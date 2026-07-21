@@ -1,0 +1,9 @@
+/node_modules
+/dist
+/.claude
+/docs
+/scripts
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json

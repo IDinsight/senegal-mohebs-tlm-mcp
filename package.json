@@ -1,0 +1,27 @@
+{
+  "name": "senegal-mohebs-tlm-server",
+  "version": "0.4.0",
+  "description": "MCP server: shared memory for generating Senegalese MOHEBS teaching & learning materials across grades and subjects. Local sources are organised per grade/subject; Firebase Storage holds generated documents and a per-context history that caches extracted content so tracked documents are never re-parsed.",
+  "type": "module",
+  "bin": {
+    "senegal-mohebs-tlm-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "node scripts/check-cycles.mjs && npx tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "check:cycles": "node scripts/check-cycles.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "firebase-admin": "^14.2.0",
+    "mammoth": "^1.9.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.10"
+  }
+}
