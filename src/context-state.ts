@@ -5,7 +5,8 @@
 // ContextNotSetError and the server prompts the user to choose one.
 import { readdirSync, existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { CONFIG, slug, basePrefix } from "./config.js";
+import { CONFIG, basePrefix } from "./config.js";
+import { slug } from "./utils/index.js";
 
 export type ActiveContext = { grade: string; subject: string };
 

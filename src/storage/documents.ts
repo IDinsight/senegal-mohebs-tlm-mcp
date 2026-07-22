@@ -1,10 +1,7 @@
 import mammoth from "mammoth";
 import { getStorageAdapter } from "./adapter.js";
+import { firstInt } from "../utils/index.js";
 import type { DeliverableSpec, DiscoveredDoc } from "../types.js";
-
-// Scope value from a chapter-style subfolder name (first integer). Subjects
-// whose deliverables aren't chaptered will generalize this in a later phase.
-const firstInt = (s: string): number | null => { const m = s.match(/\d+/); return m ? parseInt(m[0], 10) : null; };
 
 // Classification is per-subject, so the deliverable specs are passed in by the
 // caller (the app layer, which owns the active profile). This keeps storage a

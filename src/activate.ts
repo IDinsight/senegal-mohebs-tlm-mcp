@@ -5,7 +5,8 @@
 // it at module-init time; it must not import them back).
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { CONFIG, slug } from "./config.js";
+import { CONFIG } from "./config.js";
+import { slug } from "./utils/index.js";
 import { setActiveContext, listAvailableContexts, subjectDir, type ActiveContext } from "./context-state.js";
 import { resolveProfile, setActiveProfile } from "./profiles/index.js";
 

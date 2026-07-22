@@ -1,8 +1,9 @@
 // ── Layer: core (leaf) ───────────────────────────────────────────────────────
 // Static configuration read once from the environment: where local sources live,
-// the canonical per-subject source filenames, Firebase credentials, and small
-// pure string helpers (slug, noAccents). Imports nothing from this project, so
-// every other module can import it freely without risk of a cycle.
+// the canonical per-subject source filenames, Firebase credentials, and the
+// config-derived DOCX_MIME/basePrefix helpers. Imports nothing from this project,
+// so every other module can import it freely without risk of a cycle. (Pure
+// string helpers like slug/noAccents live in utils/.)
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,9 +31,6 @@ export const CONFIG = {
   defaultSubject: (env.TLM_SUBJECT ?? "").trim(),
 };
 
-export const noAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-// Folder-safe identifier for a grade or subject (lowercase, ascii, dash-separated).
-export const slug = (s: string) => noAccents(s).trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 export const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 // Base object-key prefix from env. The active grade/subject scope is appended in
