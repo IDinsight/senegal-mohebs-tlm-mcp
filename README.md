@@ -67,15 +67,21 @@ Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within
 0. `set_context(grade, subject)` — pick what you're working on. `get_context` lists the installed pairs and the current selection.
 1. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology guidance, coverage, and (for the teacher guide) the manual to build on. `unit` is the scope value (for maths, the chapter number) and `deliverable` is a deliverable key (`manual`/`lessons`). For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
 2. Generate the `.docx`.
-3. `create_upload_url(relPath)` → the server returns a short-lived **signed URL**. Upload the file with an HTTP `PUT` (Content-Type `application/vnd.openxmlformats-officedocument.wordprocessingml.document`). No large payloads go through the MCP channel.
-4. `log_generation(unit, deliverable, relPath, content)` — the server reads the uploaded object's md5 from storage and records what you produced. History updated; no local file needed.
+3. `create_upload_url(relPath, confirm)` → the server returns a short-lived **signed URL**. Upload the file with an HTTP `PUT` (Content-Type `application/vnd.openxmlformats-officedocument.wordprocessingml.document`). No large payloads go through the MCP channel. **Requires confirmation** — see below.
+4. `log_generation(unit, deliverable, relPath, content, confirm)` — the server reads the uploaded object's md5 from storage and records what you produced. History updated; no local file needed. **Requires confirmation** — see below.
+
+> **Confirmation gate.** The three tools that write outward — `create_upload_url` (gates the upload), `log_generation`, and `record_document_content` — never act without approval, using the strongest gate the client supports:
+> - **Client supports MCP elicitation** → the server asks the **user** directly via an elicitation dialog. This is a hard gate: the agent cannot bypass it (even passing `confirm: true` won't skip it — a declined dialog blocks the action).
+> - **Otherwise** → an agent-mediated two-step: the first call performs no side effect and returns `{ needsConfirmation: true, message }`; the agent asks the user, then re-calls with `confirm: true`.
+>
+> Input validation (e.g. unknown deliverable) runs before the gate, so bad calls fail first. All read-only tools are ungated. Note: in a fully headless run (no user, no elicitation) these tools cannot get approval by design — drive them only where a human is reachable.
 
 ## Ingesting a doc authored elsewhere (e.g. an expert wrote chapter 2)
 
 1. The file is in the bucket (uploaded any way you like), under the grade/subject's `documents/`.
 2. `reconcile` surfaces it as untracked.
 3. `get_document_text(relPath)` returns its plain text (server downloads from the bucket and extracts via mammoth — it never calls an LLM).
-4. Extract the structured content and call `record_document_content(...)`. Tracked from then on.
+4. Extract the structured content and call `record_document_content(...)` (**requires confirmation** — call with `confirm: true` after the user approves). Tracked from then on.
 
 ## Reconciliation
 
