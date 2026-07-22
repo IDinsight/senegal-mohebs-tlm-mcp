@@ -1,3 +1,8 @@
+// ── Layer: core (leaf) ───────────────────────────────────────────────────────
+// Static configuration read once from the environment: where local sources live,
+// the canonical per-subject source filenames, Firebase credentials, and small
+// pure string helpers (slug, noAccents). Imports nothing from this project, so
+// every other module can import it freely without risk of a cycle.
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 

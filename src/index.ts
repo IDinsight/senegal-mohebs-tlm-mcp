@@ -1,3 +1,17 @@
+// ── Layer: app · entry point ─────────────────────────────────────────────────
+// Boots the MCP server: apply an optional startup context, reconcile once, serve
+// over stdio. Also the package's public export surface (for tests/embedding).
+//
+// Module layout (imports only ever point DOWN this list — enforced by
+// scripts/check-cycles.mjs; see docs/multi-subject-architecture.md):
+//
+//   app       server.ts · index.ts · activate.ts
+//   profiles  profiles/*            — compose the services below per subject
+//   services  storage/* · curriculum/* · generation/*   — never import profiles
+//   core      config.ts · types.ts · context-state.ts   — leaves
+//
+// Cross-module imports go through each module's index.ts (barrel); files inside
+// a module import their siblings directly.
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";

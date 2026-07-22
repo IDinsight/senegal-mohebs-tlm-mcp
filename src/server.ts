@@ -1,3 +1,9 @@
+// ── Layer: app ───────────────────────────────────────────────────────────────
+// Defines the MCP tool surface. This is the only layer that reads the active
+// profile (getActiveProfile) and dispatches to it — curriculum, generation, and
+// deliverable validation all flow through the profile here, so the service
+// modules stay unaware of profiles. Every source-/bucket-dependent tool is
+// wrapped in guarded() so it prompts for a context instead of throwing.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { readFileSync } from "node:fs";

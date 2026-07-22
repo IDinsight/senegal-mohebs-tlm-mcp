@@ -1,3 +1,8 @@
+// ── Module: storage · internal ───────────────────────────────────────────────
+// The concrete Firebase/GCS implementation of StorageAdapter: signed upload/
+// download URLs, docx download, and reading/writing the history.json object. The
+// only file that talks to firebase-admin. Object keys are namespaced per active
+// grade/subject via the docsPrefix/historyKey helpers from context-state.
 import { createRequire } from "node:module";
 import { CONFIG, DOCX_MIME } from "../config.js";
 import { docsPrefix, docKey, historyKey } from "../context-state.js";

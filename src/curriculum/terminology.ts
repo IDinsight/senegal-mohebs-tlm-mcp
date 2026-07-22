@@ -1,3 +1,7 @@
+// ── Module: curriculum · internal ────────────────────────────────────────────
+// The FR/Wolof glossary lookup for the active subject, loaded lazily from the
+// subject's terminology.json and cached until the context changes. Subject-
+// agnostic: any subject that ships a terminology.json gets search for free.
 import { readFileSync } from "node:fs";
 import { CONFIG, noAccents } from "../config.js";
 import { sourcePath, onContextChange } from "../context-state.js";

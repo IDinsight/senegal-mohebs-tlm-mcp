@@ -1,3 +1,8 @@
+// ── Layer: profiles (composes the service modules below) ─────────────────────
+// The CI-maths subject profile: which deliverables exist (pupil manual +
+// teacher guide) and how each is recognized/scoped, the enabled capabilities,
+// and buildGenerationContext() — the maths-specific pre-generation payload. It
+// composes curriculum + storage + generation; those services never import back.
 import { noAccents } from "../config.js";
 import { createMathsCurriculum, terminologySections } from "../curriculum/index.js";
 import { listEntries } from "../storage/index.js";
