@@ -1,13 +1,14 @@
+// ── Layer: app ───────────────────────────────────────────────────────────────
 // Orchestrates switching the active teaching context: resolve the subject
 // profile, run the schema guard against its knowledge graph, then bind the
-// context and install the profile. Kept separate from context-state.ts so that
-// context-state stays a dependency-light leaf (profiles/* and storage/* import
-// it at module-init time; it must not import them back).
+// context and install the profile. This is app-layer composition — it wires the
+// leaf context module to profiles/ — so it lives at the root alongside index.ts
+// rather than inside context/ (which stays a dependency-light leaf).
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CONFIG } from "./config.js";
 import { slug } from "./utils/index.js";
-import { setActiveContext, listAvailableContexts, subjectDir, type ActiveContext } from "./context-state.js";
+import { setActiveContext, listAvailableContexts, subjectDir, type ActiveContext } from "./context/index.js";
 import { resolveProfile, setActiveProfile } from "./profiles/index.js";
 
 export type ActivateResult =

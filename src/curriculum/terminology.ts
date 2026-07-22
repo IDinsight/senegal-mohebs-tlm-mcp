@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { CONFIG } from "../config.js";
 import { noAccents } from "../utils/index.js";
-import { sourcePath, onContextChange } from "../context-state.js";
+import { sourcePath, onContextChange } from "../context/index.js";
 
 type TermEntry = { francais: string; wolof: string | null; exemple: string | null; section: string | null };
 let termEntries: TermEntry[] = [], termLoaded = false;

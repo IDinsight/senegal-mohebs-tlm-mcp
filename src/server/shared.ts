@@ -5,7 +5,7 @@
 // so each tool group imports all its helpers from one place ("./shared.js").
 import { asJson, type ToolResult } from "../utils/index.js";
 import { getActiveProfile } from "../profiles/index.js";
-import { ContextNotSetError } from "../context-state.js";
+import { ContextNotSetError } from "../context/index.js";
 
 export { asJson, type ToolResult };
 

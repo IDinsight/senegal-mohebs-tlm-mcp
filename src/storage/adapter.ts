@@ -4,7 +4,7 @@
 // we drop the cache on context change. Internal to the storage module — other
 // modules go through storage/index.ts.
 import { createFirebaseStorage } from "./firebase.js";
-import { onContextChange } from "../context-state.js";
+import { onContextChange } from "../context/index.js";
 import type { StorageAdapter, HistoryFile } from "../types.js";
 
 let storage: StorageAdapter | null = null;

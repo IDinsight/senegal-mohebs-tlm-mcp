@@ -5,7 +5,7 @@
 // into the maths generation context; profiles without the capability ignore it.
 import { readFileSync, existsSync } from "node:fs";
 import { CONFIG } from "../config.js";
-import { sourcePath } from "../context-state.js";
+import { sourcePath } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
 
 const DEFAULT_POOL = ["fruits", "legumes", "animals", "tam-tams", "pirogues", "cordes", "paniers", "calebasses", "ballons", "ardoises"];

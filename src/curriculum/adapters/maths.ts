@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { CONFIG } from "../../config.js";
-import { sourcePath, onContextChange } from "../../context-state.js";
+import { sourcePath, onContextChange } from "../../context/index.js";
 import { buildModel, unit } from "../model.js";
 import type { CurriculumAdapter, CurriculumModel, CurriculumUnit, SubjectCurriculum } from "../../types.js";
 

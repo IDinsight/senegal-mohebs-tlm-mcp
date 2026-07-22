@@ -5,25 +5,26 @@
 // Module layout (imports only ever point DOWN this list — enforced by
 // scripts/check-cycles.mjs; see docs/multi-subject-architecture.md):
 //
-//   app       server.ts · index.ts · activate.ts
+//   app       server/* · index.ts · activate.ts
 //   profiles  profiles/*            — compose the services below per subject
 //   services  storage/* · curriculum/* · generation/*   — never import profiles
-//   core      config.ts · types.ts · context-state.ts   — leaves
+//   core      config.ts · types.ts · context/{state,shared} · utils/*   — leaves
 //
 // Cross-module imports go through each module's index.ts (barrel); files inside
-// a module import their siblings directly.
+// a module import their siblings directly. activate.ts is app-layer glue (it
+// wires context + profiles), so it lives at the root, not inside the leaf context/.
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { buildServer } from "./server/index.js";
 import { CONFIG } from "./config.js";
-import { getActiveContext, listAvailableContexts } from "./context-state.js";
+import { getActiveContext, listAvailableContexts } from "./context/index.js";
 import { activateContext } from "./activate.js";
 import { getActiveProfile } from "./profiles/index.js";
 import { reconcile } from "./storage/index.js";
 
 export { CONFIG } from "./config.js";
-export { getActiveContext, listAvailableContexts } from "./context-state.js";
+export { getActiveContext, listAvailableContexts } from "./context/index.js";
 export { activateContext } from "./activate.js";
 export { getActiveProfile, resolveProfile } from "./profiles/index.js";
 export { reconcile, listEntries, recordContent, extractDocxText, __setStorageForTest } from "./storage/index.js";

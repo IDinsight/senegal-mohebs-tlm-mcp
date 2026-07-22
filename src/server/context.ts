@@ -5,7 +5,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson } from "./shared.js";
 import { activateContext } from "../activate.js";
-import { getActiveContext, listAvailableContexts } from "../context-state.js";
+import { getActiveContext, listAvailableContexts } from "../context/index.js";
 
 export function registerContextTools(server: McpServer) {
   server.registerTool("set_context", { title: "Set grade & subject", description: "Choose the grade (e.g. 'ci') and subject (e.g. 'maths') to work on. This selects which local sources load and which Firebase namespace documents and history live under, and MUST be set before any other tool. If you don't know which to use, call get_context to list the installed options, then ask the user.", inputSchema: { grade: z.string(), subject: z.string() } },

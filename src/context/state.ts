@@ -1,23 +1,19 @@
-// Active teaching context — which grade + subject the server is working on.
+// ── Module: context · state (leaf) ───────────────────────────────────────────
+// The active teaching context — which grade + subject the server is working on.
 // The choice selects (a) which local sources load and (b) which Firebase
-// namespace documents and history live under. It must be set before any
-// source- or bucket-dependent tool runs; when it isn't, requireContext() throws
+// namespace documents and history live under. It must be set before any source-
+// or bucket-dependent tool runs; when it isn't, requireContext() throws
 // ContextNotSetError and the server prompts the user to choose one.
+//
+// This module is a dependency-light LEAF (imports only config + utils + the
+// context/shared types). Many modules import it at init time, so it must not
+// import profiles/* or storage/* back — the profile resolution + schema guard
+// that need those live in context/activate.ts.
 import { readdirSync, existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
-import { CONFIG, basePrefix } from "./config.js";
-import { slug } from "./utils/index.js";
-
-export type ActiveContext = { grade: string; subject: string };
-
-export class ContextNotSetError extends Error {
-  readonly available: ActiveContext[];
-  constructor(available: ActiveContext[]) {
-    super("No active teaching context. Choose a grade and subject with set_context first.");
-    this.name = "ContextNotSetError";
-    this.available = available;
-  }
-}
+import { CONFIG, basePrefix } from "../config.js";
+import { slug } from "../utils/index.js";
+import { type ActiveContext, ContextNotSetError } from "./shared.js";
 
 let active: ActiveContext | null = null;
 
@@ -49,8 +45,8 @@ export const subjectDir = (grade: string, subject: string) => resolve(CONFIG.sou
 
 // Low-level bind: slugify, validate against installed sources, set the active
 // context, and fire cache-reset listeners. Profile resolution and the schema
-// guard live in activateContext() (activate.ts) to avoid an import cycle; call
-// that, not this, from tools and startup.
+// guard live in activateContext() (context/activate.ts) to avoid an import
+// cycle; call that, not this, from tools and startup.
 export function setActiveContext(grade: string, subject: string):
   | { ok: true; context: ActiveContext }
   | { ok: false; error: string; available: ActiveContext[] } {

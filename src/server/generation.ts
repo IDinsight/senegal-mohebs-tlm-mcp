@@ -6,7 +6,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { readFileSync } from "node:fs";
 import { asJson, guarded, badDeliverable } from "./shared.js";
-import { sourcePath } from "../context-state.js";
+import { sourcePath } from "../context/index.js";
 import { getActiveProfile } from "../profiles/index.js";
 
 export function registerGenerationTools(server: McpServer) {

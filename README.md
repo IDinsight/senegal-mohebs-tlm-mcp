@@ -132,13 +132,13 @@ The server supports many grades/subjects whose curriculum graphs and deliverable
 Modules are **layered, and imports only ever point down**. A build-time check (`npm run check:cycles`, run automatically by `npm run build`) fails on any import cycle:
 
 ```
-app       server.ts · index.ts · activate.ts
+app       server/* · index.ts · activate.ts
 profiles  profiles/*                                     — compose the services below, per subject
 services  storage/* · curriculum/* · generation/*        — never import profiles
-core      config.ts · types.ts · context-state.ts · utils/*   — leaves
+core      config.ts · types.ts · context/{state,shared} · utils/*   — leaves
 ```
 
-Cross-module imports go through each module's `index.ts` (barrel); files **inside** a module import their siblings directly. The full design rationale is in [`docs/multi-subject-architecture.md`](docs/multi-subject-architecture.md).
+Cross-module imports go through each module's `index.ts` (barrel); files **inside** a module import their siblings directly. `activate.ts` (resolve the profile → run the schema guard → bind the context) is app-layer glue that wires `context/` to `profiles/`, so it lives at the root next to `index.ts` rather than inside the leaf `context/` module. The full design rationale is in [`docs/multi-subject-architecture.md`](docs/multi-subject-architecture.md).
 
 ## Adding a new grade/subject
 

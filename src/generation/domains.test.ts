@@ -17,7 +17,7 @@ vi.mock("../config.js", () => ({
   CONFIG: { exampleDomainsFile: "example_domains.json" },
 }));
 
-vi.mock("../context-state.js", () => ({
+vi.mock("../context/index.js", () => ({
   sourcePath: () => "/nonexistent/example_domains.json",
 }));
 

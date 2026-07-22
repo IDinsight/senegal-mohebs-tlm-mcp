@@ -13,7 +13,7 @@ const fromRoot = (p: string) => resolve(PKG_ROOT, p);
 
 export const CONFIG = {
   // Sources root (override with TLM_SOURCES_DIR). Under it, one folder per grade,
-  // then per subject, resolved at runtime for the active context (context-state.ts).
+  // then per subject, resolved at runtime for the active context (context/state.ts).
   // The per-subject filenames below are fixed conventions — the same in every
   // subject folder. Prompt filenames are NOT here: they belong to each subject's
   // deliverables (DeliverableSpec.promptFile), read by the get_prompt tool.
@@ -33,5 +33,5 @@ export const CONFIG = {
 export const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 // Base object-key prefix from env. The active grade/subject scope is appended in
-// context-state.ts so each context gets its own documents/ and history.json.
+// context/state.ts so each context gets its own documents/ and history.json.
 export const basePrefix = () => (CONFIG.bucketPrefix ? CONFIG.bucketPrefix + "/" : "");
