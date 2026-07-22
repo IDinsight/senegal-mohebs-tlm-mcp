@@ -8,7 +8,7 @@
 // This module is a dependency-light LEAF (imports only config + utils + the
 // context/shared types). Many modules import it at init time, so it must not
 // import profiles/* or storage/* back — the profile resolution + schema guard
-// that need those live in context/activate.ts.
+// that need those live in the app-layer activate.ts (at the repo root).
 import { readdirSync, existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { CONFIG, basePrefix } from "../config.js";
@@ -45,8 +45,8 @@ export const subjectDir = (grade: string, subject: string) => resolve(CONFIG.sou
 
 // Low-level bind: slugify, validate against installed sources, set the active
 // context, and fire cache-reset listeners. Profile resolution and the schema
-// guard live in activateContext() (context/activate.ts) to avoid an import
-// cycle; call that, not this, from tools and startup.
+// guard live in activateContext() (root activate.ts) to avoid an import cycle;
+// call that, not this, from tools and startup.
 export function setActiveContext(grade: string, subject: string):
   | { ok: true; context: ActiveContext }
   | { ok: false; error: string; available: ActiveContext[] } {

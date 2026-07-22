@@ -15,7 +15,7 @@ export function resolveProfile(grade: string, subject: string): SubjectProfile |
   return build ? build(grade, subject) : null;
 }
 
-// The profile for the active context. Set by context/activate on set_context and
+// The profile for the active context. Set by activate.ts on set_context and
 // replaced (not mutated) on every switch, so caches never leak across contexts.
 let activeProfile: SubjectProfile | null = null;
 export function setActiveProfile(p: SubjectProfile | null) { activeProfile = p; }
