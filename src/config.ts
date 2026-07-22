@@ -12,16 +12,15 @@ const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fromRoot = (p: string) => resolve(PKG_ROOT, p);
 
 export const CONFIG = {
-  // Sources root. Under it, one folder per grade, then per subject:
-  //   sources/<grade>/<subject>/{knowledge_graph.json, terminology.json, PROMPT_*.md, …}
-  // The active grade/subject is chosen at runtime (see context-state.ts); these
-  // filenames are the canonical per-subject basenames resolved inside that folder.
+  // Sources root (override with TLM_SOURCES_DIR). Under it, one folder per grade,
+  // then per subject, resolved at runtime for the active context (context-state.ts).
+  // The per-subject filenames below are fixed conventions — the same in every
+  // subject folder. Prompt filenames are NOT here: they belong to each subject's
+  // deliverables (DeliverableSpec.promptFile), read by the get_prompt tool.
   sourcesDir: env.TLM_SOURCES_DIR ? resolve(env.TLM_SOURCES_DIR) : fromRoot("sources"),
-  kgFile: env.TLM_KG_FILE ?? "knowledge_graph.json",
-  terminologyFile: env.TLM_TERMINOLOGY_FILE ?? "terminology.json",
-  chapterPromptFile: env.TLM_CHAPTER_PROMPT ?? "PROMPT_generate_chapter.md",
-  lessonsPromptFile: env.TLM_LESSONS_PROMPT ?? "PROMPT_generate_lessons.md",
-  exampleDomainsFile: env.TLM_EXAMPLE_DOMAINS ?? "example_domains.json",
+  kgFile: "knowledge_graph.json",
+  terminologyFile: "terminology.json",
+  exampleDomainsFile: "example_domains.json",
   // Firebase Storage (shared source of truth for documents + history).
   serviceAccountKeyPath: env.SERVICE_ACCOUNT_KEY_PATH ?? "",
   firebaseBucket: env.FIREBASE_STORAGE_BUCKET ?? "",

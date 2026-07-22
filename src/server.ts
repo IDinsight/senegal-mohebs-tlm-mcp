@@ -7,7 +7,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { readFileSync } from "node:fs";
-import { CONFIG } from "./config.js";
 import { sourcePath, getActiveContext, listAvailableContexts, ContextNotSetError } from "./context-state.js";
 import { activateContext } from "./activate.js";
 import { getActiveProfile } from "./profiles/index.js";
@@ -86,8 +85,13 @@ export function buildServer(): McpServer {
   server.registerTool("terminology_sections", { title: "Terminology sections", description: "List terminology sections and entry counts.", inputSchema: {} },
     guarded(async () => asJson(terminologySections())));
 
-  server.registerTool("get_prompt", { title: "Get generation prompt", description: "Return the chapter or lessons generation prompt (the md files you manage).", inputSchema: { which: z.enum(["chapter", "lessons"]) } },
-    guarded(async (a: { which: "chapter" | "lessons" }) => asJson({ which: a.which, text: readFileSync(sourcePath(a.which === "chapter" ? CONFIG.chapterPromptFile : CONFIG.lessonsPromptFile), "utf8") })));
+  server.registerTool("get_prompt", { title: "Get generation prompt", description: "Return the generation prompt for one of the active subject's deliverables (its DeliverableSpec.promptFile). 'deliverable' is a deliverable key — for maths, 'manual' or 'lessons'.", inputSchema: { deliverable: z.string() } },
+    guarded(async (a: { deliverable: string }) => {
+      const bad = badDeliverable(a.deliverable); if (bad) return bad;
+      const spec = getActiveProfile().deliverables.find((d) => d.key === a.deliverable)!;
+      if (!spec.promptFile) return asJson({ error: `Deliverable '${a.deliverable}' has no generation prompt configured.` });
+      return asJson({ deliverable: a.deliverable, text: readFileSync(sourcePath(spec.promptFile), "utf8") });
+    }));
 
   server.registerTool("get_generation_context", { title: "Get generation context", description: "One call to load before generating: curriculum for the unit, plus subject-specific context (for maths: established characters, a fresh example-domain suggestion, and — for the teacher guide — the manual to build on). 'docType' is a deliverable key for the active subject (maths: 'manual' or 'lessons').", inputSchema: { chapter: z.number().int(), docType: z.string() } },
     guarded(async (a: { chapter: number; docType: string }) => badDeliverable(a.docType) ?? asJson(await getActiveProfile().buildGenerationContext(a.chapter, a.docType))));

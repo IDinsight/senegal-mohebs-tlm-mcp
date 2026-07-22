@@ -47,7 +47,7 @@ Required:
 Optional:
 - `TLM_GRADE` / `TLM_SUBJECT` — pre-select the active grade/subject at startup, so you don't have to call `set_context` first. Must match an installed folder pair.
 - `TLM_BUCKET_PREFIX` — put everything under a prefix (e.g. `pilot` → `pilot/ci/maths/documents/…`, `pilot/ci/maths/history.json`). The grade/subject scope is always appended after the prefix.
-- `TLM_SOURCES_DIR` and per-file overrides (`TLM_KG_FILE`, `TLM_TERMINOLOGY_FILE`, `TLM_CHAPTER_PROMPT`, `TLM_LESSONS_PROMPT`, `TLM_EXAMPLE_DOMAINS`). Overrides are basenames resolved inside the active `<grade>/<subject>` folder.
+- `TLM_SOURCES_DIR` — relocate the sources root (defaults to `./sources`). The per-subject filenames inside each `<grade>/<subject>` folder are fixed conventions: `knowledge_graph.json`, `terminology.json`, optional `example_domains.json`, and the prompt `.md` files (each subject's profile names its own prompt files via `DeliverableSpec.promptFile`).
 - `TLM_DOMAIN_NEIGHBORHOOD_K` — how many chapters on each side count as a chapter's "neighborhood" for example-domain variety (default `3`). `get_generation_context` only reports the domains used by chapters within ±K of the target (by chapter number), and its fresh-domain suggestion avoids anything in that window. Larger K = stronger variety across a wider span; the payload stays bounded by the window regardless of how many chapters are authored.
 
 ## Bucket layout
