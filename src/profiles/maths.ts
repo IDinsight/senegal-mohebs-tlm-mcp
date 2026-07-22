@@ -67,7 +67,7 @@ export function buildMathsProfile(grade: string, subject: string): SubjectProfil
       if (!curriculumSlice) notes.push(`Chapter ${chapter} was not found in the knowledge graph.`);
 
       return {
-        chapter, docType, curriculum: curriculumSlice, progression: curriculum.progression(chapter), requiredLessonCoverage: curriculum.requiredCoverage(chapter),
+        unit: chapter, deliverable: docType, curriculum: curriculumSlice, progression: curriculum.progression(chapter), requiredLessonCoverage: curriculum.requiredCoverage(chapter),
         establishedCharacters,
         exampleDomains: await (async () => {
           const avoidNearby = await neighborhoodDomains(chapter);

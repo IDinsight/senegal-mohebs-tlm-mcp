@@ -15,7 +15,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { buildServer } from "./server.js";
+import { buildServer } from "./server/index.js";
 import { CONFIG } from "./config.js";
 import { getActiveContext, listAvailableContexts } from "./context-state.js";
 import { activateContext } from "./activate.js";
@@ -29,7 +29,7 @@ export { getActiveProfile, resolveProfile } from "./profiles/index.js";
 export { reconcile, listEntries, recordContent, extractDocxText, __setStorageForTest } from "./storage/index.js";
 export { suggestFreshDomain } from "./generation/index.js";
 export { searchTerminology } from "./curriculum/index.js";
-export { buildServer } from "./server.js";
+export { buildServer } from "./server/index.js";
 export type { StorageAdapter, StoredObject, HistoryFile, DocType, SubjectProfile } from "./types.js";
 
 const LOG = "[senegal-mohebs-tlm]";

@@ -65,10 +65,10 @@ Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within
 ## The generation flow (cross-host, no shared disk)
 
 0. `set_context(grade, subject)` — pick what you're working on. `get_context` lists the installed pairs and the current selection.
-1. `get_generation_context(chapter, docType)` — curriculum slice, established characters, terminology guidance, coverage, and (for lessons) the manual to build on. For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
+1. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology guidance, coverage, and (for the teacher guide) the manual to build on. `unit` is the scope value (for maths, the chapter number) and `deliverable` is a deliverable key (`manual`/`lessons`). For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
 2. Generate the `.docx`.
 3. `create_upload_url(relPath)` → the server returns a short-lived **signed URL**. Upload the file with an HTTP `PUT` (Content-Type `application/vnd.openxmlformats-officedocument.wordprocessingml.document`). No large payloads go through the MCP channel.
-4. `log_generation(chapter, type, relPath, content)` — the server reads the uploaded object's md5 from storage and records what you produced. History updated; no local file needed.
+4. `log_generation(unit, deliverable, relPath, content)` — the server reads the uploaded object's md5 from storage and records what you produced. History updated; no local file needed.
 
 ## Ingesting a doc authored elsewhere (e.g. an expert wrote chapter 2)
 
@@ -83,9 +83,14 @@ Run on startup (when a context is active) and via the `reconcile` tool: present 
 
 ## Tools
 
-Context: `set_context`, `get_context`.
+**Context (subject-agnostic):** `set_context`, `get_context`.
 
-Per grade/subject: `list_chapters`, `get_curriculum`, `get_terminology`, `terminology_sections`, `get_prompt`, `get_generation_context`, `suggest_fresh_domain`, `domain_usage`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`, `record_document_content`, `log_generation`.
+**Subject-agnostic** — work the same for any grade/subject: `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`.
+
+**Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's profile:
+
+- `list_units`, `get_curriculum`, `get_generation_context`, `record_document_content`, `log_generation`. These take a `unit` (the subject's scope value — a chapter for maths, a week for CE1 reading) and, where relevant, a `deliverable` key. The shapes are subject-specific: maths returns `chapitreNum`/`leconNum` etc., and the `content` payload (characters, example domains, amorce/bilan) follows the maths storybook model — all fields optional.
+- *Capability-specific* (`exampleDomainRotation`, maths only) — `suggest_fresh_domain`, `domain_usage`. Example-domain rotation is a maths storybook feature; they are gated on the capability, so for a subject whose profile doesn't enable it they return a `notApplicable` message instead of running.
 
 ## Setup
 
