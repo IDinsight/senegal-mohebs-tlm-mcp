@@ -168,7 +168,7 @@ Adding a subject takes its **sources** (data) and a **profile** (code). If the k
 
 **Rules the build enforces:** imports point *down* the layers above; **service modules (`storage`/`curriculum`/`generation`) must not import `profiles`** — pass what they need in as arguments (as `reconcile(deliverables)` and `discoverDocuments(deliverables)` do); cross-module imports go through the module's `index.ts`. `npm run check:cycles` fails the build on any import cycle.
 
-> A worked example is pending for **CE1 reading** (scope: one teacher guide **per week**); see `docs/multi-subject-architecture.md` §9/§11 for the remaining steps.
+> **CE1 reading** is wired as a worked second subject (scope: one teacher guide **per week**), registered as `ce1/reading` — its adapter parses a `nodes`/`relationships` + `hasChild` graph. See `docs/multi-subject-architecture.md` §11 phase 4 for what its KG needed and the open follow-ups (no `terminology.json` yet; evaluation grids pending).
 
 ## Testing note
 

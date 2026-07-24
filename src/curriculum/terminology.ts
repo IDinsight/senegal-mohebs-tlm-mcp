@@ -11,8 +11,17 @@ type TermEntry = { francais: string; wolof: string | null; exemple: string | nul
 let termEntries: TermEntry[] = [], termLoaded = false;
 
 function termReload() {
-  const raw = JSON.parse(readFileSync(sourcePath(CONFIG.terminologyFile), "utf8"));
   termEntries = [];
+  // A subject may not ship a terminology.json yet (e.g. CE1 reading leans on the
+  // KG's own bilingual wording). Treat a missing file as an empty glossary so
+  // get_terminology / terminology_sections return [] instead of crashing.
+  let raw: any;
+  try {
+    raw = JSON.parse(readFileSync(sourcePath(CONFIG.terminologyFile), "utf8"));
+  } catch {
+    termLoaded = true;
+    return;
+  }
   for (const sec of raw.sections ?? [])
     for (const e of sec.entrees ?? [])
       termEntries.push({ francais: e.francais ?? "", wolof: e.wolof ?? null, exemple: e.exemple ?? null, section: sec.titre ?? null });

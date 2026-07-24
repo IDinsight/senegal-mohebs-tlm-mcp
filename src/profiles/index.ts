@@ -1,5 +1,6 @@
 import type { SubjectProfile } from "../types.js";
 import { buildMathsProfile } from "./maths.js";
+import { buildReadingProfile } from "./reading.js";
 import { ContextNotSetError, listAvailableContexts } from "../context/index.js";
 
 // Registry: (grade/subject) → profile builder. Add a subject by registering its
@@ -8,6 +9,7 @@ import { ContextNotSetError, listAvailableContexts } from "../context/index.js";
 type ProfileBuilder = (grade: string, subject: string) => SubjectProfile;
 const REGISTRY: Record<string, ProfileBuilder> = {
   "ci/maths": buildMathsProfile,
+  "ce1/reading": buildReadingProfile,
 };
 
 export function resolveProfile(grade: string, subject: string): SubjectProfile | null {

@@ -4,3 +4,4 @@
 export { buildModel, unit } from "./model.js";
 export { searchTerminology, terminologySections } from "./terminology.js";
 export { mathsAdapter, createMathsCurriculum } from "./adapters/maths.js";
+export { readingAdapter, createReadingCurriculum } from "./adapters/reading.js";
