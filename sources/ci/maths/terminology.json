@@ -1,0 +1,3267 @@
+{
+  "titre": "Baatukaay - Terminologie Français/Wolof - Mathématiques",
+  "etape": "Première étape (CI-CP)",
+  "source": "Ministère de l'Éducation nationale du Sénégal - MOHEBS (Modèle Harmonisé d'Enseignement Bilingue au Sénégal)",
+  "date": "Février 2024",
+  "sections": [
+    {
+      "titre": "I. ACTIVITÉS NUMÉRIQUES",
+      "nombre_entrees": 207,
+      "entrees": [
+        {
+          "n": 1,
+          "francais": "Abaisser",
+          "wolof": "Wàcce",
+          "exemple": "Su may séddale 54 ci 2, dinaa soxla wàcce 4."
+        },
+        {
+          "n": 2,
+          "francais": "Abaque",
+          "wolof": "Abag b-",
+          "exemple": "Abag dafay yombal xayma bi."
+        },
+        {
+          "n": 3,
+          "francais": "Abstrait",
+          "wolof": "Jёmmoodi / Jёmmuwul",
+          "exemple": "Taamu nañu ci njàngum lim, jóge ci li jёmmu dem ci li jёmmoodi."
+        },
+        {
+          "n": 4,
+          "francais": "Activité",
+          "wolof": "Yëngute b",
+          "exemple": "Yëngute ci lim, ci xam-xamu xayma la bokk."
+        },
+        {
+          "n": 5,
+          "francais": "Activités numériques",
+          "wolof": "Yëngute ci lim",
+          "exemple": "Yëngute ci lim, ci xam-xamu xayma la bokk."
+        },
+        {
+          "n": 6,
+          "francais": "Addition",
+          "wolof": "Yokk b-",
+          "exemple": "Ci yokk, damay dolli."
+        },
+        {
+          "n": 7,
+          "francais": "Additionner",
+          "wolof": "Yokk",
+          "exemple": "Soo yokkee 6 ci 4 mu jox la 10."
+        },
+        {
+          "n": 8,
+          "francais": "Ajout",
+          "wolof": "Dolli b- / yokk b-",
+          "exemple": "Ab dolli dina yokk ab lim."
+        },
+        {
+          "n": 9,
+          "francais": "Ajouter",
+          "wolof": "Dolli / yokk",
+          "exemple": "Boo dollee 1 ci 9 am fukk."
+        },
+        {
+          "n": 10,
+          "francais": "Appariement",
+          "wolof": "Lëkkale g-",
+          "exemple": "Ndigal li, lëkkale la."
+        },
+        {
+          "n": 11,
+          "francais": "Apparier",
+          "wolof": "Lëkkale",
+          "exemple": "Muse bi digal na elew bi mboole mu nekk mu lëkkale ko ak limam."
+        },
+        {
+          "n": 12,
+          "francais": "Appartenance",
+          "wolof": "Bokk g-",
+          "exemple": "Njàngum tey mu ngi aju ci ñakk a bokk."
+        },
+        {
+          "n": 13,
+          "francais": "Appartenir à",
+          "wolof": "Bokk ci-",
+          "exemple": "Fukk ak benn bokk na ci lim yi tóol."
+        },
+        {
+          "n": 14,
+          "francais": "Appartenir à",
+          "wolof": "Bokk ci.",
+          "exemple": "2 bokk na ci lim yi gën a tuuti 5."
+        },
+        {
+          "n": 15,
+          "francais": "Assembler",
+          "wolof": "Dajale / boole",
+          "exemple": "Dajaleel ay banti woññi ba am mboolem 5."
+        },
+        {
+          "n": 16,
+          "francais": "Autant que",
+          "wolof": "(limu)…tollu ni (limu)…",
+          "exemple": "Limu màngo yi tollu na ni limu banaana yi."
+        },
+        {
+          "n": 17,
+          "francais": "Bande numérique",
+          "wolof": "Soru / bàndu lim",
+          "exemple": "Mottalil sorub lim bi : 1 - … - 3 - 4 - … - 6 - … - 8 - …"
+        },
+        {
+          "n": 18,
+          "francais": "Base",
+          "wolof": "Ndëju / ndéju",
+          "exemple": "Fukk mooy ndëjuy lim yi ci farañse."
+        },
+        {
+          "n": 19,
+          "francais": "Batonnet",
+          "wolof": "Mbant s-",
+          "exemple": "Waññal 3 mbant."
+        },
+        {
+          "n": 20,
+          "francais": "Beaucoup",
+          "wolof": "Bari",
+          "exemple": "Ci ñetti nataali bool yi, cuubal bool bi am màngo yu bari."
+        },
+        {
+          "n": 21,
+          "francais": "Caillou",
+          "wolof": "Xeer w-",
+          "exemple": "Jëlleen xeer wi, ngeen yokk ko ci 5."
+        },
+        {
+          "n": 22,
+          "francais": "Calcul",
+          "wolof": "Xayma b-",
+          "exemple": "Seetal ndax xayma bi jub na : 15 - 3 = 8."
+        },
+        {
+          "n": 23,
+          "francais": "Calcul écrit",
+          "wolof": "Xayma ci mbind",
+          "exemple": "Bi muse bi noppee, jox na elew yi xayma ci mbind."
+        },
+        {
+          "n": 24,
+          "francais": "Calcul mental",
+          "wolof": "Xayma ci xel",
+          "exemple": "Njàngum xayma mi mungi tàmbalee ci xayma ci xel."
+        },
+        {
+          "n": 25,
+          "francais": "Calculer",
+          "wolof": "Xayma",
+          "exemple": "Xaymaal pexem mboole mi 16 + 9 = …"
+        },
+        {
+          "n": 26,
+          "francais": "Cardinal",
+          "wolof": "Lim mboole g-",
+          "exemple": "Lim mboole xale yi 30 la."
+        },
+        {
+          "n": 27,
+          "francais": "Cent",
+          "wolof": "Téemeer",
+          "exemple": "Tey, jàng nanu limu téemeer."
+        },
+        {
+          "n": 28,
+          "francais": "Centaine",
+          "wolof": "Téemeerte b-",
+          "exemple": "Abaag am na kenug téemeerte."
+        },
+        {
+          "n": 29,
+          "francais": "Centième",
+          "wolof": "Téemeereel",
+          "exemple": "Fattalikunaa témeereelu bitu Saajo Maane."
+        },
+        {
+          "n": 30,
+          "francais": "Cent-un",
+          "wolof": "Téemeer ak benn",
+          "exemple": "Wañ ñleen ba téemeer ak benn."
+        },
+        {
+          "n": 31,
+          "francais": "Chiffre",
+          "wolof": "Limtu b- / siifar b-",
+          "exemple": "Jëfandikool limtu 7 ak limtu 5 te nga bindal ma lim bu yées 40."
+        },
+        {
+          "n": 32,
+          "francais": "Cinq",
+          "wolof": "Juroom",
+          "exemple": "Loxo bu nekk am na juroomi baaraam."
+        },
+        {
+          "n": 33,
+          "francais": "Cinquante",
+          "wolof": "Juroom fukk",
+          "exemple": "Juroom fukk mooy xaaju téemeer."
+        },
+        {
+          "n": 34,
+          "francais": "Cinquième",
+          "wolof": "Juroomeel",
+          "exemple": "Àjjuma mooy juroomeelu fanu ayu bés bi."
+        },
+        {
+          "n": 35,
+          "francais": "Classe des centaines",
+          "wolof": "Giiru téemeere",
+          "exemple": "Ci lim 123, 1 moo nekk ci giiru téemeere."
+        },
+        {
+          "n": 36,
+          "francais": "Classe des dizaines",
+          "wolof": "Giiru fukke",
+          "exemple": "Ci lim 123, 2 moo nekk ci giiru fukke."
+        },
+        {
+          "n": 37,
+          "francais": "Classe des unités simples",
+          "wolof": "Giiru benne",
+          "exemple": "Ci limu 89, 9 mooy nekk ci giiru benne."
+        },
+        {
+          "n": 38,
+          "francais": "Classer",
+          "wolof": "Giiral",
+          "exemple": "Am nga bool bu def ay soras, karoot, kaani, ñàmbi, banaana ak ay màngo : giiralal ñam yi bokk wirgo."
+        },
+        {
+          "n": 39,
+          "francais": "Codage",
+          "wolof": "Màndargaal g-",
+          "exemple": "Defleen màndargaalu mboole A."
+        },
+        {
+          "n": 40,
+          "francais": "Code",
+          "wolof": "Màndarga g-",
+          "exemple": "Mboole mi dafa am màndarga."
+        },
+        {
+          "n": 41,
+          "francais": "Coder",
+          "wolof": "Màndargaal",
+          "exemple": "Muse bi dafa màndargaal mboole mi."
+        },
+        {
+          "n": 42,
+          "francais": "Collection",
+          "wolof": "Ndajale m-",
+          "exemple": "Am nga ay kapsil ak ay doj, defaral ci bu nekk ndajale mu am 4 këfin."
+        },
+        {
+          "n": 43,
+          "francais": "Colonne",
+          "wolof": "Raŋ",
+          "exemple": "Bindal 2 ci raŋu fukkeel yi."
+        },
+        {
+          "n": 44,
+          "francais": "Colonne des centaines",
+          "wolof": "Raŋu téemeere",
+          "exemple": "Bindal 1 ci raŋu téemeere yi."
+        },
+        {
+          "n": 45,
+          "francais": "Colonne des dizaines",
+          "wolof": "Raŋu fukke g-",
+          "exemple": "Bindal 5 ci raŋu fukke yi."
+        },
+        {
+          "n": 46,
+          "francais": "Colonne des unités",
+          "wolof": "Raŋu benne g-",
+          "exemple": "Bindal 6 ci raŋu benne."
+        },
+        {
+          "n": 47,
+          "francais": "Colorier",
+          "wolof": "Suub",
+          "exemple": "Ci ñenti nataalu boyet yi suubal boyet bi gën a néew kere."
+        },
+        {
+          "n": 48,
+          "francais": "Combien",
+          "wolof": "Ñaata",
+          "exemple": "Am nga 5 kaye, ñaata nga ciy yokk ngir am 9 ?"
+        },
+        {
+          "n": 49,
+          "francais": "Commutativité",
+          "wolof": "Weccaloo g- / Wuutalante g-",
+          "exemple": "Weccaloo dañu koy jëfandikoo ci pexem yokk."
+        },
+        {
+          "n": 50,
+          "francais": "Comparer",
+          "wolof": "Méngale / tëkkale",
+          "exemple": "Jëfandikool < wala > ngir méngale 45 ak 82."
+        },
+        {
+          "n": 51,
+          "francais": "Compter",
+          "wolof": "Waññ",
+          "exemple": "Waññleen 10 jëm 100 ak jéegoy fukke."
+        },
+        {
+          "n": 52,
+          "francais": "Concret",
+          "wolof": "Jëmmu",
+          "exemple": "Ci njàngum lim, taamu nañu doore ci li jёmmu."
+        },
+        {
+          "n": 53,
+          "francais": "Croissant (ordre +)",
+          "wolof": "Jёm kaw",
+          "exemple": "Bindaatal lim yi, tàmbalee ci lim bi gën a ndaw jëm kaw : 2 - 17 - 8 - 4."
+        },
+        {
+          "n": 54,
+          "francais": "Décomposer",
+          "wolof": "Tas / dogat",
+          "exemple": "Tasal limu 6 ci ñetti limtu."
+        },
+        {
+          "n": 55,
+          "francais": "Décomposition d'un nombre",
+          "wolof": "Tasu lim",
+          "exemple": "Benn ci tasi limu 8 yi mooy : 8 = 5 + 3"
+        },
+        {
+          "n": 56,
+          "francais": "Décompter",
+          "wolof": "Waññ wàcc",
+          "exemple": "Waññleen wàcc 10 jëm 0 ak jéegoy ñaar ñaar."
+        },
+        {
+          "n": 57,
+          "francais": "Décroissant (ordre -)",
+          "wolof": "Jёm suuf",
+          "exemple": "Bindaatal lim yi, tàmbalee ci lim bi gën a mag jëm suuf : 2 - 15 - 5 - 6."
+        },
+        {
+          "n": 58,
+          "francais": "Dénombrer",
+          "wolof": "Xayma lim",
+          "exemple": "Xaymaal mbooloom kalaasu CP bi te wax lim bi."
+        },
+        {
+          "n": 59,
+          "francais": "Deux",
+          "wolof": "Ñaar",
+          "exemple": "Sunu kalaas am na ñaari bunt."
+        },
+        {
+          "n": 60,
+          "francais": "Deuxième",
+          "wolof": "Ñaareel",
+          "exemple": "Wërngal leen ñaareelu xarmi"
+        },
+        {
+          "n": 61,
+          "francais": "Diagramme",
+          "wolof": "Jagaraam",
+          "exemple": "Defaral jagaraam bu am 10 yëf."
+        },
+        {
+          "n": 62,
+          "francais": "Diminuer",
+          "wolof": "Wàññi",
+          "exemple": "Soo wàññee benn ci ñeent, ñett mooy des."
+        },
+        {
+          "n": 63,
+          "francais": "Distribuer",
+          "wolof": "Séddale",
+          "exemple": "Faatu, kaay séddale per yi ci pot yi."
+        },
+        {
+          "n": 64,
+          "francais": "Dividende",
+          "wolof": "Céddaleef g-",
+          "exemple": "Ci pexem séddale bi : 70 : 2 — 70 mooy céddaleef gi"
+        },
+        {
+          "n": 65,
+          "francais": "Diviser",
+          "wolof": "Séddale",
+          "exemple": "Sédaleel 12 ñeeti cër."
+        },
+        {
+          "n": 66,
+          "francais": "Diviseur",
+          "wolof": "Séddalekaay b-",
+          "exemple": "Ci pexem sédale bi : 70 : 2 — 2 mooy séddalekaay bi."
+        },
+        {
+          "n": 67,
+          "francais": "Divisible",
+          "wolof": "Séddaliku",
+          "exemple": "Limu 9 séddaliku na ci 3."
+        },
+        {
+          "n": 68,
+          "francais": "Divisible par ...",
+          "wolof": "Séddaliku ci…",
+          "exemple": "Bindal ñetti lim yu séddaliku ci 5."
+        },
+        {
+          "n": 69,
+          "francais": "Division",
+          "wolof": "Céddale m-",
+          "exemple": "Ci ñaari pexe yii, ban moo ciy céddale ? a) 27-15 = … ; b) 27 : 3 = …"
+        },
+        {
+          "n": 70,
+          "francais": "Dix",
+          "wolof": "Fukk",
+          "exemple": "Bindal lim fukk ci tablo bi."
+        },
+        {
+          "n": 71,
+          "francais": "Dix-neuf",
+          "wolof": "Fukk ak juroom-ñeent",
+          "exemple": "Séen nañu fukk ak juroom-ñeenti elew ci ëttu ekool bi."
+        },
+        {
+          "n": 72,
+          "francais": "Dixième",
+          "wolof": "Fukkeel b-",
+          "exemple": "Fukkeelu taabal bi ci kalaas bi am na ñetti elew."
+        },
+        {
+          "n": 73,
+          "francais": "Dizaine",
+          "wolof": "Fukke b-",
+          "exemple": "Abag bi ci kalaasu CI am na kenug fukke."
+        },
+        {
+          "n": 74,
+          "francais": "Double",
+          "wolof": "Ñaarca",
+          "exemple": "Bindal lim yu ñaarcay : 7 - 9 - 10 - 25."
+        },
+        {
+          "n": 75,
+          "francais": "Douze",
+          "wolof": "Fukk ak ñaar",
+          "exemple": "Bindal 12 ci wolof ak ay araf."
+        },
+        {
+          "n": 76,
+          "francais": "Écrire en chiffres",
+          "wolof": "Bind ci siifar",
+          "exemple": "Bindleen fukk ak ñaar ci siifar."
+        },
+        {
+          "n": 77,
+          "francais": "Écrire en lettres",
+          "wolof": "Bind ci araf",
+          "exemple": "Bindleen 35 ci araf."
+        },
+        {
+          "n": 78,
+          "francais": "Effectuer (une opération)",
+          "wolof": "Xayma pexe m- / Wàcce pexe m-",
+          "exemple": "Xaymaal pexem mboole mi : 18 + 7 = …"
+        },
+        {
+          "n": 79,
+          "francais": "Égal (signe égal)",
+          "wolof": "Tolloo",
+          "exemple": "Boo jëlee 5 yokk ci 2, dafay tolloo ak 7."
+        },
+        {
+          "n": 80,
+          "francais": "Égal à",
+          "wolof": "Tolloo / yem",
+          "exemple": "3 + 2 tolloo na ak 4 + 1."
+        },
+        {
+          "n": 81,
+          "francais": "Égalité",
+          "wolof": "Tolloo b- / Yemoo b-",
+          "exemple": "13 + 11 = 10 + 14 ab tolloo la."
+        },
+        {
+          "n": 82,
+          "francais": "Elément",
+          "wolof": "Bennat b-",
+          "exemple": "Mboole mi am na bennat yu bari."
+        },
+        {
+          "n": 83,
+          "francais": "Emprunt",
+          "wolof": "Àbb g-",
+          "exemple": "Booy xayma 21 - 8, dangay jёfandikoo àbb."
+        },
+        {
+          "n": 84,
+          "francais": "Emprunter",
+          "wolof": "Àbb",
+          "exemple": "Booy xayma 34 - 9, dangay àbb 1 fukke ci 3 fukke yi."
+        },
+        {
+          "n": 85,
+          "francais": "En groupe",
+          "wolof": "Mbooloo / kurel",
+          "exemple": "Defleen ndigal li ci mbooloo."
+        },
+        {
+          "n": 86,
+          "francais": "En tout",
+          "wolof": "Ci mboole-seen",
+          "exemple": "Am nga 5 mango ci mboole-seen."
+        },
+        {
+          "n": 87,
+          "francais": "Encadrer",
+          "wolof": "Wёrale koñ",
+          "exemple": "Ci lim yii 12 - 5 - 16 - 8 - 20 wёraleel koñ lim yu tóol yi."
+        },
+        {
+          "n": 88,
+          "francais": "Ensemble",
+          "wolof": "Mboole m-",
+          "exemple": "Am nga ay kapsil ak ay doj, defaral ci bu nekk mboole mu am 5 bennat."
+        },
+        {
+          "n": 89,
+          "francais": "Ensemble vide",
+          "wolof": "Mboole-wëyëƞ",
+          "exemple": "Ci mboole yi, wëraleel koñ mboole-wëyëƞ bi."
+        },
+        {
+          "n": 90,
+          "francais": "Étiquette",
+          "wolof": "Kёyitu màndarga / Itiket",
+          "exemple": "Bindal ci këyitu màndarga bu nekk limu mboole mi."
+        },
+        {
+          "n": 91,
+          "francais": "Exact",
+          "wolof": "Jub",
+          "exemple": "Pexem yokk mi jub na."
+        },
+        {
+          "n": 92,
+          "francais": "Exécuter la consigne",
+          "wolof": "Jëfe ndigal",
+          "exemple": "Elew yi jëfe nañu ndigal yi."
+        },
+        {
+          "n": 93,
+          "francais": "Exercice",
+          "wolof": "Tàggatu g-",
+          "exemple": "Defleen tàggatu gi ci tablo bi ci seen kaye."
+        },
+        {
+          "n": 94,
+          "francais": "Faux",
+          "wolof": "Jubul",
+          "exemple": "Pexem mboole mii jubul : 25 + 16 = 31."
+        },
+        {
+          "n": 95,
+          "francais": "Fois",
+          "wolof": "Yoon",
+          "exemple": "Ñaata yoon la 2 nekk ci 20 ?"
+        },
+        {
+          "n": 96,
+          "francais": "Fois (multiplication)",
+          "wolof": "Ful",
+          "exemple": "5 ful 4 mo tolloo ak 20."
+        },
+        {
+          "n": 97,
+          "francais": "Huit",
+          "wolof": "Juroom-ñett",
+          "exemple": "Paket bi juroom-ñeetti karayong la def."
+        },
+        {
+          "n": 98,
+          "francais": "Huitième",
+          "wolof": "Juroom-ñetteel",
+          "exemple": "Tàmbalil ci sa ndeyjoor, tànn juroom-ñetteelu."
+        },
+        {
+          "n": 99,
+          "francais": "Identifier",
+          "wolof": "Ràññee / xàmmee",
+          "exemple": "Wёrёleel koñ lim yu tóoladi yi ngir ràññee leen."
+        },
+        {
+          "n": 100,
+          "francais": "Impair",
+          "wolof": "Tóol",
+          "exemple": "Wёrngёlal lim yu tóol yi ngir ràññee leen."
+        },
+        {
+          "n": 101,
+          "francais": "Inclus dans",
+          "wolof": "Ëmbu",
+          "exemple": "Mboolem góori kalaas bi dafa ёmbu ci mboolem elewi kalaas bi."
+        },
+        {
+          "n": 102,
+          "francais": "Inférieur à",
+          "wolof": "Gёn a néew",
+          "exemple": "5 moo gёn a néew 8."
+        },
+        {
+          "n": 103,
+          "francais": "Intégration",
+          "wolof": "Boole mooñ g-",
+          "exemple": "Boole mooñ gi mooy dëgëral njàng mi."
+        },
+        {
+          "n": 104,
+          "francais": "Juste",
+          "wolof": "Jub",
+          "exemple": "Saytul ndax pexem mboole mi jub na : 37 + 16 = 53."
+        },
+        {
+          "n": 105,
+          "francais": "Mathématique",
+          "wolof": "Xam-xamu xayma",
+          "exemple": "Lim ak natt ci njàngum xam-xamu xayma lañu bokk."
+        },
+        {
+          "n": 106,
+          "francais": "Mettre en relation",
+          "wolof": "Lëkkale",
+          "exemple": "Lëkkaleleen mboole mu nekk ak limam."
+        },
+        {
+          "n": 107,
+          "francais": "Mettre une croix",
+          "wolof": "Ñaas",
+          "exemple": "Ñaasal xayma bi jub."
+        },
+        {
+          "n": 108,
+          "francais": "Moins",
+          "wolof": "Wàññi",
+          "exemple": "10 boo ci wàññee 6 ñent moo ciy des."
+        },
+        {
+          "n": 109,
+          "francais": "Moins … que",
+          "wolof": "Gёn a …",
+          "exemple": "Raŋaleel lim yi dale ci bi gёn a tuuti ba ci bi ёpp : 12 ; 2 ; 6 ; 4"
+        },
+        {
+          "n": 110,
+          "francais": "Moitié",
+          "wolof": "Xaaj / genn-wàll",
+          "exemple": "Xaaju 10 mooy 5."
+        },
+        {
+          "n": 111,
+          "francais": "Multiple",
+          "wolof": "Fulit",
+          "exemple": "15 fulitu 3 la."
+        },
+        {
+          "n": 112,
+          "francais": "Multiplicande",
+          "wolof": "Fuleef b-",
+          "exemple": "Ci ful gi 2 X 6, 2 mooy fuleef b-."
+        },
+        {
+          "n": 113,
+          "francais": "Multiplicateur",
+          "wolof": "Fulkat",
+          "exemple": "Ci ful gi 2 X 6, 6 mooy fulkat bi."
+        },
+        {
+          "n": 114,
+          "francais": "Multiplication",
+          "wolof": "Ful g-",
+          "exemple": "3 X 5 = lii ag ful la."
+        },
+        {
+          "n": 115,
+          "francais": "Multiplier",
+          "wolof": "Ful",
+          "exemple": "Boo dee ful dangay jёfandikoo X."
+        },
+        {
+          "n": 116,
+          "francais": "Neuf",
+          "wolof": "Juroom-ñeent",
+          "exemple": "Bindal juroom ñeent ci siifar."
+        },
+        {
+          "n": 117,
+          "francais": "Nombre",
+          "wolof": "Lim b-",
+          "exemple": "Bindal lim 5 ci tablo bi."
+        },
+        {
+          "n": 118,
+          "francais": "Nombre impair",
+          "wolof": "Lim-tóol",
+          "exemple": "Bindal lim yi tóol yi ci diggante 0 ak 10."
+        },
+        {
+          "n": 119,
+          "francais": "Nombre ordinal",
+          "wolof": "Lim toftale",
+          "exemple": "Bindal ñaari lim toftale ci sa kaye."
+        },
+        {
+          "n": 120,
+          "francais": "Nombre pair",
+          "wolof": "Lim-tóolul",
+          "exemple": "Wërngalal lim-tóolul yi nekk ci lim yii : 3, 5, 6, 9, 11, 12."
+        },
+        {
+          "n": 121,
+          "francais": "Numéral cardinal",
+          "wolof": "Lim",
+          "exemple": "Bindal ma lim 4 ci tablo bi."
+        },
+        {
+          "n": 122,
+          "francais": "Numéral ordinal",
+          "wolof": "Lim toftale",
+          "exemple": "Ñetteel lim toftale la."
+        },
+        {
+          "n": 123,
+          "francais": "Numéro",
+          "wolof": "Limat / nimero",
+          "exemple": "Ay limat a ngi nii : 1 ; 2 ; 3. Defal wёrngal ci limat 2."
+        },
+        {
+          "n": 124,
+          "francais": "Numéroter",
+          "wolof": "Limatal",
+          "exemple": "Dañoo limatal bunt kalaas yi benn ba juroom benn."
+        },
+        {
+          "n": 125,
+          "francais": "Onze",
+          "wolof": "Fukk ak benn",
+          "exemple": "Bindal fukk ak benn ci siifar."
+        },
+        {
+          "n": 126,
+          "francais": "Onzième",
+          "wolof": "Fukk ak benneel",
+          "exemple": "Mari, won ma fukk ak benneelu elew bi tàmbalee ci Póol."
+        },
+        {
+          "n": 127,
+          "francais": "Opération",
+          "wolof": "Kenu xayma g-",
+          "exemple": "Jàngal kenu xayma gi ci kaw : 5 + 2 =…"
+        },
+        {
+          "n": 128,
+          "francais": "Ordonner",
+          "wolof": "Toftalante",
+          "exemple": "Toftalantel lim yi ci bi gёn a tuuti ba ci bi ёpp : 15 ; 2 ; 6 ; 3 ; 10."
+        },
+        {
+          "n": 129,
+          "francais": "Ôter de",
+          "wolof": "Wàññi ci",
+          "exemple": "Soo wàññee 3 ci 5 mu des 2."
+        },
+        {
+          "n": 130,
+          "francais": "Partage",
+          "wolof": "Céddale g-",
+          "exemple": "Tey, céddale gu tolloo lanuy jàng."
+        },
+        {
+          "n": 131,
+          "francais": "Partition",
+          "wolof": "Pàcc",
+          "exemple": "Xaral xaal bi ñaari pàcc."
+        },
+        {
+          "n": 132,
+          "francais": "Peu",
+          "wolof": "Néew",
+          "exemple": "Ci ñaari pot yii def meew, defal màndarga X ci suufu pot bi def meew mu néew."
+        },
+        {
+          "n": 133,
+          "francais": "Plus",
+          "wolof": "Gёn a",
+          "exemple": "Defal wërngal ci suufu rëdd-jub bi gёn a gudd."
+        },
+        {
+          "n": 134,
+          "francais": "Plus (signe plus)",
+          "wolof": "Màndargay yokk",
+          "exemple": "Bindleen ci seen àlluwa màndargay yokk."
+        },
+        {
+          "n": 135,
+          "francais": "Plus grand que",
+          "wolof": "Gёn a rёy… / ёpp",
+          "exemple": "Juroom moo gёn a rёy ñaar."
+        },
+        {
+          "n": 136,
+          "francais": "Plus petit que",
+          "wolof": "Gёn a tuuti…",
+          "exemple": "Ñaar moo gёn a tuuti juroom."
+        },
+        {
+          "n": 137,
+          "francais": "Plus…que",
+          "wolof": "Ëpp",
+          "exemple": "Paanu ndox moo ëpp siwo."
+        },
+        {
+          "n": 138,
+          "francais": "Poser (opération, problème)",
+          "wolof": "Taxawal",
+          "exemple": "Taxawalal kenu xayma gi : 12 x 3 = …"
+        },
+        {
+          "n": 139,
+          "francais": "Premier",
+          "wolof": "Ki/li jiitu, ki/li njëkk",
+          "exemple": "Ki njëkk a jiite senegaal mooy Lewopóol Sedaar Seŋoor."
+        },
+        {
+          "n": 140,
+          "francais": "Problème",
+          "wolof": "Caxu xayma",
+          "exemple": "Jàngleen caxu xayma bi ci tablo bi ci seen xel."
+        },
+        {
+          "n": 141,
+          "francais": "Produit",
+          "wolof": "Njureef",
+          "exemple": "Juroom boo ko fulee ñaari yoon fukk mooy njureef li."
+        },
+        {
+          "n": 142,
+          "francais": "Quantité",
+          "wolof": "Barewaay / dayoo b-",
+          "exemple": "Barewaayu ndox mi paan bi def toll na ci 20l."
+        },
+        {
+          "n": 143,
+          "francais": "Quarante",
+          "wolof": "Ñeent-fukk",
+          "exemple": "Ñaata la nuy yokk ci fanweer ak benn ngir am ñeent-fukk ?"
+        },
+        {
+          "n": 144,
+          "francais": "Quart",
+          "wolof": "Xaaj-ñeent",
+          "exemple": "Ñaata mooy xaaj-ñeentu ñaar fukk ?"
+        },
+        {
+          "n": 145,
+          "francais": "Quatorze",
+          "wolof": "Fukk ak ñeent",
+          "exemple": "Ban lim a topp ci fukk ak ñeent ?"
+        },
+        {
+          "n": 146,
+          "francais": "Quatre",
+          "wolof": "Ñeent",
+          "exemple": "Fas ñeenti tànk la am."
+        },
+        {
+          "n": 147,
+          "francais": "Quatre-vingt dix",
+          "wolof": "Juroom-ñeent-fukk",
+          "exemple": "Juroom-ñett-fukk boo ci yokkee fukk mu jox la juroom-ñeent-fukk."
+        },
+        {
+          "n": 148,
+          "francais": "Quatre-vingts",
+          "wolof": "Juroom-ñett-fukk",
+          "exemple": "Ñaar fukk ku ko full ñeenti yoon am juroom-ñett-fukk."
+        },
+        {
+          "n": 149,
+          "francais": "Quatre-vingt-un",
+          "wolof": "Juroom-ñett-fukk ak benn",
+          "exemple": "Soo yokkee benn ci juroom-ñett-fukk, mu jox la juroom-ñett-fukk ak benn."
+        },
+        {
+          "n": 150,
+          "francais": "Quinze",
+          "wolof": "Fukk ak juroom",
+          "exemple": "Fan weer boo ko xaajee mu jox la fukk ak juroom."
+        },
+        {
+          "n": 151,
+          "francais": "Quotient",
+          "wolof": "Séddalit w-",
+          "exemple": "Séddalit wi mooy njureefu céddale mi."
+        },
+        {
+          "n": 152,
+          "francais": "Rabais",
+          "wolof": "Wàcce",
+          "exemple": "Pexem yokk mu am aj dafay ànd ak wàcce."
+        },
+        {
+          "n": 153,
+          "francais": "Raisonnement",
+          "wolof": "Xeltu g-",
+          "exemple": "Xeltu moo lay teg ci yoonu tekki caxu xayma."
+        },
+        {
+          "n": 154,
+          "francais": "Rangement",
+          "wolof": "Raƞale b-",
+          "exemple": "Maalig, sa raƞale bi am na ay njuumte."
+        },
+        {
+          "n": 155,
+          "francais": "Ranger",
+          "wolof": "Raƞale",
+          "exemple": "Raƞaleel lim yi tasaaroo yi tàmbalee ci bi gën a tuuti ba bi gën a rëy."
+        },
+        {
+          "n": 156,
+          "francais": "Rapide",
+          "wolof": "Gaaw",
+          "exemple": "Fomp sama arduwaas moo gën a gaaw fomp àlluwa ju mag ji."
+        },
+        {
+          "n": 157,
+          "francais": "Relation",
+          "wolof": "Digaale",
+          "exemple": "Ban digaale moo am diggante ñaari pàcc yi ?"
+        },
+        {
+          "n": 158,
+          "francais": "Représenter",
+          "wolof": "Jëmmal",
+          "exemple": "Ku nekk na jëmmal yoon wi mu jaar bi muy ñëw ekol."
+        },
+        {
+          "n": 159,
+          "francais": "Représenter graphiquement",
+          "wolof": "Jëmmal ci nataal",
+          "exemple": "Jëmmalleen ci nataal seen yoonu ekol."
+        },
+        {
+          "n": 160,
+          "francais": "Résoudre",
+          "wolof": "Tekki cax",
+          "exemple": "Kan moo may tekkil cax bi ci tablo bi ?"
+        },
+        {
+          "n": 161,
+          "francais": "Résoudre un problème",
+          "wolof": "Tekki caxu xayma",
+          "exemple": "Faatu, jéemal a tekki caxu xayma bi ci téere bi, xët nimero 13."
+        },
+        {
+          "n": 162,
+          "francais": "Reste",
+          "wolof": "Des w-",
+          "exemple": "Fukk boo ci wàññee juroom, juroom a ciy des."
+        },
+        {
+          "n": 163,
+          "francais": "Résultat",
+          "wolof": "Njureef l-",
+          "exemple": "Ñett boo ko fullee ñetti yoon juroom ñeent mooy njureef li."
+        },
+        {
+          "n": 164,
+          "francais": "Retenue",
+          "wolof": "Aj b-",
+          "exemple": "Sooy xayma aj bi des da nga koy delloo."
+        },
+        {
+          "n": 165,
+          "francais": "Retrancher",
+          "wolof": "Wàññi / dindi",
+          "exemple": "Ñeent boo ci wàññee ñett dafay des benn."
+        },
+        {
+          "n": 166,
+          "francais": "Réunion",
+          "wolof": "Mboole m-",
+          "exemple": "Mbooleem juroomi bindukaay ak ñaari bindukaay day joxe juroom ñaari bindukaay."
+        },
+        {
+          "n": 167,
+          "francais": "Réunion (d'ensembles)",
+          "wolof": "Dajale b- (mboole)",
+          "exemple": "Dajaleb ñaari mboole yi dafay ëmb mboole mu ci nekk."
+        },
+        {
+          "n": 168,
+          "francais": "Rien",
+          "wolof": "Dara",
+          "exemple": "Juroom boo ci dindee juroom, dara du ci des."
+        },
+        {
+          "n": 169,
+          "francais": "Second",
+          "wolof": "Ñaareel",
+          "exemple": "Talaata mooy ñaareelu bés ci ayu bés bi."
+        },
+        {
+          "n": 170,
+          "francais": "Seize",
+          "wolof": "Fukk ak juroom-benn",
+          "exemple": "Fukk ak juroom-benn boo ko xaajee, juroom ñett ngay am ci boor bu ne."
+        },
+        {
+          "n": 171,
+          "francais": "Semi-concret",
+          "wolof": "Nataale",
+          "exemple": "Njàngaleem lim yi dafay tàmbalee ci jëmmu dem ci jëmmoodi ginnaaw bamu jaare ci nataale."
+        },
+        {
+          "n": 172,
+          "francais": "Sens (sens des opérations)",
+          "wolof": "Maanaam pexe",
+          "exemple": "Ñeenti maanaay pexe ñoo am : yokk, wàññi, ful ak séddale."
+        },
+        {
+          "n": 173,
+          "francais": "Sept",
+          "wolof": "Juroom-ñaar",
+          "exemple": "Bési ayu bés yi juroom ñaar lañu."
+        },
+        {
+          "n": 174,
+          "francais": "Sériation",
+          "wolof": "Giirale",
+          "exemple": "Sukkandikul ci melo yi nga giirale per yi."
+        },
+        {
+          "n": 175,
+          "francais": "Signe de multiplication",
+          "wolof": "Màndargay ful",
+          "exemple": "Kan mooy dem ci tablo bi won nu màndargay ful ?"
+        },
+        {
+          "n": 176,
+          "francais": "Situation-problème",
+          "wolof": "Cësluwaayu caxu xayma",
+          "exemple": "Jàngleen ci seen xel cësluwaayu caxu xayma gi ñu bind ci tablo bi."
+        },
+        {
+          "n": 177,
+          "francais": "Six",
+          "wolof": "Juroom-benn",
+          "exemple": "Juroom boo ci yokkee benn nga am juroom-benn."
+        },
+        {
+          "n": 178,
+          "francais": "Sixième",
+          "wolof": "Juroom-benneel",
+          "exemple": "Gaawu mooy juroom-benneelu fanu ayu bés bi."
+        },
+        {
+          "n": 179,
+          "francais": "Soixante",
+          "wolof": "Juroom-benn-fukk",
+          "exemple": "Juroom-benn-fukk mooy fukk yoo ful juróom benni yoon."
+        },
+        {
+          "n": 180,
+          "francais": "Soixante-dix",
+          "wolof": "Juroom-ñaar-fukk",
+          "exemple": "Juroom-ñaar-fukk mooy fukk yoo ful juroom-ñaari yoon."
+        },
+        {
+          "n": 181,
+          "francais": "Solution",
+          "wolof": "Tekki g-",
+          "exemple": "Ku may jox tekki caxu xayma bi ?"
+        },
+        {
+          "n": 182,
+          "francais": "Somme",
+          "wolof": "Mboole-seen",
+          "exemple": "Juroom mooy mboole-seenu ñatt ak ñaar."
+        },
+        {
+          "n": 183,
+          "francais": "Sous-ensemble",
+          "wolof": "Pàccu mboole m-",
+          "exemple": "Soo xaajee am mboole di nga am ñaari pàccu mboole."
+        },
+        {
+          "n": 184,
+          "francais": "Soustraction",
+          "wolof": "Wàññi m-",
+          "exemple": "Demal ca tablo ba nga won nu màandargaay wàññi."
+        },
+        {
+          "n": 185,
+          "francais": "Soustraire",
+          "wolof": "Wàññi",
+          "exemple": "Jëlal fukki per nga wàññi ci ñeent te wax nu li des."
+        },
+        {
+          "n": 186,
+          "francais": "Suite",
+          "wolof": "Lim-toftalu",
+          "exemple": "Mottalil lim-toftalu bii : 1 - ... - 3 - 4 - ... - 6 - ... - 8 - …"
+        },
+        {
+          "n": 187,
+          "francais": "Supérieur à",
+          "wolof": "Gёn a rёy…",
+          "exemple": "Juroom a gën rëy ñaar."
+        },
+        {
+          "n": 188,
+          "francais": "Table de multiplication",
+          "wolof": "Àlluwa fulandi",
+          "exemple": "Musaa, kaay nga jàng àlluwa fulandiy 2."
+        },
+        {
+          "n": 189,
+          "francais": "Tableau (grille)",
+          "wolof": "Kёrale g-",
+          "exemple": "Tegal sa baaraam ci jurooméelu kër gi ci kёrale gii."
+        },
+        {
+          "n": 190,
+          "francais": "Tableau de numération",
+          "wolof": "Kёraleg lim yi",
+          "exemple": "Kёraleg lim yi am na kër gu ñu jagleel benne ag gu ñu jagleel fukke."
+        },
+        {
+          "n": 191,
+          "francais": "Tas",
+          "wolof": "Saam",
+          "exemple": "Defleen ay saamu juroomi xeer."
+        },
+        {
+          "n": 192,
+          "francais": "Technique (technique opératoire)",
+          "wolof": "Xaralag xayma",
+          "exemple": "Soo bëggee mën a xayma, dangay mokkal xaralag xayma."
+        },
+        {
+          "n": 193,
+          "francais": "Total",
+          "wolof": "Mboole-seen",
+          "exemple": "Mboole-seenu ñaar ak ñeent, juroom benn la."
+        },
+        {
+          "n": 194,
+          "francais": "Treize",
+          "wolof": "Fukk ak ñett",
+          "exemple": "Fukk ak ñett mo tegu ci fukk ak ñaar."
+        },
+        {
+          "n": 195,
+          "francais": "Trente",
+          "wolof": "Fan-weer",
+          "exemple": "Fan-weer mooy fukk yoo ful ñetti yoon."
+        },
+        {
+          "n": 196,
+          "francais": "Tri",
+          "wolof": "Tànn g- / segg g-",
+          "exemple": "Faatu, waxal ci yan sàrt la sa tànn gi tegu."
+        },
+        {
+          "n": 197,
+          "francais": "Trier",
+          "wolof": "Tànn / segg",
+          "exemple": "Tànnal xeer yu ñuul yi."
+        },
+        {
+          "n": 198,
+          "francais": "Triple",
+          "wolof": "Ñettci",
+          "exemple": "Fan weer mooy ñettci fukk."
+        },
+        {
+          "n": 199,
+          "francais": "Tripler",
+          "wolof": "Ñettca / ful ñett",
+          "exemple": "Samay at ñettca na sa yos."
+        },
+        {
+          "n": 200,
+          "francais": "Trois",
+          "wolof": "Ñett",
+          "exemple": "Cin ñetti tànk la am."
+        },
+        {
+          "n": 201,
+          "francais": "Trouver (solution)",
+          "wolof": "Tekki",
+          "exemple": "Ndongo yi tekki nañ caxu xayma gi."
+        },
+        {
+          "n": 202,
+          "francais": "Un",
+          "wolof": "Benn",
+          "exemple": "Benn mo jiitu ñaar."
+        },
+        {
+          "n": 203,
+          "francais": "Unité",
+          "wolof": "Benne b-",
+          "exemple": "Kёraleg lim yi am nay kër : benne, fukke, téemeere, añs."
+        },
+        {
+          "n": 204,
+          "francais": "Vérification",
+          "wolof": "Wόorlu g- / Leerlu g-",
+          "exemple": "Wόorlug njureef ginnaaw boo defee xayma lu baax la."
+        },
+        {
+          "n": 205,
+          "francais": "Vérifier",
+          "wolof": "Wόorlu / leerlu",
+          "exemple": "Defaatal caxu xayma mi ngir leerlu njureef li."
+        },
+        {
+          "n": 206,
+          "francais": "Vingt",
+          "wolof": "Ñaar-fukk",
+          "exemple": "Ñaar-fukki baraam (waaram) la nit am."
+        },
+        {
+          "n": 207,
+          "francais": "Zéro",
+          "wolof": "Tus / sero",
+          "exemple": "Soo amee ñaari màngo, soo lekkee ñaar yépp, sero mooy des."
+        }
+      ]
+    },
+    {
+      "titre": "II. ACTIVITÉS GÉOMÉTRIQUES",
+      "nombre_entrees": 134,
+      "entrees": [
+        {
+          "n": 1,
+          "francais": "Activités géométriques",
+          "wolof": "Yëngute xam-xamu dénd",
+          "exemple": "Tey, sunu yëngute xam-xamu dénd mu ngi jëm ci koñ bu ubbeeku."
+        },
+        {
+          "n": 2,
+          "francais": "Alternance de formes",
+          "wolof": "Weccaloo melo",
+          "exemple": "Seetlul bu baax weccaloo melo yi ci xët mi."
+        },
+        {
+          "n": 3,
+          "francais": "Angle",
+          "wolof": "Koñ b-",
+          "exemple": "Kaare, ñeenti koñ lay am."
+        },
+        {
+          "n": 4,
+          "francais": "Après",
+          "wolof": "Ci ginnaaw / gannaaw",
+          "exemple": "Rëddal ci ginnaaw muus mi."
+        },
+        {
+          "n": 5,
+          "francais": "Assembler",
+          "wolof": "Boole",
+          "exemple": "Rama boole na nataal yi niroo."
+        },
+        {
+          "n": 6,
+          "francais": "Association",
+          "wolof": "Mbooloo m-",
+          "exemple": "Beral mbooloo ñeenti koñ yi niroo."
+        },
+        {
+          "n": 7,
+          "francais": "Au même niveau",
+          "wolof": "Yu tolloo",
+          "exemple": "Defal ñaari rëdd yu tolloo."
+        },
+        {
+          "n": 8,
+          "francais": "Avant",
+          "wolof": "Ci kanam / lu jiitu",
+          "exemple": "Defal kurwa ci kanamu ñeenti-koñ bi."
+        },
+        {
+          "n": 9,
+          "francais": "Bille",
+          "wolof": "Biy b-",
+          "exemple": "Waññal biy yi nekk ci ñeenti koñ bi."
+        },
+        {
+          "n": 10,
+          "francais": "Bord",
+          "wolof": "Wet g-",
+          "exemple": "Cuubal wërgal bi nekk ci wetu oto bi."
+        },
+        {
+          "n": 11,
+          "francais": "Borne",
+          "wolof": "Dig b-",
+          "exemple": "Ñaasal dig bi nekk ci ndeyjooru rëdd wi."
+        },
+        {
+          "n": 12,
+          "francais": "Calcul",
+          "wolof": "Xayma b-",
+          "exemple": "Awa def na xayma bi."
+        },
+        {
+          "n": 13,
+          "francais": "Calculer",
+          "wolof": "Xayma",
+          "exemple": "Ndongo yi xayma nañu guddaayu yoon wi."
+        },
+        {
+          "n": 14,
+          "francais": "Carré",
+          "wolof": "Kaare / ñeenti-koñ tolloo b-",
+          "exemple": "Cuubal kaare bi / ñeenti-koñ tolloo bi."
+        },
+        {
+          "n": 15,
+          "francais": "Carreaux",
+          "wolof": "Karo",
+          "exemple": "Defal ay karo ci sa arduwaas."
+        },
+        {
+          "n": 16,
+          "francais": "Case",
+          "wolof": "Kër g-",
+          "exemple": "Cuubal kër gi amul dara."
+        },
+        {
+          "n": 17,
+          "francais": "Centre",
+          "wolof": "Digg b-",
+          "exemple": "Rëddal ci digg bi."
+        },
+        {
+          "n": 18,
+          "francais": "Cercle",
+          "wolof": "Wërgal w-",
+          "exemple": "Faatu, bindal benn wërgal."
+        },
+        {
+          "n": 19,
+          "francais": "Circulaire",
+          "wolof": "Wërngalu",
+          "exemple": "Rëdd wi dafa wërngalu."
+        },
+        {
+          "n": 20,
+          "francais": "Classement",
+          "wolof": "Giiral g-",
+          "exemple": "Xale yi ñu ngiy defar giiralu melo yi."
+        },
+        {
+          "n": 21,
+          "francais": "Classer",
+          "wolof": "Giiral",
+          "exemple": "Giiralal ñetti-koñ yi, dale bi gën a tuuti."
+        },
+        {
+          "n": 22,
+          "francais": "Classifier",
+          "wolof": "Tegtale giir",
+          "exemple": "Tegtaleel giiri mboole yi te wax fi nga sukkandiku."
+        },
+        {
+          "n": 23,
+          "francais": "Collecte (de données)",
+          "wolof": "Tànn gi (tegtal)",
+          "exemple": "Tànnub tegtal dina yombal tekkim caxu xayma."
+        },
+        {
+          "n": 24,
+          "francais": "Collecter",
+          "wolof": "Dajale",
+          "exemple": "Dajaleel nataali dénd yi niroo."
+        },
+        {
+          "n": 25,
+          "francais": "Collection",
+          "wolof": "Ndajale m-",
+          "exemple": "Abdu am na ndajalem nataali dénd."
+        },
+        {
+          "n": 26,
+          "francais": "Combien",
+          "wolof": "Ñaata",
+          "exemple": "Ñaata koñ la nataalu dénd bi am ?"
+        },
+        {
+          "n": 27,
+          "francais": "Combinaison",
+          "wolof": "Duggalante b-",
+          "exemple": "Rëddal duggalanteb wërngal ak ay ñeenti-koñ tolloo."
+        },
+        {
+          "n": 28,
+          "francais": "Combiner",
+          "wolof": "Duggalante",
+          "exemple": "Duggalanteel wërngal ak ay ñeenti-koñ tolloo."
+        },
+        {
+          "n": 29,
+          "francais": "Comme",
+          "wolof": "Niki",
+          "exemple": "Sottil nataal yi niki ci royukaay bi."
+        },
+        {
+          "n": 30,
+          "francais": "Comment",
+          "wolof": "Naka / nan",
+          "exemple": "Naka ngay ràññee ñeenti-koñ tolloo ?"
+        },
+        {
+          "n": 31,
+          "francais": "Comparaison",
+          "wolof": "Méngale b-",
+          "exemple": "Méngale bi wone na ne nataal yi niroowuñu."
+        },
+        {
+          "n": 32,
+          "francais": "Comparer",
+          "wolof": "Méngale",
+          "exemple": "Méngaleel nataal yii."
+        },
+        {
+          "n": 33,
+          "francais": "Compétition",
+          "wolof": "Joⴄante b-",
+          "exemple": "Xale yi ñu ngi ci joⴄante bi."
+        },
+        {
+          "n": 34,
+          "francais": "Construire",
+          "wolof": "Tabax",
+          "exemple": "Tabaxal benn nataal dénd."
+        },
+        {
+          "n": 35,
+          "francais": "Convenir",
+          "wolof": "War",
+          "exemple": "Mottalil ak nataal dénd bi war."
+        },
+        {
+          "n": 36,
+          "francais": "Côté",
+          "wolof": "Wet",
+          "exemple": "Tabaxal benn wërngal ci wetu garab gi."
+        },
+        {
+          "n": 37,
+          "francais": "Courbe",
+          "wolof": "Sajju / wërgalu",
+          "exemple": "Rëdd bu musaa dafa sajju."
+        },
+        {
+          "n": 38,
+          "francais": "Crayon",
+          "wolof": "Karyoⴄ b-",
+          "exemple": "Bindal ak sa karyoⴄ."
+        },
+        {
+          "n": 39,
+          "francais": "Cube",
+          "wolof": "Kib",
+          "exemple": "Suubleen ñeenti weti kib bi."
+        },
+        {
+          "n": 40,
+          "francais": "Cylindre",
+          "wolof": "Ndëju mbege",
+          "exemple": "Dajalleel ndëju mbege yi."
+        },
+        {
+          "n": 41,
+          "francais": "Décomposer",
+          "wolof": "Tas",
+          "exemple": "Tasal nataalu dénd bi."
+        },
+        {
+          "n": 42,
+          "francais": "Décomposer (figure)",
+          "wolof": "Tas",
+          "exemple": "Tasal nataalu dénd bi."
+        },
+        {
+          "n": 43,
+          "francais": "Décoration",
+          "wolof": "Taaral / rafetal",
+          "exemple": "Nanu taaral sunu kalaas bi ak ay nataali dénd."
+        },
+        {
+          "n": 44,
+          "francais": "Découper",
+          "wolof": "Daggat / daggate / dogate",
+          "exemple": "Daggatal xob bi ba am lu niroo ak royukaay bi."
+        },
+        {
+          "n": 45,
+          "francais": "Décrire",
+          "wolof": "Melool",
+          "exemple": "Melol rafetal yi nekk ci miir."
+        },
+        {
+          "n": 46,
+          "francais": "Définir",
+          "wolof": "Firndeel",
+          "exemple": "Jàngalekat bi mu firndeel baat yu jafe yi."
+        },
+        {
+          "n": 47,
+          "francais": "Dehors",
+          "wolof": "Biti b-",
+          "exemple": "Cuubaal karo yi nekk ci biti."
+        },
+        {
+          "n": 48,
+          "francais": "Derrière",
+          "wolof": "Ginnaaw / gannaaw",
+          "exemple": "Defal benn tomb ci ginnaaw oto bi."
+        },
+        {
+          "n": 49,
+          "francais": "Dessiner",
+          "wolof": "Nataal",
+          "exemple": "Nataalal benn néegu-ñax."
+        },
+        {
+          "n": 50,
+          "francais": "Devant",
+          "wolof": "Kanam g-",
+          "exemple": "Ñaasal ci kanamu nit ki."
+        },
+        {
+          "n": 51,
+          "francais": "Distance",
+          "wolof": "Diggante b-",
+          "exemple": "Rëddal rëdd wu jub diggante ñaari tomb yi."
+        },
+        {
+          "n": 52,
+          "francais": "Double",
+          "wolof": "Ñaar-ca b-",
+          "exemple": "6 mooy ñaar-ca 3."
+        },
+        {
+          "n": 53,
+          "francais": "Double-décimètre",
+          "wolof": "Duubal-desimeetar / Ñaari-fukkeelu meetar",
+          "exemple": "Damay jëfandikoo duubal-desimeetar. Ñaari-fukkeelu meetar ngir natt rëdd wi."
+        },
+        {
+          "n": 54,
+          "francais": "Doubler",
+          "wolof": "Ful-ñaar",
+          "exemple": "Fulal ñaar lim bii."
+        },
+        {
+          "n": 55,
+          "francais": "Droite",
+          "wolof": "Rëdd-jub w-",
+          "exemple": "Bindal benn rëdd-jub ci sa kaye."
+        },
+        {
+          "n": 56,
+          "francais": "Droite horizontale",
+          "wolof": "Rëdd-jub tëdd w-",
+          "exemple": "Bindal ñaari rëdd-jub tëdd teg ci ñaari rëdd-jub taxaw."
+        },
+        {
+          "n": 57,
+          "francais": "Droite verticale",
+          "wolof": "Rëdd-jub taxaw w-",
+          "exemple": "\"I\" bu mag, rëdd-jub taxaw lanu koy binde."
+        },
+        {
+          "n": 58,
+          "francais": "En bas",
+          "wolof": "Ci suuf",
+          "exemple": "Bindal ci suuf kër gi."
+        },
+        {
+          "n": 59,
+          "francais": "En haut",
+          "wolof": "Ci kaw",
+          "exemple": "Bindal ci kaw weer wi."
+        },
+        {
+          "n": 60,
+          "francais": "Équerre",
+          "wolof": "Ekeer",
+          "exemple": "Jëlal ekeer bi, nga rëdd."
+        },
+        {
+          "n": 61,
+          "francais": "Équivalence",
+          "wolof": "Méngoo b-",
+          "exemple": "Am na méngoo diggante ñaari nataali dénd."
+        },
+        {
+          "n": 62,
+          "francais": "Équivalent",
+          "wolof": "Méngoo",
+          "exemple": "Ñaari nataali dénd yi méngoo nañu."
+        },
+        {
+          "n": 63,
+          "francais": "Étape",
+          "wolof": "Pàcc b-",
+          "exemple": "Njàngum xayma am na ñetti pàcc."
+        },
+        {
+          "n": 64,
+          "francais": "Étiquette",
+          "wolof": "Tiket / këyitu màndarga",
+          "exemple": "Miiru kalaas bi am na ay tiket-lim."
+        },
+        {
+          "n": 65,
+          "francais": "Évaluation formative",
+          "wolof": "Xayma-tàggat",
+          "exemple": "Xayma-tàggat la jàngalekat bi di natte li elew yi xam ci lesoŋ bi."
+        },
+        {
+          "n": 66,
+          "francais": "Extérieur",
+          "wolof": "Biti b-",
+          "exemple": "Defal ab tomb ci biti wërngal wi."
+        },
+        {
+          "n": 67,
+          "francais": "Extrémité",
+          "wolof": "Cat",
+          "exemple": "Tegal sa baaraam ci catu rëdd-jub tëdd wi."
+        },
+        {
+          "n": 68,
+          "francais": "Figure",
+          "wolof": "Nataal b-",
+          "exemple": "Xoolal nataal bi ci téere bi, xët 6."
+        },
+        {
+          "n": 69,
+          "francais": "Figure plane",
+          "wolof": "Nataal-tàlli b-",
+          "exemple": "Ubbil téere bi, xët 7, tegal sa baaraam ci nataal-tàlli bi."
+        },
+        {
+          "n": 70,
+          "francais": "Frise",
+          "wolof": "Rëdd-rafetal b-",
+          "exemple": "Xale yi defar nañu ay rëdd-rafetal yu bari."
+        },
+        {
+          "n": 71,
+          "francais": "Frontière",
+          "wolof": "Dig b-",
+          "exemple": "Tay linuy wax dig la nuy jàng."
+        },
+        {
+          "n": 72,
+          "francais": "Gauche",
+          "wolof": "Càmmooñ",
+          "exemple": "Mbind ci farañse ci càmmooñ lay tàmbalee."
+        },
+        {
+          "n": 73,
+          "francais": "Géométrie",
+          "wolof": "Xam-xamu dénd",
+          "exemple": "Xam-xamu dénd benn pàcc la ci xam-xamu xayma."
+        },
+        {
+          "n": 74,
+          "francais": "Intersection",
+          "wolof": "Selebe yoon b-",
+          "exemple": "Defal ñaas ci selebe yoonu ñaari rëdd-jub yi."
+        },
+        {
+          "n": 75,
+          "francais": "Itinéraire",
+          "wolof": "Jëmu b- / jaaru b- yoon",
+          "exemple": "Rëddal jëmub diggante sa kër ak sa ekool."
+        },
+        {
+          "n": 76,
+          "francais": "Labyrinthe",
+          "wolof": "Ruq-ruqaat",
+          "exemple": "Ruq-ruqaat bi ay jëmu yu bari la am."
+        },
+        {
+          "n": 77,
+          "francais": "Ligne",
+          "wolof": "Rëdd w-",
+          "exemple": "Ñaata rëdd ñoo nekk ci tablo bi."
+        },
+        {
+          "n": 78,
+          "francais": "Ligne brisée",
+          "wolof": "Rëdd-dammat",
+          "exemple": "Ku nekk na rëdd ab rëdd-dammat ci kayeem."
+        },
+        {
+          "n": 79,
+          "francais": "Ligne courbe",
+          "wolof": "Rëdd-wërngal",
+          "exemple": "Isaa, won ma ab rëdd-wërngal."
+        },
+        {
+          "n": 80,
+          "francais": "Ligne fermée",
+          "wolof": "Rëdd bu ubu",
+          "exemple": "Rëddal rëdd bu ubu."
+        },
+        {
+          "n": 81,
+          "francais": "Ligne ouverte",
+          "wolof": "Rëd bu ubbéeku",
+          "exemple": "Rëddal rëdd bu ubbéeku."
+        },
+        {
+          "n": 82,
+          "francais": "Longueur",
+          "wolof": "Guddaay",
+          "exemple": "Dawala sa baaraam ci guddaayu yu koñ-ñeent jub bi."
+        },
+        {
+          "n": 83,
+          "francais": "Marque",
+          "wolof": "Màndarga m-",
+          "exemple": "Defal ab màndarga ci suufu rëdd-jub tëdd wi."
+        },
+        {
+          "n": 84,
+          "francais": "Mathématiques",
+          "wolof": "Xam-xamu xayma",
+          "exemple": "Lim ak natt ci njàngum xama-xamu xayma lañu bokk."
+        },
+        {
+          "n": 85,
+          "francais": "Milieu",
+          "wolof": "Digg",
+          "exemple": "Xaajal rëdd-jub tëdd wi ci digg bi."
+        },
+        {
+          "n": 86,
+          "francais": "Modèle",
+          "wolof": "Royukaay b-",
+          "exemple": "Xoolal royukaay bi ci tablo bi te de defar bu ni mel."
+        },
+        {
+          "n": 87,
+          "francais": "Moitié",
+          "wolof": "Xaaj",
+          "exemple": "Muse defna tablo bi ñaari xaaj."
+        },
+        {
+          "n": 88,
+          "francais": "Nœud",
+          "wolof": "Fas b-",
+          "exemple": "Tegal sa baaraam ci fas bi nekk ci nataal bi ci tablo bi."
+        },
+        {
+          "n": 89,
+          "francais": "Objet",
+          "wolof": "Këf k-",
+          "exemple": "Jëlal këf ki nekk ci kaw taabal bi."
+        },
+        {
+          "n": 90,
+          "francais": "Parcours",
+          "wolof": "Yoon w-",
+          "exemple": "Cuubal yoon wi gën a gàtt ci nataal bi."
+        },
+        {
+          "n": 91,
+          "francais": "Pavé droit",
+          "wolof": "Boyet rektàngal",
+          "exemple": "Móol, màndargay boyet rektàngal la yor."
+        },
+        {
+          "n": 92,
+          "francais": "Personnage",
+          "wolof": "Jëmm j-",
+          "exemple": "Defal wërngal ci suufu jëmm ju góor ji ci nataal bi."
+        },
+        {
+          "n": 93,
+          "francais": "Pictogrammes",
+          "wolof": "Jëmmal j-",
+          "exemple": "Tegal sa baaraam ci jëmmal ji am weer."
+        },
+        {
+          "n": 94,
+          "francais": "Plan",
+          "wolof": "Palaŋ b-",
+          "exemple": "Kayit, melikaanu palaŋ la am."
+        },
+        {
+          "n": 95,
+          "francais": "Plier",
+          "wolof": "Lem",
+          "exemple": "Lemleen kayit gi ngir am ñaari kaare."
+        },
+        {
+          "n": 96,
+          "francais": "Point d'arrivée",
+          "wolof": "Tomb-jeexal b-",
+          "exemple": "Dawal ba ci tomb-jeexal bi."
+        },
+        {
+          "n": 97,
+          "francais": "Point de départ",
+          "wolof": "Tomb-tàmbali b-",
+          "exemple": "Taxawal ci tomb-tàmbali bi."
+        },
+        {
+          "n": 98,
+          "francais": "Position",
+          "wolof": "Tolluwaay b-",
+          "exemple": "Kan moo may wax tolluwaayu buro Direktëer ci biir ekool bi."
+        },
+        {
+          "n": 99,
+          "francais": "Près de",
+          "wolof": "Ci wetu",
+          "exemple": "Taabal ji mi ngi ci wetu tablo bi."
+        },
+        {
+          "n": 100,
+          "francais": "Production",
+          "wolof": "Liggeey b-",
+          "exemple": "Jàngalekat bi mu ngi jubanti liggeeyu elew yi."
+        },
+        {
+          "n": 101,
+          "francais": "Quadrillage",
+          "wolof": "Ñaas-ñaasal",
+          "exemple": "Cuubal nataal dénd bi am ñaas-ñaasal."
+        },
+        {
+          "n": 102,
+          "francais": "Recomposer",
+          "wolof": "Boolewaat",
+          "exemple": "Boolewaatal pàcc yi ba mu nekk ab rektàngal / koñ-ñeent jub."
+        },
+        {
+          "n": 103,
+          "francais": "Rectangle",
+          "wolof": "Rektàngal / Koñ-ñeent jub",
+          "exemple": "Tay linuy wax rektàngal. Koñ-ñeent jub la nuy jàng."
+        },
+        {
+          "n": 104,
+          "francais": "Règle",
+          "wolof": "Reegal / Rëddu-xocc b-",
+          "exemple": "Rëddal aw rëdd-jub tëdd ak rëddu-xocc bi."
+        },
+        {
+          "n": 105,
+          "francais": "Relever",
+          "wolof": "Seppi / tànn",
+          "exemple": "Ci nataal bi seppil bàyyima yi."
+        },
+        {
+          "n": 106,
+          "francais": "Représentation graphique",
+          "wolof": "Jëmm-nataal b-",
+          "exemple": "Rëddal jëmm-nataalub yoon wi joge buro direktëer ba ci calaas bi."
+        },
+        {
+          "n": 107,
+          "francais": "Représenter",
+          "wolof": "Jëmmal",
+          "exemple": "Ku nekk na jëmmal yoon wi mu jaar bi muy ñëw ekol."
+        },
+        {
+          "n": 108,
+          "francais": "Représenter graphiquement",
+          "wolof": "Jëmmal ci nataal",
+          "exemple": "Jëmmalleen ci nataal seen yoonu ekol."
+        },
+        {
+          "n": 109,
+          "francais": "Reproduire",
+          "wolof": "Sotti",
+          "exemple": "Sottil nataal bi niki ci royukaay bi."
+        },
+        {
+          "n": 110,
+          "francais": "Résoudre",
+          "wolof": "Defar",
+          "exemple": "Defaral xayma bi."
+        },
+        {
+          "n": 111,
+          "francais": "Rond",
+          "wolof": "Wërngal b-",
+          "exemple": "Defal ab wërngal ci wetu garab gi ci nataal bi."
+        },
+        {
+          "n": 112,
+          "francais": "Rythme graphique",
+          "wolof": "Meloy rëddantu w-",
+          "exemple": "Tay meloy rëddantu lanuy jàng."
+        },
+        {
+          "n": 113,
+          "francais": "Signe",
+          "wolof": "Màndarga b-",
+          "exemple": "X ak + ay màndarga lañu."
+        },
+        {
+          "n": 114,
+          "francais": "Situation",
+          "wolof": "Cëslaay b-",
+          "exemple": "Cëslaay bi dafa wara leer ci boppu xale yi."
+        },
+        {
+          "n": 115,
+          "francais": "Situation significative d'intégration",
+          "wolof": "Cëslaay-mooñaalemaana b-",
+          "exemple": "Xale yi ñu ngi jàng ay cëslaay-mooñaalemaana."
+        },
+        {
+          "n": 116,
+          "francais": "Solide",
+          "wolof": "Dénd-jëmmu b-",
+          "exemple": "Cuubal dénd-jëmmu bi ci nataal bi."
+        },
+        {
+          "n": 117,
+          "francais": "Solide familier",
+          "wolof": "Dénd-jëmmu-miinu",
+          "exemple": "Boyet rektàngal ab dénd-jëmmu-miinu la."
+        },
+        {
+          "n": 118,
+          "francais": "Sous",
+          "wolof": "Ci ron / ci suufu",
+          "exemple": "Defal ab màndarga X ci ron tabal ji."
+        },
+        {
+          "n": 119,
+          "francais": "Suivant",
+          "wolof": "Li topp",
+          "exemple": "Rëddal rëdd-jub taxaw wu mel ni bii topp."
+        },
+        {
+          "n": 120,
+          "francais": "Supérieur",
+          "wolof": "Li ëpp",
+          "exemple": "Defal ab wërngal ci lim bi ëpp."
+        },
+        {
+          "n": 121,
+          "francais": "Supérieur (être -)",
+          "wolof": "Gёn a rёy…",
+          "exemple": "Juroom a gën rëy ñaar."
+        },
+        {
+          "n": 122,
+          "francais": "Sur",
+          "wolof": "Ci kaw / kow",
+          "exemple": "Defal ab màndarga ci kaw garab gi ci nataal bi."
+        },
+        {
+          "n": 123,
+          "francais": "Tableau",
+          "wolof": "Alluwa ju mag / tablo",
+          "exemple": "Fompal tablo bi te rëdd ci ab wërnga bu ubbéeku."
+        },
+        {
+          "n": 124,
+          "francais": "Tableau/grille",
+          "wolof": "Kërale g-",
+          "exemple": "Duggalanteel lim yi ci Kërale gi."
+        },
+        {
+          "n": 125,
+          "francais": "Technique de traçage",
+          "wolof": "Xaralag rëdd g-",
+          "exemple": "Tay xaralag rëdd lanuy jàng."
+        },
+        {
+          "n": 126,
+          "francais": "Total",
+          "wolof": "Mboole-seen",
+          "exemple": "Mboole-seenub ñaar ak ñett mooy juroom."
+        },
+        {
+          "n": 127,
+          "francais": "Traçage",
+          "wolof": "Rëddin b-",
+          "exemple": "Jëfandikoo rëddu-xocc day jubal rëddin."
+        },
+        {
+          "n": 128,
+          "francais": "Tracer",
+          "wolof": "Rëdd",
+          "exemple": "Rëddleen ci seeni arduwaas rëdd-xocc."
+        },
+        {
+          "n": 129,
+          "francais": "Tri",
+          "wolof": "Tànn b-",
+          "exemple": "Manees naa def ab tànn ci ay yëf yu wuute ngir boole yi bokk."
+        },
+        {
+          "n": 130,
+          "francais": "Triangle",
+          "wolof": "Tiriyàngal / Koñ-ñett",
+          "exemple": "Tiriyàngal / Koñ-ñett ab nataal la bu am ñetti koñ."
+        },
+        {
+          "n": 131,
+          "francais": "Trier",
+          "wolof": "Tànn",
+          "exemple": "Ay nataal a ngi nii, tànnal nataal yi nuroo ber leen."
+        },
+        {
+          "n": 132,
+          "francais": "Utiliser",
+          "wolof": "Jëfandikoo",
+          "exemple": "Bu nuy rëdd ab nataal karyoⴄ lanuy jëfandikoo."
+        },
+        {
+          "n": 133,
+          "francais": "Vocabulaire adéquat",
+          "wolof": "Sàqum baat mu yell",
+          "exemple": "Njàngum xam-xamu dénd dafa am sàqum baat mu yell."
+        },
+        {
+          "n": 134,
+          "francais": "Zone",
+          "wolof": "Barab b-",
+          "exemple": "Rëddal aw wërngal ci barab bi garab gi nekk ci nataal bi."
+        }
+      ]
+    },
+    {
+      "titre": "III. ACTIVITÉS DE MESURE",
+      "nombre_entrees": 149,
+      "entrees": [
+        {
+          "n": 1,
+          "francais": "Activités de mesure",
+          "wolof": "Yëngute xam-xamu natt g-",
+          "exemple": "Talaata ju nekk, danuy def yëngute xam-xamu natt."
+        },
+        {
+          "n": 2,
+          "francais": "Année",
+          "wolof": "At m-",
+          "exemple": "At mu nekk, am na fukki weer ak ñaar."
+        },
+        {
+          "n": 3,
+          "francais": "Aussi léger que",
+          "wolof": "Woyofe ni",
+          "exemple": "Xob dafa woyofe ni këyit."
+        },
+        {
+          "n": 4,
+          "francais": "Aussi lourd que",
+          "wolof": "Diise ni",
+          "exemple": "Saaku dugub dafa diise nis saaku ceeb."
+        },
+        {
+          "n": 5,
+          "francais": "Aussi que",
+          "wolof": "… ni",
+          "exemple": "Xob dafa woyofe ni këyit."
+        },
+        {
+          "n": 6,
+          "francais": "Autant",
+          "wolof": "(limu)…tollu ni (limu)…",
+          "exemple": "Limu màngo yi tollu na ni limu banaana yi."
+        },
+        {
+          "n": 7,
+          "francais": "Balance",
+          "wolof": "Peesekaay / balãas b-",
+          "exemple": "Booy natt ceeb, mën nga jëfandikoo peesekaay."
+        },
+        {
+          "n": 8,
+          "francais": "Bâton",
+          "wolof": "Bant b-",
+          "exemple": "Am nanu bant bu gudd ak bant bu gàtt."
+        },
+        {
+          "n": 9,
+          "francais": "Beaucoup",
+          "wolof": "Bari",
+          "exemple": "Paan gi mën a def ndox mu bari."
+        },
+        {
+          "n": 10,
+          "francais": "Bouteille",
+          "wolof": "Buteel b-",
+          "exemple": "Buteel bi def na liitaru ndox."
+        },
+        {
+          "n": 11,
+          "francais": "Caillou",
+          "wolof": "Xeer / doj w-",
+          "exemple": "Xeer wi moo gën a diis këyit wi."
+        },
+        {
+          "n": 12,
+          "francais": "Calcul mental",
+          "wolof": "Xayma ci xel",
+          "exemple": "Xaymaal ci sa xel njëgu kaye yi."
+        },
+        {
+          "n": 13,
+          "francais": "Calculatrice",
+          "wolof": "Masinu xayma / kalkil b-",
+          "exemple": "Bo bëggee boole lim yu rëy, mën nga jëfandikoo masinu xayma."
+        },
+        {
+          "n": 14,
+          "francais": "Calculer",
+          "wolof": "Xayma",
+          "exemple": "Xaymaal njëgu kaye yi."
+        },
+        {
+          "n": 15,
+          "francais": "Calendrier",
+          "wolof": "Arminaat b-",
+          "exemple": "Xoolal arminaat bi ngir nga xam bësu gàmmu gi."
+        },
+        {
+          "n": 16,
+          "francais": "Capacité",
+          "wolof": "Njël g-",
+          "exemple": "Njëlu paan gi moo ëpp njëlu siwo bi."
+        },
+        {
+          "n": 17,
+          "francais": "Centimètre",
+          "wolof": "Sàntimeetar b-",
+          "exemple": "Sama reegal bi gudde na ñaar-fukki sàntimeetar."
+        },
+        {
+          "n": 18,
+          "francais": "Cinq francs (monnaie)",
+          "wolof": "Dërëm b-",
+          "exemple": "Ci dërëm lañuy natt xaalis ci wolof."
+        },
+        {
+          "n": 19,
+          "francais": "Combien",
+          "wolof": "Ñaata",
+          "exemple": "Ñaata kaye nga am ?"
+        },
+        {
+          "n": 20,
+          "francais": "Combien de fois",
+          "wolof": "Ñaata yoon",
+          "exemple": "Ñaata yoon ngay dem ekool ci bés bi ?"
+        },
+        {
+          "n": 21,
+          "francais": "Comme",
+          "wolof": "Ni",
+          "exemple": "Def ko ni ko madam defe ci misaal mi."
+        },
+        {
+          "n": 22,
+          "francais": "Comment",
+          "wolof": "Naka / nan",
+          "exemple": "Tablo bi nan la mel ? Dafa weex wala dafa ñuul ?"
+        },
+        {
+          "n": 23,
+          "francais": "Comparaison",
+          "wolof": "Méngale m-",
+          "exemple": "Méngalem guddaayu ñaari bant yi, wone na ni, bii moo gën a gudd."
+        },
+        {
+          "n": 24,
+          "francais": "Comparer",
+          "wolof": "Méngale",
+          "exemple": "Méngaleel guddayu ñari bant yi."
+        },
+        {
+          "n": 25,
+          "francais": "Consigne",
+          "wolof": "Ndigal l-",
+          "exemple": "Boo jangul bu baax ndigal li, doo xam li ñu la sant."
+        },
+        {
+          "n": 26,
+          "francais": "Contenance",
+          "wolof": "Ndefu l-",
+          "exemple": "Ndefu ndab li, toll na ci ñaari liitari soow."
+        },
+        {
+          "n": 27,
+          "francais": "Contenu",
+          "wolof": "Këmbe g-",
+          "exemple": "Këmbe gi ci buteel bi ndox la."
+        },
+        {
+          "n": 28,
+          "francais": "Contexte",
+          "wolof": "Sabab b-",
+          "exemple": "Jéemal a xam bu baax li ñu wax ci sabab bi, balaa ngay tontu laaj yi."
+        },
+        {
+          "n": 29,
+          "francais": "Coudée",
+          "wolof": "Xasab b-",
+          "exemple": "Guddaayu buum gi, ñaari xasab la."
+        },
+        {
+          "n": 30,
+          "francais": "Couleur",
+          "wolof": "Wirgo w-",
+          "exemple": "Raaya Senegaal, wirgo yi ci nekk ñooy : wert, mboq ak xonq."
+        },
+        {
+          "n": 31,
+          "francais": "Court",
+          "wolof": "Gàtt",
+          "exemple": "Puso moo gën a gàtt ràbb."
+        },
+        {
+          "n": 32,
+          "francais": "Court (être -)",
+          "wolof": "Gàtt",
+          "exemple": "Puso moo gën a gàtt ràbb."
+        },
+        {
+          "n": 33,
+          "francais": "Date",
+          "wolof": "Bés / limu fan",
+          "exemple": "Bésu tey mooy juroomi fan ci weeru tabaski."
+        },
+        {
+          "n": 34,
+          "francais": "Dater",
+          "wolof": "Bésal b-",
+          "exemple": "Bul fàtte bésal sa bataaxal bi nga bind."
+        },
+        {
+          "n": 35,
+          "francais": "Demi",
+          "wolof": "Genn-wàll / xaaj",
+          "exemple": "Sama mag buy togg, dafay jënd genn-wàllu liitaru diwlin."
+        },
+        {
+          "n": 36,
+          "francais": "Demi-kilogramme",
+          "wolof": "Liibar",
+          "exemple": "Ñaari liibar mooy benn kilo."
+        },
+        {
+          "n": 37,
+          "francais": "Demi-litre",
+          "wolof": "Genn-wallu liitar / dimi",
+          "exemple": "2 Genn-wallu liitar = 1 liitar."
+        },
+        {
+          "n": 38,
+          "francais": "Dimanche",
+          "wolof": "Dibeer j-",
+          "exemple": "Bësu dibeer, am na ñuy dem mees."
+        },
+        {
+          "n": 39,
+          "francais": "Distance",
+          "wolof": "Diggante b-",
+          "exemple": "Diggante kër ga ak ekool, soriwul lool."
+        },
+        {
+          "n": 40,
+          "francais": "Double-décimètre",
+          "wolof": "Duubal desimeetar b-",
+          "exemple": "Ndongo yi dañuy jëfandikoo duubal desimeetar bu ñuy rëdd ci seen kaye."
+        },
+        {
+          "n": 41,
+          "francais": "Durée",
+          "wolof": "Diir b-",
+          "exemple": "Saa yoo reeree ba noppi, nanga dox ab diir soog a tëdd."
+        },
+        {
+          "n": 42,
+          "francais": "Empan",
+          "wolof": "Sebre",
+          "exemple": "Yaatuwaayu palanteer bi, xasab la ak sebre."
+        },
+        {
+          "n": 43,
+          "francais": "Emploi du temps",
+          "wolof": "Kërale waxtu njàng g- / diir",
+          "exemple": "Ci kërale waxtu njàng gi, lañuy leerale li xale bi war a jàng bés bu nekk."
+        },
+        {
+          "n": 44,
+          "francais": "Ensemble",
+          "wolof": "Mboole m-",
+          "exemple": "Rëddal ci suufu mboolem keryoŋ mi."
+        },
+        {
+          "n": 45,
+          "francais": "Estimer",
+          "wolof": "Natt ci xel",
+          "exemple": "Musaa, nattal ci sa xel diisaayu saaku bi."
+        },
+        {
+          "n": 46,
+          "francais": "Etiquette",
+          "wolof": "Tikket",
+          "exemple": "Ci tikket bi lanuy bind njëgu màrsandiis mi."
+        },
+        {
+          "n": 47,
+          "francais": "Exercice",
+          "wolof": "Tàggatu g-",
+          "exemple": "Am nanu ay tàggatu yu bari yi nu war a def kër ga."
+        },
+        {
+          "n": 48,
+          "francais": "Ficelle",
+          "wolof": "Mbuum s-",
+          "exemple": "Mbuum si dëgarul."
+        },
+        {
+          "n": 49,
+          "francais": "Franc (monnaie)",
+          "wolof": "Dërëm b-",
+          "exemple": "Téere bi, téemeeri dërëm lay jar."
+        },
+        {
+          "n": 50,
+          "francais": "Gramme",
+          "wolof": "Garaam b-",
+          "exemple": "Garaam bokk na ci nattukaayu diisaay yi."
+        },
+        {
+          "n": 51,
+          "francais": "Grand",
+          "wolof": "Njool / gudd",
+          "exemple": "Duudu moo gën a njool Siidi."
+        },
+        {
+          "n": 52,
+          "francais": "Grand (être -)",
+          "wolof": "Mag",
+          "exemple": "Jëmmu duudu moo gën a mag jëmmu saaliyu."
+        },
+        {
+          "n": 53,
+          "francais": "Hauteur",
+          "wolof": "Taxawaay b-",
+          "exemple": "Rëddal taxawaayu ñetti koñ bi."
+        },
+        {
+          "n": 54,
+          "francais": "Heure",
+          "wolof": "Waxtu w-",
+          "exemple": "Wan waxtu moo jot ? Fukki waxtu teg na fanweeri simili."
+        },
+        {
+          "n": 55,
+          "francais": "Instrument",
+          "wolof": "Jumtukaay b-",
+          "exemple": "Meetar, jumtukaayu natt guddaay la."
+        },
+        {
+          "n": 56,
+          "francais": "Instrument conventionnel",
+          "wolof": "Jumtukaay-tënku b-",
+          "exemple": "Reegal ak peesekaay ay jumtukaay-tënku lañu."
+        },
+        {
+          "n": 57,
+          "francais": "Instrument de mesure",
+          "wolof": "Jumtukaayu natt b-",
+          "exemple": "Abaag bi ci kalaasu CI am na kenug fukkte"
+        },
+        {
+          "n": 58,
+          "francais": "Instrument non conventionnel",
+          "wolof": "Non conventionnel",
+          "exemple": "Jumtukaayu cosaan tënkoodi / miinu."
+        },
+        {
+          "n": 59,
+          "francais": "Intégration",
+          "wolof": "Boole-mooñ",
+          "exemple": "Saa yu nu jeexalee ab jéego, danuy def boole-mooñ."
+        },
+        {
+          "n": 60,
+          "francais": "Jeudi",
+          "wolof": "Alxames j-",
+          "exemple": "Alxames jii weesu, njiital ekool bi ak jàngalekat yi daje nañu."
+        },
+        {
+          "n": 61,
+          "francais": "Jour",
+          "wolof": "Bëcëk b-",
+          "exemple": "Bëcëk bi lañuy séen jànt bi."
+        },
+        {
+          "n": 62,
+          "francais": "Jours",
+          "wolof": "Fan b-",
+          "exemple": "Bi ma demee Ndakaaru, def naa fa fukki fan ak ñaar."
+        },
+        {
+          "n": 63,
+          "francais": "Jours de la semaine",
+          "wolof": "Bési ayubés",
+          "exemple": "Bési ayubés bi juroom-ñaar lañu."
+        },
+        {
+          "n": 64,
+          "francais": "Léger",
+          "wolof": "Woyof",
+          "exemple": "Kayit dafa woyof."
+        },
+        {
+          "n": 65,
+          "francais": "Léger (être -)",
+          "wolof": "Woyof",
+          "exemple": "Kayit dafa woyof."
+        },
+        {
+          "n": 66,
+          "francais": "Lent",
+          "wolof": "Yeex",
+          "exemple": "Yaw danga yeex ni mbonaat."
+        },
+        {
+          "n": 67,
+          "francais": "Lent (être -)",
+          "wolof": "Yeex",
+          "exemple": "Yaw danga yeex ni mbonaat."
+        },
+        {
+          "n": 68,
+          "francais": "Litre",
+          "wolof": "Liitar",
+          "exemple": "Liitar, nattukaayu yolaan la."
+        },
+        {
+          "n": 69,
+          "francais": "Loin de",
+          "wolof": "Sori",
+          "exemple": "Keedugu dafa sori Ndakaaru."
+        },
+        {
+          "n": 70,
+          "francais": "Loin de (être -)",
+          "wolof": "Sori",
+          "exemple": "Keedugu dafa sori Ndakaaru."
+        },
+        {
+          "n": 71,
+          "francais": "Long",
+          "wolof": "Gudd",
+          "exemple": "Ràbb moo gën a gudd puso."
+        },
+        {
+          "n": 72,
+          "francais": "Long (être -)",
+          "wolof": "Gudd",
+          "exemple": "Ràbb moo gën a gudd puso."
+        },
+        {
+          "n": 73,
+          "francais": "Longueur",
+          "wolof": "Guddaay b-",
+          "exemple": "Guddaayu tablo bi tollu na ci ñetti meetar."
+        },
+        {
+          "n": 74,
+          "francais": "Lourd",
+          "wolof": "Diis",
+          "exemple": "Saaku suuf moo gën a diis saaku yére."
+        },
+        {
+          "n": 75,
+          "francais": "Lourd (être -)",
+          "wolof": "Diis",
+          "exemple": "Saaku suuf moo gën a diis saaku yére."
+        },
+        {
+          "n": 76,
+          "francais": "Lundi",
+          "wolof": "Altine j-",
+          "exemple": "Altine ju nekk, danuy def yëngute ci xam-xamu lim."
+        },
+        {
+          "n": 77,
+          "francais": "Mardi",
+          "wolof": "Talaata j-",
+          "exemple": "Talaata la Abdu di màggal bësub juddoom."
+        },
+        {
+          "n": 78,
+          "francais": "Marque",
+          "wolof": "Xàmmeekaay / Màndarga",
+          "exemple": "Oto bu nekk am na Xàmmeekaay / màndarga."
+        },
+        {
+          "n": 79,
+          "francais": "Mathématique",
+          "wolof": "Xam-xamu xayma",
+          "exemple": "Ndongo yi sawar nañu ci jàng xam-xamu xayma."
+        },
+        {
+          "n": 80,
+          "francais": "Matin",
+          "wolof": "Suba s-",
+          "exemple": "Tey, danuy jàng suba ak ngoon."
+        },
+        {
+          "n": 81,
+          "francais": "Mercredi",
+          "wolof": "Àllarba j-",
+          "exemple": "Bari na daara yu dul jàng àllarba ci ngoon."
+        },
+        {
+          "n": 82,
+          "francais": "Mesure",
+          "wolof": "Nattukaay natt b-",
+          "exemple": "Natt dina tax nu xam guddaayu buum gi."
+        },
+        {
+          "n": 83,
+          "francais": "Mesure de capacité",
+          "wolof": "Nattukaayu ndefu b-",
+          "exemple": "Walaat, nattukaayu ndefu la."
+        },
+        {
+          "n": 84,
+          "francais": "Mesure de longueur",
+          "wolof": "Nattukaayu guddaay",
+          "exemple": "Meetar, nattukaayu guddaay la."
+        },
+        {
+          "n": 85,
+          "francais": "Mesure de poids/masse",
+          "wolof": "Nattukaayu diisaay",
+          "exemple": "Potu liibar, nattukaayu diisaay la."
+        },
+        {
+          "n": 86,
+          "francais": "Mesure de longueur",
+          "wolof": "Nattukaayu guddaay",
+          "exemple": "Meetar, nattukaayu guddaay la."
+        },
+        {
+          "n": 87,
+          "francais": "Mesurer",
+          "wolof": "Natt",
+          "exemple": "Duudu, jëlal buum gi, natt guddaayu taabal ji."
+        },
+        {
+          "n": 88,
+          "francais": "Mètre",
+          "wolof": "Meetar b-",
+          "exemple": "Ñetti meetaru ndimo moo may doy taybaas ak sér."
+        },
+        {
+          "n": 89,
+          "francais": "Midi",
+          "wolof": "Digg bëccëg",
+          "exemple": "Digg bëccëg, naaj wi dafay tàng jérr."
+        },
+        {
+          "n": 90,
+          "francais": "Minuit",
+          "wolof": "Xaaju guddi",
+          "exemple": "Xaaju guddi, nit ñi dañuy nelaw."
+        },
+        {
+          "n": 91,
+          "francais": "Minute",
+          "wolof": "Simili b-",
+          "exemple": "Juroomi simili moo des tisbaar jot."
+        },
+        {
+          "n": 92,
+          "francais": "Moins",
+          "wolof": "Yées",
+          "exemple": "Ngir nga jàll kalaas, waruloo am lu yées fukki poñ."
+        },
+        {
+          "n": 93,
+          "francais": "Moins (être -)",
+          "wolof": "Yées",
+          "exemple": "Ngir nga jàll kalaas, waruloo am lu yées fukki poñ."
+        },
+        {
+          "n": 94,
+          "francais": "Moins…que",
+          "wolof": "Gën a …",
+          "exemple": "Kayit a gën a woyof tére."
+        },
+        {
+          "n": 95,
+          "francais": "Mois",
+          "wolof": "Weer w-",
+          "exemple": "Tey, weeru tamxarit, am na fukki fan ak juroom."
+        },
+        {
+          "n": 96,
+          "francais": "Moitié",
+          "wolof": "Xaaj / genn-wàll",
+          "exemple": "Genn-wàllu liitar, xaaju liitar la."
+        },
+        {
+          "n": 97,
+          "francais": "Nuit",
+          "wolof": "Guddi g-",
+          "exemple": "Guddi gi lañuy séen biddiw yi."
+        },
+        {
+          "n": 98,
+          "francais": "Pas",
+          "wolof": "Jéego b-",
+          "exemple": "Móodu, nattal guddaayu kalaas bi ak say jéego."
+        },
+        {
+          "n": 99,
+          "francais": "Peser",
+          "wolof": "Natt / peese",
+          "exemple": "Jaaykatu guro bi, nattal na ma kilo ak liibaru guro."
+        },
+        {
+          "n": 100,
+          "francais": "Peu",
+          "wolof": "Tuuti",
+          "exemple": "Tuuti diwlin moo nekk ci buteel bi."
+        },
+        {
+          "n": 101,
+          "francais": "Plus",
+          "wolof": "Gën / ëpp",
+          "exemple": "Ndox mi ci bool bi moo ëpp ndox mi ci kaas bi."
+        },
+        {
+          "n": 102,
+          "francais": "Plus … que",
+          "wolof": "Gën a …",
+          "exemple": "Xayma bu tey jii moo gën a jafe bu démb ba."
+        },
+        {
+          "n": 103,
+          "francais": "Plus court",
+          "wolof": "Gën a gàtt",
+          "exemple": "Yoon wii moo gën a gàtt wale."
+        },
+        {
+          "n": 104,
+          "francais": "Plus grand…que",
+          "wolof": "Gën a njool / gudd",
+          "exemple": "Fatu moo gën a njool Duudu. Duudu moo gën a gàtt Faatu."
+        },
+        {
+          "n": 105,
+          "francais": "Plus léger… que",
+          "wolof": "Gën a woyof",
+          "exemple": "Kaye fanweeri xët ak ñaar moo gën a woyof sunu téere liifantu bi."
+        },
+        {
+          "n": 106,
+          "francais": "Plus loin",
+          "wolof": "Gën a sori",
+          "exemple": "Biro direktëer moo gën a sori wanag yi."
+        },
+        {
+          "n": 107,
+          "francais": "Plus long…que",
+          "wolof": "Gën a gudd",
+          "exemple": "Buum gii moo gën a gudd buum gee."
+        },
+        {
+          "n": 108,
+          "francais": "Plus lourd… que",
+          "wolof": "Gën a diis",
+          "exemple": "Saaku ceeb bu juroom-fukki kilo moo gën a diis saaku ceeb bu ñaar-fukki kilo ak juroom."
+        },
+        {
+          "n": 109,
+          "francais": "Plus lourd…que",
+          "wolof": "Gën a diis",
+          "exemple": "Taabal ji moo gën a diis siis bi."
+        },
+        {
+          "n": 110,
+          "francais": "Plus petit que",
+          "wolof": "Gën a tuuti / gën a néew",
+          "exemple": "Sama rakk moo gën a tuuti ci kër gi. Sama maam moo gën a néew kàttan ci kër gi."
+        },
+        {
+          "n": 111,
+          "francais": "Plus près de",
+          "wolof": "Gën a jege",
+          "exemple": "Jamñaajo moo gën a jege Ndakaaru Cees."
+        },
+        {
+          "n": 112,
+          "francais": "Plus…que",
+          "wolof": "Gën a",
+          "exemple": "Man, maa la gën a sonn ci liggeey bi."
+        },
+        {
+          "n": 113,
+          "francais": "Point d'arrivée",
+          "wolof": "Tomb-yegsi",
+          "exemple": "Woneel tomb-yegsib yoon wi ñu natal."
+        },
+        {
+          "n": 114,
+          "francais": "Point de départ",
+          "wolof": "Tomb-tàmbali",
+          "exemple": "Booy natt dogitu rëdd, tomb-tàmbali bi ak sero reegal bi ñooy ànd."
+        },
+        {
+          "n": 115,
+          "francais": "Pot",
+          "wolof": "Pot b-",
+          "exemple": "Ñaata poti ndox nga mën a am ci paan gi ?"
+        },
+        {
+          "n": 116,
+          "francais": "Prix",
+          "wolof": "Njëg g-",
+          "exemple": "Xaymaal njëgu ñaari kaye yi."
+        },
+        {
+          "n": 117,
+          "francais": "Quart",
+          "wolof": "Ñeenteelu xaaj",
+          "exemple": "Walaat mu ngi tolloo ak ñeenteelu xaaju liitar."
+        },
+        {
+          "n": 118,
+          "francais": "Quart de kilogramme",
+          "wolof": "Genn wàllu liibar",
+          "exemple": "Ñeenti genn wàllu liibar mooy benn kilo ; ñaari genn wàllu liibar mooy liibar."
+        },
+        {
+          "n": 119,
+          "francais": "Quart de litre",
+          "wolof": "Walaat",
+          "exemple": "Genn-wàllu liitar, ñaari walaat la."
+        },
+        {
+          "n": 120,
+          "francais": "Quintal",
+          "wolof": "Barigo b-",
+          "exemple": "Jaaykat bi jënd na barigo dugub."
+        },
+        {
+          "n": 121,
+          "francais": "Raisonner",
+          "wolof": "Xeltu",
+          "exemple": "Booy tekki cax, dangay xeltu."
+        },
+        {
+          "n": 122,
+          "francais": "Rapide",
+          "wolof": "Gaaw",
+          "exemple": "Fomp sama arduwaas moo gën a gaaw fomp àlluwa ju mag ji."
+        },
+        {
+          "n": 123,
+          "francais": "Règle",
+          "wolof": "Reegal",
+          "exemple": "Reegal, mën nañu cee natte ab guddaay."
+        },
+        {
+          "n": 124,
+          "francais": "Remédiation",
+          "wolof": "Njubbanti m-",
+          "exemple": "Njubbanti mi, moy tax nga gën a mokkal."
+        },
+        {
+          "n": 125,
+          "francais": "Résoudre",
+          "wolof": "Tekki",
+          "exemple": "Tekkil caxu xayma bi."
+        },
+        {
+          "n": 126,
+          "francais": "Saison",
+          "wolof": "Jamono j-",
+          "exemple": "Jamono nawet dafay taw lu bari."
+        },
+        {
+          "n": 127,
+          "francais": "Samedi",
+          "wolof": "Gaawu b-",
+          "exemple": "Gaawu bu nekk, ndongo yi dañuy nafar seen i lesoŋ yëpp."
+        },
+        {
+          "n": 128,
+          "francais": "Seconde",
+          "wolof": "Saa / sëgond",
+          "exemple": "Tooguma fa lu mat juroomi saa."
+        },
+        {
+          "n": 129,
+          "francais": "Semaine",
+          "wolof": "Ayubés b-",
+          "exemple": "Atline, benn bés la ci ayubés bi."
+        },
+        {
+          "n": 130,
+          "francais": "Signe",
+          "wolof": "Màndarga m-",
+          "exemple": "Defal màndarga yokk ci tontu bu jub bi."
+        },
+        {
+          "n": 131,
+          "francais": "Soir",
+          "wolof": "Ngoon g-",
+          "exemple": "Tey, dunu jàng ngoon."
+        },
+        {
+          "n": 132,
+          "francais": "Soupeser",
+          "wolof": "Gam-gamle",
+          "exemple": "Soo bëggee méngale diisaayu ñaari yëf, mën nga leen a gam-gamle."
+        },
+        {
+          "n": 133,
+          "francais": "Tableau",
+          "wolof": "Kërale / këraan / tablo",
+          "exemple": "Dugalal ci kërale gi lim yu tóol yi."
+        },
+        {
+          "n": 134,
+          "francais": "Tableau de conversion",
+          "wolof": "Kërale sopparñi g-",
+          "exemple": "Jëfandikooleen kërale sopparñi gi."
+        },
+        {
+          "n": 135,
+          "francais": "Tas",
+          "wolof": "Saam b-",
+          "exemple": "Waññal limu saam bu nekk."
+        },
+        {
+          "n": 136,
+          "francais": "Tasse",
+          "wolof": "Kaas b-",
+          "exemple": "Ñaata kaasi attaaya nga mën a am ci baraada bi ?"
+        },
+        {
+          "n": 137,
+          "francais": "Total",
+          "wolof": "Mboole-seen m- / Lépp",
+          "exemple": "Xaymaal mboole-seenu juroomi màngo ak juroom benni mango."
+        },
+        {
+          "n": 138,
+          "francais": "Transvaser",
+          "wolof": "Sottandiku",
+          "exemple": "Sottandikul ndox mi ci ndab li."
+        },
+        {
+          "n": 139,
+          "francais": "Tri",
+          "wolof": "Tànn b- / cegg m-",
+          "exemple": "Bu nawet bi jubsee, baykat yi dañuy tànn jiwu."
+        },
+        {
+          "n": 140,
+          "francais": "Trier",
+          "wolof": "Tànn / segg",
+          "exemple": "Tànnal per yu weex yi."
+        },
+        {
+          "n": 141,
+          "francais": "Trimestre",
+          "wolof": "Weer-ñett / Ñetti weer",
+          "exemple": "Diiru nawet, weer-ñett la."
+        },
+        {
+          "n": 142,
+          "francais": "Unité de 5 francs",
+          "wolof": "Dërëm b-",
+          "exemple": "Awa yor na fukki dërëm."
+        },
+        {
+          "n": 143,
+          "francais": "Unité de capacité",
+          "wolof": "Nattukaayu ndefu",
+          "exemple": "Jaaykat bi am na ay nattukaayi ndefu."
+        },
+        {
+          "n": 144,
+          "francais": "Unité de longueur",
+          "wolof": "Nattukaayu guddaay",
+          "exemple": "Meetar nattukaayu guddaay la."
+        },
+        {
+          "n": 145,
+          "francais": "Unité de mesure",
+          "wolof": "Nattukaay g-",
+          "exemple": "Sunu yëngute tey, mu ngi jëm ci nattukaay yi."
+        },
+        {
+          "n": 146,
+          "francais": "Unité de mesure de monnaie",
+          "wolof": "Dërëm b-",
+          "exemple": "Awa yor na fukki dërëm."
+        },
+        {
+          "n": 147,
+          "francais": "Vendredi",
+          "wolof": "Àjjuma",
+          "exemple": "Aljuma, am na ñuy julliji jumaa."
+        },
+        {
+          "n": 148,
+          "francais": "Vide",
+          "wolof": "Wëyëŋ",
+          "exemple": "Mboole mu amul dara moy mboole wëyëŋ."
+        },
+        {
+          "n": 149,
+          "francais": "Vitesse",
+          "wolof": "Gaawaay b- / xél w-",
+          "exemple": "Nattal ma gaawaayu liggeey bi."
+        }
+      ]
+    },
+    {
+      "titre": "IV. ACTIVITÉS DE RÉSOLUTION DE PROBLÈMES",
+      "nombre_entrees": 49,
+      "entrees": [
+        {
+          "n": 1,
+          "francais": "Algorithme",
+          "wolof": "Tëralin w-",
+          "exemple": "Aali, jox ma am tëralin ak ñetti lim yi jëkk."
+        },
+        {
+          "n": 2,
+          "francais": "Algorithme récursif",
+          "wolof": "Tëralin baamu-ful",
+          "exemple": "Faatu, jëfandikool ñetti lim yu jëkk yi nga jox nu am tëralin wu nu baamu-ful."
+        },
+        {
+          "n": 3,
+          "francais": "Algorithme répétitif",
+          "wolof": "Tëralin baamu",
+          "exemple": "Musaa, jox nu am tëralin baamu-ful ak ñatti limu yu njëkk yi."
+        },
+        {
+          "n": 4,
+          "francais": "Combien",
+          "wolof": "Ñaata",
+          "exemple": "Soxna, ñaata nit a nekk ci kalaas bi ?"
+        },
+        {
+          "n": 5,
+          "francais": "Consigne",
+          "wolof": "Ndigal l-",
+          "exemple": "Aysatu, jàngal nu ndigal li ci kàddu gi."
+        },
+        {
+          "n": 6,
+          "francais": "Construire un énoncé mathématique",
+          "wolof": "Tëgg kàddug xayma",
+          "exemple": "Kan moo may tëggal kàaddug xayma ?"
+        },
+        {
+          "n": 7,
+          "francais": "Démarche",
+          "wolof": "Doxalin w-",
+          "exemple": "Doxalin wi alaaji jël baax na lool."
+        },
+        {
+          "n": 8,
+          "francais": "Démarche appropriée",
+          "wolof": "Doxalin wi jub / doxalin wi gën",
+          "exemple": "Siidi ak Jeynaba kan moo ci def doxalin wi jub ?"
+        },
+        {
+          "n": 9,
+          "francais": "Démarche progressive",
+          "wolof": "Doxalin wu toftalu",
+          "exemple": "Doxalin wu toftalu da fay yombal tekki xayma."
+        },
+        {
+          "n": 10,
+          "francais": "Diminuer",
+          "wolof": "Wàññi",
+          "exemple": "Juroom bo ci wàññi benn, ñeent mooy des."
+        },
+        {
+          "n": 11,
+          "francais": "Distribuer",
+          "wolof": "Seddale",
+          "exemple": "Seddaleel fukki xeer ñaari elew."
+        },
+        {
+          "n": 12,
+          "francais": "Donnée",
+          "wolof": "Tegtal g-",
+          "exemple": "Ku ma mën a wax tegtal yi nekk ci caxu xayma mii ?"
+        },
+        {
+          "n": 13,
+          "francais": "Donnée inutile",
+          "wolof": "Tegtal ñàkk soxlawul",
+          "exemple": "Ci biir caxu xayma mii, am na ay soxlawul, ku ma leen di wax ?"
+        },
+        {
+          "n": 14,
+          "francais": "Donnée manquante",
+          "wolof": "Tegtal teewul",
+          "exemple": "Ku ma mën a wax tegtal teewal ci caxu xayma mii ?"
+        },
+        {
+          "n": 15,
+          "francais": "Donnée non numérique",
+          "wolof": "Tegtal limuwul",
+          "exemple": "Ku mën a ñëw won nu ak baaraamam am tegtal limuwul ci caxu xayma mii ?"
+        },
+        {
+          "n": 16,
+          "francais": "Donnée numérique",
+          "wolof": "Tegtal limu",
+          "exemple": "Ñaata tegtal limu moo nekk ci sunu caxu xayma mii ?"
+        },
+        {
+          "n": 17,
+          "francais": "Donnée utile",
+          "wolof": "Tegtal soxlawu",
+          "exemple": "Jatu kaay rëdd suufal nu am tegtal soxlawu ci caxu xayma mii."
+        },
+        {
+          "n": 18,
+          "francais": "Données d'un problème",
+          "wolof": "Tegtali caxu xayma",
+          "exemple": "Sooda, wëraleel tegtal i caxu xayma yi ci tablo bi."
+        },
+        {
+          "n": 19,
+          "francais": "Dramatiser un problème",
+          "wolof": "Gaaral caxu xayma / Jëmmal caxu xayma",
+          "exemple": "Gaaral am caxu xayma di na tax mu neex a dégg."
+        },
+        {
+          "n": 20,
+          "francais": "Enoncé",
+          "wolof": "Kàddu g-",
+          "exemple": "Kan moo nuy liifantul kàddu gii ba mu yegg ?"
+        },
+        {
+          "n": 21,
+          "francais": "Enoncé incomplet",
+          "wolof": "Kàddu matadi",
+          "exemple": "Caxu xayma mu kàddu matadidu neex a tekki."
+        },
+        {
+          "n": 22,
+          "francais": "Enoncé mathématique",
+          "wolof": "Kàddu xayma",
+          "exemple": "Kàddu xayma war na am ay tegtal."
+        },
+        {
+          "n": 23,
+          "francais": "Exécuter la consigne",
+          "wolof": "Jëfe ndigal",
+          "exemple": "Jëfeleen ndigal li ci juroomi simili."
+        },
+        {
+          "n": 24,
+          "francais": "Indice",
+          "wolof": "Màndarga / Ràññeekaay",
+          "exemple": "Ay tegtalu limu ay màndarga lañu ci kàddug xayma."
+        },
+        {
+          "n": 25,
+          "francais": "Information",
+          "wolof": "Tegtal g-",
+          "exemple": "Xam tegtal yi di na yombal tekki caxu xayma."
+        },
+        {
+          "n": 26,
+          "francais": "Information importante",
+          "wolof": "Tegtal solowu",
+          "exemple": "Kan mooy rëdd suufal am tegtal am solo ci caxu xayma mi ?"
+        },
+        {
+          "n": 27,
+          "francais": "Information inutile",
+          "wolof": "Tegtal soxlawul",
+          "exemple": "Suleymaan demal teg sa baaraam ci tegtal soxlawul."
+        },
+        {
+          "n": 28,
+          "francais": "Information manquante",
+          "wolof": "Tegtal teewul",
+          "exemple": "Aminata wax nu tegtal teewul ci caxu xayma mii."
+        },
+        {
+          "n": 29,
+          "francais": "Information utile",
+          "wolof": "Tegtal soxlawu",
+          "exemple": "Ñaata tegtal soxlawu a nekk ci sunu caxu xayma mii ?"
+        },
+        {
+          "n": 30,
+          "francais": "Intrus",
+          "wolof": "Njóox m-",
+          "exemple": "Mataar, wëraleel njóox mi ci giir gii."
+        },
+        {
+          "n": 31,
+          "francais": "Mathématique",
+          "wolof": "Xam-xamu xayma b-",
+          "exemple": "Yengute lim ci xam-xamu xayma la bokk."
+        },
+        {
+          "n": 32,
+          "francais": "Mettre en relation",
+          "wolof": "Lëkkale",
+          "exemple": "Lëkkaleleen mboole mu nekk ak limam."
+        },
+        {
+          "n": 33,
+          "francais": "Mettre une croix",
+          "wolof": "Ñaas",
+          "exemple": "Ñaasal xayma bi jub."
+        },
+        {
+          "n": 34,
+          "francais": "Partage",
+          "wolof": "Céddale g-",
+          "exemple": "Tey, céddale gu tolloo lanuy jàng."
+        },
+        {
+          "n": 35,
+          "francais": "Problème",
+          "wolof": "Caxu xayma",
+          "exemple": "Liifantuleen ci seen xel caxu xayma bi ci tablo bi."
+        },
+        {
+          "n": 36,
+          "francais": "Question",
+          "wolof": "Laaj b-",
+          "exemple": "Ñaata laaj a nekk ci caxu xayma bi ?"
+        },
+        {
+          "n": 37,
+          "francais": "Question finale",
+          "wolof": "Laaju mujjantal / Jeextal",
+          "exemple": "Maalik, biralal nu laaju mujjantal bi ci caxu xayma mi ?"
+        },
+        {
+          "n": 38,
+          "francais": "Question intermédiaire",
+          "wolof": "Laaju biir",
+          "exemple": "Kan moo nuy génneel laaju biir bi ?"
+        },
+        {
+          "n": 39,
+          "francais": "Raisonnement",
+          "wolof": "Xeltu g-",
+          "exemple": "Xeltu moo lay teg ci yoonu tekki caxu xayma."
+        },
+        {
+          "n": 40,
+          "francais": "Raisonner",
+          "wolof": "Xeltu",
+          "exemple": "Nanu xeltu bu baax ngir tekki cax mi."
+        },
+        {
+          "n": 41,
+          "francais": "Rechercher",
+          "wolof": "Seet / fexe",
+          "exemple": "Seetleen tegtal njariñ ci kàddu gi."
+        },
+        {
+          "n": 42,
+          "francais": "Reconnaître un problème mathématique",
+          "wolof": "Teewlub caxu xayma",
+          "exemple": "Ku nuy wax ni nuy ràññee teewlub caxu xayma ?"
+        },
+        {
+          "n": 43,
+          "francais": "Règle logique",
+          "wolof": "Sartu tëralin",
+          "exemple": "Njaga xoolal nataal bi te wax nu saartu tëralin wi ko lal."
+        },
+        {
+          "n": 44,
+          "francais": "Résolution",
+          "wolof": "Tekki m-",
+          "exemple": "Ndax tekki mii jub na ?"
+        },
+        {
+          "n": 45,
+          "francais": "Résolution de problèmes",
+          "wolof": "Tekkim caxu xayma",
+          "exemple": "Sunu yënguteem tey mi ci tekkim caxu xayma la."
+        },
+        {
+          "n": 46,
+          "francais": "Résoudre",
+          "wolof": "Tekki",
+          "exemple": "Jàngleen ci seen xel caxu xayma mi soog koo jéem a tekki."
+        },
+        {
+          "n": 47,
+          "francais": "Résoudre un problème",
+          "wolof": "Tekki caxu xayma",
+          "exemple": "Tekki caxu xayma yombul ci ku ëppal."
+        },
+        {
+          "n": 48,
+          "francais": "Tableau",
+          "wolof": "Kërale / këraan",
+          "exemple": "Nataalleen ag kërale ci seen kaye."
+        },
+        {
+          "n": 49,
+          "francais": "Tableau à double entrée",
+          "wolof": "Këraleg ñaari bunt",
+          "exemple": "Jibi, sottil këraleg ñaari bunt bi ci àlluwa ju mag ji ci sa kaye."
+        }
+      ]
+    }
+  ],
+  "total_entrees": 539
+}

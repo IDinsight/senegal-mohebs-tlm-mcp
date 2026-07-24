@@ -4,6 +4,8 @@
 /docs
 /scripts
 *.json
+!knowledge_graph.json
+!terminology.json
 !package.json
 !package-lock.json
 !tsconfig.json
