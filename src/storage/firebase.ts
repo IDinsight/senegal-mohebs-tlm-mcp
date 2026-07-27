@@ -27,16 +27,21 @@ interface GcsBucket {
 const fbApp = require("firebase-admin/app") as {
   initializeApp: (opts: { credential: unknown; storageBucket: string }) => unknown;
   cert: (serviceAccountPathOrObject: string) => unknown;
+  applicationDefault: () => unknown;
   getApps: () => unknown[];
 };
 const fbStorage = require("firebase-admin/storage") as { getStorage: () => { bucket: () => GcsBucket } };
 
 function initFirebase(): void {
-  if (!CONFIG.serviceAccountKeyPath || !CONFIG.firebaseBucket) {
-    throw new Error("Firebase is not configured. Set SERVICE_ACCOUNT_KEY_PATH and FIREBASE_STORAGE_BUCKET.");
+  if (!CONFIG.firebaseBucket) {
+    throw new Error("Firebase is not configured. Set FIREBASE_STORAGE_BUCKET (and SERVICE_ACCOUNT_KEY_PATH when not running on GCP).");
   }
   if (fbApp.getApps().length === 0) {
-    fbApp.initializeApp({ credential: fbApp.cert(CONFIG.serviceAccountKeyPath), storageBucket: CONFIG.firebaseBucket });
+    // A key file is only needed off-GCP (local/stdio). On Cloud Run the runtime
+    // service account provides Application Default Credentials; signed URLs then
+    // sign via the IAM credentials API (the SA needs roles/iam.serviceAccountTokenCreator).
+    const credential = CONFIG.serviceAccountKeyPath ? fbApp.cert(CONFIG.serviceAccountKeyPath) : fbApp.applicationDefault();
+    fbApp.initializeApp({ credential, storageBucket: CONFIG.firebaseBucket });
   }
 }
 
