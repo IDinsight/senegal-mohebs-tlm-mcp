@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { CONFIG } from "../../config.js";
-import { sourcePath, onContextChange } from "../../context/index.js";
+import { sourcePath } from "../../context/index.js";
 import { buildModel, unit } from "../model.js";
 import type { CurriculumAdapter, CurriculumModel, CurriculumUnit, SubjectCurriculum } from "../../types.js";
 
@@ -137,9 +137,10 @@ export const readingAdapter: CurriculumAdapter = {
 // palier, genre, and cross-week progression derived from week ordering (the KG
 // carries no progression edges). ────────────────────────────────────────────
 export function createReadingCurriculum(): SubjectCurriculum {
+  // Closure cache is safe without a reset hook: activateContext() builds a fresh
+  // profile (and thus a fresh curriculum + empty cache) on every context switch.
   let model: CurriculumModel | null = null;
   const ensure = (): CurriculumModel => (model ??= readingAdapter.parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
-  onContextChange(() => { model = null; });
 
   const weeks = () => ensure().unitsOfKind("week").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const weekOf = (wk: number) => weeks().find((w) => w.properties.semaine === wk) ?? null;

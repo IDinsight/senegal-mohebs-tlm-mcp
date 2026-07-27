@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { CONFIG } from "../../config.js";
-import { sourcePath, onContextChange } from "../../context/index.js";
+import { sourcePath } from "../../context/index.js";
 import { buildModel, unit } from "../model.js";
 import type { CurriculumAdapter, CurriculumModel, CurriculumUnit, SubjectCurriculum } from "../../types.js";
 
@@ -93,9 +93,10 @@ export const mathsAdapter: CurriculumAdapter = {
 // and render the maths-shaped tool JSON from it. Output is byte-identical to the
 // previous knowledge-graph.ts implementation (verified against a golden snapshot).
 export function createMathsCurriculum(): SubjectCurriculum {
+  // Closure cache is safe without a reset hook: activateContext() builds a fresh
+  // profile (and thus a fresh curriculum + empty cache) on every context switch.
   let model: CurriculumModel | null = null;
   const ensure = (): CurriculumModel => (model ??= mathsAdapter.parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
-  onContextChange(() => { model = null; });
 
   const chapters = () => ensure().unitsOfKind("chapter");
   const lessonsOf = (m: CurriculumModel, chapNum: number) =>

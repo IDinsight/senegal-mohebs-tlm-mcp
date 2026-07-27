@@ -4,3 +4,4 @@
 // lives in src/activate.ts, not here.
 export * from "./shared.js";
 export * from "./state.js";
+export * from "./session.js";

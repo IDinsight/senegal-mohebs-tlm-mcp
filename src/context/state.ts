@@ -14,13 +14,13 @@ import { resolve } from "node:path";
 import { CONFIG, basePrefix } from "../config.js";
 import { slug } from "../utils/index.js";
 import { type ActiveContext, ContextNotSetError } from "./shared.js";
+import { sessionState } from "./session.js";
 
-let active: ActiveContext | null = null;
-
-// Cache-invalidation hooks: modules that cache source- or bucket-derived data
-// register here so switching context drops their stale state.
-const resetListeners: Array<() => void> = [];
-export function onContextChange(fn: () => void) { resetListeners.push(fn); }
+// The active context lives in the current session's state (per-session in HTTP
+// mode, process-wide in stdio mode). Context-derived caches live in the same
+// session's bag and are cleared wholesale on a context switch — this replaced
+// the old onContextChange listener registry, which was process-global and
+// therefore unsafe once multiple sessions share the process.
 
 const isDir = (p: string) => { try { return statSync(p).isDirectory(); } catch { return false; } };
 
@@ -39,14 +39,14 @@ export function listAvailableContexts(): ActiveContext[] {
   return out.sort((a, b) => a.grade.localeCompare(b.grade) || a.subject.localeCompare(b.subject));
 }
 
-export function getActiveContext(): ActiveContext | null { return active; }
+export function getActiveContext(): ActiveContext | null { return sessionState().active; }
 
 export const subjectDir = (grade: string, subject: string) => resolve(CONFIG.sourcesDir, grade, subject);
 
 // Low-level bind: slugify, validate against installed sources, set the active
-// context, and fire cache-reset listeners. Profile resolution and the schema
-// guard live in activateContext() (root activate.ts) to avoid an import cycle;
-// call that, not this, from tools and startup.
+// context, and drop the session's context-derived caches. Profile resolution
+// and the schema guard live in activateContext() (root activate.ts) to avoid an
+// import cycle; call that, not this, from tools and startup.
 export function setActiveContext(grade: string, subject: string):
   | { ok: true; context: ActiveContext }
   | { ok: false; error: string; available: ActiveContext[] } {
@@ -54,13 +54,15 @@ export function setActiveContext(grade: string, subject: string):
   const available = listAvailableContexts();
   const match = available.find((c) => c.grade === g && c.subject === s);
   if (!match) return { ok: false, error: `No sources installed for grade '${grade}' / subject '${subject}'.`, available };
-  const changed = !active || active.grade !== match.grade || active.subject !== match.subject;
-  active = match;
-  if (changed) for (const fn of resetListeners) fn();
+  const st = sessionState();
+  const changed = !st.active || st.active.grade !== match.grade || st.active.subject !== match.subject;
+  st.active = match;
+  if (changed) st.bag.clear();
   return { ok: true, context: match };
 }
 
 export function requireContext(): ActiveContext {
+  const { active } = sessionState();
   if (!active) throw new ContextNotSetError(listAvailableContexts());
   return active;
 }
