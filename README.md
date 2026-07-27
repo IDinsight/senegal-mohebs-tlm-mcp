@@ -106,6 +106,24 @@ npm run build
 ```
 
 
+### Remote (HTTP) mode — central hosting
+
+`npm run start:http` starts a Streamable HTTP server (for e.g. Cloud Run) instead of stdio.
+Each MCP session gets its own active context and caches, so concurrent users can work on
+different grades/subjects without interfering. Stdio mode (`npm start`) is unchanged.
+
+| Env | Meaning |
+|---|---|
+| `PORT` | Listen port (default 8080) |
+| `PUBLIC_URL` | This server's public base URL (required when auth is on) |
+| `SUPABASE_URL` | `https://<ref>.supabase.co` — enables OAuth (Supabase Auth is the authorization server; this server only validates its JWTs) |
+| `ALLOW_UNAUTHENTICATED` | `1` to run without auth — local testing only |
+
+With auth on, unauthenticated calls get a 401 pointing at `/.well-known/oauth-protected-resource`,
+which advertises the Supabase authorization server — MCP clients (e.g. Claude connectors)
+discover the login flow from there. Every tool call is logged with the caller's identity.
+`GET /healthz` is unauthenticated.
+
 ### Wiring into a host (e.g. Claude Desktop)
 
 ```jsonc
