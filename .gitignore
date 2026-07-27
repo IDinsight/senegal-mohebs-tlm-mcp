@@ -2,11 +2,11 @@
 /dist
 /.claude
 /docs
-/scripts
 *.json
 .DS_Store
 !knowledge_graph.json
 !terminology.json
+!example_domains.json
 !package.json
 !package-lock.json
 !tsconfig.json
