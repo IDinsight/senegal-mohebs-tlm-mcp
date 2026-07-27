@@ -2,10 +2,10 @@
 /dist
 /.claude
 /docs
-/scripts
 *.json
 !knowledge_graph.json
 !terminology.json
+!example_domains.json
 !package.json
 !package-lock.json
 !tsconfig.json
