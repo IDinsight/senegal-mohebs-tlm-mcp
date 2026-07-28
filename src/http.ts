@@ -25,8 +25,9 @@ import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.
 import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
-import { CONFIG } from "./config.js";
+import { CONFIG, basePrefix } from "./config.js";
 import { newSessionState, runInSession, type SessionState } from "./context/index.js";
+import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
 import { activateContext } from "./activate.js";
 import { consentPage } from "./consent.js";
 
@@ -60,8 +61,35 @@ function supabaseVerifier(): OAuthTokenVerifier {
 }
 
 // ── Sessions: one transport + server + state per MCP session ─────────────────
-type Session = { transport: StreamableHTTPServerTransport; state: SessionState };
+type Session = { transport: StreamableHTTPServerTransport; state: SessionState; restoreTried: boolean };
 const sessions = new Map<string, Session>();
+
+// ── Per-USER context persistence ─────────────────────────────────────────────
+// Web clients (claude.ai) open a fresh MCP session for every tool call, so
+// per-session context alone evaporates between calls. The user's grade/subject
+// selection is therefore persisted per identity (JWT sub) in the bucket and
+// lazily restored into any new session that arrives without one. set_context
+// is thus sticky per person, across sessions and server restarts.
+const userStateKey = (sub: string) => `${basePrefix()}_state/${sub}.json`;
+
+async function restoreUserContext(sub: string): Promise<void> {
+  try {
+    const raw = await readGlobalObject(userStateKey(sub));
+    if (!raw) return;
+    const { grade, subject } = JSON.parse(raw);
+    if (grade && subject) {
+      const r = activateContext(grade, subject);
+      if (!r.ok) console.error(`${LOG} could not restore ${sub}'s context ${grade}/${subject}: ${r.error}`);
+    }
+  } catch (e) { console.error(`${LOG} context restore failed for ${sub}:`, (e as Error).message); }
+}
+
+function persistUserContext(sub: string, state: SessionState): void {
+  const a = state.active;
+  if (!a) return;
+  writeGlobalObject(userStateKey(sub), JSON.stringify({ grade: a.grade, subject: a.subject }))
+    .catch((e) => console.error(`${LOG} context persist failed for ${sub}:`, (e as Error).message));
+}
 
 function newSession(): Session {
   const state = newSessionState();
@@ -76,13 +104,13 @@ function newSession(): Session {
   }
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: randomUUID,
-    onsessioninitialized: (id) => { sessions.set(id, { transport, state }); },
+    onsessioninitialized: (id) => { sessions.set(id, { transport, state, restoreTried: false }); },
   });
   transport.onclose = () => { if (transport.sessionId) sessions.delete(transport.sessionId); };
   const server = buildServer();
   // Connect inside the session so any context-touching init sees session state.
   void runInSession(state, () => server.connect(transport));
-  return { transport, state };
+  return { transport, state, restoreTried: false };
 }
 
 async function main() {
@@ -141,12 +169,20 @@ async function main() {
 
     // Per-user audit line: who (Supabase identity) did what (JSON-RPC method/tool).
     const who = (req as any).auth?.extra;
+    const sub = (who?.sub as string | undefined) ?? "anon";
     const method = req.method === "POST" ? req.body?.method : req.method;
     const tool = req.method === "POST" && req.body?.method === "tools/call" ? ` ${req.body?.params?.name}` : "";
-    if (method && method !== "GET") console.error(`${LOG} ${who?.email ?? who?.sub ?? "anon"} → ${method}${tool}`);
+    if (method && method !== "GET") console.error(`${LOG} ${who?.email ?? sub} → ${method}${tool}`);
 
     const s = session;
-    await runInSession(s.state, () => s.transport.handleRequest(req, res, req.body));
+    const activeBefore = s.state.active;
+    await runInSession(s.state, async () => {
+      // New session with no context: restore this user's last selection first,
+      // so tool calls on fresh sessions (claude.ai opens one per call) work.
+      if (!s.state.active && !s.restoreTried) { s.restoreTried = true; await restoreUserContext(sub); }
+      await s.transport.handleRequest(req, res, req.body);
+    });
+    if (s.state.active !== activeBefore) persistUserContext(sub, s.state);
   });
 
   app.listen(PORT, () => {
