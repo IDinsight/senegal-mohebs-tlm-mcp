@@ -99,3 +99,22 @@ export function createFirebaseStorage(): StorageAdapter {
     },
   };
 }
+
+// ── Context-free object helpers (app-layer use) ──────────────────────────────
+// Read/write small objects at an absolute key (caller includes any prefix).
+// Unlike the adapter methods above these don't depend on the active context —
+// the HTTP entry uses them to persist each user's grade/subject selection,
+// which by definition exists outside any active context.
+export async function readGlobalObject(key: string): Promise<string | null> {
+  initFirebase();
+  const f = fbStorage.getStorage().bucket().file(key);
+  const [exists] = await f.exists();
+  if (!exists) return null;
+  const [buf] = await f.download();
+  return buf.toString("utf8");
+}
+
+export async function writeGlobalObject(key: string, text: string): Promise<void> {
+  initFirebase();
+  await fbStorage.getStorage().bucket().file(key).save(text, { contentType: "application/json", resumable: false });
+}
