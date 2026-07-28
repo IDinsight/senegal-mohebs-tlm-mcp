@@ -5,7 +5,7 @@
 //
 //   app       server/* · index.ts · activate.ts · http.ts
 //   profiles  profiles/*
-//   services  storage/* · curriculum/* · generation/*
+//   services  storage/* · curriculum/* · generation/* · kg-store/*
 //   core      config.ts · types.ts · context/* · utils/*
 //
 // Rules:
@@ -27,7 +27,7 @@ const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..", "src");
 const LAYERS = {
   server: 3, "index.ts": 3, "activate.ts": 3, "http.ts": 3, "consent.ts": 3,
   profiles: 2,
-  storage: 1, curriculum: 1, generation: 1,
+  storage: 1, curriculum: 1, generation: 1, "kg-store": 1,
   config: 0, "config.ts": 0, types: 0, "types.ts": 0, context: 0, utils: 0, "actor.ts": 0, "actor.test.ts": 0,
 };
 
@@ -76,10 +76,15 @@ for (const f of files) {
 
 const problems = [];
 
-// Rule 2 + 3: layering and barrel discipline.
+// Rule 2 + 3: layering and barrel discipline. Test files are exempt from
+// layering-up: an integration test physically colocated with a leaf module
+// still legitimately exercises app-layer entry points (activateContext, the
+// server registry, etc.), and forcing tests to sit at the top of the tree
+// scatters them away from what they exercise.
+const isTest = (p) => rel(p).endsWith(".test.ts");
 for (const [f, targets] of importsOf) {
   for (const { target, spec } of targets) {
-    if (rankOf(f) < rankOf(target)) {
+    if (rankOf(f) < rankOf(target) && !isTest(f)) {
       problems.push(`layering: ${rel(f)} (layer ${rankOf(f)}) imports UP into ${rel(target)} (layer ${rankOf(target)})`);
     }
     const fromMod = moduleOf(f), toMod = moduleOf(target);

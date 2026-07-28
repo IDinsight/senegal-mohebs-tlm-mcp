@@ -104,6 +104,11 @@ export interface CurriculumAdapter {
 // from the normalized model (maths reproduces its historical chapter/lesson
 // shapes exactly; other subjects present their own).
 export interface SubjectCurriculum {
+  // The raw-graph adapter behind this curriculum. Exposed so the seed script
+  // (and any future tooling that needs a parsed model from raw JSON) can
+  // dispatch by subject without duplicating the (grade/subject) → adapter
+  // registry that already lives in profiles/index.ts.
+  readonly adapter: CurriculumAdapter;
   detect(raw: unknown): boolean;                       // guard, delegates to the adapter
   listUnits(): unknown[];                              // list_chapters
   slice(scope: number | string): unknown | null;      // get_curriculum body (progression added by caller)

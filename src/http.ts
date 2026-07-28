@@ -25,7 +25,7 @@ import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.
 import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
-import { CONFIG, basePrefix } from "./config.js";
+import { CONFIG, basePrefix, kgSource } from "./config.js";
 import { newSessionState, runInSession, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
 import { activateContext } from "./activate.js";
@@ -64,7 +64,7 @@ function supabaseVerifier(): OAuthTokenVerifier {
 }
 
 // ── Sessions: one transport + server + state per MCP session ─────────────────
-type Session = { transport: StreamableHTTPServerTransport; state: SessionState; restoreTried: boolean };
+type Session = { transport: StreamableHTTPServerTransport; state: SessionState; restoreTried: boolean; ready: Promise<void> };
 const sessions = new Map<string, Session>();
 
 // ── Per-USER context persistence ─────────────────────────────────────────────
@@ -81,7 +81,7 @@ async function restoreUserContext(sub: string): Promise<void> {
     if (!raw) return;
     const { grade, subject } = JSON.parse(raw);
     if (grade && subject) {
-      const r = activateContext(grade, subject);
+      const r = await activateContext(grade, subject);
       if (!r.ok) console.error(`${LOG} could not restore ${sub}'s context ${grade}/${subject}: ${r.error}`);
     }
   } catch (e) { console.error(`${LOG} context restore failed for ${sub}:`, (e as Error).message); }
@@ -96,24 +96,27 @@ function persistUserContext(sub: string, state: SessionState): void {
 
 function newSession(): Session {
   const state = newSessionState();
-  // Optional startup context (TLM_GRADE/TLM_SUBJECT) applies per session, same
-  // semantics as stdio startup. Startup reconcile is skipped here — it's
-  // informational logging, and per-session bucket sweeps would be noise.
-  if (CONFIG.defaultGrade && CONFIG.defaultSubject) {
-    runInSession(state, () => {
-      const r = activateContext(CONFIG.defaultGrade, CONFIG.defaultSubject);
-      if (!r.ok) console.error(`${LOG} startup context not activated: ${r.error}`);
-    });
-  }
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: randomUUID,
-    onsessioninitialized: (id) => { sessions.set(id, { transport, state, restoreTried: false }); },
+    onsessioninitialized: (id) => { sessions.set(id, { transport, state, restoreTried: false, ready: readyPromise }); },
   });
   transport.onclose = () => { if (transport.sessionId) sessions.delete(transport.sessionId); };
   const server = buildServer();
+  // Optional startup context (TLM_GRADE/TLM_SUBJECT) applies per session, same
+  // semantics as stdio startup. activateContext is async now (Firestore mode
+  // hydrates over the network), so first-request dispatch awaits `ready`
+  // before touching handlers — otherwise the very first tool call could race
+  // against startup activation and see `active === null`.
+  let readyPromise: Promise<void> = Promise.resolve();
+  if (CONFIG.defaultGrade && CONFIG.defaultSubject) {
+    readyPromise = runInSession(state, async () => {
+      const r = await activateContext(CONFIG.defaultGrade, CONFIG.defaultSubject);
+      if (!r.ok) console.error(`${LOG} startup context not activated: ${r.error}`);
+    });
+  }
   // Connect inside the session so any context-touching init sees session state.
   void runInSession(state, () => server.connect(transport));
-  return { transport, state, restoreTried: false };
+  return { transport, state, restoreTried: false, ready: readyPromise };
 }
 
 async function main() {
@@ -188,6 +191,10 @@ async function main() {
     // Persistence keys off the verified actor id (or "unknown" in unauth mode).
     const sub = actor.id;
     const s = session;
+    // Wait for any startup activation to finish before dispatching. In bundle
+    // mode this is a resolved promise; in Firestore mode it covers the initial
+    // network round-trip so the first tool call sees a populated context.
+    await s.ready;
     const activeBefore = s.state.active;
     await runAsActor(actor, async () => {
       await runInSession(s.state, async () => {
@@ -216,6 +223,10 @@ async function main() {
         tool: toolName,
         grade: a?.grade ?? null,
         subject: a?.subject ?? null,
+        // Which backend served curriculum/KG reads for this call. Sourced
+        // from the config flag, not any client-controlled input — so the
+        // audit log records the actual data path, not a claimed one.
+        kgSource: kgSource(),
       }));
     }
   });

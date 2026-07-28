@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
-import { CONFIG } from "../../config.js";
-import { sourcePath } from "../../context/index.js";
+import { CONFIG, kgSource } from "../../config.js";
+import { sourcePath, sessionState } from "../../context/index.js";
 import { buildModel, unit } from "../model.js";
+import { PRELOADED_MODEL_KEY } from "../store-bridge.js";
 import type { CurriculumAdapter, CurriculumModel, CurriculumUnit, SubjectCurriculum } from "../../types.js";
 
 // Raw CE1-reading graph shape: two arrays (`nodes` + `relationships`), a `hasChild`
@@ -140,7 +141,15 @@ export function createReadingCurriculum(): SubjectCurriculum {
   // Closure cache is safe without a reset hook: activateContext() builds a fresh
   // profile (and thus a fresh curriculum + empty cache) on every context switch.
   let model: CurriculumModel | null = null;
-  const ensure = (): CurriculumModel => (model ??= readingAdapter.parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
+  const ensure = (): CurriculumModel => {
+    if (model) return model;
+    if (kgSource() === "firestore") {
+      const preloaded = sessionState().bag.get(PRELOADED_MODEL_KEY) as CurriculumModel | undefined;
+      if (!preloaded) throw new Error("KG_SOURCE=firestore but curriculum was not preloaded from the store. Call activateContext() first.");
+      return (model = preloaded);
+    }
+    return (model = readingAdapter.parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
+  };
 
   const weeks = () => ensure().unitsOfKind("week").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const weekOf = (wk: number) => weeks().find((w) => w.properties.semaine === wk) ?? null;
@@ -179,6 +188,7 @@ export function createReadingCurriculum(): SubjectCurriculum {
   };
 
   return {
+    adapter: readingAdapter,
     detect: (raw) => readingAdapter.detect(raw),
     listUnits: () =>
       weeks().map((w) => ({ semaine: w.properties.semaine, palier: w.properties.palier ?? null, genre: w.properties.genre ?? null })),
