@@ -13,6 +13,8 @@
 //   PORT                   listen port (default 8080)
 //   PUBLIC_URL             this server's public base URL (required with auth)
 //   SUPABASE_URL           https://<ref>.supabase.co — enables auth
+//   SUPABASE_ANON_KEY      the project's public (anon/publishable) key — used only
+//                          by the browser-side login/consent page, safe to expose
 //   ALLOW_UNAUTHENTICATED  "1" to run without auth (local testing only)
 import { randomUUID } from "node:crypto";
 import express from "express";
@@ -26,6 +28,7 @@ import { buildServer } from "./server/index.js";
 import { CONFIG } from "./config.js";
 import { newSessionState, runInSession, type SessionState } from "./context/index.js";
 import { activateContext } from "./activate.js";
+import { consentPage } from "./consent.js";
 
 const LOG = "[senegal-mohebs-tlm:http]";
 const PORT = parseInt(process.env.PORT ?? "8080", 10);
@@ -106,6 +109,18 @@ async function main() {
       });
     });
     app.use("/mcp", requireBearerAuth({ verifier: supabaseVerifier(), resourceMetadataUrl }));
+
+    // Supabase's OAuth server delegates the login/consent UI to the application
+    // (dashboard: Site URL = this service, Authorization Path = /oauth/consent).
+    // Served here so no separate frontend deployment is needed. Public by design:
+    // the user is mid-login. Needs the public anon key for browser-side supabase-js.
+    const anonKey = process.env.SUPABASE_ANON_KEY ?? "";
+    if (anonKey) {
+      const page = consentPage(SUPABASE_URL, anonKey);
+      app.get("/oauth/consent", (_req, res) => { res.type("html").send(page); });
+    } else {
+      console.error(`${LOG} WARNING: SUPABASE_ANON_KEY not set — /oauth/consent disabled; OAuth logins cannot complete.`);
+    }
     console.error(`${LOG} auth enabled — authorization server: ${SUPABASE_URL}/auth/v1`);
   } else {
     console.error(`${LOG} WARNING: running UNAUTHENTICATED (ALLOW_UNAUTHENTICATED=1) — local testing only.`);
