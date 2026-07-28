@@ -32,7 +32,7 @@ gcloud run deploy senegal-mohebs-tlm \
   --service-account tlm-server@senegal-ci-maths.iam.gserviceaccount.com \
   --max-instances 1 \
   --allow-unauthenticated \
-  --set-env-vars "FIREBASE_STORAGE_BUCKET=senegal-ci-maths.firebasestorage.app,SUPABASE_URL=https://<ref>.supabase.co,PUBLIC_URL=https://<service-url>"
+  --set-env-vars "FIREBASE_STORAGE_BUCKET=senegal-ci-maths.firebasestorage.app,SUPABASE_URL=https://<ref>.supabase.co,SUPABASE_ANON_KEY=<public anon key>,PUBLIC_URL=https://<service-url>"
 ```
 
 Notes:
@@ -50,12 +50,23 @@ Notes:
   (hence the TokenCreator role above).
 - `sources/` ships inside the container image, so adding a grade/subject means a redeploy.
 
+## Supabase dashboard configuration
+
+The server hosts Supabase's delegated login/consent UI at `/oauth/consent` (hence
+`SUPABASE_ANON_KEY`, the public browser key from Project Settings → API). Configure:
+
+- **Authentication → OAuth Server**: enabled, **Dynamic OAuth Apps** on,
+  **Authorization Path** = `/oauth/consent`.
+- **Authentication → URL Configuration**: **Site URL** = `https://<service-url>`
+  (the TLM service — it serves the consent page for both MCP servers).
+- **Authentication → Users**: invite designers by email (they set a password via the invite link).
+
 ## Claude connector
 
 Point a Claude custom connector at `https://<service-url>/mcp`. The 401 challenge advertises
 `/.well-known/oauth-protected-resource`, which points at the Supabase authorization server —
-the client discovers the login flow from there. Supabase side: enable Authentication →
-OAuth Server + Dynamic Client Registration, and invite users (email+password) from the dashboard.
+the client discovers the login flow from there, registers itself dynamically, and sends the
+user to the consent page above.
 
 ## Smoke checks after deploy
 
