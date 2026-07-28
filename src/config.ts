@@ -23,6 +23,9 @@ export const CONFIG = {
   exampleDomainsFile: "example_domains.json",
   // Firebase Storage (shared source of truth for documents + history).
   serviceAccountKeyPath: env.SERVICE_ACCOUNT_KEY_PATH ?? "",
+  // Alternative to the key path: the key's JSON content directly (for hosts
+  // where mounting a file is impractical). Path wins if both are set.
+  serviceAccountKeyJson: env.SERVICE_ACCOUNT_KEY_JSON ?? "",
   firebaseBucket: env.FIREBASE_STORAGE_BUCKET ?? "",
   bucketPrefix: (env.TLM_BUCKET_PREFIX ?? "").replace(/\/+$/, ""), // optional, no trailing slash
   // Optional startup defaults for the active teaching context.
