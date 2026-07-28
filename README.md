@@ -54,6 +54,7 @@ Optional:
 
 ```
 gs://<FIREBASE_STORAGE_BUCKET>/
+  _state/<user-id>.json        # per-user active grade/subject (HTTP mode)
   <grade>/<subject>/
     documents/
       chapitre_05/<Manuel …>.docx
@@ -105,6 +106,31 @@ npm install
 npm run build
 ```
 
+
+### Production deployment (current state)
+
+The server is **live on Cloud Run**: project `senegal-ci-maths`, region `europe-west1`,
+service `senegal-mohebs-tlm`, capped at one instance.
+
+- **Users connect** via a Claude custom connector pointing at
+  `https://senegal-mohebs-tlm-148764688487.europe-west1.run.app/mcp`. First use runs an
+  OAuth login (Supabase project `senegal-tlm-auth`, IDinsight org) on a consent page this
+  server hosts at `/oauth/consent`.
+- **Accounts** are created in the Supabase dashboard (Authentication → Users → *Create new
+  user*, auto-confirm on). The invite-email flow is **not** supported yet — its link expects
+  a password-setup page that hasn't been built.
+- **A user's grade/subject selection is sticky per person** (persisted at
+  `_state/<user-id>.json` in the bucket) because web clients open a fresh MCP session per
+  tool call.
+- **Merging to `main` does NOT deploy.** CI builds and tests only. To ship an update, from
+  the repo root on `main`:
+
+  ```bash
+  gcloud run deploy senegal-mohebs-tlm --source . --region europe-west1 --project senegal-ci-maths
+  ```
+
+  Existing env vars and public-access settings are preserved. Full runbook incl. first-time
+  setup, Supabase dashboard config, and post-deploy smoke checks: [`DEPLOY.md`](DEPLOY.md).
 
 ### Remote (HTTP) mode — central hosting
 
