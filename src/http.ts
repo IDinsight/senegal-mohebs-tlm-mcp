@@ -30,6 +30,7 @@ import { newSessionState, runInSession, type SessionState } from "./context/inde
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
 import { activateContext } from "./activate.js";
 import { consentPage } from "./consent.js";
+import { resolveActor, runAsActor, type Actor } from "./actor.js";
 
 const LOG = "[senegal-mohebs-tlm:http]";
 const PORT = parseInt(process.env.PORT ?? "8080", 10);
@@ -49,7 +50,9 @@ function supabaseVerifier(): OAuthTokenVerifier {
           clientId: (payload as any).client_id ?? "unknown",
           scopes: [],
           expiresAt: payload.exp,
-          extra: { sub: payload.sub, email: (payload as any).email },
+          // `iss` is captured so the actor layer can record the verified issuer
+          // — jwtVerify already asserted it matches `issuer`, so it is safe to trust.
+          extra: { sub: payload.sub, email: (payload as any).email, iss: payload.iss },
         };
       } catch (e) {
         // Map every verification failure (bad signature, expiry, JWKS fetch) to
@@ -167,22 +170,54 @@ async function main() {
       }
     }
 
-    // Per-user audit line: who (Supabase identity) did what (JSON-RPC method/tool).
-    const who = (req as any).auth?.extra;
-    const sub = (who?.sub as string | undefined) ?? "anon";
-    const method = req.method === "POST" ? req.body?.method : req.method;
-    const tool = req.method === "POST" && req.body?.method === "tools/call" ? ` ${req.body?.params?.name}` : "";
-    if (method && method !== "GET") console.error(`${LOG} ${who?.email ?? sub} → ${method}${tool}`);
+    // Resolve the caller's identity from the verified auth layer ONLY. Never
+    // from tool arguments, request body, or client-settable headers — those
+    // are spoofable. `resolveActor` is the single writer for actor state.
+    const actor: Actor = resolveActor((req as any).auth);
 
+    // ── unknown-actor policy (DEFAULTED — flip here when roles land) ─────────
+    // Today: unknown actors proceed (no roles are enforced anywhere yet).
+    // With `SUPABASE_URL` set, the bearer middleware already 401s before we
+    // get here, so `actor.unknown` is only reachable via ALLOW_UNAUTHENTICATED=1
+    // (local testing). To require identity for every /mcp call, replace this
+    // block with e.g. `if (actor.unknown) { res.status(401).json(...); return; }`.
+    const method = req.method === "POST" ? req.body?.method : req.method;
+    const toolName = req.method === "POST" && req.body?.method === "tools/call"
+      ? (req.body?.params?.name as string | undefined) : undefined;
+
+    // Persistence keys off the verified actor id (or "unknown" in unauth mode).
+    const sub = actor.id;
     const s = session;
     const activeBefore = s.state.active;
-    await runInSession(s.state, async () => {
-      // New session with no context: restore this user's last selection first,
-      // so tool calls on fresh sessions (claude.ai opens one per call) work.
-      if (!s.state.active && !s.restoreTried) { s.restoreTried = true; await restoreUserContext(sub); }
-      await s.transport.handleRequest(req, res, req.body);
+    await runAsActor(actor, async () => {
+      await runInSession(s.state, async () => {
+        // New session with no context: restore this user's last selection first,
+        // so tool calls on fresh sessions (claude.ai opens one per call) work.
+        // Skip restore for unknown actors — no persisted state to restore against.
+        if (!s.state.active && !s.restoreTried && !actor.unknown) {
+          s.restoreTried = true;
+          await restoreUserContext(sub);
+        }
+        await s.transport.handleRequest(req, res, req.body);
+      });
     });
-    if (s.state.active !== activeBefore) persistUserContext(sub, s.state);
+    if (s.state.active !== activeBefore && !actor.unknown) persistUserContext(sub, s.state);
+
+    // One structured log line per non-GET JSON-RPC request. Seed for the later
+    // audit log — kept in stderr for now, no persistence yet (out of scope).
+    if (method && method !== "GET") {
+      const a = s.state.active;
+      console.error(`${LOG} ` + JSON.stringify({
+        msg: "tool_call",
+        actor: actor.id,
+        actorEmail: actor.email,
+        unknown: actor.unknown || undefined,
+        method,
+        tool: toolName,
+        grade: a?.grade ?? null,
+        subject: a?.subject ?? null,
+      }));
+    }
   });
 
   app.listen(PORT, () => {

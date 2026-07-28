@@ -124,6 +124,23 @@ which advertises the Supabase authorization server — MCP clients (e.g. Claude 
 discover the login flow from there. Every tool call is logged with the caller's identity.
 `GET /healthz` is unauthenticated.
 
+#### Per-request actor identity
+
+Every MCP request is bound to a request-scoped `Actor` derived **only** from the
+verified Supabase JWT (`sub`, `email`, `iss`) — see [`src/actor.ts`](src/actor.ts).
+Tool handlers read the caller via `currentActor()` (nested inside the existing
+`runInSession` context); tool arguments, request bodies, and client-settable
+headers are never trusted for identity. Each non-GET request emits one
+structured JSON audit line to stderr — `{ actor, tool, grade, subject, … }` —
+as the seed for the audit store planned in a later phase.
+
+**Defaulted decision — unknown-actor policy.** With `SUPABASE_URL` set the
+bearer middleware 401s any unverified caller before we resolve an actor, so
+`actor.unknown` is only reachable via `ALLOW_UNAUTHENTICATED=1` (local
+testing). In that mode, unknown actors currently proceed since no roles are
+enforced yet. Flip this by editing the `unknown-actor policy` block in
+[`src/http.ts`](src/http.ts) — it is the one place to change.
+
 ### Wiring into a host (e.g. Claude Desktop)
 
 ```jsonc
