@@ -5,13 +5,13 @@
 import { readFileSync } from "node:fs";
 import { CONFIG } from "../config.js";
 import { noAccents } from "../utils/index.js";
-import { sourcePath, onContextChange } from "../context/index.js";
+import { sourcePath, sessionCache } from "../context/index.js";
 
 type TermEntry = { francais: string; wolof: string | null; exemple: string | null; section: string | null };
-let termEntries: TermEntry[] = [], termLoaded = false;
 
-function termReload() {
-  termEntries = [];
+// Cached per session (bag key), dropped automatically on context switch.
+function termLoad(): TermEntry[] {
+  const entries: TermEntry[] = [];
   // A subject may not ship a terminology.json yet (e.g. CE1 reading leans on the
   // KG's own bilingual wording). Treat a missing file as an empty glossary so
   // get_terminology / terminology_sections return [] instead of crashing.
@@ -19,27 +19,23 @@ function termReload() {
   try {
     raw = JSON.parse(readFileSync(sourcePath(CONFIG.terminologyFile), "utf8"));
   } catch {
-    termLoaded = true;
-    return;
+    return entries;
   }
   for (const sec of raw.sections ?? [])
     for (const e of sec.entrees ?? [])
-      termEntries.push({ francais: e.francais ?? "", wolof: e.wolof ?? null, exemple: e.exemple ?? null, section: sec.titre ?? null });
-  termLoaded = true;
+      entries.push({ francais: e.francais ?? "", wolof: e.wolof ?? null, exemple: e.exemple ?? null, section: sec.titre ?? null });
+  return entries;
 }
-const termEnsure = () => { if (!termLoaded) termReload(); };
-// Switching grade/subject points at a different glossary — drop the cache.
-onContextChange(() => { termLoaded = false; termEntries = []; });
+const termEnsure = () => sessionCache("curriculum.terminology", termLoad);
 
 export function searchTerminology(query: string, limit = 20) {
-  termEnsure();
+  const entries = termEnsure();
   const q = noAccents(query);
-  return termEntries.filter((e) => noAccents(e.francais).includes(q)).slice(0, limit);
+  return entries.filter((e) => noAccents(e.francais).includes(q)).slice(0, limit);
 }
 
 export function terminologySections() {
-  termEnsure();
   const counts = new Map<string | null, number>();
-  for (const e of termEntries) counts.set(e.section, (counts.get(e.section) ?? 0) + 1);
+  for (const e of termEnsure()) counts.set(e.section, (counts.get(e.section) ?? 0) + 1);
   return [...counts.entries()].map(([titre, count]) => ({ titre, count }));
 }

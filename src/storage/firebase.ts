@@ -26,17 +26,26 @@ interface GcsBucket {
 
 const fbApp = require("firebase-admin/app") as {
   initializeApp: (opts: { credential: unknown; storageBucket: string }) => unknown;
-  cert: (serviceAccountPathOrObject: string) => unknown;
+  cert: (serviceAccountPathOrObject: string | object) => unknown;
+  applicationDefault: () => unknown;
   getApps: () => unknown[];
 };
 const fbStorage = require("firebase-admin/storage") as { getStorage: () => { bucket: () => GcsBucket } };
 
 function initFirebase(): void {
-  if (!CONFIG.serviceAccountKeyPath || !CONFIG.firebaseBucket) {
-    throw new Error("Firebase is not configured. Set SERVICE_ACCOUNT_KEY_PATH and FIREBASE_STORAGE_BUCKET.");
+  if (!CONFIG.firebaseBucket) {
+    throw new Error("Firebase is not configured. Set FIREBASE_STORAGE_BUCKET (and SERVICE_ACCOUNT_KEY_PATH when not running on GCP).");
   }
   if (fbApp.getApps().length === 0) {
-    fbApp.initializeApp({ credential: fbApp.cert(CONFIG.serviceAccountKeyPath), storageBucket: CONFIG.firebaseBucket });
+    // Credential precedence: key file (local) > key JSON content (hosts where a
+    // file mount is impractical) > Application Default Credentials (GCP runtime;
+    // signed URLs then need roles/iam.serviceAccountTokenCreator on the SA).
+    const credential = CONFIG.serviceAccountKeyPath
+      ? fbApp.cert(CONFIG.serviceAccountKeyPath)
+      : CONFIG.serviceAccountKeyJson
+        ? fbApp.cert(JSON.parse(CONFIG.serviceAccountKeyJson))
+        : fbApp.applicationDefault();
+    fbApp.initializeApp({ credential, storageBucket: CONFIG.firebaseBucket });
   }
 }
 
@@ -89,4 +98,23 @@ export function createFirebaseStorage(): StorageAdapter {
       await bucket().file(historyKey()).save(JSON.stringify(h, null, 2), { contentType: "application/json", resumable: false });
     },
   };
+}
+
+// ── Context-free object helpers (app-layer use) ──────────────────────────────
+// Read/write small objects at an absolute key (caller includes any prefix).
+// Unlike the adapter methods above these don't depend on the active context —
+// the HTTP entry uses them to persist each user's grade/subject selection,
+// which by definition exists outside any active context.
+export async function readGlobalObject(key: string): Promise<string | null> {
+  initFirebase();
+  const f = fbStorage.getStorage().bucket().file(key);
+  const [exists] = await f.exists();
+  if (!exists) return null;
+  const [buf] = await f.download();
+  return buf.toString("utf8");
+}
+
+export async function writeGlobalObject(key: string, text: string): Promise<void> {
+  initFirebase();
+  await fbStorage.getStorage().bucket().file(key).save(text, { contentType: "application/json", resumable: false });
 }

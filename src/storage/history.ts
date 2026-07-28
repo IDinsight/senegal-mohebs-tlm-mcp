@@ -5,12 +5,13 @@
 // (record_document_content / log_generation), and reconcile() — the diff of the
 // bucket against history. Deliverable specs are passed in by the caller so this
 // service never imports the profiles layer.
-import { getStorageAdapter, histCache, setHistCache } from "./adapter.js";
+import { getStorageAdapter, getHistCache, setHistCache } from "./adapter.js";
 import { discoverDocuments } from "./documents.js";
 import type { HistoryFile, HistoryEntry, DeliverableSpec, DocType, DocumentContent } from "../types.js";
 
 async function histLoad(): Promise<HistoryFile> {
-  if (histCache) return histCache;
+  const cached = getHistCache();
+  if (cached) return cached;
   const loaded = (await getStorageAdapter().readHistory()) ?? { version: 2 as const, entries: [] };
   setHistCache(loaded);
   return loaded;
