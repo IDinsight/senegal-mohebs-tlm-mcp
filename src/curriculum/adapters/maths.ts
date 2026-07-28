@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
-import { CONFIG } from "../../config.js";
-import { sourcePath } from "../../context/index.js";
+import { CONFIG, kgSource } from "../../config.js";
+import { sourcePath, sessionState } from "../../context/index.js";
 import { buildModel, unit } from "../model.js";
+import { PRELOADED_MODEL_KEY } from "../store-bridge.js";
 import type { CurriculumAdapter, CurriculumModel, CurriculumUnit, SubjectCurriculum } from "../../types.js";
 
 // Raw CI-maths graph shape: a single `graph` array of discriminated nodes and
@@ -96,7 +97,19 @@ export function createMathsCurriculum(): SubjectCurriculum {
   // Closure cache is safe without a reset hook: activateContext() builds a fresh
   // profile (and thus a fresh curriculum + empty cache) on every context switch.
   let model: CurriculumModel | null = null;
-  const ensure = (): CurriculumModel => (model ??= mathsAdapter.parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
+  const ensure = (): CurriculumModel => {
+    if (model) return model;
+    // KG_SOURCE=firestore: activate.ts hydrates the model asynchronously and
+    // stashes it in the session bag before returning. Anything reaching this
+    // adapter without a preloaded model is a wiring bug — reads must not fall
+    // through to a bundle in Firestore mode.
+    if (kgSource() === "firestore") {
+      const preloaded = sessionState().bag.get(PRELOADED_MODEL_KEY) as CurriculumModel | undefined;
+      if (!preloaded) throw new Error("KG_SOURCE=firestore but curriculum was not preloaded from the store. Call activateContext() first.");
+      return (model = preloaded);
+    }
+    return (model = mathsAdapter.parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
+  };
 
   const chapters = () => ensure().unitsOfKind("chapter");
   const lessonsOf = (m: CurriculumModel, chapNum: number) =>
@@ -149,6 +162,7 @@ export function createMathsCurriculum(): SubjectCurriculum {
   };
 
   return {
+    adapter: mathsAdapter,
     detect: (raw) => mathsAdapter.detect(raw),
     listUnits: () =>
       chapters()

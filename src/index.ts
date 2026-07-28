@@ -17,7 +17,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { buildServer } from "./server/index.js";
-import { CONFIG } from "./config.js";
+import { CONFIG, kgSource } from "./config.js";
 import { getActiveContext, listAvailableContexts } from "./context/index.js";
 import { activateContext } from "./activate.js";
 import { getActiveProfile } from "./profiles/index.js";
@@ -40,9 +40,9 @@ const LOG = "[senegal-mohebs-tlm]";
 // call prompts the user to choose one.
 async function applyStartupContext() {
   if (CONFIG.defaultGrade && CONFIG.defaultSubject) {
-    const r = activateContext(CONFIG.defaultGrade, CONFIG.defaultSubject);
+    const r = await activateContext(CONFIG.defaultGrade, CONFIG.defaultSubject);
     if (!r.ok) { console.error(`${LOG} TLM_GRADE/TLM_SUBJECT '${CONFIG.defaultGrade}/${CONFIG.defaultSubject}' not activated: ${r.error}`); return; }
-    console.error(`${LOG} active context: ${r.context.grade}/${r.context.subject}`);
+    console.error(`${LOG} active context: ${r.context.grade}/${r.context.subject} (kgSource=${kgSource()})`);
   }
 }
 

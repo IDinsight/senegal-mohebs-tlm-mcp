@@ -33,6 +33,19 @@ export const CONFIG = {
   defaultSubject: (env.TLM_SUBJECT ?? "").trim(),
 };
 
+// Where curriculum + KG reads pull from. "bundle" keeps the legacy behavior
+// (readFileSync from sources/); "firestore" hydrates the normalized
+// CurriculumModel from the generic node/edge store seeded by
+// scripts/seed-kg-store.mjs. Reversible flag — flip either way without a
+// rebuild. Unknown values collapse to "bundle".
+//
+// Resolved lazily (not memoised into CONFIG) so parity tests can toggle
+// KG_SOURCE per case with `process.env.KG_SOURCE = ...` inside one run.
+export type KgSource = "bundle" | "firestore";
+export function kgSource(): KgSource {
+  return (process.env.KG_SOURCE ?? "bundle").trim().toLowerCase() === "firestore" ? "firestore" : "bundle";
+}
+
 export const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 // Base object-key prefix from env. The active grade/subject scope is appended in

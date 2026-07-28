@@ -49,6 +49,50 @@ Optional:
 - `TLM_BUCKET_PREFIX` — put everything under a prefix (e.g. `pilot` → `pilot/ci/maths/documents/…`, `pilot/ci/maths/history.json`). The grade/subject scope is always appended after the prefix.
 - `TLM_SOURCES_DIR` — relocate the sources root (defaults to `./sources`). The per-subject filenames inside each `<grade>/<subject>` folder are fixed conventions: `knowledge_graph.json`, `terminology.json`, optional `example_domains.json`, and the prompt `.md` files (each subject's profile names its own prompt files via `DeliverableSpec.promptFile`).
 - `TLM_DOMAIN_NEIGHBORHOOD_K` — how many chapters on each side count as a chapter's "neighborhood" for example-domain variety (default `3`). `get_generation_context` only reports the domains used by chapters within ±K of the target (by chapter number), and its fresh-domain suggestion avoids anything in that window. Larger K = stronger variety across a wider span; the payload stays bounded by the window regardless of how many chapters are authored.
+- `KG_SOURCE` — where curriculum + KG reads pull from: `bundle` (default; legacy `readFileSync(sources/…)`) or `firestore` (hydrate from the seeded node/edge store). Reversible without a rebuild. See [KG node/edge store](#kg-nodeedge-store) below.
+
+## KG node/edge store
+
+Curriculum + KG data can live in a generic node/edge store on Firestore, so
+later steps can expose editing tools without rewiring the read layer. Two
+collections, each namespaced by `${TLM_BUCKET_PREFIX}<grade>/<subject>` (the
+same key the docs bucket and history use):
+
+- `kg_nodes` — one document per curriculum unit: `{ id, type, namespace, properties }`. `type` is the adapter-produced kind (maths: `chapter, lesson, component, task`; reading: `week, standard, component`). `properties` carries the normalized fields (`code, title, text, order, isAssessment`) plus the raw graph passthrough under `raw`. Ids are the verbatim UUIDs from the bundled KGs — never regenerated.
+- `kg_edges` — one document per adapter-produced link: `{ id, type, from, to, namespace, properties }`. `type` is either `hasChild` (parent→child hierarchy) or `buildsTowards` (maths cross-chapter progression). `properties` records `orderInParent` / `sequenceInFrom` / `sequenceInTo` so child and progression ordering round-trip byte-identically.
+- `kg_meta` — one doc per namespace holding the seed provenance stamp: `{ contentHash, seededAt, adapterId, nodeCount, edgeCount }`. The seed writes it last, so its presence is the signal that the namespace was successfully seeded; `activateContext` refuses to load an unseeded namespace when `KG_SOURCE=firestore`.
+
+The store is **read-only in this phase** — no write tools, no draft/published split, no permissioning. It exists so the read paths (`list_units`, `get_curriculum`, `get_generation_context`, plus the `set_context` schema guard) can serve from Firestore instead of the bundle when `KG_SOURCE=firestore`.
+
+### Seed
+
+```bash
+npm run seed:kg-store                    # seed every installed grade/subject
+npm run seed:kg-store -- ci maths        # seed a single pair
+npm run seed:kg-store -- --dry-run       # in-memory store; no writes
+```
+
+Idempotent: a re-run converges to the same state (no duplicates, no stragglers). Needs the same Firebase credentials the server uses (`SERVICE_ACCOUNT_KEY_PATH` or `SERVICE_ACCOUNT_KEY_JSON`, and `FIREBASE_STORAGE_BUCKET`).
+
+### Cutover
+
+```bash
+KG_SOURCE=firestore npm run start:http   # or npm start for stdio
+```
+
+`KG_SOURCE=bundle` (the default) keeps the server behaving exactly as before — the bundle loader stays in place, so the flag is a clean toggle in either direction. The per-call actor log line records the active `kgSource`, so the audit stream shows which data path served each tool call.
+
+### Parity check
+
+`get_generation_context`, `get_curriculum`, and `list_units` must return structurally identical output for every grade/subject and every unit against both backends. Run:
+
+```bash
+npm run parity:kg-store                  # offline: memory store seeded from bundle
+npm run parity:kg-store -- --live        # against live Firestore (needs a prior seed)
+npm test                                 # includes src/kg-store/parity.test.ts
+```
+
+Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering doesn't cause false diffs, but the response shape itself must not change. A secondary manual check (regenerating a manual and a lessons deliverable with the flag flipped and confirming the pre-LLM generation context is identical) is documented in the roadmap; the LLM output itself is not byte-stable and is not the parity oracle.
 
 ## Bucket layout
 

@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "check:cycles": "node scripts/check-cycles.mjs",
     "test": "vitest run",
-    "start:http": "node dist/http.js"
+    "start:http": "node dist/http.js",
+    "seed:kg-store": "npm run build && node scripts/seed-kg-store.mjs",
+    "parity:kg-store": "npm run build && node scripts/parity-check.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
