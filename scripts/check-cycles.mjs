@@ -25,7 +25,7 @@ const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..", "src");
 
 // Layer rank per top-level module (higher may import lower or same).
 const LAYERS = {
-  server: 3, "index.ts": 3, "activate.ts": 3, "http.ts": 3,
+  server: 3, "index.ts": 3, "activate.ts": 3, "http.ts": 3, "consent.ts": 3,
   profiles: 2,
   storage: 1, curriculum: 1, generation: 1,
   config: 0, "config.ts": 0, types: 0, "types.ts": 0, context: 0, utils: 0,
