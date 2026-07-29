@@ -7,11 +7,16 @@
 //      normalized CurriculumModel.
 //   3. Serializes to generic StoredNode/StoredEdge documents with verbatim
 //      ids (UUIDs and integer scopes are never regenerated).
-//   4. Writes the batch to Firestore under namespace `${prefix}<grade>/<subject>`
-//      via a replace-wholesale API — a re-run converges to the same state
-//      instead of duplicating documents.
-//   5. Stamps a per-namespace `_meta` doc with the raw content hash, wall-
-//      clock timestamp, and adapter id so the seed is traceable.
+//   4. Writes the batch to Firestore under namespace `${prefix}<grade>/<subject>`,
+//      slot "a" — the seed always populates the "a" slot; a curator's draft (if
+//      one exists) sits in "b" and is left untouched.
+//   5. Stamps a per-namespace pointer doc { publishedSlot: "a", draftSlot: null }
+//      the first time only — a re-seed does NOT reset the pointer, so publishing
+//      a draft (which flips publishedSlot to "b") remains sticky. Once flipped,
+//      a re-seed of "a" is effectively writing to a stale/discarded slot; the
+//      operator should reconcile deliberately (see README).
+//   6. Includes the raw content hash + adapter id + wall-clock time on the
+//      per-slot meta stamp so the seed is traceable.
 //
 // Usage:
 //   npm run build                             # compile TS to dist/ first
@@ -105,8 +110,21 @@ for (const { grade, subject } of pairs) {
   };
 
   try {
-    await store.writeNamespace(namespace, { nodes, edges, meta });
-    console.error(`seed-kg-store: ${label}: OK — ns='${namespace}', nodes=${nodes.length}, edges=${edges.length}, hash=${contentHash.slice(0, 12)}…`);
+    // Always seed into slot "a". The pointer is only initialized the first
+    // time (ensurePointer is a no-op if one already exists), so re-seeding
+    // after a curator has published a draft (which put "b" into publishedSlot)
+    // does NOT silently move published back to "a" — the pointer stays put and
+    // slot "a" becomes a stale side copy. Flag that state to the operator.
+    const existingPointer = await store.readPointer(namespace);
+    await store.writeSlot(namespace, "a", { nodes, edges, meta });
+    await store.ensurePointer(namespace, "a");
+    const afterPointer = await store.readPointer(namespace);
+    const note = existingPointer && afterPointer && afterPointer.publishedSlot !== "a"
+      ? ` (WARNING: publishedSlot is currently '${afterPointer.publishedSlot}', not 'a' — this re-seed wrote to a non-published slot)`
+      : afterPointer && afterPointer.draftSlot === "a"
+        ? ` (WARNING: slot 'a' was the active draft — this re-seed overwrote it)`
+        : "";
+    console.error(`seed-kg-store: ${label}: OK — ns='${namespace}', slot='a', nodes=${nodes.length}, edges=${edges.length}, hash=${contentHash.slice(0, 12)}…${note}`);
   } catch (e) {
     console.error(`seed-kg-store: ${label}: FAILED — ${(e && e.message) || e}`);
     failures++;

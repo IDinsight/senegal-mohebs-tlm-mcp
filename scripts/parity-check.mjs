@@ -56,10 +56,11 @@ if (!live) {
     if (!adapter) continue;
     const model = adapter.parse(raw);
     const { nodes, edges } = serializeModel(model, kgNamespace(grade, subject));
-    await store.writeNamespace(kgNamespace(grade, subject), {
+    await store.writeSlot(kgNamespace(grade, subject), "a", {
       nodes, edges,
       meta: { contentHash: "cli", seededAt: new Date(0).toISOString(), adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
     });
+    await store.ensurePointer(kgNamespace(grade, subject), "a");
   }
 }
 

@@ -62,7 +62,7 @@ same key the docs bucket and history use):
 - `kg_edges` — one document per adapter-produced link: `{ id, type, from, to, namespace, properties }`. `type` is either `hasChild` (parent→child hierarchy) or `buildsTowards` (maths cross-chapter progression). `properties` records `orderInParent` / `sequenceInFrom` / `sequenceInTo` so child and progression ordering round-trip byte-identically.
 - `kg_meta` — one doc per namespace holding the seed provenance stamp: `{ contentHash, seededAt, adapterId, nodeCount, edgeCount }`. The seed writes it last, so its presence is the signal that the namespace was successfully seeded; `activateContext` refuses to load an unseeded namespace when `KG_SOURCE=firestore`.
 
-The store is **read-only in this phase** — no write tools, no draft/published split, no permissioning. It exists so the read paths (`list_units`, `get_curriculum`, `get_generation_context`, plus the `set_context` schema guard) can serve from Firestore instead of the bundle when `KG_SOURCE=firestore`.
+The store is still **read-only from the outside in this phase** — no MCP write tools, no user-facing lifecycle tools, no permissioning. But it now has a **draft/published split** under the hood so later steps have somewhere to write. See [Draft/published state](#draftpublished-state) below.
 
 ### Seed
 
@@ -81,6 +81,22 @@ KG_SOURCE=firestore npm run start:http   # or npm start for stdio
 ```
 
 `KG_SOURCE=bundle` (the default) keeps the server behaving exactly as before — the bundle loader stays in place, so the flag is a clean toggle in either direction. The per-call actor log line records the active `kgSource`, so the audit stream shows which data path served each tool call.
+
+### Draft/published state
+
+Each namespace (firestore backend only — bundle mode is unchanged) holds up to **two slots** of curriculum data, `a` and `b`, plus one small **pointer doc** (`kg_pointers/<nsSlug>`) that says which slot is currently `publishedSlot` and which (optionally) is the in-progress `draftSlot`. Reads follow the pointer: `activate.ts` resolves `publishedSlot` first and hydrates the `CurriculumModel` from that slot. **Generation always reads published**, so an in-progress draft can never leak into produced materials.
+
+- **create draft** copies published → the free slot, then sets `draftSlot` in the pointer LAST. A half-copied draft is invisible to readers. Idempotent: calling it when a draft already exists is a no-op.
+- **publish draft** is a single-doc pointer flip (`publishedSlot := draftSlot; draftSlot := null`). Firestore's single-doc write guarantee makes it atomic — readers see either the pre-publish snapshot or the post-publish snapshot, never a mix.
+- **discard draft** clears `draftSlot`. Orphaned draft docs remain in the free slot and get overwritten wholesale by the next `create draft`.
+
+Node and edge ids are the LC UUIDs verbatim (nodes) and deterministic `edgeId(type, from, to)` values (edges). Both survive create/publish byte-for-byte, so later diff-by-id and cross-version references remain sound.
+
+These lifecycle functions live on the internal `KgNodeStore` interface — **no user-facing MCP tools are exposed yet**. Tool-facing wrappers for `create_draft` / `publish_draft` / `discard_draft` (and a `diff_draft`) land in a later step (#10). Preview generation against a draft (#15) will use the draft-read path that this step lays down but doesn't expose.
+
+**Concurrency of edits is an open decision for the next step.** With no write tools this step doesn't exercise contention. When writes land (#5/#11), the team will need to pick a strategy — optimistic version counter on each edit, an explicit "who holds the draft" lock, or per-user drafts. The two-slot foundation supports any of them; nothing about it locks in the choice.
+
+**Re-seeding after a publish.** The seed always writes into slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op if one already exists). Once a curator publishes (which flips `publishedSlot` to `b`), a re-seed writes to `a` — which is now a stale side copy, not the live published data. The seed logs a WARNING when it detects this; reconciling it deliberately (typically by making the fresh bundle the next draft rather than the next seed) is the operator's call.
 
 ### Parity check
 

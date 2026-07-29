@@ -41,14 +41,23 @@ export async function activateContext(grade: string, subject: string): Promise<A
   let preloadedModel: ReturnType<typeof deserializeToModel> | null = null;
   if (kgSource() === "firestore") {
     const ns = kgNamespace(match.grade, match.subject);
-    let meta;
+    // Resolve the *published* slot first, then read from it. Generation MUST
+    // read published — draft-targeted reads live behind the internal lifecycle
+    // API and are not exposed to tools in this step (see roadmap #15).
+    let pointer;
     try {
-      meta = await getKgStore().readMeta(ns);
+      pointer = await getKgStore().readPointer(ns);
     } catch (e) {
       return { ok: false, error: `Could not reach the KG store for '${match.grade}/${match.subject}': ${(e as Error).message}`, available };
     }
-    if (!meta) return { ok: false, error: `KG_SOURCE=firestore but no seed found for namespace '${ns}'. Run: npm run seed:kg-store (see README).`, available };
-    const [nodes, edges] = await Promise.all([getKgStore().listNodes(ns), getKgStore().listEdges(ns)]);
+    if (!pointer) return { ok: false, error: `KG_SOURCE=firestore but no seed found for namespace '${ns}'. Run: npm run seed:kg-store (see README).`, available };
+    const publishedSlot = pointer.publishedSlot;
+    const [meta, nodes, edges] = await Promise.all([
+      getKgStore().readMeta(ns, publishedSlot),
+      getKgStore().listNodes(ns, publishedSlot),
+      getKgStore().listEdges(ns, publishedSlot),
+    ]);
+    if (!meta) return { ok: false, error: `KG_SOURCE=firestore: pointer for '${ns}' says slot '${publishedSlot}' is published, but that slot has no meta. Re-run the seed.`, available };
     preloadedModel = deserializeToModel({ nodes, edges });
   } else {
     let raw: unknown;

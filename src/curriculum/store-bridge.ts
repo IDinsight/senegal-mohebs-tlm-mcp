@@ -8,6 +8,12 @@ import { buildModel, unit } from "./model.js";
 import type { CurriculumModel, CurriculumUnit } from "../types.js";
 import type { StoredNode, StoredEdge } from "../kg-store/index.js";
 
+// The graph shape the seed / lifecycle produces: no `slot` tag — the store
+// stamps that at write time. Reads still return the wire `StoredNode` /
+// `StoredEdge` (with slot), which deserializeToModel accepts as a superset.
+type LogicalNode = Omit<StoredNode, "slot">;
+type LogicalEdge = Omit<StoredEdge, "slot">;
+
 // Session-bag key under which activate.ts stashes the deserialized model when
 // KG_SOURCE=firestore. Adapter closures read from this synchronously, so a
 // context switch that clears the bag automatically drops the preloaded model.
@@ -19,15 +25,15 @@ export const edgeId = (type: string, from: string, to: string) => `${type}:${fro
 
 const numeric = (v: unknown, fallback: number): number => (typeof v === "number" && Number.isFinite(v) ? v : fallback);
 
-export type SerializedGraph = { nodes: StoredNode[]; edges: StoredEdge[] };
+export type SerializedGraph = { nodes: LogicalNode[]; edges: LogicalEdge[] };
 
 // Encode a parsed CurriculumModel as generic nodes + edges. All CurriculumUnit
 // fields land in `properties`; parentId/childIds/buildsFrom/buildsTowards are
 // externalized as edges and NOT redundantly copied into properties (they are
 // re-derived from the edges on the way back).
 export function serializeModel(model: CurriculumModel, namespace: string): SerializedGraph {
-  const nodes: StoredNode[] = [];
-  const edges: StoredEdge[] = [];
+  const nodes: LogicalNode[] = [];
+  const edges: LogicalEdge[] = [];
   const seen = new Set<string>();
   for (const u of model.byId.values()) {
     nodes.push({
@@ -81,7 +87,7 @@ export function serializeModel(model: CurriculumModel, namespace: string): Seria
 // StoredNode.properties round-trip exactly: `raw` restores the subject-specific
 // passthrough dict, and code/title/text/order/isAssessment restore the
 // normalized fields — so downstream presenters see a byte-identical model.
-export function deserializeToModel(input: { nodes: StoredNode[]; edges: StoredEdge[] }): CurriculumModel {
+export function deserializeToModel(input: { nodes: LogicalNode[]; edges: LogicalEdge[] }): CurriculumModel {
   const nodeById = new Map(input.nodes.map((n) => [n.id, n]));
   const childBuckets = new Map<string, { order: number; to: string }[]>();
   const buildsTowardsBuckets = new Map<string, { order: number; to: string }[]>();

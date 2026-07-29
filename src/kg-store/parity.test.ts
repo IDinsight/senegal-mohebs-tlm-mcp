@@ -52,10 +52,11 @@ beforeAll(async () => {
     if (!adapter) continue;
     const model = adapter.parse(raw);
     const { nodes, edges } = serializeModel(model, kgNamespace(grade, subject));
-    await memStore.writeNamespace(kgNamespace(grade, subject), {
+    await memStore.writeSlot(kgNamespace(grade, subject), "a", {
       nodes, edges,
       meta: { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
     });
+    await memStore.ensurePointer(kgNamespace(grade, subject), "a");
   }
 });
 

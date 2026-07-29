@@ -3,4 +3,5 @@
 export { getKgStore, __setKgStoreForTest, kgNamespace } from "./adapter.js";
 export { createFirestoreKgStore } from "./firestore.js";
 export { createMemoryKgStore } from "./memory.js";
-export type { KgNodeStore, StoredNode, StoredEdge, StoredMeta } from "./types.js";
+export type { KgNodeStore, Slot, StoredNode, StoredEdge, StoredMeta, StoredPointer } from "./types.js";
+export { otherSlot } from "./types.js";
