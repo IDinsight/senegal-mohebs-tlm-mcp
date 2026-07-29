@@ -2,7 +2,7 @@
 // Example-domain rotation, a maths capability: track which object families
 // (fruits, pirogues, …) each chapter used, and suggest a fresh one so chapters
 // don't repeat — while also avoiding domains used by nearby chapters. Composed
-// into the maths generation context; profiles without the capability ignore it.
+// into the maths generation context; adapters without the capability ignore it.
 import { readFileSync, existsSync } from "node:fs";
 import { CONFIG } from "../config.js";
 import { sourcePath } from "../context/index.js";

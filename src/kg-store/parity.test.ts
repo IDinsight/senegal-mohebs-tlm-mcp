@@ -1,9 +1,10 @@
 // ── Parity harness (KG_SOURCE=bundle vs KG_SOURCE=firestore) ─────────────────
-// Primary acceptance oracle for the KG-store swap. Iterates every installed
-// grade/subject and every unit inside it, calls the curriculum + KG read tools
-// against BOTH backends (bundle read directly from sources/, and firestore
-// hydrated from an in-memory KgNodeStore that mirrors what the seed script
-// writes), and asserts DEEP structural equality on the parsed results.
+// Primary acceptance oracle for the KG-store swap AND for the adapter refactor.
+// Iterates every installed grade/subject and every unit inside it, calls the
+// curriculum + KG read tools against BOTH backends (bundle read directly from
+// sources/, and firestore hydrated from an in-memory KgNodeStore that mirrors
+// what the seed script writes), and asserts DEEP structural equality on the
+// parsed results.
 //
 // Any diff fails the build — this is the byte-for-byte parity check the task
 // requires. The harness uses the memory store so it runs in CI without live
@@ -14,7 +15,7 @@ import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../context/index.js";
 import { CONFIG } from "../config.js";
-import { resolveProfile } from "../profiles/index.js";
+import { resolveAdapter } from "../adapters/index.js";
 import { serializeModel } from "../curriculum/index.js";
 import { __setKgStoreForTest, createMemoryKgStore, kgNamespace } from "./index.js";
 import { __setStorageForTest } from "../storage/index.js";
@@ -47,13 +48,13 @@ beforeAll(async () => {
   __setStorageForTest(fakeStorage);
   for (const { grade, subject } of listAvailableContexts()) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
-    const profile = resolveProfile(grade, subject);
-    if (!profile) continue;
-    const model = profile.curriculum.adapter.parse(raw);
+    const adapter = resolveAdapter(grade, subject);
+    if (!adapter) continue;
+    const model = adapter.parse(raw);
     const { nodes, edges } = serializeModel(model, kgNamespace(grade, subject));
     await memStore.writeNamespace(kgNamespace(grade, subject), {
       nodes, edges,
-      meta: { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: profile.curriculum.adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
+      meta: { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
     });
   }
 });
@@ -74,21 +75,21 @@ async function collectReads(source: "bundle" | "firestore", grade: string, subje
   return runInSession(state, async () => {
     const r = await activateContext(grade, subject);
     if (!r.ok) throw new Error(`activate ${grade}/${subject} @ ${source} failed: ${r.error}`);
-    const profile = resolveProfile(grade, subject)!;
-    // Re-fetch the profile from the registry so the (curriculum, session-bag)
-    // wiring is fresh; activateContext installs a profile via setActiveProfile,
-    // but calling resolveProfile again is safe — same builder, no shared state.
-    const curriculum = profile.curriculum;
-    const units = curriculum.listUnits();
-    const scopes = curriculum.scopeValues();
+    // Re-resolve the adapter here so the same-session bag wiring picks up the
+    // preloaded model (firestore) or the bundle read (bundle). Each call
+    // builds a fresh instance closing over the same session state — same
+    // behavior as before this refactor, when resolveProfile was called twice.
+    const adapter = resolveAdapter(grade, subject)!;
+    const units = adapter.listUnits();
+    const scopes = adapter.scopeValues();
     const perUnit: Array<{ scope: number | string; slice: unknown; progression: unknown; requiredCoverage: unknown; generationContext: unknown[] }> = [];
     for (const scope of scopes) {
-      const slice = curriculum.slice(scope);
-      const progression = curriculum.progression(scope);
-      const requiredCoverage = curriculum.requiredCoverage(scope);
+      const slice = adapter.slice(scope);
+      const progression = adapter.progression(scope);
+      const requiredCoverage = adapter.requiredCoverage(scope);
       const generationContext: unknown[] = [];
-      for (const d of profile.deliverables) {
-        generationContext.push(await profile.buildGenerationContext(scope, d.key));
+      for (const d of adapter.deliverables) {
+        generationContext.push(await adapter.buildGenerationContext(scope, d.key));
       }
       perUnit.push({ scope, slice, progression, requiredCoverage, generationContext });
     }

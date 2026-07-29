@@ -3,7 +3,7 @@
 //
 // For each installed grade/subject folder, this script:
 //   1. Reads the bundled knowledge_graph.json.
-//   2. Runs the subject profile's adapter (detect + parse) to produce a
+//   2. Runs the subject adapter (detect + parse) to produce a
 //      normalized CurriculumModel.
 //   3. Serializes to generic StoredNode/StoredEdge documents with verbatim
 //      ids (UUIDs and integer scopes are never regenerated).
@@ -38,7 +38,7 @@ if (!existsSync(DIST)) {
 
 const { CONFIG } = await import(new URL("../dist/config.js", import.meta.url));
 const { listAvailableContexts, subjectDir } = await import(new URL("../dist/context/index.js", import.meta.url));
-const { resolveProfile } = await import(new URL("../dist/profiles/index.js", import.meta.url));
+const { resolveAdapter } = await import(new URL("../dist/adapters/index.js", import.meta.url));
 const { serializeModel } = await import(new URL("../dist/curriculum/index.js", import.meta.url));
 const { kgNamespace, createMemoryKgStore, createFirestoreKgStore } = await import(new URL("../dist/kg-store/index.js", import.meta.url));
 
@@ -81,25 +81,25 @@ for (const { grade, subject } of pairs) {
   const contentHash = createHash("sha256").update(rawBytes).digest("hex");
   const parsed = JSON.parse(rawBytes.toString("utf8"));
 
-  const profile = resolveProfile(grade, subject);
-  if (!profile) {
-    console.error(`seed-kg-store: ${label}: no subject profile registered — skipped.`);
+  const adapter = resolveAdapter(grade, subject);
+  if (!adapter) {
+    console.error(`seed-kg-store: ${label}: no subject adapter registered — skipped.`);
     failures++;
     continue;
   }
-  if (!profile.curriculum.detect(parsed)) {
+  if (!adapter.detect(parsed)) {
     console.error(`seed-kg-store: ${label}: adapter refused this graph — skipped.`);
     failures++;
     continue;
   }
 
-  const model = profile.curriculum.adapter.parse(parsed);
+  const model = adapter.parse(parsed);
   const namespace = kgNamespace(grade, subject);
   const { nodes, edges } = serializeModel(model, namespace);
   const meta = {
     contentHash,
     seededAt: new Date().toISOString(),
-    adapterId: profile.curriculum.adapter.id,
+    adapterId: adapter.id,
     nodeCount: nodes.length,
     edgeCount: edges.length,
   };

@@ -5,7 +5,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded, badDeliverable, requireConfirmation } from "./shared.js";
-import { getActiveProfile } from "../profiles/index.js";
+import { getActiveAdapter } from "../adapters/index.js";
 import { getStorageAdapter, extractDocxText, listEntries, recordContent, reconcile } from "../storage/index.js";
 
 // SUBJECT-SPECIFIC (CI-maths-leaning). The structured content recorded per
@@ -31,7 +31,7 @@ const contentSchema = {
 
 export function registerDocumentTools(server: McpServer) {
   server.registerTool("reconcile", { title: "Reconcile bucket with history", description: "List the documents in Firebase Storage and diff against history: tracked docs, UNTRACKED docs needing ingestion, entries dropped because their object is gone, and duplicate resolutions.", inputSchema: {} },
-    guarded(async () => asJson(await reconcile(getActiveProfile().deliverables))));
+    guarded(async () => asJson(await reconcile(getActiveAdapter().deliverables))));
 
   server.registerTool("list_documents", { title: "List tracked documents", description: "Current history: one canonical entry per document, with its known content.", inputSchema: {} },
     guarded(async () => asJson(await listEntries())));
