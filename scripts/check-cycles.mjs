@@ -4,14 +4,14 @@
 // Enforces the module layering documented in src/index.ts and README:
 //
 //   app       server/* · index.ts · activate.ts · http.ts
-//   profiles  profiles/*
+//   adapters  adapters/*
 //   services  storage/* · curriculum/* · generation/* · kg-store/*
 //   core      config.ts · types.ts · context/* · utils/*
 //
 // Rules:
 //   1. No import cycles anywhere.
 //   2. Imports only ever point DOWN (an importer's layer >= the importee's).
-//      In particular, service modules must never import profiles/*.
+//      In particular, service modules must never import adapters/*.
 //   3. Cross-module imports go through the target module's index.ts barrel;
 //      only files inside the same module import siblings directly.
 //      (Single-file modules — config.ts, types.ts, activate.ts — are their own barrel.)
@@ -26,7 +26,7 @@ const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..", "src");
 // Layer rank per top-level module (higher may import lower or same).
 const LAYERS = {
   server: 3, "index.ts": 3, "activate.ts": 3, "http.ts": 3, "consent.ts": 3,
-  profiles: 2,
+  adapters: 2,
   storage: 1, curriculum: 1, generation: 1, "kg-store": 1,
   config: 0, "config.ts": 0, types: 0, "types.ts": 0, context: 0, utils: 0, "actor.ts": 0, "actor.test.ts": 0,
 };

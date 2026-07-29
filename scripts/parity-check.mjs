@@ -23,7 +23,7 @@ if (!existsSync(resolve(REPO, "dist"))) {
 
 const { CONFIG } = await import(new URL("../dist/config.js", import.meta.url));
 const { listAvailableContexts, subjectDir, newSessionState, runInSession } = await import(new URL("../dist/context/index.js", import.meta.url));
-const { resolveProfile } = await import(new URL("../dist/profiles/index.js", import.meta.url));
+const { resolveAdapter } = await import(new URL("../dist/adapters/index.js", import.meta.url));
 const { serializeModel } = await import(new URL("../dist/curriculum/index.js", import.meta.url));
 const { kgNamespace, createMemoryKgStore, createFirestoreKgStore, __setKgStoreForTest } = await import(new URL("../dist/kg-store/index.js", import.meta.url));
 const { __setStorageForTest } = await import(new URL("../dist/storage/index.js", import.meta.url));
@@ -52,13 +52,13 @@ __setKgStoreForTest(store);
 if (!live) {
   for (const { grade, subject } of listAvailableContexts()) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
-    const profile = resolveProfile(grade, subject);
-    if (!profile) continue;
-    const model = profile.curriculum.adapter.parse(raw);
+    const adapter = resolveAdapter(grade, subject);
+    if (!adapter) continue;
+    const model = adapter.parse(raw);
     const { nodes, edges } = serializeModel(model, kgNamespace(grade, subject));
     await store.writeNamespace(kgNamespace(grade, subject), {
       nodes, edges,
-      meta: { contentHash: "cli", seededAt: new Date(0).toISOString(), adapterId: profile.curriculum.adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
+      meta: { contentHash: "cli", seededAt: new Date(0).toISOString(), adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
     });
   }
 }
@@ -69,21 +69,20 @@ async function collect(source, grade, subject) {
   return runInSession(state, async () => {
     const r = await activateContext(grade, subject);
     if (!r.ok) throw new Error(`activate ${grade}/${subject} @ ${source}: ${r.error}`);
-    const profile = resolveProfile(grade, subject);
-    const curriculum = profile.curriculum;
+    const adapter = resolveAdapter(grade, subject);
     const perUnit = [];
-    for (const scope of curriculum.scopeValues()) {
+    for (const scope of adapter.scopeValues()) {
       const generationContext = [];
-      for (const d of profile.deliverables) generationContext.push(await profile.buildGenerationContext(scope, d.key));
+      for (const d of adapter.deliverables) generationContext.push(await adapter.buildGenerationContext(scope, d.key));
       perUnit.push({
         scope,
-        slice: curriculum.slice(scope),
-        progression: curriculum.progression(scope),
-        requiredCoverage: curriculum.requiredCoverage(scope),
+        slice: adapter.slice(scope),
+        progression: adapter.progression(scope),
+        requiredCoverage: adapter.requiredCoverage(scope),
         generationContext,
       });
     }
-    return { units: curriculum.listUnits(), scopes: curriculum.scopeValues(), perUnit };
+    return { units: adapter.listUnits(), scopes: adapter.scopeValues(), perUnit };
   });
 }
 

@@ -4,8 +4,8 @@ import { firstInt } from "../utils/index.js";
 import type { DeliverableSpec, DiscoveredDoc } from "../types.js";
 
 // Classification is per-subject, so the deliverable specs are passed in by the
-// caller (the app layer, which owns the active profile). This keeps storage a
-// pure service that never reaches up into profiles.
+// caller (the app layer, which owns the active adapter). This keeps storage a
+// pure service that never reaches up into adapters.
 export async function discoverDocuments(deliverables: DeliverableSpec[]): Promise<DiscoveredDoc[]> {
   const objs = await getStorageAdapter().listDocuments();
   const out: DiscoveredDoc[] = [];

@@ -1,7 +1,8 @@
 // ── Layer: app · module: server ──────────────────────────────────────────────
 // Front door of the server module: assemble the MCP server from the tool groups.
-// The tool groups are the only layer that reads the active profile (getActive-
-// Profile) and dispatches to it, so the service modules stay unaware of profiles.
+// The tool groups are the only layer that reads the active adapter (via
+// getActiveAdapter) and dispatches to it, so the service modules stay unaware
+// of the adapter layer.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerContextTools } from "./context.js";
 import { registerCurriculumTools } from "./curriculum.js";

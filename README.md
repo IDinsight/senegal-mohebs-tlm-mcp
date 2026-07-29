@@ -36,7 +36,7 @@ sources/
 
 `get_context` discovers these by scanning the tree, so the installed pairs are whatever folders exist.
 
-> **Note.** Dropping in a folder provides the *data* for a grade/subject. Wiring it up so the tools actually work also needs a registered **profile** (and, if its knowledge-graph shape differs from an existing subject, a curriculum **adapter**). A folder with no registered profile is rejected by `set_context`. See [Adding a new grade/subject](#adding-a-new-gradesubject).
+> **Note.** Dropping in a folder provides the *data* for a grade/subject. Wiring it up so the tools actually work also needs a registered **adapter** — one behavior module per subject that owns everything from raw-graph parsing to generation-context assembly. A folder with no registered adapter is rejected by `set_context`. See [Adding a new grade/subject](#adding-a-new-gradesubject).
 
 ## Configuration
 
@@ -47,7 +47,7 @@ Required:
 Optional:
 - `TLM_GRADE` / `TLM_SUBJECT` — pre-select the active grade/subject at startup, so you don't have to call `set_context` first. Must match an installed folder pair.
 - `TLM_BUCKET_PREFIX` — put everything under a prefix (e.g. `pilot` → `pilot/ci/maths/documents/…`, `pilot/ci/maths/history.json`). The grade/subject scope is always appended after the prefix.
-- `TLM_SOURCES_DIR` — relocate the sources root (defaults to `./sources`). The per-subject filenames inside each `<grade>/<subject>` folder are fixed conventions: `knowledge_graph.json`, `terminology.json`, optional `example_domains.json`, and the prompt `.md` files (each subject's profile names its own prompt files via `DeliverableSpec.promptFile`).
+- `TLM_SOURCES_DIR` — relocate the sources root (defaults to `./sources`). The per-subject filenames inside each `<grade>/<subject>` folder are fixed conventions: `knowledge_graph.json`, `terminology.json`, optional `example_domains.json`, and the prompt `.md` files (each subject's adapter names its own prompt files via `DeliverableSpec.promptFile`).
 - `TLM_DOMAIN_NEIGHBORHOOD_K` — how many chapters on each side count as a chapter's "neighborhood" for example-domain variety (default `3`). `get_generation_context` only reports the domains used by chapters within ±K of the target (by chapter number), and its fresh-domain suggestion avoids anything in that window. Larger K = stronger variety across a wider span; the payload stays bounded by the window regardless of how many chapters are authored.
 - `KG_SOURCE` — where curriculum + KG reads pull from: `bundle` (default; legacy `readFileSync(sources/…)`) or `firestore` (hydrate from the seeded node/edge store). Reversible without a rebuild. See [KG node/edge store](#kg-nodeedge-store) below.
 
@@ -105,7 +105,7 @@ gs://<FIREBASE_STORAGE_BUCKET>/
       chapitre_05/<Fiches de leçons …>.docx
     history.json
 ```
-Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within a grade/subject**; the scope is the first integer in the subfolder name, and the active subject's profile classifies the filename into a deliverable (for maths: a file named "Fiches de leçons …" is the lesson-sheets doc, anything else is the manual).
+Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within a grade/subject**; the scope is the first integer in the subfolder name, and the active subject's adapter classifies the filename into a deliverable (for maths: a file named "Fiches de leçons …" is the lesson-sheets doc, anything else is the manual).
 
 ## The generation flow (cross-host, no shared disk)
 
@@ -138,10 +138,10 @@ Run on startup (when a context is active) and via the `reconcile` tool: present 
 
 **Subject-agnostic** — work the same for any grade/subject: `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`.
 
-**Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's profile:
+**Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's adapter:
 
 - `list_units`, `get_curriculum`, `get_generation_context`, `record_document_content`, `log_generation`. These take a `unit` (the subject's scope value — a chapter for maths, a week for CE1 reading) and, where relevant, a `deliverable` key. The shapes are subject-specific: maths returns `chapitreNum`/`leconNum` etc., and the `content` payload (characters, example domains, amorce/bilan) follows the maths storybook model — all fields optional.
-- *Capability-specific* (`exampleDomainRotation`, maths only) — `suggest_fresh_domain`, `domain_usage`. Example-domain rotation is a maths storybook feature; they are gated on the capability, so for a subject whose profile doesn't enable it they return a `notApplicable` message instead of running.
+- *Capability-specific* (`exampleDomainRotation`, maths only) — `suggest_fresh_domain`, `domain_usage`. Example-domain rotation is a maths storybook feature; they are gated on the capability, so for a subject whose adapter doesn't enable it they return a `notApplicable` message instead of running.
 
 ## Setup
 
@@ -235,43 +235,41 @@ enforced yet. Flip this by editing the `unknown-actor policy` block in
 
 ## Architecture
 
-The server supports many grades/subjects whose curriculum graphs and deliverables genuinely differ (CI maths is a `graph[]` of `Chapitre`/`OS` nodes; CE1 reading is `nodes`/`relationships` with a `hasChild` tree and no chapters). Behaviour is therefore **pluggable per subject**, not hard-coded:
+The server supports many grades/subjects whose curriculum graphs and deliverables genuinely differ (CI maths is a `graph[]` of `Chapitre`/`OS` nodes; CE1 reading is `nodes`/`relationships` with a `hasChild` tree and no chapters). Behaviour is therefore **pluggable per subject**, not hard-coded — one **adapter module** per subject owns everything subject-specific in one place.
 
-- **Curriculum adapter** (`src/curriculum/adapters/*`) — parses a subject's raw knowledge graph into a normalized `CurriculumModel`, and exposes a `detect()` guard so a graph that doesn't match its schema is refused at `set_context` instead of silently mis-parsed.
-- **Subject profile** (`src/profiles/*`) — declares the subject's deliverables (filenames, scope, dependencies), its capabilities, and how to build the pre-generation context. A registry in `src/profiles/index.ts` binds each `(grade, subject)` to its profile.
+- **Subject adapter** (`src/adapters/*.ts`) — one module per subject. Each module exposes a common behavior interface: raw-graph `detect`/`parse` (the schema knowledge each subject already owns), the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), `buildGenerationContext`, plus the subject's `deliverables` and `capabilities`. Capability-gated helpers (`suggestFreshDomain`/`domainUsage`, only maths today) are optional on the interface. Storage round-trip is handled generically on top of the parsed model by `curriculum/store-bridge.ts` (`serializeModel` / `deserializeToModel`), so no serialize/deserialize methods hang off the adapter.
+- **Adapter registry** (`src/adapters/index.ts`) — binds each `(grade, subject)` pair to an adapter builder. Resolution is many-to-one capable: several `${grade}/${subject}` keys may point at the same builder when their graphs share a shape, but different grades of the "same" subject stay independent by default — a graph with a different envelope registers its own adapter.
+
+Adapters are **behavior only**. There is no `schema` field, no LC property/edge/cardinality declaration, and no integrity rules on the adapter — that's deliberate. The write-safety rules that will land in the next phase live *in the write tools*, not on the adapter (and they'll key on the raw LC IRI — the stored `id` is the LC UUID verbatim, and friendly properties like `chapitreNum`/`semaine` live inside `properties.raw`).
 
 Modules are **layered, and imports only ever point down**. A build-time check (`npm run check:cycles`, run automatically by `npm run build`) fails on any import cycle:
 
 ```
 app       server/* · index.ts · activate.ts
-profiles  profiles/*                                     — compose the services below, per subject
-services  storage/* · curriculum/* · generation/*        — never import profiles
+adapters  adapters/*                                     — one behavior module per subject
+services  storage/* · curriculum/* · generation/* · kg-store/*   — never import adapters
 core      config.ts · types.ts · context/{state,shared} · utils/*   — leaves
 ```
 
-Cross-module imports go through each module's `index.ts` (barrel); files **inside** a module import their siblings directly. `activate.ts` (resolve the profile → run the schema guard → bind the context) is app-layer glue that wires `context/` to `profiles/`, so it lives at the root next to `index.ts` rather than inside the leaf `context/` module. The full design rationale is in [`docs/multi-subject-architecture.md`](docs/multi-subject-architecture.md).
+Cross-module imports go through each module's `index.ts` (barrel); files **inside** a module import their siblings directly. `activate.ts` (resolve the adapter → run the schema guard → bind the context) is app-layer glue that wires `context/` to `adapters/`, so it lives at the root next to `index.ts` rather than inside the leaf `context/` module. The full design rationale is in [`docs/multi-subject-architecture.md`](docs/multi-subject-architecture.md).
 
 ## Adding a new grade/subject
 
-Adding a subject takes its **sources** (data) and a **profile** (code). If the knowledge-graph shape differs from every existing adapter, it also needs a new **adapter**.
+Adding a subject takes its **sources** (data) and an **adapter** (code). If the knowledge-graph shape matches one that's already registered, you can point a new `(grade, subject)` key at that adapter's builder — the registry is many-to-one on purpose.
 
 1. **Drop in the sources** under `sources/<grade>/<subject>/`: `knowledge_graph.json`, `terminology.json`, the generation prompt(s), and optionally `example_domains.json`.
 
-2. **Reuse or write a curriculum adapter** (`src/curriculum/adapters/`):
-   - *Same graph shape as an existing subject* (e.g. the CI-maths `graph[]` envelope) → reuse that adapter.
-   - *Different shape* → add `src/curriculum/adapters/<name>.ts` implementing `CurriculumAdapter`: `detect(raw)` (the schema guard) and `parse(raw)` → `CurriculumModel`, plus a factory returning a `SubjectCurriculum` (`listUnits` / `slice` / `progression` / `requiredCoverage` / `scopeValues`). Export it from `src/curriculum/index.ts`.
+2. **Reuse or write an adapter** (`src/adapters/`):
+   - *Same graph shape as an existing subject* → register the new `(grade, subject)` key against that subject's builder in `src/adapters/index.ts`. That's the many-to-one case.
+   - *Different shape* → add `src/adapters/<subject>.ts` exporting a `buildXxxAdapter(grade, subject): SubjectAdapter`. The adapter carries everything: raw-envelope `detect`/`parse`, the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), the `deliverables` list (`key`, `label`, `scopeKind`, `classify(filename)`, `dependsOn`, `promptFile` — one per document kind), the `capabilities` flags (`exampleDomainRotation`, `characterConsistency`), and `buildGenerationContext(scope, deliverableKey)`. Optional maths-style helpers (`suggestFreshDomain`, `domainUsage`) are only added when the subject enables the matching capability.
 
-3. **Write the profile** in `src/profiles/<subject>.ts` — a `buildProfile(grade, subject): SubjectProfile` providing:
-   - `curriculum` — from your adapter;
-   - `deliverables` — one `DeliverableSpec` per document kind (`key`, `label`, `scopeKind`, `classify(filename)`, `dependsOn`, `promptFile`);
-   - `capabilities` — feature flags (e.g. `exampleDomainRotation`, `characterConsistency`);
-   - `buildGenerationContext(scope, deliverableKey)` — the pre-generation payload for that subject.
+3. **Register it** in `src/adapters/index.ts` under the `"<grade>/<subject>"` key (in the `REGISTRY` object). Grade × subject: e.g. `"ci/maths"` and `"cp/maths"` may point at the same builder or different ones — that's a per-pair choice, not an assumption.
 
-4. **Register it** in `src/profiles/index.ts` under the `"<grade>/<subject>"` key.
+4. **Build and select it:** `npm run build`, then `set_context("<grade>", "<subject>")`. The guard runs your adapter's `detect()` against the KG; on a mismatch it refuses to activate and says why — nothing is silently mis-parsed.
 
-5. **Build and select it:** `npm run build`, then `set_context("<grade>", "<subject>")`. The guard runs your adapter's `detect()` against the KG; on a mismatch it refuses to activate and says why — nothing is silently mis-parsed.
+**No schema.** Adapters carry behavior only. If your subject needs write-safety rules (uniqueness, required properties, edge-type constraints), those will live in the write tools when they land — not on the adapter. The stored `id` for every node/edge is the raw LC IRI, verbatim; friendly properties (`chapitreNum`, `semaine`, `statementCode`) live inside `properties.raw` and must NOT be used as write-target identities.
 
-**Rules the build enforces:** imports point *down* the layers above; **service modules (`storage`/`curriculum`/`generation`) must not import `profiles`** — pass what they need in as arguments (as `reconcile(deliverables)` and `discoverDocuments(deliverables)` do); cross-module imports go through the module's `index.ts`. `npm run check:cycles` fails the build on any import cycle.
+**Rules the build enforces:** imports point *down* the layers above; **service modules (`storage`/`curriculum`/`generation`/`kg-store`) must not import `adapters`** — pass what they need in as arguments (as `reconcile(deliverables)` and `discoverDocuments(deliverables)` do); cross-module imports go through the module's `index.ts`. `npm run check:cycles` fails the build on any import cycle.
 
 > **CE1 reading** is wired as a worked second subject (scope: one teacher guide **per week**), registered as `ce1/reading` — its adapter parses a `nodes`/`relationships` + `hasChild` graph. See `docs/multi-subject-architecture.md` §11 phase 4 for what its KG needed and the open follow-ups (no `terminology.json` yet; evaluation grids pending).
 

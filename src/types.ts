@@ -4,7 +4,7 @@
 
 // A deliverable key identifies one kind of document a subject produces
 // (e.g. "manual", "lessons"). It is an open string drawn from the active
-// SubjectProfile's deliverable list — NOT a fixed union — because the set of
+// SubjectAdapter's deliverable list — NOT a fixed union — because the set of
 // deliverables varies per grade/subject. Kept as a named alias for readability.
 export type DeliverableKey = string;
 
@@ -93,32 +93,8 @@ export interface CurriculumModel {
   childrenOf(id: string): CurriculumUnit[];
 }
 
-// One module per graph *shape*. Owns all raw-schema knowledge. §5.2.
-export interface CurriculumAdapter {
-  readonly id: string;
-  detect(raw: unknown): boolean;          // cheap structural check — is this my schema?
-  parse(raw: unknown): CurriculumModel;   // envelope + taxonomy + hierarchy → normalized tree
-}
-
-// Tool-facing curriculum operations. Each subject renders its own JSON shapes
-// from the normalized model (maths reproduces its historical chapter/lesson
-// shapes exactly; other subjects present their own).
-export interface SubjectCurriculum {
-  // The raw-graph adapter behind this curriculum. Exposed so the seed script
-  // (and any future tooling that needs a parsed model from raw JSON) can
-  // dispatch by subject without duplicating the (grade/subject) → adapter
-  // registry that already lives in profiles/index.ts.
-  readonly adapter: CurriculumAdapter;
-  detect(raw: unknown): boolean;                       // guard, delegates to the adapter
-  listUnits(): unknown[];                              // list_chapters
-  slice(scope: number | string): unknown | null;      // get_curriculum body (progression added by caller)
-  progression(scope: number | string): unknown;       // cross-unit progression
-  requiredCoverage(scope: number | string): unknown[]; // lessons/skills a deliverable must cover
-  scopeValues(): Array<number | string>;               // every generation-unit scope (for coverage)
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Deliverables & subject profile — axes 2–3. §5.3.
+// Deliverables + capabilities — axes 2–3. §5.3.
 // ─────────────────────────────────────────────────────────────────────────────
 export type DeliverableSpec = {
   key: DeliverableKey;                       // replaces the old DocType enum value
@@ -135,14 +111,56 @@ export type Capabilities = {
   characterConsistency: boolean;    // maths; false for reading
 };
 
-export interface SubjectProfile {
-  grade: string;
-  subject: string;
-  curriculum: SubjectCurriculum;
-  deliverables: DeliverableSpec[];
-  capabilities: Capabilities;
-  // Assemble the pre-generation context for one (scope, deliverable). Owned by
-  // the profile because generation semantics (characters, domains, dependencies)
-  // are subject-specific. §5 / axis 3.
+// ─────────────────────────────────────────────────────────────────────────────
+// SubjectAdapter — the single per-(grade, subject) module the rest of the
+// server dispatches to. Consolidates what used to be three separate concepts
+// (CurriculumAdapter — raw parser, SubjectCurriculum — presenter, and
+// SubjectProfile — generation-context + deliverables + capabilities) into
+// one behavior module. Deliberately BEHAVIOR ONLY: no schema, no LC
+// property/edge/cardinality declarations, no integrity rules. Write-safety
+// rules live later, in the write tools — not here.
+//
+// Common core every adapter implements:
+//   - raw-schema knowledge (detect + parse) — the only place that touches raw
+//     graph JSON. Storage round-trip is handled generically on top of the
+//     parsed model by curriculum/store-bridge.ts (serializeModel /
+//     deserializeToModel), so no serialize/deserialize methods hang off the
+//     adapter;
+//   - LC → friendly projection (listUnits / slice / progression /
+//     requiredCoverage / scopeValues), rendered from the parsed CurriculumModel;
+//   - generation-context assembly (buildGenerationContext), owned by the
+//     subject because generation semantics — characters, domains, dependencies
+//     — are subject-specific;
+//   - deliverables and capabilities declarations.
+//
+// Optional subject-specific functions (declared on the interface but not every
+// adapter implements them). Present only when the corresponding capability is
+// enabled; gated at the tool boundary in src/server/*.
+// ─────────────────────────────────────────────────────────────────────────────
+export interface SubjectAdapter {
+  readonly grade: string;
+  readonly subject: string;
+  readonly id: string;                          // stable adapter id, e.g. "ci-maths/graph-array-v1"
+  readonly deliverables: DeliverableSpec[];
+  readonly capabilities: Capabilities;
+
+  // Raw envelope → normalized CurriculumModel. Owns all raw-schema knowledge
+  // (envelope layout, endpoint keying, node taxonomy). detect() is the schema
+  // guard set_context runs against the KG before activating a context.
+  detect(raw: unknown): boolean;
+  parse(raw: unknown): CurriculumModel;
+
+  // LC → friendly projection. Return shapes are subject-specific.
+  listUnits(): unknown[];
+  slice(scope: number | string): unknown | null;
+  progression(scope: number | string): unknown;
+  requiredCoverage(scope: number | string): unknown[];
+  scopeValues(): Array<number | string>;
+
+  // Pre-generation payload.
   buildGenerationContext(scope: number | string, deliverableKey: DeliverableKey): Promise<unknown>;
+
+  // Optional, capability-gated at the tool boundary.
+  suggestFreshDomain?(): Promise<unknown>;
+  domainUsage?(): Promise<unknown>;
 }
