@@ -5,7 +5,7 @@
 // re-exported here so each tool group imports all its helpers from one place
 // ("./shared.js").
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { asJson, type ToolResult } from "../utils/index.js";
+import { asJson, buildConfirmEnvelope, type ToolResult } from "../utils/index.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { ContextNotSetError } from "../context/index.js";
 
@@ -46,22 +46,22 @@ export const needsCapability = (enabled: boolean, cap: string): ToolResult | nul
   enabled ? null : asJson({ notApplicable: true, message: `Not applicable for the active subject: this tool requires the '${cap}' capability, which this subject's adapter does not enable.` });
 
 // Human confirmation for outward-facing / state-changing tools (file uploads,
-// history writes). Returns a ToolResult (→ caller does NO side effect) unless the
-// user has approved, in which case it returns null (→ proceed). "Best available"
-// gate across clients:
+// history writes, and the graph-mutation framework). Returns a ToolResult (→
+// caller does NO side effect) unless the user has approved, in which case it
+// returns null (→ proceed). "Best available" gate across clients:
 //   • Client supports MCP elicitation → ask the USER directly via a dialog. This
 //     is the strong gate — the agent cannot bypass it with confirm:true.
 //   • Otherwise → fall back to the agent-mediated two-step: no side effect until
 //     the tool is re-called with confirm:true (the agent is told to ask first).
-export async function requireConfirmation(server: McpServer, confirm: boolean | undefined, summary: string): Promise<ToolResult | null> {
+export async function requireConfirmation(server: McpServer, confirm: boolean | undefined, action: string): Promise<ToolResult | null> {
   const caps = server.server.getClientCapabilities();
   if (caps?.elicitation) {
     try {
       const res = await server.server.elicitInput({
-        message: `Confirm before proceeding — about to ${summary}. Proceed?`,
+        message: `Confirm before proceeding — about to ${action}. Proceed?`,
         requestedSchema: {
           type: "object",
-          properties: { confirm: { type: "boolean", title: "Proceed?", description: `Approve: ${summary}` } },
+          properties: { confirm: { type: "boolean", title: "Proceed?", description: `Approve: ${action}` } },
           required: ["confirm"],
         },
       });
@@ -72,7 +72,5 @@ export async function requireConfirmation(server: McpServer, confirm: boolean | 
       // Client advertised elicitation but the request failed — fall back below.
     }
   }
-  return confirm
-    ? null
-    : asJson({ needsConfirmation: true, message: `Do NOT proceed yet. Ask the user to confirm — about to ${summary}. Once they explicitly agree, call this tool again with confirm: true.` });
+  return confirm ? null : asJson(buildConfirmEnvelope(action));
 }

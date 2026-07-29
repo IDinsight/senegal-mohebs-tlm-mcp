@@ -94,6 +94,17 @@ Node and edge ids are the LC UUIDs verbatim (nodes) and deterministic `edgeId(ty
 
 These lifecycle functions live on the internal `KgNodeStore` interface — **no user-facing MCP tools are exposed yet**. Tool-facing wrappers for `create_draft` / `publish_draft` / `discard_draft` (and a `diff_draft`) land in a later step (#10). Preview generation against a draft (#15) will use the draft-read path that this step lays down but doesn't expose.
 
+### Graph-mutation framework (draft-only apply)
+
+Sits on top of the draft/published split. A **graph mutation** is a pure function over `{nodes, edges}` — e.g. "set property X on node Y", "delete node Z". The framework in [`src/kg-store/mutations.ts`](src/kg-store/mutations.ts) gives every new mutation the same two-phase confirm plumbing for free:
+
+- **preview** (no `confirm`) → runs `validate` (empty seam today; #6 fills it), computes a per-mutation `diff` keyed by stable id, and returns the shared confirmation envelope extended with `diff`, `warnings`, and a `confirmationToken`. Changes NO state.
+- **confirm** (with the `confirmationToken`) → verifies the token matches the mutation + args + base-version + is unused, lazily creates a draft if none exists (byte-for-byte from published), then applies the mutation to the **draft slot only** via `writeSlot`. Published is unaffected — publish is a separate step (#10).
+
+The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(type, from, to)` for edges) — friendly properties like `chapitreNum` live in `properties.raw` and are NEVER used as identity. A stale token (base moved between preview and confirm) or a replayed token is rejected cleanly with no partial apply. See [`docs/kg-mutations-framework.md`](docs/kg-mutations-framework.md) for the full design note, decisions, and the mutation interface.
+
+**No user-facing graph edit tool ships in this step.** The framework has exactly one test-only mutation, wired inside `mutations.test.ts` — real edit tools (`upsert_property` / `create_node` / `delete_node` / `link_nodes`) land in #11/#12 and will supply mutation-specific `validate` implementations against write-safety rules (#6) that today are a pass-through empty seam.
+
 **Concurrency of edits is an open decision for the next step.** With no write tools this step doesn't exercise contention. When writes land (#5/#11), the team will need to pick a strategy — optimistic version counter on each edit, an explicit "who holds the draft" lock, or per-user drafts. The two-slot foundation supports any of them; nothing about it locks in the choice.
 
 **Re-seeding after a publish.** The seed always writes into slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op if one already exists). Once a curator publishes (which flips `publishedSlot` to `b`), a re-seed writes to `a` — which is now a stale side copy, not the live published data. The seed logs a WARNING when it detects this; reconciling it deliberately (typically by making the fresh bundle the next draft rather than the next seed) is the operator's call.
@@ -133,9 +144,11 @@ Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within
 
 > **Confirmation gate.** The three tools that write outward — `create_upload_url` (gates the upload), `log_generation`, and `record_document_content` — never act without approval, using the strongest gate the client supports:
 > - **Client supports MCP elicitation** → the server asks the **user** directly via an elicitation dialog. This is a hard gate: the agent cannot bypass it (even passing `confirm: true` won't skip it — a declined dialog blocks the action).
-> - **Otherwise** → an agent-mediated two-step: the first call performs no side effect and returns `{ needsConfirmation: true, message }`; the agent asks the user, then re-calls with `confirm: true`.
+> - **Otherwise** → an agent-mediated two-step: the first call performs no side effect and returns the shared confirmation envelope `{ needsConfirmation: true, action, message }` (`action` states the stakes; `message` tells the agent to re-call with `confirm: true`); the agent asks the user, then re-calls with `confirm: true`.
 >
 > Input validation (e.g. unknown deliverable) runs before the gate, so bad calls fail first. All read-only tools are ungated. Note: in a fully headless run (no user, no elicitation) these tools cannot get approval by design — drive them only where a human is reachable.
+>
+> **Two lifecycles share only the envelope shape.** Document tools write **live** to the bucket / history — the confirm is the ONLY gate, and the `action` field says "writes NOW … no draft, no undo". Graph mutations (see below) **stage a draft edit** — the same envelope, but the `action` says "STAGES a draft edit … nothing reaches generation until you separately publish". Uniform mechanics; deliberately different stakes.
 
 ## Ingesting a doc authored elsewhere (e.g. an expert wrote chapter 2)
 
