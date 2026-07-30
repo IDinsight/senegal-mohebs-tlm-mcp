@@ -16,5 +16,5 @@ export type {
   UpsertPropertyArgs,
 } from "./mutations.js";
 export { validateStructural, STRUCTURAL_RULES } from "./validate.js";
-export { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";
+export { matchesAuditQuery, sortAuditNewestFirst, toAuditActor } from "./audit.js";
 export type { AuditRecord, AuditQuery, AuditActor, AuditEventType } from "./types.js";

@@ -68,7 +68,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
   const draftExists = !!pointer?.draftSlot;
-  let createdBy: { id: string; email?: string; role?: string; ts: string } | undefined;
+  let createdBy: { id: string; email: string | null; role: string | null; ts: string } | undefined;
   if (draftExists) {
     const [mostRecentCreate] = await store.listAudit({ namespace, eventType: "createDraft", limit: 1 });
     if (mostRecentCreate) {

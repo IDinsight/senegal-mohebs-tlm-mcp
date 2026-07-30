@@ -23,6 +23,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { getKgStore } from "./adapter.js";
+import { toAuditActor } from "./audit.js";
 import { validateStructural } from "./validate.js";
 import type { AuditRecord, DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, Slot, StoredMeta, ValidationResult } from "./types.js";
 export type { DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, ValidationResult } from "./types.js";
@@ -241,7 +242,7 @@ export async function runGraphMutation<Args>(
   // verbatim rather than fabricating a fake actor. Role is snapshot too so
   // audit reviews see WHO WAS a curator/approver when this happened.
   const actor = currentActor();
-  const auditActor = { id: actor.id, email: actor.email, tokenIssuer: actor.tokenIssuer, role: actor.role, unknown: actor.unknown };
+  const auditActor = toAuditActor(actor);
 
   // Small helper: emit one blocked-attempt audit record. Fire-and-forget from
   // the caller's perspective — but we `await` it so a store failure surfaces
@@ -427,8 +428,7 @@ export type DiscardResult =
 // wrappers don't reach into runGraphMutation's internals.
 function snapshotActor(): { actor: Actor; auditActor: AuditRecord["actor"] } {
   const actor = currentActor();
-  const auditActor = { id: actor.id, email: actor.email, tokenIssuer: actor.tokenIssuer, role: actor.role, unknown: actor.unknown };
-  return { actor, auditActor };
+  return { actor, auditActor: toAuditActor(actor) };
 }
 
 // The apply records that would be promoted by publishing / discarded by

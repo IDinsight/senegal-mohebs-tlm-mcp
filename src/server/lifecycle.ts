@@ -28,6 +28,7 @@ import {
   upsertProperty,
   kgNamespace,
   getKgStore,
+  toAuditActor,
 } from "../kg-store/index.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
@@ -63,7 +64,7 @@ export function registerLifecycleTools(server: McpServer) {
         await getKgStore().appendAudit({
           id: randomUUID(),
           ts: new Date().toISOString(),
-          actor: { id: actor.id, email: actor.email, tokenIssuer: actor.tokenIssuer, role: actor.role, unknown: actor.unknown },
+          actor: toAuditActor(actor),
           namespace: ns,
           eventType: "blocked",
           reason: `unauthorized: ${authz.reason}`,

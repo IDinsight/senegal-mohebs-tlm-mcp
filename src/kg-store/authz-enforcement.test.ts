@@ -302,7 +302,7 @@ describe("unknown / no-role actor", () => {
     const blocked = await store.listAudit({ namespace: ns, eventType: "blocked" });
     expect(blocked[0].actor.id).toBe(SIGNED_IN_NO_ROLE.id);
     expect(blocked[0].actor.unknown).toBe(false);
-    expect(blocked[0].actor.role).toBeUndefined();
+    expect(blocked[0].actor.role).toBeNull();
   });
 
   it("unknown cannot publish or discard either", async () => {

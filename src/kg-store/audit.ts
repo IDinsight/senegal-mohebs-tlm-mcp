@@ -25,7 +25,22 @@
 // transaction as the state write (see firestore.ts). For `blocked` there is
 // no state change to join — plain append.
 
-import type { AuditQuery, AuditRecord } from "./types.js";
+import type { Actor } from "../actor.js";
+import type { AuditActor, AuditQuery, AuditRecord } from "./types.js";
+
+// Build the audit-friendly projection of an Actor. Coerces `undefined` to
+// `null` on the optional identity/role fields so the doc is Firestore-safe
+// (Firestore rejects `undefined` values). Every audit-write site MUST go
+// through this — do not spread actor fields inline.
+export function toAuditActor(actor: Actor): AuditActor {
+  return {
+    id: actor.id,
+    email: actor.email ?? null,
+    tokenIssuer: actor.tokenIssuer ?? null,
+    role: actor.role ?? null,
+    unknown: actor.unknown,
+  };
+}
 
 // True if the record satisfies every set field in the filter. Used by both
 // memory and firestore backends after the coarse cursor read.

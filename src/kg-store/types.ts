@@ -129,15 +129,22 @@ export interface KgNodeStore {
 
 export type AuditActor = {
   id: string;
-  email?: string;
-  tokenIssuer?: string;
+  // `null` — not `undefined` — for missing values. Firestore's default
+  // settings reject `undefined` field values on write, so the denial path
+  // itself would crash for a no-role/unknown actor. Normalizing here at the
+  // source keeps writes serializable and lets audit readers distinguish
+  // "field was absent" from a missing key on the doc. The helper
+  // `toAuditActor(actor)` in audit.ts is the one place that does the
+  // coercion — never build this object inline.
+  email: string | null;
+  tokenIssuer: string | null;
   /**
    * The actor's role at the time of the event, snapshot from the verified
    * JWT claim (see #8). Preserved on the record so an audit review sees
    * WHO WAS a curator/approver when this happened, not who is one now.
-   * `undefined` = signed in with no role, or unknown actor.
+   * `null` = signed in with no role, or unknown actor.
    */
-  role?: "curator" | "approver";
+  role: "curator" | "approver" | null;
   unknown: boolean;
 };
 

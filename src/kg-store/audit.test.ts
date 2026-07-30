@@ -345,7 +345,7 @@ describe("append-only surface", () => {
   it("appendAudit persists a record that listAudit returns", async () => {
     const record: AuditRecord = {
       id: randomUUID(), ts: "2026-07-30T12:00:00Z",
-      actor: { id: "u1", unknown: false },
+      actor: { id: "u1", email: null, tokenIssuer: null, role: null, unknown: false },
       namespace: ns, eventType: "blocked",
       mutation: "test/mut", reason: "manual",
     };
@@ -362,9 +362,9 @@ describe("listAudit filters", () => {
     const now = "2026-07-30T10:00:00Z";
     const later = "2026-07-30T11:00:00Z";
     const records: AuditRecord[] = [
-      { id: "1", ts: now,   actor: { id: "alice", unknown: false }, namespace: ns, eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
-      { id: "2", ts: later, actor: { id: "bob",   unknown: false }, namespace: ns, eventType: "blocked", mutation: "m", reason: "r" },
-      { id: "3", ts: now,   actor: { id: "alice", unknown: false }, namespace: "other-ns", eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
+      { id: "1", ts: now,   actor: { id: "alice", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: ns, eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
+      { id: "2", ts: later, actor: { id: "bob", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: ns, eventType: "blocked", mutation: "m", reason: "r" },
+      { id: "3", ts: now,   actor: { id: "alice", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: "other-ns", eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
     ];
     for (const r of records) await store.appendAudit(r);
 
@@ -381,11 +381,32 @@ describe("listAudit filters", () => {
     expect(all[0].id).toBe("2"); // later ts wins
   });
 
+  // Firestore rejects `undefined` field values by default — a denial-path
+  // audit that carries an unknown/no-role actor would crash the whole
+  // request if `email`/`tokenIssuer`/`role` were left as `undefined` on the
+  // record. toAuditActor is the single funnel that normalizes those to
+  // `null`; this test pins the invariant so it can't silently regress.
+  it("toAuditActor emits null (never undefined) for absent identity/role fields", async () => {
+    const { toAuditActor } = await import("./audit.js");
+    // Signed-in, no-role, no email.
+    const noRole = toAuditActor({ id: "u", unknown: false });
+    expect(noRole.role).toBeNull();
+    expect(noRole.email).toBeNull();
+    expect(noRole.tokenIssuer).toBeNull();
+    expect(Object.values(noRole)).not.toContain(undefined);
+    // Unknown actor.
+    const unknown = toAuditActor({ id: "unknown", unknown: true });
+    expect(Object.values(unknown)).not.toContain(undefined);
+    // Fully-populated actor.
+    const curator = toAuditActor({ id: "c", email: "c@x", tokenIssuer: "iss", role: "curator", unknown: false });
+    expect(curator).toEqual({ id: "c", email: "c@x", tokenIssuer: "iss", role: "curator", unknown: false });
+  });
+
   it("limit caps the result count", async () => {
     for (const i of [1, 2, 3, 4, 5]) {
       await store.appendAudit({
         id: `q${i}`, ts: `2026-07-30T10:0${i}:00Z`,
-        actor: { id: "a", unknown: false }, namespace: ns, eventType: "blocked",
+        actor: { id: "a", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: ns, eventType: "blocked",
         mutation: "m", reason: "r",
       });
     }
