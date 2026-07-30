@@ -162,6 +162,29 @@ Two server-side authorization roles gate every graph state change:
 
 **Not gated here.** The document tools (`create_upload_url`, `log_generation`, `record_document_content`) remain open — this step covers graph writes only. A follow-on could extend role-gating to document writes if desired.
 
+### The curator loop — end to end
+
+Four MCP tools close the loop:
+
+- **`diff_draft`** — read-only. Returns the CUMULATIVE draft-vs-published diff for the active grade/subject. This is the "approver's view" — everything that will go live on publish. Curator + approver only; unknown/no-role callers are blocked (a draft is pre-publish work-in-progress).
+- **`upsert_property(nodeId, key, value)`** — the first real edit. `key` is a **logical** wording name (`"title"`, `"text"`, `"title_en"`, `"text_en"`); the active subject's adapter (`SubjectAdapter.wordingAliases`) resolves it to the concrete storage paths its wording lives under, and updates them **atomically in one call**. For maths chapters, `title` covers both `properties.title` (what presenters read) and `properties.raw.chapitreTitre` (the source-truth) — the curator doesn't need to know the storage layout. Two-phase confirm from #5: dry-run returns a per-mutation diff + token; confirm applies to the draft. Curator + approver.
+- **`publish_draft`** — approver only. Two-phase: dry-run shows the whole-draft diff + a draft-level token; confirm promotes atomically via #7's audit, with self-authorship marked per #8. If the draft moved since dry-run (someone else edited), confirm is rejected (retry).
+- **`discard_draft`** — curator or approver. Two-phase: dry-run shows what will be thrown away; confirm drops the draft. Published is byte-untouched. Audited.
+
+**Two kinds of diff.** `upsert_property`'s dry-run returns a **per-mutation diff** — what THIS edit alone would change. `diff_draft` and `publish_draft`'s dry-run return the **whole-draft diff** — the cumulative view across every edit landed on the draft. They coincide when the draft has one edit; they diverge with more.
+
+**Pilot edit surface — term wording only.** Only logical keys `title` / `text` / `title_en` / `text_en` are editable, only on node kinds the adapter declares them for, and only when the underlying storage paths currently hold a non-null string (the "existing key" rule: fix wording that's there, don't create new fields). A central `UPSERT_PROPERTY_SAFE_PATHS` allowlist inside the mutation is the safety net — a rogue adapter can't expand the editable surface by declaring an unlisted path. Structural properties (`statementCode`, `chapitreNum`, edge from/to, ids) and non-wording node types stay read-only; those open in #12.
+
+**End-to-end example** (assuming set_context is done):
+
+```
+curator: upsert_property(nodeId=..., key="title", value="…") → dry-run: diff + token
+curator: upsert_property(..., confirm:true, confirmationToken:...) → applied to draft
+approver: diff_draft() → sees the whole-draft diff (1 change)
+approver: publish_draft() → dry-run: diff + draft-level token
+approver: publish_draft(confirm:true, confirmationToken:...) → promoted, generation now reads the new wording
+```
+
 **Concurrency of edits is an open decision for the next step.** With no write tools this step doesn't exercise contention. When writes land (#5/#11), the team will need to pick a strategy — optimistic version counter on each edit, an explicit "who holds the draft" lock, or per-user drafts. The two-slot foundation supports any of them; nothing about it locks in the choice.
 
 **Re-seeding after a publish.** The seed always writes into slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op if one already exists). Once a curator publishes (which flips `publishedSlot` to `b`), a re-seed writes to `a` — which is now a stale side copy, not the live published data. The seed logs a WARNING when it detects this; reconciling it deliberately (typically by making the fresh bundle the next draft rather than the next seed) is the operator's call.

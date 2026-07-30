@@ -137,12 +137,42 @@ export type Capabilities = {
 // adapter implements them). Present only when the corresponding capability is
 // enabled; gated at the tool boundary in src/server/*.
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Wording aliases for `upsert_property` (#10). Maps a logical wording key
+ * a curator would ask about (`"title"`, `"text"`, `"title_en"`, `"text_en"`)
+ * to the concrete `StoredNode.properties` paths that back it for a given
+ * node kind. When both a normalized field (e.g. `title`) and its raw
+ * source (`raw.chapitreTitre`) hold the same wording, the adapter lists
+ * BOTH here so one curator call updates them together — the "call twice
+ * or drift" trap doesn't reach the curator's mental model.
+ *
+ * Paths are dot-notation relative to `StoredNode.properties`, e.g.
+ * `"title"` or `"raw.chapitreTitre"`. The mutation validates every path
+ * against a central safety allowlist regardless — a rogue adapter cannot
+ * expand the editable surface by declaring a path outside the pilot.
+ *
+ * Empty declaration (`{}`) is legitimate for a subject whose adapter
+ * doesn't yet expose editable wording.
+ */
+export type WordingAliases = {
+  [nodeKind: string]: {
+    [logicalKey: string]: readonly string[];
+  };
+};
+
 export interface SubjectAdapter {
   readonly grade: string;
   readonly subject: string;
   readonly id: string;                          // stable adapter id, e.g. "ci-maths/graph-array-v1"
   readonly deliverables: DeliverableSpec[];
   readonly capabilities: Capabilities;
+  /**
+   * The wording paths a curator may edit via `upsert_property` (#10). Each
+   * entry names a node kind, then the logical wording keys available on
+   * that kind and the storage paths each key updates atomically. See
+   * `WordingAliases`. Declare `{}` for a subject with no editable wording.
+   */
+  readonly wordingAliases: WordingAliases;
 
   // Raw envelope → normalized CurriculumModel. Owns all raw-schema knowledge
   // (envelope layout, endpoint keying, node taxonomy). detect() is the schema

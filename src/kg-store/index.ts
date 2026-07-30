@@ -6,10 +6,14 @@ export { createMemoryKgStore } from "./memory.js";
 export type { KgNodeStore, Slot, StoredNode, StoredEdge, StoredMeta, StoredPointer } from "./types.js";
 export { otherSlot } from "./types.js";
 export { runGraphMutation, publishDraft, discardDraft, diffGraphs, __resetMutationsForTest } from "./mutations.js";
+export { diffDraft, publishDraftWithConfirm, discardDraftWithConfirm, __resetDraftTokensForTest } from "./mutations.js";
+export { upsertProperty, UPSERT_PROPERTY_SAFE_PATHS } from "./mutations.js";
 export type {
   GraphMutation, MutationGraph, MutationNode, MutationEdge, ValidationResult,
   GraphDiff, DiffEntry, GraphPreviewResult, GraphBlockedResult, GraphApplyResult, GraphUnauthorizedResult,
   RunGraphMutationArgs, PublishResult, DiscardResult,
+  WholeDraftDiff, PublishConfirmResult, PublishConfirmPreview, DiscardConfirmResult, DiscardConfirmPreview,
+  UpsertPropertyArgs,
 } from "./mutations.js";
 export { validateStructural } from "./validate.js";
 export { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";

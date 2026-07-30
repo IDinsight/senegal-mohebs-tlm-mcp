@@ -206,6 +206,18 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
     id: ADAPTER_ID,
     deliverables: DELIVERABLES,
     capabilities: { exampleDomainRotation: false, characterConsistency: true },
+    // Reading's wording lives in `text` (normalized) + `raw.description`
+    // (source) on strand standards and their learning components. Weeks
+    // are grouping nodes whose title is derived from the week number —
+    // no editable wording. See `WordingAliases` in src/types.ts.
+    wordingAliases: {
+      standard: {
+        text: ["text", "raw.description"],
+      },
+      component: {
+        text: ["text", "raw.description"],
+      },
+    },
 
     detect, parse,
 

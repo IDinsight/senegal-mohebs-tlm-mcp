@@ -9,6 +9,7 @@ import { registerCurriculumTools } from "./curriculum.js";
 import { registerGenerationTools } from "./generation.js";
 import { registerMathsTools } from "./maths.js";
 import { registerDocumentTools } from "./documents.js";
+import { registerLifecycleTools } from "./lifecycle.js";
 
 export function buildServer(): McpServer {
   const server = new McpServer({ name: "senegal-mohebs-tlm-server", version: "0.4.0" });
@@ -17,5 +18,6 @@ export function buildServer(): McpServer {
   registerGenerationTools(server);   // get_prompt, get_generation_context
   registerMathsTools(server);        // suggest_fresh_domain, domain_usage (maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log
+  registerLifecycleTools(server);    // diff_draft, upsert_property, publish_draft, discard_draft
   return server;
 }

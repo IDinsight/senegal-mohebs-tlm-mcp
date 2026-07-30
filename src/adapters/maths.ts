@@ -188,6 +188,30 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
     id: ADAPTER_ID,
     deliverables: DELIVERABLES,
     capabilities: { exampleDomainRotation: true, characterConsistency: true },
+    // Wording paths a curator may edit via upsert_property (#10). Each
+    // logical key maps to the storage paths its wording is stored under.
+    // Chapter's title lives in BOTH the normalized field (what presenters
+    // read) AND the raw source (what preserves the source graph faithfully)
+    // — declaring both here means one curator call keeps them in sync
+    // without the curator having to know the storage layout.
+    wordingAliases: {
+      chapter: {
+        title:    ["title", "raw.chapitreTitre"],
+        title_en: ["raw.chapitreTitre_en"],
+      },
+      lesson: {
+        text:    ["text", "raw.osTexte"],
+        text_en: ["raw.osTexte_en"],
+      },
+      component: {
+        text:    ["text", "raw.description"],
+        text_en: ["raw.description_en"],
+      },
+      task: {
+        text:    ["text", "raw.description"],
+        text_en: ["raw.description_en"],
+      },
+    },
 
     detect, parse,
 

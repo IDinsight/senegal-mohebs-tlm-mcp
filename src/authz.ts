@@ -21,7 +21,7 @@
 
 import type { Actor } from "./actor.js";
 
-export type AuthAction = "apply" | "discard" | "publish";
+export type AuthAction = "apply" | "discard" | "publish" | "readDraft";
 
 export type AuthResult =
   | { ok: true }
@@ -37,8 +37,12 @@ export function authorize(actor: Actor, action: AuthAction, _namespace: string):
   switch (action) {
     case "apply":
     case "discard":
+    case "readDraft":
       // Curator and approver both allowed. Approver is a superset — see
-      // README "Curator / approver roles".
+      // README "Curator / approver roles". readDraft (used by #9's
+      // diff_draft tool) is the read side of the draft: same allow set,
+      // since a draft is pre-publish work-in-progress that non-participants
+      // shouldn't see.
       return { ok: true };
     case "publish":
       if (actor.role === "approver") return { ok: true };
