@@ -227,6 +227,7 @@ async function main() {
         msg: "tool_call",
         actor: actor.id,
         actorEmail: actor.email,
+        actorRole: actor.role,
         unknown: actor.unknown || undefined,
         method,
         tool: toolName,
