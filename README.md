@@ -185,6 +185,20 @@ approver: publish_draft() → dry-run: diff + draft-level token
 approver: publish_draft(confirm:true, confirmationToken:...) → promoted, generation now reads the new wording
 ```
 
+### `get_capabilities` — a truthful mirror of "what can I do?"
+
+`get_capabilities` is a read-only tool that reports, for the currently-authenticated caller and the active grade/subject:
+
+- **actor** — verified id, whether the caller is known, and their role (`curator` / `approver` / `null`), all from the JWT — never client-supplied.
+- **actions** — which of `canReadGenerate` / `canReadDraft` / `canEditDraft` / `canDiscardDraft` / `canPublish` are allowed. **Each value is computed by calling `authorize()` — the same function every write tool actually uses.** No role-mapping logic lives in the tool itself.
+- **draft** — whether a draft is open on this namespace, and (if so) who created it and when (from the audit log). Useful for a second curator to see they'd be editing someone else's draft.
+- **editable** — the pilot scope: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist. Both are read from source, not retyped.
+- **rules** — the structural rules (id-immutable, no-orphan) as descriptions imported from `validate.ts`, plus the two-phase confirm expectation.
+
+**Why it exists.** So Claude can tell a curator accurately what they can and cannot do BEFORE trying — instead of discovering limits by hitting errors, or inferring from tool names. Available to any caller: an unknown user gets a truthful "read/generate only" response, not a 401.
+
+**Guarantee.** A mirror-property test asserts, for every role and every gated action, that `get_capabilities.actions.canX === authorize(actor, X, ns).ok`. If those ever disagree, one of them is a copy that drifted — the test catches it. This tool cannot lie about permissions by design.
+
 **Concurrency of edits is an open decision for the next step.** With no write tools this step doesn't exercise contention. When writes land (#5/#11), the team will need to pick a strategy — optimistic version counter on each edit, an explicit "who holds the draft" lock, or per-user drafts. The two-slot foundation supports any of them; nothing about it locks in the choice.
 
 **Re-seeding after a publish.** The seed always writes into slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op if one already exists). Once a curator publishes (which flips `publishedSlot` to `b`), a re-seed writes to `a` — which is now a stale side copy, not the live published data. The seed logs a WARNING when it detects this; reconciling it deliberately (typically by making the fresh bundle the next draft rather than the next seed) is the operator's call.

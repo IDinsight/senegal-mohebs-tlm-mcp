@@ -22,6 +22,16 @@
 
 import type { MutationEdge, MutationGraph, MutationNode, ValidationResult } from "./types.js";
 
+// Human-readable descriptions of the structural rules enforced by
+// validateStructural. Read by the get_capabilities tool (#11) so Claude
+// can set expectations for a curator BEFORE they try an edit. Editing a
+// description here changes it everywhere — the tool imports from this
+// module rather than retyping a copy.
+export const STRUCTURAL_RULES: readonly string[] = [
+  "Rule 1 (id-immutable): node and edge ids never change. Every reference in the graph points at them; a silent rename would orphan everything. A remove/add pair with the same content but a different id is rejected as a rename attempt.",
+  "Rule 2 (no-orphan): every edge's from/to must resolve to a node that exists in the graph after the edit. A removed node with surviving incident edges is rejected.",
+];
+
 // Two nodes/edges "look like the same thing" when everything except the id
 // matches. If that's true across a remove/add pair, the edit was a rename —
 // which is exactly what Rule 1 blocks.
