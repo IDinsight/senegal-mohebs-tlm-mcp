@@ -72,32 +72,120 @@ export interface KgNodeStore {
   readMeta(namespace: string, slot: Slot): Promise<StoredMeta | null>;
   readPointer(namespace: string): Promise<StoredPointer | null>;
 
-  // ── Wholesale slot write (seed + createDraft's internal copy) ──────────────
+  // ── Wholesale slot write (seed + createDraft's internal copy + apply) ──────
   // Idempotent: after this returns, the store's state for (namespace, slot)
   // equals exactly the passed nodes/edges/meta. Stale docs in that slot are
   // removed. Does NOT touch the pointer. The `slot` field is a storage-time
   // concern — callers pass nodes/edges without it and the store tags them.
-  writeSlot(namespace: string, slot: Slot, batch: SlotWriteBatch): Promise<void>;
+  //
+  // `audit` is optional at this interface (the seed script writes without an
+  // audit context, and #4's lifecycle tests predate #7). When passed, the
+  // backend commits it in the SAME transaction as the final pointer meta
+  // touch — see firestore.ts. Every runtime state-changing call goes through
+  // runGraphMutation, which always supplies an audit; this parameter is
+  // optional here only to keep the seed path untouched.
+  writeSlot(namespace: string, slot: Slot, batch: SlotWriteBatch, audit?: AuditRecord): Promise<void>;
 
   // Set the pointer to publishedSlot if no pointer exists yet; no-op otherwise.
   // Used by the seed script so the first seed also stamps the initial pointer.
   ensurePointer(namespace: string, publishedSlot: Slot): Promise<void>;
 
   // ── Lifecycle (draft ⇄ published) ─────────────────────────────────────────
+  // Every lifecycle op accepts an optional `audit`. When passed, the backend
+  // commits the audit doc in the same Firestore transaction that flips the
+  // pointer (or in the same synchronous op for the memory backend), so a
+  // committed state change always has its record.
+  //
   // createDraft: if no draft exists, copy the published slot into the free
   //   slot and set draftSlot in the pointer LAST (so a half-copied draft is
   //   invisible to readers). If a draft already exists, no-op (idempotent).
   //   Errors if the namespace has never been seeded (no pointer).
-  createDraft(namespace: string): Promise<void>;
+  createDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
   // publishDraft: atomic single-doc pointer flip —
   //   publishedSlot := draftSlot; draftSlot := null.
   // The old published data is orphaned in place until the next createDraft
   // overwrites its slot. Errors if no draft exists.
-  publishDraft(namespace: string): Promise<void>;
+  publishDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
   // discardDraft: single-doc pointer write — draftSlot := null. Orphaned draft
   // docs remain until the next createDraft overwrites them. No-op if no
   // draft exists.
-  discardDraft(namespace: string): Promise<void>;
+  discardDraft(namespace: string, audit?: AuditRecord): Promise<void>;
+
+  // ── Audit surface (append-only) ────────────────────────────────────────────
+  // No update / delete method — records go through `set` on a fresh doc id
+  // only. `appendAudit` is used for events that do NOT accompany a state
+  // change (blocked attempts); events that DO accompany a state change ride
+  // that call's `audit` parameter so both are committed together.
+  appendAudit(record: AuditRecord): Promise<void>;
+  listAudit(query: AuditQuery): Promise<AuditRecord[]>;
 }
+
+// ─── Audit types ─────────────────────────────────────────────────────────────
+// Types live here (leaf) so KgNodeStore can reference them without cycling
+// through audit.ts. The runtime helpers that operate on records
+// (matchesAuditQuery, sortAuditNewestFirst) stay in audit.ts.
+
+export type AuditActor = {
+  id: string;
+  email?: string;
+  tokenIssuer?: string;
+  unknown: boolean;
+};
+
+export type AuditEventType = "apply" | "createDraft" | "publish" | "discard" | "blocked";
+
+// One flat shape covers every event type. Fields are populated per event;
+// which ones apply is discriminated by `eventType`. Kept flat (rather than a
+// discriminated union) so Firestore doc writes and cross-event queries stay
+// straightforward — the reader picks the fields it cares about.
+export type AuditRecord = {
+  id: string;                          // uuid; also the Firestore doc id
+  ts: string;                          // ISO-8601 UTC
+  actor: AuditActor;
+  namespace: string;
+  eventType: AuditEventType;
+
+  // Populated per event type:
+  mutation?: string;                   // apply | blocked
+  baseVersion?: string;                // apply | createDraft | publish | discard
+  resultingVersion?: string;           // apply | publish
+  diff?: GraphDiff;                    // apply (inline; see #5)
+  promotedApplyIds?: string[];         // publish
+  discardedApplyIds?: string[];        // discard
+  reason?: string;                     // blocked
+};
+
+// Query surface — a minimal internal filter. Not user-facing; #7 does not
+// ship an audit browser. Fields compose as an AND.
+export type AuditQuery = {
+  namespace?: string;
+  actorId?: string;
+  eventType?: AuditEventType;
+  sinceTs?: string;                    // inclusive ISO-8601
+  untilTs?: string;                    // inclusive ISO-8601
+  limit?: number;                      // default: all matches
+};
+
+// ─── Types the graph-mutation framework shares with the validators ───────────
+// A mutation reads/writes a graph without the storage-level `slot` tag (the
+// store adds that at writeSlot time). Kept here (leaf) so both mutations.ts
+// and validate.ts can import them without creating a cycle.
+export type MutationNode = Omit<StoredNode, "slot">;
+export type MutationEdge = Omit<StoredEdge, "slot">;
+export type MutationGraph = { nodes: MutationNode[]; edges: MutationEdge[] };
+
+// Shape returned by every validate function — the framework and the shared
+// structural rules alike. `errors` blocks confirmation; `warnings` rides
+// alongside a normal preview envelope.
+export type ValidationResult = { errors: string[]; warnings: string[] };
+
+// Per-mutation diff (see #5). Lives here rather than in mutations.ts so
+// audit.ts can reference the diff shape without importing mutations — that
+// would create a cycle through the KgNodeStore interface.
+export type DiffEntry = { id: string; before?: unknown; after?: unknown };
+export type GraphDiff = {
+  nodes: { added: DiffEntry[]; removed: DiffEntry[]; changed: DiffEntry[] };
+  edges: { added: DiffEntry[]; removed: DiffEntry[]; changed: DiffEntry[] };
+};

@@ -11,3 +11,6 @@ export type {
   GraphDiff, DiffEntry, GraphPreviewResult, GraphBlockedResult, GraphApplyResult,
   RunGraphMutationArgs,
 } from "./mutations.js";
+export { validateStructural } from "./validate.js";
+export { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";
+export type { AuditRecord, AuditQuery, AuditActor, AuditEventType } from "./types.js";

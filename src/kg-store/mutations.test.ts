@@ -71,10 +71,13 @@ const deleteNode: GraphMutation<DeleteArgs> = {
 };
 
 // A validating mutation — proves the seam. Errors when args.value is null.
+// The seam is now (base, after, args); this mutation ignores `after` because
+// its check only looks at intent, but the signature matches so structural
+// rules and mutation-specific rules share the same shape.
 const validatingMutation: GraphMutation<SetPropArgs> = {
   name: "test/validating",
   describe: (a) => `validating set '${a.key}' on '${a.nodeId}'`,
-  validate: (_base, args) => ({
+  validate: (_base, _after, args) => ({
     errors: args.value === null ? ["value must not be null"] : [],
     warnings: typeof args.value === "string" && args.value.length > 20 ? ["value is unusually long"] : [],
   }),

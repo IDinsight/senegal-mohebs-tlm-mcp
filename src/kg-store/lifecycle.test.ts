@@ -221,6 +221,8 @@ describe("bundle mode is untouched by the lifecycle", () => {
       createDraft: async () => { throw new Error("bundle mode must not touch createDraft"); },
       publishDraft: async () => { throw new Error("bundle mode must not touch publishDraft"); },
       discardDraft: async () => { throw new Error("bundle mode must not touch discardDraft"); },
+      appendAudit: async () => { throw new Error("bundle mode must not touch appendAudit"); },
+      listAudit: async () => { throw new Error("bundle mode must not touch listAudit"); },
     };
     __setKgStoreForTest(tripwire);
     process.env.KG_SOURCE = "bundle";

@@ -15,8 +15,9 @@
 // modules can call it independently without stepping on each other.
 import { createRequire } from "node:module";
 import { CONFIG } from "../config.js";
-import type { KgNodeStore, Slot, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
+import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
 import { otherSlot } from "./types.js";
+import { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";
 
 const require = createRequire(import.meta.url);
 
@@ -77,6 +78,13 @@ const docId = (ns: string, slot: Slot, id: string) => `${nsSlug(ns)}::${slot}::$
 const NODES = "kg_nodes";
 const EDGES = "kg_edges";
 const POINTERS = "kg_pointers";
+// Append-only audit collection. Every state-changing graph op writes a doc
+// here in the SAME transaction as its state write; blocked-attempt records
+// are plain `create` writes (no state to join). No code path calls update()
+// or delete() on these docs — see appendAudit / listAudit below. A future
+// Firestore security rule can lock this in externally; for now the barrier
+// is the write-only surface exposed by KgNodeStore.
+const AUDIT = "kg_audit";
 // Firestore caps a WriteBatch at 500 operations. We stay a bit under to leave
 // headroom.
 const BATCH_MAX = 450;
@@ -142,7 +150,7 @@ export function createFirestoreKgStore(): KgNodeStore {
       return { publishedSlot: p.publishedSlot, draftSlot: p.draftSlot ?? null };
     },
 
-    async writeSlot(namespace, slot, batch) {
+    async writeSlot(namespace, slot, batch, audit) {
       // Idempotency (per slot): upsert target ids, delete stragglers in this
       // slot only. The other slot is untouched — critical for createDraft's
       // copy phase not to disturb the published data.
@@ -163,10 +171,22 @@ export function createFirestoreKgStore(): KgNodeStore {
       await commitInChunks(db, nodeDeletes, (b, r) => { b.delete(r); });
       await commitInChunks(db, edgeDeletes, (b, r) => { b.delete(r); });
 
-      // Stash the slot's meta on the pointer doc via a merge-preserving write.
-      // The pointer's slot fields (publishedSlot/draftSlot) are handled by
-      // ensurePointer / lifecycle ops; here we only touch the meta cell.
-      await pointerRef(namespace).set({ [metaField(slot)]: { ...batch.meta } }, { merge: true });
+      // Final step: stash the slot's meta on the pointer doc AND — when the
+      // caller passed an audit — write the audit doc, in the SAME
+      // transaction. Firestore's single-doc write guarantee makes the meta
+      // touch atomic; adding the audit set to the same tx extends that
+      // guarantee to the audit doc. If this tx fails, neither writes and the
+      // caller sees the throw. Note: the bulk node/edge writes above are NOT
+      // in this transaction (Firestore txns cap at 500 writes) — a crash
+      // between them and this final tx leaves an inconsistent slot with no
+      // audit, which is the same partial-write window #4 already had.
+      await db.runTransaction(async (tx) => {
+        const pRef = pointerRef(namespace);
+        const doc = await tx.get(pRef as unknown as FsDocRef);
+        const prev = (doc.data() as PointerDoc | undefined) ?? {};
+        tx.set(pRef as unknown as FsDocRef, { ...prev, [metaField(slot)]: { ...batch.meta } }, { merge: true });
+        if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
+      });
     },
 
     async ensurePointer(namespace, publishedSlot) {
@@ -181,7 +201,7 @@ export function createFirestoreKgStore(): KgNodeStore {
       });
     },
 
-    async createDraft(namespace) {
+    async createDraft(namespace, audit) {
       // Read the current pointer OUTSIDE a transaction: the copy step itself
       // is long-running and cannot be inside a Firestore transaction (which
       // caps at 500 writes and a few seconds). Race safety is achieved by
@@ -232,15 +252,19 @@ export function createFirestoreKgStore(): KgNodeStore {
           // an inconsistent pointer; a retry will read the new published slot.
           throw new Error(`createDraft: '${namespace}' was published concurrently; retry.`);
         }
-        if (p.draftSlot) return; // another createDraft finished first — accept it
+        if (p.draftSlot) return; // another createDraft finished first — accept it (no audit either)
         tx.update(ref as unknown as FsDocRef, { draftSlot: to, [metaField(to)]: p[metaField(from)] ?? null });
+        // Join the audit doc into this same pointer transaction — the draft
+        // is only observable once THIS commits, so audit and state agree.
+        if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },
 
-    async publishDraft(namespace) {
+    async publishDraft(namespace, audit) {
       // Single-doc transaction: read current pointer, flip published/draft.
       // Atomic by Firestore's single-doc write guarantee — no reader ever
-      // observes a partial state.
+      // observes a partial state. The audit doc write is added to the same
+      // tx so a committed publish always has its record.
       await db.runTransaction(async (tx) => {
         const ref = pointerRef(namespace);
         const doc = await tx.get(ref as unknown as FsDocRef);
@@ -248,19 +272,48 @@ export function createFirestoreKgStore(): KgNodeStore {
         if (!p) throw new Error(`publishDraft: namespace '${namespace}' has no pointer.`);
         if (!p.draftSlot) throw new Error(`publishDraft: namespace '${namespace}' has no draft to publish.`);
         tx.update(ref as unknown as FsDocRef, { publishedSlot: p.draftSlot, draftSlot: null });
+        if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },
 
-    async discardDraft(namespace) {
+    async discardDraft(namespace, audit) {
       await db.runTransaction(async (tx) => {
         const ref = pointerRef(namespace);
         const doc = await tx.get(ref as unknown as FsDocRef);
         const p = (doc.data() as PointerDoc | undefined) ?? null;
-        if (!p || !p.draftSlot) return; // idempotent no-op
+        if (!p || !p.draftSlot) return; // idempotent no-op — no audit either
         // Clear the draft slot's meta cell alongside the pointer so a fresh
         // createDraft doesn't inherit a stale meta.
         tx.update(ref as unknown as FsDocRef, { draftSlot: null, [metaField(p.draftSlot)]: null });
+        if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
+    },
+
+    // ── Append-only audit surface ──────────────────────────────────────────
+    // appendAudit is only used for records that do NOT accompany a state
+    // change (blocked attempts). Records that DO accompany a state change
+    // ride the call's `audit` parameter and are committed inside the same
+    // transaction as the state write — see writeSlot / createDraft /
+    // publishDraft / discardDraft above.
+    async appendAudit(record) {
+      // create-style write on a fresh doc id — never an update / delete.
+      await db.collection(AUDIT).doc(record.id).set(record as unknown as Record<string, unknown>);
+    },
+
+    async listAudit(query) {
+      // Coarse filter server-side by whatever's easiest to index (namespace,
+      // eventType, actorId, ts range), then re-run matchesAuditQuery locally
+      // to enforce the exact contract regardless of how many predicates
+      // Firestore accepted in one composite query.
+      let q: FsQuery = db.collection(AUDIT);
+      if (query.namespace != null) q = (q as FsCollection).where("namespace", "==", query.namespace);
+      if (query.eventType != null) q = (q as FsCollection).where("eventType", "==", query.eventType);
+      if (query.actorId != null) q = (q as FsCollection).where("actor.id", "==", query.actorId);
+      if (query.sinceTs != null) q = (q as FsCollection).where("ts", ">=", query.sinceTs);
+      if (query.untilTs != null) q = (q as FsCollection).where("ts", "<=", query.untilTs);
+      const snap = await q.get();
+      const rows = snap.docs.map((d) => d.data() as AuditRecord).filter((r) => matchesAuditQuery(r, query));
+      return sortAuditNewestFirst(rows).slice(0, query.limit ?? Infinity);
     },
   };
 }

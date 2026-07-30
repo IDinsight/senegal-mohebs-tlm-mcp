@@ -103,7 +103,42 @@ Sits on top of the draft/published split. A **graph mutation** is a pure functio
 
 The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(type, from, to)` for edges) — friendly properties like `chapitreNum` live in `properties.raw` and are NEVER used as identity. A stale token (base moved between preview and confirm) or a replayed token is rejected cleanly with no partial apply. See [`docs/kg-mutations-framework.md`](docs/kg-mutations-framework.md) for the full design note, decisions, and the mutation interface.
 
-**No user-facing graph edit tool ships in this step.** The framework has exactly one test-only mutation, wired inside `mutations.test.ts` — real edit tools (`upsert_property` / `create_node` / `delete_node` / `link_nodes`) land in #11/#12 and will supply mutation-specific `validate` implementations against write-safety rules (#6) that today are a pass-through empty seam.
+**No user-facing graph edit tool ships in this step.** The framework has exactly one test-only mutation, wired inside `mutations.test.ts` — real edit tools (`upsert_property` / `create_node` / `delete_node` / `link_nodes`) land in #11/#12.
+
+### Write-safety rules (structural only)
+
+Every graph mutation goes through two shared structural rules in [`src/kg-store/validate.ts`](src/kg-store/validate.ts) before the human review gate. Errors from either rule **block confirmation** — no token is issued, so there's nothing to replay.
+
+- **Rule 1 (id-immutable).** A node's id is the LC IRI verbatim; an edge's id is `edgeId(type, from, to)`. Every reference in the graph points at these ids, so a silent rename would orphan everything the reviewer can't easily see in a diff. The rule detects a rename by looking for a removed node/edge and an added node/edge that share the same content — that pair is treated as a rename attempt and rejected. Legitimate delete-then-create (genuinely different content) passes.
+- **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Rule 2 is built and tested now but only becomes load-bearing when #12 introduces delete/relink mutations — today, no mutation removes nodes or edges, so it's trivially satisfied.
+
+**Denylist = just the `id` key** (on nodes and edges). References in this graph are edges-only at the storage level — `properties.raw` carries content and match-keys, never a stored id pointing at another node — so there are no reference-bearing properties to protect. If a future subject introduces one, the denylist extends by a single entry.
+
+**We don't check content.** Whether a title reads well, whether a number is sensible, whether wording matches the KG's own — that's what the draft → review → publish gate is for. A reviewer sees the whole diff and approves it. The machine only guards the two errors a reviewer can't eyeball; anything else would drift toward the schema we deliberately don't build.
+
+A mutation may still add its own `validate(base, after, args)` on top of the shared rules for anything only it can decide; both layers run and their errors compose.
+
+### Audit log (append-only, atomic with the change)
+
+Every state-changing graph operation writes a record to a single append-only Firestore collection `kg_audit`. Query surface: `KgNodeStore.listAudit(filter)` filters by namespace, actor id, event type, and time range (newest first). No update/delete method exists on the interface, and the write path uses `set` on a fresh doc id only — never `update()`, never `delete()`. A future Firestore security rule can lock this in externally.
+
+Events:
+- **`apply`** — a graph mutation was applied to the draft. Carries the #5 diff inline, plus `baseVersion` / `resultingVersion` (sha256 of the sorted-canonical graph before/after).
+- **`createDraft`** — a draft was created from published (byte-for-byte copy).
+- **`publish`** — the draft was promoted to published. References `promotedApplyIds`; no whole-draft diff (that's #10).
+- **`discard`** — the draft was thrown away. References `discardedApplyIds`.
+- **`blocked`** — a mutation was rejected (structural rule failure, custom validate error, or a confirm-time token mismatch: stale / replay / argsMismatch / mutationMismatch / invalidToken / unseeded). Lightweight: `{ actor, ts, namespace, mutation, reason }`, no diff, no versions. Distinguishable from committed changes by `eventType`.
+
+**Atomicity.** Each committed-change record is written in the SAME Firestore transaction as its state write:
+- `publishDraft` / `discardDraft` — single-doc pointer transaction; the audit doc joins that same tx.
+- `createDraft` — the final `draftSlot` flip is a pointer transaction; the audit doc joins it. Byte-for-byte copy happens beforehand and is not itself transactional (pre-existing #4 limitation).
+- `writeSlot` (apply) — bulk node/edge writes are chunked (Firestore's 500-op transaction cap forbids one big tx); the FINAL step is a transaction on the pointer meta doc, and the apply audit joins that tx. If a crash lands inside the bulk-write window, the draft may be inconsistent AND no audit is recorded — the same partial-write window #4 already had. Reliability of the audit equals reliability of the state write; the log never carries a phantom record for a state change that didn't happen.
+
+**Who.** The actor is captured verbatim from #1 — including `actor.unknown` when no verified identity is available. The audit records who *tried*; it does **not** restrict anyone. Until roles land (#8), unattributed writes remain possible (locally, via `ALLOW_UNAUTHENTICATED=1`); the audit log will surface them faithfully as `actor.id === "unknown"`.
+
+**What is NOT audited here.** The document tools (`create_upload_url`, `log_generation`, `record_document_content`) write live to the bucket / history and are a separate lifecycle. #7 deliberately does not audit them; a follow-on could extend the same append-only log to those events if desired. The seed script does not emit audits either — it's an operator step, not a runtime graph operation.
+
+**Traceability.** Each request already emits one structured log line via #1. Once #11 ships a real graph edit tool, the tool's response will include the resulting `auditId`s and the log line will mirror them for one-line tracing. Until then, records are independently queryable by actor + namespace + time.
 
 **Concurrency of edits is an open decision for the next step.** With no write tools this step doesn't exercise contention. When writes land (#5/#11), the team will need to pick a strategy — optimistic version counter on each edit, an explicit "who holds the draft" lock, or per-user drafts. The two-slot foundation supports any of them; nothing about it locks in the choice.
 

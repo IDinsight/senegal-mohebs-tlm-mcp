@@ -23,39 +23,31 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { getKgStore } from "./adapter.js";
-import type { Slot, StoredEdge, StoredMeta, StoredNode } from "./types.js";
-
-// The framework's working shape: nodes + edges without the storage-level slot
-// tag (the store adds that at write time — see writeSlot). Kept structurally
-// compatible with SerializedGraph from curriculum/store-bridge.ts so a
-// curriculum-shaped mutation can be authored against the same shape.
-export type MutationNode = Omit<StoredNode, "slot">;
-export type MutationEdge = Omit<StoredEdge, "slot">;
-export type MutationGraph = { nodes: MutationNode[]; edges: MutationEdge[] };
-
-// Result of the empty validate seam. `errors` blocks confirmation entirely —
-// the framework returns { errors, warnings } and NO token, so confirm has
-// nothing to replay. `warnings` are surfaced in the envelope and do not block.
-export type ValidationResult = { errors: string[]; warnings: string[] };
+import { validateStructural } from "./validate.js";
+import type { AuditRecord, DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, Slot, StoredMeta, ValidationResult } from "./types.js";
+export type { DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, ValidationResult } from "./types.js";
+import { currentActor } from "../actor.js";
+import { randomUUID } from "node:crypto";
 
 // A graph mutation is a pure function over {nodes, edges}. `describe(args)` is
 // used in the envelope's `action` string, so it must state the stakes: what
 // changes on the DRAFT, and remind the caller that publish is a separate step.
+//
+// `validate` receives BOTH the pre-state and the post-apply graph — the
+// framework computes `after` before validation so structural checks (see
+// validateStructural) and mutation-specific checks alike can inspect the
+// proposed result, not just intent. It's optional: every mutation gets the
+// two shared structural rules for free, whether or not it adds its own.
 export interface GraphMutation<Args> {
   name: string;
   describe(args: Args): string;
-  validate?(base: MutationGraph, args: Args): ValidationResult;
+  validate?(base: MutationGraph, after: MutationGraph, args: Args): ValidationResult;
   apply(base: MutationGraph, args: Args): MutationGraph;
 }
 
-// Per-mutation diff. Keyed exclusively off the stable id (LC IRI for nodes,
-// deterministic edgeId for edges). Friendly properties like chapitreNum live
-// inside properties.raw and MUST NOT be used as identity — see #3 finding.
-export type DiffEntry = { id: string; before?: unknown; after?: unknown };
-export type GraphDiff = {
-  nodes: { added: DiffEntry[]; removed: DiffEntry[]; changed: DiffEntry[] };
-  edges: { added: DiffEntry[]; removed: DiffEntry[]; changed: DiffEntry[] };
-};
+// (Per-mutation diff shape — `DiffEntry` / `GraphDiff` — lives in types.ts so
+// audit.ts can reference it without cycling through this module. Re-exported
+// above.)
 
 // Return-type union for runGraphMutation. Discriminated on `phase` so callers
 // can narrow without probing `in` operators. `phase: "preview"` and `"blocked"`
@@ -232,35 +224,71 @@ export async function runGraphMutation<Args>(
   // is a separate step" phrasing can't drift between preview and confirm.
   const action = `${mutation.describe(args)} — this STAGES a draft edit on namespace '${namespace}'; nothing reaches generation until you separately publish the draft`;
 
+  // Snapshot the actor once for this call — every audit record we emit uses
+  // the same identity. `unknown` is a valid state (see #1); we record it
+  // verbatim rather than fabricating a fake actor.
+  const actor = currentActor();
+  const auditActor = { id: actor.id, email: actor.email, tokenIssuer: actor.tokenIssuer, unknown: actor.unknown };
+
+  // Small helper: emit one blocked-attempt audit record. Fire-and-forget from
+  // the caller's perspective — but we `await` it so a store failure surfaces
+  // rather than being swallowed. Blocked records carry no diff or versions;
+  // eventType alone distinguishes them from committed changes.
+  const auditBlocked = async (reason: string): Promise<void> => {
+    await store.appendAudit({
+      id: randomUUID(),
+      ts: new Date().toISOString(),
+      actor: auditActor,
+      namespace,
+      eventType: "blocked",
+      mutation: mutation.name,
+      reason,
+    });
+  };
+
   // ── Confirm phase ────────────────────────────────────────────────────────
   if (confirm) {
-    if (!token) return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", message: "confirm=true was passed without a confirmationToken; re-run without confirm to get a fresh preview." };
+    if (!token) { await auditBlocked("invalidToken: missing"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", message: "confirm=true was passed without a confirmationToken; re-run without confirm to get a fresh preview." }; }
     const payload = decodeToken(token);
-    if (!payload) return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", message: "confirmationToken is malformed; re-run without confirm to get a fresh preview." };
-    if (payload.m !== mutation.name) return { phase: "apply", ok: false, kind: "graphMutation", reason: "mutationMismatch", message: `confirmationToken was issued for mutation '${payload.m}', not '${mutation.name}'.` };
-    if (payload.a !== hashArgs(args)) return { phase: "apply", ok: false, kind: "graphMutation", reason: "argsMismatch", message: "args differ from the previewed values; re-run without confirm to preview the new args." };
-    if (consumedNonces.has(payload.n)) return { phase: "apply", ok: false, kind: "graphMutation", reason: "replay", message: "This confirmation token has already been used; a mutation cannot be applied twice from one preview." };
+    if (!payload) { await auditBlocked("invalidToken: malformed"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", message: "confirmationToken is malformed; re-run without confirm to get a fresh preview." }; }
+    if (payload.m !== mutation.name) { await auditBlocked(`mutationMismatch: token was for '${payload.m}'`); return { phase: "apply", ok: false, kind: "graphMutation", reason: "mutationMismatch", message: `confirmationToken was issued for mutation '${payload.m}', not '${mutation.name}'.` }; }
+    if (payload.a !== hashArgs(args)) { await auditBlocked("argsMismatch"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "argsMismatch", message: "args differ from the previewed values; re-run without confirm to preview the new args." }; }
+    if (consumedNonces.has(payload.n)) { await auditBlocked("replay"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "replay", message: "This confirmation token has already been used; a mutation cannot be applied twice from one preview." }; }
 
     const snap = await readBase(namespace);
-    if ("unseeded" in snap) return { phase: "apply", ok: false, kind: "graphMutation", reason: "unseeded", message: `Namespace '${namespace}' has no seed; run the seed before mutating.` };
+    if ("unseeded" in snap) { await auditBlocked("unseeded"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "unseeded", message: `Namespace '${namespace}' has no seed; run the seed before mutating.` }; }
 
     // A preview against 'published' expects (a) no draft has appeared since,
     // and (b) published hasn't shifted. A preview against 'draft' expects the
     // draft hash still matches. Any mismatch → stale, retry.
     if (snap.kind !== payload.k) {
+      await auditBlocked(`stale: base slot changed (was '${payload.k}', now '${snap.kind}')`);
       return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", message: `The base slot changed since preview (was '${payload.k}', now '${snap.kind}'); re-preview.` };
     }
     if (hashGraph(snap.graph) !== payload.v) {
+      await auditBlocked("stale: base graph changed");
       return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", message: `The base graph changed since preview; re-preview to see the current diff.` };
     }
 
     // Lazy draft creation. When the preview was against 'published' the draft
     // does not exist yet — createDraft is a byte-for-byte copy of published,
     // so the just-created draft equals what the preview mutated in memory
-    // (already verified via the hash check above).
-    if (snap.kind === "onPublished") await store.createDraft(namespace);
+    // (already verified via the hash check above). The `createDraft` audit
+    // rides its own transaction and is a distinct committed event.
+    if (snap.kind === "onPublished") {
+      const createRec: AuditRecord = {
+        id: randomUUID(),
+        ts: new Date().toISOString(),
+        actor: auditActor,
+        namespace,
+        eventType: "createDraft",
+        baseVersion: hashGraph(snap.graph),
+      };
+      await store.createDraft(namespace, createRec);
+    }
     const pointerAfter = await store.readPointer(namespace);
     if (!pointerAfter || !pointerAfter.draftSlot) {
+      await auditBlocked("stale: draft could not be established");
       return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", message: `Draft could not be established for namespace '${namespace}'; re-preview.` };
     }
     const draftSlot = pointerAfter.draftSlot;
@@ -273,16 +301,30 @@ export async function runGraphMutation<Args>(
     const applied = mutation.apply(draftGraph, args);
     const diff = diffGraphs(draftGraph, applied);
 
+    const resultingVersion = hashGraph(applied);
     const meta: StoredMeta = {
       // adapterId survives from the previous meta so re-seed detection stays
       // meaningful; contentHash + counts reflect the new draft state.
       adapterId: snap.meta?.adapterId ?? "unknown",
       seededAt: snap.meta?.seededAt ?? "unknown",
-      contentHash: hashGraph(applied),
+      contentHash: resultingVersion,
       nodeCount: applied.nodes.length,
       edgeCount: applied.edges.length,
     };
-    await store.writeSlot(namespace, draftSlot, { nodes: applied.nodes, edges: applied.edges, meta });
+    const applyRec: AuditRecord = {
+      id: randomUUID(),
+      ts: new Date().toISOString(),
+      actor: auditActor,
+      namespace,
+      eventType: "apply",
+      mutation: mutation.name,
+      baseVersion: hashGraph(draftGraph),
+      resultingVersion,
+      diff,
+    };
+    // writeSlot commits the audit doc in the SAME final pointer transaction
+    // (see firestore.ts) — a committed change always has its record.
+    await store.writeSlot(namespace, draftSlot, { nodes: applied.nodes, edges: applied.edges, meta }, applyRec);
 
     // Consume the nonce LAST — if writeSlot throws, the token remains usable
     // for a legitimate retry after the operator fixes the underlying issue.
@@ -293,17 +335,35 @@ export async function runGraphMutation<Args>(
   // ── Preview phase ────────────────────────────────────────────────────────
   const snap = await readBase(namespace);
   if ("unseeded" in snap) {
+    await auditBlocked("unseeded (preview)");
     return { phase: "blocked", needsConfirmation: false, kind: "graphMutation", errors: [`Namespace '${namespace}' has no seed; run the seed before mutating.`], warnings: [] };
   }
 
-  const validation: ValidationResult = mutation.validate
-    ? mutation.validate(snap.graph, args)
+  // Compute the post-apply graph FIRST — the shared structural rules (and
+  // any mutation-specific validate) inspect the proposed result, not just
+  // the intent. Apply is a pure in-memory function over the draft graph.
+  const after = mutation.apply(snap.graph, args);
+
+  // Two layers of validation, always in this order:
+  //   1. The shared structural rules (id-immutable, no-orphan). Every
+  //      mutation gets these, whether or not it defines its own validate.
+  //   2. The mutation's own validate, if any — for anything the mutation
+  //      alone can decide.
+  // Errors from either layer block confirmation; per #5's contract we
+  // return them via a `phase: "blocked"` result with NO token.
+  const structural = validateStructural(snap.graph, after);
+  const custom = mutation.validate
+    ? mutation.validate(snap.graph, after, args)
     : { errors: [], warnings: [] };
-  if (validation.errors.length > 0) {
-    return { phase: "blocked", needsConfirmation: false, kind: "graphMutation", errors: validation.errors, warnings: validation.warnings };
+  const errors = [...structural.errors, ...custom.errors];
+  const warnings = [...structural.warnings, ...custom.warnings];
+  if (errors.length > 0) {
+    // Sample the first error for the reason field — the full array is
+    // reflected in the response but audit records stay lightweight.
+    await auditBlocked(`validation: ${errors[0]}`);
+    return { phase: "blocked", needsConfirmation: false, kind: "graphMutation", errors, warnings };
   }
 
-  const after = mutation.apply(snap.graph, args);
   const diff = diffGraphs(snap.graph, after);
   const issuedToken = encodeToken({
     m: mutation.name,
@@ -319,7 +379,7 @@ export async function runGraphMutation<Args>(
     action,
     message: `Do NOT proceed yet. Ask the user to confirm — about to ${action}. Once they explicitly agree, call this tool again with confirm: true AND the confirmationToken from this response.`,
     diff,
-    warnings: validation.warnings,
+    warnings,
     confirmationToken: issuedToken,
   };
 }

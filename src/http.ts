@@ -210,8 +210,13 @@ async function main() {
     });
     if (s.state.active !== activeBefore && !actor.unknown) persistUserContext(sub, s.state);
 
-    // One structured log line per non-GET JSON-RPC request. Seed for the later
-    // audit log — kept in stderr for now, no persistence yet (out of scope).
+    // One structured log line per non-GET JSON-RPC request. Complements #7's
+    // durable audit store — this line is ephemeral operational logging (who
+    // called what, when, against which backend) and stays in stderr; the
+    // per-graph-op audit records live in the `kg_audit` Firestore collection
+    // and are queryable via KgNodeStore.listAudit. When #11 lands the first
+    // real graph edit tool, we plan to also emit the resulting audit-record
+    // ids in the tool's response and mirror them here for one-line tracing.
     if (method && method !== "GET") {
       const a = s.state.active;
       console.error(`${LOG} ` + JSON.stringify({
