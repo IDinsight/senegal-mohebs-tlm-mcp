@@ -26,7 +26,8 @@ import { getKgStore } from "./adapter.js";
 import { validateStructural } from "./validate.js";
 import type { AuditRecord, DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, Slot, StoredMeta, ValidationResult } from "./types.js";
 export type { DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, ValidationResult } from "./types.js";
-import { currentActor } from "../actor.js";
+import { currentActor, type Actor } from "../actor.js";
+import { authorize, selfApproveAllowed, type AuthAction } from "../authz.js";
 import { randomUUID } from "node:crypto";
 
 // A graph mutation is a pure function over {nodes, edges}. `describe(args)` is
@@ -82,6 +83,17 @@ export type GraphBlockedResult = {
 export type GraphApplyResult =
   | { phase: "apply"; ok: true; kind: "graphMutation"; applied: string; draftSlot: Slot; diff: GraphDiff }
   | { phase: "apply"; ok: false; kind: "graphMutation"; reason: "stale" | "replay" | "invalidToken" | "argsMismatch" | "mutationMismatch" | "unseeded"; message: string };
+
+// A distinct result for role-denied calls. Kept separate from `blocked`
+// (which stays for validation errors from #6) and from `apply ok:false`
+// (which stays for stale/replay/token errors from #5) so callers can tell
+// "you can't do this at all" from "you can do this but not right now".
+export type GraphUnauthorizedResult = {
+  phase: "unauthorized";
+  kind: "graphMutation";
+  action: AuthAction;
+  reason: string;
+};
 
 // ── Base-version computation ─────────────────────────────────────────────────
 // The base version is a sha256 over the sorted-canonical JSON of the graph's
@@ -215,7 +227,7 @@ export type RunGraphMutationArgs<Args> = {
 
 export async function runGraphMutation<Args>(
   input: RunGraphMutationArgs<Args>,
-): Promise<GraphPreviewResult | GraphBlockedResult | GraphApplyResult> {
+): Promise<GraphPreviewResult | GraphBlockedResult | GraphApplyResult | GraphUnauthorizedResult> {
   const { namespace, mutation, args, confirm, token } = input;
   const store = getKgStore();
 
@@ -226,9 +238,10 @@ export async function runGraphMutation<Args>(
 
   // Snapshot the actor once for this call — every audit record we emit uses
   // the same identity. `unknown` is a valid state (see #1); we record it
-  // verbatim rather than fabricating a fake actor.
+  // verbatim rather than fabricating a fake actor. Role is snapshot too so
+  // audit reviews see WHO WAS a curator/approver when this happened.
   const actor = currentActor();
-  const auditActor = { id: actor.id, email: actor.email, tokenIssuer: actor.tokenIssuer, unknown: actor.unknown };
+  const auditActor = { id: actor.id, email: actor.email, tokenIssuer: actor.tokenIssuer, role: actor.role, unknown: actor.unknown };
 
   // Small helper: emit one blocked-attempt audit record. Fire-and-forget from
   // the caller's perspective — but we `await` it so a store failure surfaces
@@ -245,6 +258,16 @@ export async function runGraphMutation<Args>(
       reason,
     });
   };
+
+  // ── Authorization: must be a curator or approver to apply — for BOTH
+  // dry-run and confirm. Reads/generation stay ungated elsewhere; this gate
+  // is only for graph state changes. Enforced BEFORE any state read or
+  // token check, so denials never leak diffs or issue tokens.
+  const authz = authorize(actor, "apply", namespace);
+  if (!authz.ok) {
+    await auditBlocked(`unauthorized: ${authz.reason}`);
+    return { phase: "unauthorized", kind: "graphMutation", action: "apply", reason: authz.reason };
+  }
 
   // ── Confirm phase ────────────────────────────────────────────────────────
   if (confirm) {
@@ -382,4 +405,149 @@ export async function runGraphMutation<Args>(
     warnings,
     confirmationToken: issuedToken,
   };
+}
+
+// ── Lifecycle wrappers: publishDraft / discardDraft ─────────────────────────
+// These wrap the raw store lifecycle primitives so #8's role check and #7's
+// audit both fire, atomically with the state write (the store commits both
+// in one Firestore transaction). Tests and future user-facing tools (#9)
+// go through these, NEVER `store.publishDraft` / `store.discardDraft`
+// directly — that's how enforcement stays complete.
+
+export type PublishResult =
+  | { ok: true; publishedSlot: Slot; auditId: string; selfAuthored: boolean }
+  | { ok: false; reason: string };
+
+export type DiscardResult =
+  | { ok: true; auditId: string; discardedApplyIds: string[] }
+  | { ok: false; reason: string };
+
+// Snapshot the actor and its audit-friendly projection. Same shape used by
+// runGraphMutation — kept here rather than exported so the lifecycle
+// wrappers don't reach into runGraphMutation's internals.
+function snapshotActor(): { actor: Actor; auditActor: AuditRecord["actor"] } {
+  const actor = currentActor();
+  const auditActor = { id: actor.id, email: actor.email, tokenIssuer: actor.tokenIssuer, role: actor.role, unknown: actor.unknown };
+  return { actor, auditActor };
+}
+
+// The apply records that would be promoted by publishing / discarded by
+// discarding the current draft. "Current draft" = everything since the
+// most recent createDraft record for this namespace (that createDraft is
+// what opened the draft the store is holding right now).
+async function currentDraftApplies(namespace: string): Promise<AuditRecord[]> {
+  const store = getKgStore();
+  const events = await store.listAudit({ namespace });
+  // listAudit is newest-first. The first createDraft we hit is the one
+  // that opened the currently-open draft.
+  const created = events.find((r) => r.eventType === "createDraft");
+  if (!created) return []; // no draft ever created here — publish will fail at the store anyway
+  return events.filter((r) => r.eventType === "apply" && r.ts >= created.ts);
+}
+
+export async function publishDraft(namespace: string): Promise<PublishResult> {
+  const store = getKgStore();
+  const { actor, auditActor } = snapshotActor();
+
+  // Denial → typed error + blocked audit + no state change. Same shape as
+  // runGraphMutation's unauthorized path.
+  const authz = authorize(actor, "publish", namespace);
+  if (!authz.ok) {
+    await store.appendAudit({
+      id: randomUUID(), ts: new Date().toISOString(), actor: auditActor,
+      namespace, eventType: "blocked", reason: `unauthorized: ${authz.reason}`,
+    });
+    return { ok: false, reason: authz.reason };
+  }
+
+  // Look up which applies would be promoted, and check self-authorship.
+  // The `selfAuthored` flag is ALWAYS recorded on the publish audit so an
+  // auditor sees self-approval even when the config permits it (see #8
+  // decision (b)); only if the strict config is set does self-authorship
+  // block the publish.
+  const promoted = await currentDraftApplies(namespace);
+  const promotedIds = promoted.map((r) => r.id);
+  const selfAuthored = promoted.some((r) => r.actor.id === actor.id);
+
+  if (selfAuthored && !selfApproveAllowed()) {
+    const reason = "separation-of-duties: approver cannot publish self-authored edits (TLM_ALLOW_SELF_APPROVE=0)";
+    await store.appendAudit({
+      id: randomUUID(), ts: new Date().toISOString(), actor: auditActor,
+      namespace, eventType: "blocked", reason: `unauthorized: ${reason}`,
+    });
+    return { ok: false, reason };
+  }
+
+  // Read the pointer so we can name the base/resulting versions. The
+  // pointer flip is atomic in the store — we're just recording the two
+  // hashes for later reference.
+  const pointer = await store.readPointer(namespace);
+  if (!pointer || !pointer.draftSlot) {
+    // Not an authz failure — just no draft to promote. Let the store
+    // surface it, but audit it as blocked for consistency.
+    const reason = "no draft to publish";
+    await store.appendAudit({
+      id: randomUUID(), ts: new Date().toISOString(), actor: auditActor,
+      namespace, eventType: "blocked", reason,
+    });
+    return { ok: false, reason };
+  }
+  const [pubN, pubE, drN, drE] = await Promise.all([
+    store.listNodes(namespace, pointer.publishedSlot),
+    store.listEdges(namespace, pointer.publishedSlot),
+    store.listNodes(namespace, pointer.draftSlot),
+    store.listEdges(namespace, pointer.draftSlot),
+  ]);
+  const baseVersion = hashGraph({ nodes: pubN.map(stripSlot), edges: pubE.map(stripSlot) });
+  const resultingVersion = hashGraph({ nodes: drN.map(stripSlot), edges: drE.map(stripSlot) });
+
+  const auditId = randomUUID();
+  const rec: AuditRecord = {
+    id: auditId, ts: new Date().toISOString(), actor: auditActor,
+    namespace, eventType: "publish",
+    baseVersion, resultingVersion,
+    promotedApplyIds: promotedIds,
+    selfAuthored,
+  };
+  await store.publishDraft(namespace, rec);
+  const newPointer = await store.readPointer(namespace);
+  return { ok: true, publishedSlot: newPointer!.publishedSlot, auditId, selfAuthored };
+}
+
+export async function discardDraft(namespace: string): Promise<DiscardResult> {
+  const store = getKgStore();
+  const { actor, auditActor } = snapshotActor();
+
+  const authz = authorize(actor, "discard", namespace);
+  if (!authz.ok) {
+    await store.appendAudit({
+      id: randomUUID(), ts: new Date().toISOString(), actor: auditActor,
+      namespace, eventType: "blocked", reason: `unauthorized: ${authz.reason}`,
+    });
+    return { ok: false, reason: authz.reason };
+  }
+
+  const promoted = await currentDraftApplies(namespace);
+  const discardedApplyIds = promoted.map((r) => r.id);
+
+  // Base version = published slot's hash at discard time. Nothing changes on
+  // published, but recording the hash gives audit reviews a fixed anchor.
+  const pointer = await store.readPointer(namespace);
+  let baseVersion: string | undefined;
+  if (pointer) {
+    const [n, e] = await Promise.all([
+      store.listNodes(namespace, pointer.publishedSlot),
+      store.listEdges(namespace, pointer.publishedSlot),
+    ]);
+    baseVersion = hashGraph({ nodes: n.map(stripSlot), edges: e.map(stripSlot) });
+  }
+
+  const auditId = randomUUID();
+  const rec: AuditRecord = {
+    id: auditId, ts: new Date().toISOString(), actor: auditActor,
+    namespace, eventType: "discard",
+    baseVersion, discardedApplyIds,
+  };
+  await store.discardDraft(namespace, rec);
+  return { ok: true, auditId, discardedApplyIds };
 }

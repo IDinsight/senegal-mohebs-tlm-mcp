@@ -23,6 +23,11 @@ import { __setStorageForTest } from "../storage/index.js";
 import type { GraphMutation, MutationGraph } from "./index.js";
 import type { KgNodeStore, StoredMeta } from "./types.js";
 import type { StorageAdapter, HistoryFile } from "../types.js";
+import { __setActorForTest, type Actor } from "../actor.js";
+
+// Tests here exercise the structural rules under a curator actor — #8's
+// authz gate blocks unknown/no-role actors from mutating.
+const TEST_CURATOR: Actor = { id: "test-curator-uid", email: "curator@test", role: "curator", unknown: false };
 
 // Storage stub — same shape the other kg-store tests use.
 const emptyHistory: HistoryFile = { version: 2, entries: [] };
@@ -225,6 +230,7 @@ beforeEach(async () => {
   store = await seedFreshStore();
   __setKgStoreForTest(store);
   __resetMutationsForTest();
+  __setActorForTest(TEST_CURATOR);
   process.env.KG_SOURCE = "firestore";
 });
 afterAll(() => {

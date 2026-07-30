@@ -32,6 +32,13 @@ import type { GraphMutation, MutationGraph } from "./index.js";
 import type { KgNodeStore, StoredMeta } from "./types.js";
 import type { StorageAdapter, HistoryFile } from "../types.js";
 import { buildConfirmEnvelope } from "../utils/index.js";
+import { __setActorForTest, type Actor } from "../actor.js";
+
+// Every test in this file runs as a curator by default — #8's authz gate
+// blocks unknown/no-role actors from mutating, and these tests exercise the
+// framework's non-authz behavior (validation, tokens, diffs, staleness).
+// Tests that specifically care about the authz gate live in authz.test.ts.
+const TEST_CURATOR: Actor = { id: "test-curator-uid", email: "curator@test", role: "curator", unknown: false };
 
 const emptyHistory: HistoryFile = { version: 2, entries: [] };
 const fakeStorage: StorageAdapter = {
@@ -120,6 +127,7 @@ beforeEach(async () => {
   store = await seedFreshStore();
   __setKgStoreForTest(store);
   __resetMutationsForTest();
+  __setActorForTest(TEST_CURATOR);
   process.env.KG_SOURCE = "firestore";
 });
 afterAll(() => {

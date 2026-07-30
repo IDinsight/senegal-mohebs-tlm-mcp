@@ -140,6 +140,28 @@ Events:
 
 **Traceability.** Each request already emits one structured log line via #1. Once #11 ships a real graph edit tool, the tool's response will include the resulting `auditId`s and the log line will mirror them for one-line tracing. Until then, records are independently queryable by actor + namespace + time.
 
+### Curator / approver roles
+
+Two server-side authorization roles gate every graph state change:
+
+- **`curator`** — may apply / dry-run graph mutations and discard a draft. May NOT publish.
+- **`approver`** — superset: everything a curator can, plus publish (promote a draft to published).
+- **No role** — signed-in but no `user_roles` row: can read and generate; cannot mutate. **Unknown actor** — same treatment. Reads and generation are never gated by role.
+
+**Authorization derives ONLY from the verified Supabase identity.** The role is delivered as an `app_role` claim on the Supabase JWT — same trust channel as `sub` / `email`. No tool argument, header, or client-settable field can influence the decision. See [`src/authz.ts`](src/authz.ts) and [`src/actor.ts`](src/actor.ts).
+
+**Where roles live.** The `public.user_roles` table in Supabase is the source of truth. A **Custom Access Token Hook** (Supabase → Authentication → Hooks) reads it and injects `app_role` into the JWT at token-mint time — zero extra I/O at request time; the MCP just reads the already-verified claim. Setup SQL: [`scripts/supabase-user-roles.sql`](scripts/supabase-user-roles.sql).
+
+**Bootstrap.** Run the SQL script once via the Supabase dashboard SQL editor, then enable the hook in Authentication → Hooks → "Customize Access Token (JWT) Claims" pointing at `public.custom_access_token_hook`. Grant the first approver with `insert into public.user_roles (user_id, role) values ('<uid>', 'approver');` in the SQL editor. Further grants happen the same way. **The MCP server exposes no role-management tool** — self-escalation surface is zero.
+
+**Separation of duties.** By default an approver may publish a draft they authored edits in (`TLM_ALLOW_SELF_APPROVE` env, default `"1"`). To require a second reviewer, set `TLM_ALLOW_SELF_APPROVE=0` — publish is then denied if any promoted `apply` record was authored by the same approver. **Regardless of the flag**, every `publish` audit record carries `selfAuthored: boolean` so a reviewer can spot self-approval even when permitted.
+
+**Enforcement point.** Role checks live in the MCP server at the Firestore write chokepoint (`runGraphMutation`, `publishDraft`, `discardDraft` in [`src/kg-store/mutations.ts`](src/kg-store/mutations.ts)). Supabase Row Level Security guards direct Postgres access to `user_roles`, but the graph write itself lands in Firestore — RLS doesn't cover that, so the MCP is where enforcement has to be.
+
+**Denial shape.** A denied mutation returns `phase: "unauthorized"` (distinct from `phase: "blocked"` for validation errors and `phase: "apply" ok:false` for stale-token errors). No confirmation token is issued, no state changes, and a `blocked` audit record is written with `reason` starting `"unauthorized: ..."`.
+
+**Not gated here.** The document tools (`create_upload_url`, `log_generation`, `record_document_content`) remain open — this step covers graph writes only. A follow-on could extend role-gating to document writes if desired.
+
 **Concurrency of edits is an open decision for the next step.** With no write tools this step doesn't exercise contention. When writes land (#5/#11), the team will need to pick a strategy — optimistic version counter on each edit, an explicit "who holds the draft" lock, or per-user drafts. The two-slot foundation supports any of them; nothing about it locks in the choice.
 
 **Re-seeding after a publish.** The seed always writes into slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op if one already exists). Once a curator publishes (which flips `publishedSlot` to `b`), a re-seed writes to `a` — which is now a stale side copy, not the live published data. The seed logs a WARNING when it detects this; reconciling it deliberately (typically by making the fresh bundle the next draft rather than the next seed) is the operator's call.

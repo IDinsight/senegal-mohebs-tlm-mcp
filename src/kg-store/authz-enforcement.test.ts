@@ -1,0 +1,462 @@
+// ── #8 enforcement tests ─────────────────────────────────────────────────────
+// Drives runGraphMutation + the publish/discard wrappers under different
+// actors to prove:
+//   - authz derives ONLY from the verified Actor (spoof attempts via args are
+//     ignored — the args interface doesn't even accept an actor / role);
+//   - curator can apply/discard but not publish;
+//   - approver can publish and everything a curator can;
+//   - unknown / no-role is denied all three, with a blocked audit record;
+//   - denials never issue a token and never touch state;
+//   - self-approve config gates the publish path; the publish audit ALWAYS
+//     carries `selfAuthored` regardless of the flag;
+//   - reads and generation remain fully open for unknown actors.
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+import { CONFIG } from "../config.js";
+import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../context/index.js";
+import { resolveAdapter } from "../adapters/index.js";
+import { serializeModel } from "../curriculum/index.js";
+import {
+  __setKgStoreForTest, createMemoryKgStore, kgNamespace,
+  runGraphMutation, publishDraft, discardDraft, __resetMutationsForTest,
+} from "./index.js";
+import { __setStorageForTest } from "../storage/index.js";
+import { runAsActor, __setActorForTest, type Actor } from "../actor.js";
+import type { GraphMutation, MutationGraph } from "./index.js";
+import type { KgNodeStore, StoredMeta } from "./types.js";
+import type { StorageAdapter, HistoryFile } from "../types.js";
+
+const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const fakeStorage: StorageAdapter = {
+  listDocuments: async () => [],
+  getObjectMd5: async () => null,
+  downloadDocx: async () => Buffer.from(""),
+  createUploadUrl: async () => ({ url: "", objectKey: "", contentType: "", expiresAt: "" }),
+  createDownloadUrl: async () => ({ url: "", objectKey: "", expiresAt: "", exists: false }),
+  readHistory: async () => emptyHistory,
+  writeHistory: async () => {},
+};
+
+const CURATOR: Actor = { id: "curator-uid", email: "curator@test", role: "curator", unknown: false };
+const APPROVER: Actor = { id: "approver-uid", email: "approver@test", role: "approver", unknown: false };
+const SIGNED_IN_NO_ROLE: Actor = { id: "guest-uid", email: "guest@test", unknown: false };
+
+type SetPropArgs = { nodeId: string; key: string; value: unknown };
+const setNodeProperty: GraphMutation<SetPropArgs> = {
+  name: "test/setNodeProperty",
+  describe: (a) => `set property '${a.key}' on node '${a.nodeId}'`,
+  apply: (base, args) => ({
+    nodes: base.nodes.map((n) =>
+      n.id === args.nodeId ? { ...n, properties: { ...n.properties, [args.key]: args.value } } : n,
+    ),
+    edges: base.edges,
+  }),
+};
+
+const priorEnv = process.env.KG_SOURCE;
+const priorSelfApprove = process.env.TLM_ALLOW_SELF_APPROVE;
+let store: KgNodeStore;
+const contexts = listAvailableContexts();
+const firstCtx = contexts[0];
+const ns = kgNamespace(firstCtx.grade, firstCtx.subject);
+
+async function seedFreshStore(): Promise<KgNodeStore> {
+  const s = createMemoryKgStore();
+  for (const { grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+    const adapter = resolveAdapter(grade, subject);
+    if (!adapter) continue;
+    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
+    const meta: StoredMeta = {
+      contentHash: "test", seededAt: "1970-01-01T00:00:00Z",
+      adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length,
+    };
+    await s.writeSlot(kgNamespace(grade, subject), "a", { nodes, edges, meta });
+    await s.ensurePointer(kgNamespace(grade, subject), "a");
+  }
+  return s;
+}
+
+async function readPublishedGraph(namespace: string): Promise<MutationGraph> {
+  const pointer = await store.readPointer(namespace);
+  const slot = pointer!.publishedSlot;
+  const [nodes, edges] = await Promise.all([store.listNodes(namespace, slot), store.listEdges(namespace, slot)]);
+  const strip = <T extends { slot?: unknown }>(x: T) => { const { slot: _s, ...rest } = x; return rest; };
+  return { nodes: nodes.map(strip) as MutationGraph["nodes"], edges: edges.map(strip) as MutationGraph["edges"] };
+}
+
+beforeAll(() => { __setStorageForTest(fakeStorage); });
+beforeEach(async () => {
+  store = await seedFreshStore();
+  __setKgStoreForTest(store);
+  __resetMutationsForTest();
+  __setActorForTest(null); // each test installs its own actor explicitly
+  process.env.KG_SOURCE = "firestore";
+});
+afterEach(() => {
+  if (priorSelfApprove === undefined) delete process.env.TLM_ALLOW_SELF_APPROVE;
+  else process.env.TLM_ALLOW_SELF_APPROVE = priorSelfApprove;
+});
+afterAll(() => {
+  if (priorEnv === undefined) delete process.env.KG_SOURCE;
+  else process.env.KG_SOURCE = priorEnv;
+  __setKgStoreForTest(null);
+});
+
+// Helper: seed one apply on the draft (as a curator) so publish/discard have
+// something to promote/discard. Returns the apply audit id.
+async function seedOneCuratorApply(): Promise<string> {
+  return await runAsActor(CURATOR, async () => {
+    const g = await readPublishedGraph(ns);
+    const p = await runGraphMutation({
+      namespace: ns, mutation: setNodeProperty,
+      args: { nodeId: g.nodes[0].id, key: "seeded", value: 1 },
+    });
+    if (p.phase !== "preview") throw new Error(`preview expected, got ${p.phase}`);
+    const applied = await runGraphMutation({
+      namespace: ns, mutation: setNodeProperty,
+      args: { nodeId: g.nodes[0].id, key: "seeded", value: 1 },
+      confirm: true, token: p.confirmationToken,
+    });
+    if (applied.phase !== "apply" || !applied.ok) throw new Error("apply failed");
+    const applies = await store.listAudit({ namespace: ns, eventType: "apply" });
+    return applies[0].id;
+  });
+}
+
+// ── Curator ─────────────────────────────────────────────────────────────────
+
+describe("curator role", () => {
+  it("can dry-run and confirm-apply on the internal test-only mutation", async () => {
+    await runAsActor(CURATOR, async () => {
+      const g = await readPublishedGraph(ns);
+      const preview = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+      });
+      expect(preview.phase).toBe("preview");
+      if (preview.phase !== "preview") throw new Error("preview");
+      const applied = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+        confirm: true, token: preview.confirmationToken,
+      });
+      expect(applied.phase).toBe("apply");
+      if (applied.phase === "apply") expect(applied.ok).toBe(true);
+    });
+  });
+
+  it("can discard a draft they authored", async () => {
+    await seedOneCuratorApply();
+    await runAsActor(CURATOR, async () => {
+      const r = await discardDraft(ns);
+      expect(r.ok).toBe(true);
+      const disc = await store.listAudit({ namespace: ns, eventType: "discard" });
+      expect(disc).toHaveLength(1);
+      expect(disc[0].actor.role).toBe("curator");
+    });
+    // Draft is gone; published slot untouched.
+    expect((await store.readPointer(ns))?.draftSlot).toBe(null);
+  });
+
+  it("cannot publish — blocked with an audit denial and no state change", async () => {
+    await seedOneCuratorApply();
+    const pointerBefore = await store.readPointer(ns);
+    await runAsActor(CURATOR, async () => {
+      const r = await publishDraft(ns);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.reason).toMatch(/'curator' cannot publish/i);
+    });
+    // Pointer unchanged: draft still in place.
+    expect(await store.readPointer(ns)).toEqual(pointerBefore);
+    // A blocked audit was written for the denial (in addition to the seeded apply).
+    const blocked = await store.listAudit({ namespace: ns, eventType: "blocked" });
+    expect(blocked.some((r) => r.reason?.startsWith("unauthorized"))).toBe(true);
+  });
+});
+
+// ── Approver ────────────────────────────────────────────────────────────────
+
+describe("approver role", () => {
+  it("can publish a draft authored by someone else (no self-approval)", async () => {
+    await seedOneCuratorApply(); // curator authored the applies
+    await runAsActor(APPROVER, async () => {
+      const r = await publishDraft(ns);
+      expect(r.ok).toBe(true);
+      if (r.ok) {
+        expect(r.selfAuthored).toBe(false);
+        // Publish audit reflects it.
+        const pub = await store.listAudit({ namespace: ns, eventType: "publish" });
+        expect(pub[0].selfAuthored).toBe(false);
+        expect(pub[0].promotedApplyIds).toHaveLength(1);
+      }
+    });
+    // Pointer flipped to former draft slot.
+    const p = await store.readPointer(ns);
+    expect(p?.publishedSlot).toBe("b");
+    expect(p?.draftSlot).toBe(null);
+  });
+
+  it("can also apply and discard — approver is a superset of curator", async () => {
+    await runAsActor(APPROVER, async () => {
+      const g = await readPublishedGraph(ns);
+      const p = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+      });
+      expect(p.phase).toBe("preview");
+      if (p.phase !== "preview") throw new Error("preview");
+      const applied = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+        confirm: true, token: p.confirmationToken,
+      });
+      expect(applied.phase).toBe("apply");
+      const discarded = await discardDraft(ns);
+      expect(discarded.ok).toBe(true);
+    });
+  });
+
+  it("self-approve is ALLOWED by default and the publish audit records selfAuthored:true", async () => {
+    // Approver authors an apply, then publishes their own edit.
+    await runAsActor(APPROVER, async () => {
+      const g = await readPublishedGraph(ns);
+      const p = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: "approver-authored" },
+      });
+      if (p.phase !== "preview") throw new Error("preview");
+      await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: "approver-authored" },
+        confirm: true, token: p.confirmationToken,
+      });
+      const r = await publishDraft(ns);
+      expect(r.ok).toBe(true);
+      if (r.ok) expect(r.selfAuthored).toBe(true);
+    });
+    const pub = await store.listAudit({ namespace: ns, eventType: "publish" });
+    expect(pub[0].selfAuthored).toBe(true);
+  });
+
+  it("self-approve is DENIED when TLM_ALLOW_SELF_APPROVE=0", async () => {
+    process.env.TLM_ALLOW_SELF_APPROVE = "0";
+    await runAsActor(APPROVER, async () => {
+      const g = await readPublishedGraph(ns);
+      const p = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: "own edit" },
+      });
+      if (p.phase !== "preview") throw new Error("preview");
+      await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: "own edit" },
+        confirm: true, token: p.confirmationToken,
+      });
+      const r = await publishDraft(ns);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.reason).toMatch(/separation-of-duties/i);
+    });
+    // No publish record; draft still open.
+    expect(await store.listAudit({ namespace: ns, eventType: "publish" })).toHaveLength(0);
+    expect((await store.readPointer(ns))?.draftSlot).toBe("b");
+  });
+});
+
+// ── Unknown / no-role ───────────────────────────────────────────────────────
+
+describe("unknown / no-role actor", () => {
+  it("unknown actor cannot dry-run — returns phase:'unauthorized', writes blocked audit, no token, no state change", async () => {
+    __setActorForTest(null);
+    const g = await readPublishedGraph(ns);
+    const result = await runGraphMutation({
+      namespace: ns, mutation: setNodeProperty,
+      args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+    });
+    expect(result.phase).toBe("unauthorized");
+    if (result.phase === "unauthorized") {
+      expect(result.action).toBe("apply");
+      expect(result.reason).toMatch(/no verified identity/i);
+    }
+    // No token to leak, no state change.
+    expect("confirmationToken" in result).toBe(false);
+    expect((await store.readPointer(ns))?.draftSlot).toBe(null);
+    // Blocked audit exists.
+    const blocked = await store.listAudit({ namespace: ns, eventType: "blocked" });
+    expect(blocked).toHaveLength(1);
+    expect(blocked[0].actor.unknown).toBe(true);
+    expect(blocked[0].reason).toMatch(/^unauthorized:/);
+  });
+
+  it("signed-in-but-no-role cannot dry-run either — same treatment", async () => {
+    await runAsActor(SIGNED_IN_NO_ROLE, async () => {
+      const g = await readPublishedGraph(ns);
+      const result = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+      });
+      expect(result.phase).toBe("unauthorized");
+      if (result.phase === "unauthorized") expect(result.reason).toMatch(/no role is assigned/i);
+    });
+    const blocked = await store.listAudit({ namespace: ns, eventType: "blocked" });
+    expect(blocked[0].actor.id).toBe(SIGNED_IN_NO_ROLE.id);
+    expect(blocked[0].actor.unknown).toBe(false);
+    expect(blocked[0].actor.role).toBeUndefined();
+  });
+
+  it("unknown cannot publish or discard either", async () => {
+    await seedOneCuratorApply();
+    __setActorForTest(null);
+    const pub = await publishDraft(ns);
+    expect(pub.ok).toBe(false);
+    const disc = await discardDraft(ns);
+    expect(disc.ok).toBe(false);
+    // Draft still there.
+    expect((await store.readPointer(ns))?.draftSlot).toBe("b");
+  });
+});
+
+// ── Spoof attempts ──────────────────────────────────────────────────────────
+
+describe("authz derives only from the verified Actor — args cannot self-authorize", () => {
+  it("the mutation args interface has no role/actor slot; passing extra fields has no effect on authz", async () => {
+    __setActorForTest(null);
+    // Attempt: an unknown actor invokes the framework with args that carry a
+    // "role" field. Since args are strongly typed at the mutation level, the
+    // structural test is simply that the framework STILL denies — the extra
+    // field is ignored by authz because authz only reads Actor.role, which
+    // comes from the JWT, not from args.
+    const g = await readPublishedGraph(ns);
+    const result = await runGraphMutation({
+      namespace: ns,
+      mutation: setNodeProperty,
+      // deliberately shape a "role: approver" claim into the args to prove
+      // it doesn't get considered
+      args: { nodeId: g.nodes[0].id, key: "role", value: "approver" } as SetPropArgs,
+    });
+    expect(result.phase).toBe("unauthorized");
+  });
+
+  it("a preview issued to a curator cannot be confirmed by an unknown actor", async () => {
+    // Curator gets a token.
+    let token: string;
+    await runAsActor(CURATOR, async () => {
+      const g = await readPublishedGraph(ns);
+      const p = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+      });
+      if (p.phase !== "preview") throw new Error("preview");
+      token = p.confirmationToken;
+    });
+    // Then an unknown actor tries to redeem it — authz denies before the
+    // token is even checked.
+    __setActorForTest(null);
+    const g = await readPublishedGraph(ns);
+    const result = await runGraphMutation({
+      namespace: ns, mutation: setNodeProperty,
+      args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+      confirm: true, token: token!,
+    });
+    expect(result.phase).toBe("unauthorized");
+    // No state change: no draft was created.
+    expect((await store.readPointer(ns))?.draftSlot).toBe(null);
+  });
+});
+
+// ── Denial audit shape ──────────────────────────────────────────────────────
+
+describe("denial audit records are distinguishable and typed", () => {
+  it("apply-denial audit has eventType='blocked' and reason starts with 'unauthorized:'", async () => {
+    await runAsActor(SIGNED_IN_NO_ROLE, async () => {
+      const g = await readPublishedGraph(ns);
+      await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+      });
+    });
+    const blocked = await store.listAudit({ namespace: ns, eventType: "blocked" });
+    expect(blocked).toHaveLength(1);
+    expect(blocked[0].reason?.startsWith("unauthorized:")).toBe(true);
+  });
+
+  it("publish-denial audit for a curator has reason mentioning the role and the action", async () => {
+    await seedOneCuratorApply();
+    await runAsActor(CURATOR, async () => { await publishDraft(ns); });
+    const blocked = await store.listAudit({ namespace: ns, eventType: "blocked" });
+    const denial = blocked.find((r) => r.reason?.includes("cannot publish"));
+    expect(denial).toBeTruthy();
+    expect(denial!.reason).toMatch(/^unauthorized:.*publish/);
+  });
+
+  it("phase:'unauthorized' is distinct from phase:'blocked' (validation) and phase:'apply' ok:false (stale)", async () => {
+    await runAsActor(SIGNED_IN_NO_ROLE, async () => {
+      const g = await readPublishedGraph(ns);
+      const r = await runGraphMutation({
+        namespace: ns, mutation: setNodeProperty,
+        args: { nodeId: g.nodes[0].id, key: "k", value: 1 },
+      });
+      expect(r.phase).toBe("unauthorized");
+      // Not "blocked" (that's for validation errors).
+      expect(r.phase).not.toBe("blocked");
+      // Not "apply" (that's for confirm-time outcomes).
+      expect(r.phase).not.toBe("apply");
+    });
+  });
+});
+
+// ── Reads and generation stay open ──────────────────────────────────────────
+
+describe("reads and generation remain ungated for unknown actors", () => {
+  it("unknown actor can read published curriculum unchanged", async () => {
+    __setActorForTest(null);
+    const state = newSessionState();
+    const output = await runInSession(state, async () => {
+      const { activateContext } = await import("../activate.js");
+      const r = await activateContext(firstCtx.grade, firstCtx.subject);
+      expect(r.ok).toBe(true);
+      const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
+      return { units: adapter.listUnits(), scopes: adapter.scopeValues() };
+    });
+    expect(output.units.length).toBeGreaterThan(0);
+    // No blocked audit — reads didn't hit authz.
+    expect(await store.listAudit({ namespace: ns, eventType: "blocked" })).toEqual([]);
+  });
+});
+
+// ── Bootstrap ───────────────────────────────────────────────────────────────
+
+describe("bootstrap — no MCP path can grant a role", () => {
+  it("there is no exported tool or function that writes user_roles", async () => {
+    // Structural check: the kg-store barrel + the authz module expose no
+    // role-management surface. Roles are administered in Supabase.
+    const kg = await import("./index.js");
+    const authz = await import("../authz.js");
+    for (const [name] of Object.entries({ ...kg, ...authz })) {
+      // Nothing should look like grantRole / setRole / assignRole / addRole.
+      expect(name).not.toMatch(/grant|assignRole|setRole|addRole|writeRole/i);
+    }
+  });
+});
+
+// ── Parity oracle ───────────────────────────────────────────────────────────
+
+describe("parity: reads are unaffected by #8", () => {
+  it("a full apply chain by a curator leaves published byte-identical (parity oracle from #2)", async () => {
+    async function reads(): Promise<unknown> {
+      const state = newSessionState();
+      return runInSession(state, async () => {
+        const { activateContext } = await import("../activate.js");
+        const r = await activateContext(firstCtx.grade, firstCtx.subject);
+        if (!r.ok) throw new Error(r.error);
+        const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
+        return { units: adapter.listUnits(), scopes: adapter.scopeValues() };
+      });
+    }
+    const before = await reads();
+    await seedOneCuratorApply();
+    const after = await reads();
+    expect(after).toEqual(before);
+  });
+});

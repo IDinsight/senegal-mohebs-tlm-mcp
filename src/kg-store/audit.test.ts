@@ -18,7 +18,11 @@ import {
   runGraphMutation, __resetMutationsForTest,
 } from "./index.js";
 import { __setStorageForTest } from "../storage/index.js";
-import { runAsActor } from "../actor.js";
+import { runAsActor, __setActorForTest, type Actor } from "../actor.js";
+
+// Curator identity for the default test path. The "unknown actor" and
+// "verified actor" cases install their own actor inside the test.
+const TEST_CURATOR: Actor = { id: "test-curator-uid", email: "curator@test", role: "curator", unknown: false };
 import type { GraphMutation, MutationGraph, AuditRecord } from "./index.js";
 import type { KgNodeStore, StoredMeta } from "./types.js";
 import type { StorageAdapter, HistoryFile } from "../types.js";
@@ -87,6 +91,7 @@ beforeEach(async () => {
   store = await seedFreshStore();
   __setKgStoreForTest(store);
   __resetMutationsForTest();
+  __setActorForTest(TEST_CURATOR);
   process.env.KG_SOURCE = "firestore";
 });
 afterAll(() => {
@@ -129,7 +134,9 @@ describe("completeness — every state-changing op writes exactly one record", (
     expect(applyRec.mutation).toBe("test/setNodeProperty");
     expect(applyRec.namespace).toBe(ns);
     expect(typeof applyRec.ts).toBe("string");
-    expect(applyRec.actor.unknown).toBe(true); // no runAsActor wrapping
+    expect(applyRec.actor.id).toBe(TEST_CURATOR.id);
+    expect(applyRec.actor.unknown).toBe(false);
+    expect(applyRec.actor.role).toBe("curator");
     expect(typeof applyRec.baseVersion).toBe("string");
     expect(typeof applyRec.resultingVersion).toBe("string");
     expect(applyRec.baseVersion).not.toBe(applyRec.resultingVersion);
@@ -254,21 +261,24 @@ describe("blocked attempts audit — lightweight, distinguishable from committed
 // ── Actor fidelity ──────────────────────────────────────────────────────────
 
 describe("actor fidelity", () => {
-  it("records an 'unknown' actor verbatim (does not fabricate identity)", async () => {
+  it("records an 'unknown' actor verbatim on the blocked-attempt record (under #8, unknown cannot apply)", async () => {
+    // Explicitly clear the ambient curator so this test runs as unknown.
+    __setActorForTest(null);
     const before = await readPublishedGraph(ns);
     const target = before.nodes[0];
-    const p = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: target.id, key: "k", value: 1 } });
-    if (p.phase !== "preview") throw new Error("preview");
-    await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: target.id, key: "k", value: 1 }, confirm: true, token: p.confirmationToken });
-    const applies = await store.listAudit({ namespace: ns, eventType: "apply" });
-    expect(applies[0].actor.unknown).toBe(true);
-    expect(applies[0].actor.id).toBe("unknown");
+    const result = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: target.id, key: "k", value: 1 } });
+    expect(result.phase).toBe("unauthorized");
+    const blocked = await store.listAudit({ namespace: ns, eventType: "blocked" });
+    expect(blocked[0].actor.unknown).toBe(true);
+    expect(blocked[0].actor.id).toBe("unknown");
+    // And no apply record exists — an unknown actor produced no committed change.
+    expect(await store.listAudit({ namespace: ns, eventType: "apply" })).toHaveLength(0);
   });
 
-  it("records a verified actor with id/email/tokenIssuer intact", async () => {
+  it("records a verified curator actor with id/email/tokenIssuer/role intact", async () => {
     const before = await readPublishedGraph(ns);
     const target = before.nodes[0];
-    const actor = { id: "user-42", email: "u42@example.org", tokenIssuer: "https://supabase.example", unknown: false };
+    const actor: Actor = { id: "user-42", email: "u42@example.org", tokenIssuer: "https://supabase.example", role: "curator", unknown: false };
     await runAsActor(actor, async () => {
       const p = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: target.id, key: "k", value: 1 } });
       if (p.phase !== "preview") throw new Error("preview");

@@ -131,6 +131,13 @@ export type AuditActor = {
   id: string;
   email?: string;
   tokenIssuer?: string;
+  /**
+   * The actor's role at the time of the event, snapshot from the verified
+   * JWT claim (see #8). Preserved on the record so an audit review sees
+   * WHO WAS a curator/approver when this happened, not who is one now.
+   * `undefined` = signed in with no role, or unknown actor.
+   */
+  role?: "curator" | "approver";
   unknown: boolean;
 };
 
@@ -155,6 +162,13 @@ export type AuditRecord = {
   promotedApplyIds?: string[];         // publish
   discardedApplyIds?: string[];        // discard
   reason?: string;                     // blocked
+  /**
+   * publish-only: true if the promoted apply chain contains at least one
+   * record authored by the SAME actor doing the publish. Recorded even
+   * when `TLM_ALLOW_SELF_APPROVE=1` (the default) so an audit review can
+   * still spot self-approval — see #8 decision (b).
+   */
+  selfAuthored?: boolean;
 };
 
 // Query surface — a minimal internal filter. Not user-facing; #7 does not

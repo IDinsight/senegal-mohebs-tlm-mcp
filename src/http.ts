@@ -52,7 +52,11 @@ function supabaseVerifier(): OAuthTokenVerifier {
           expiresAt: payload.exp,
           // `iss` is captured so the actor layer can record the verified issuer
           // — jwtVerify already asserted it matches `issuer`, so it is safe to trust.
-          extra: { sub: payload.sub, email: (payload as any).email, iss: payload.iss },
+          // `app_role` is the authorization claim added by the Custom Access Token
+          // Hook (see scripts/supabase-user-roles.sql) — it's part of the same
+          // signature-verified payload as sub/email/iss, so authz shares identity's
+          // trust channel and cannot be spoofed by a header or tool argument.
+          extra: { sub: payload.sub, email: (payload as any).email, iss: payload.iss, app_role: (payload as any).app_role },
         };
       } catch (e) {
         // Map every verification failure (bad signature, expiry, JWKS fetch) to
