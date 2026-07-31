@@ -1,7 +1,5 @@
 /node_modules
 /dist
-/.claude
-/docs
 *.json
 .DS_Store
 !knowledge_graph.json
