@@ -109,14 +109,26 @@ The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(typ
 
 Every graph mutation goes through two shared structural rules in [`src/kg-store/validate.ts`](src/kg-store/validate.ts) before the human review gate. Errors from either rule **block confirmation** — no token is issued, so there's nothing to replay.
 
-- **Rule 1 (id-immutable).** A node's id is the LC IRI verbatim; an edge's id is `edgeId(type, from, to)`. Every reference in the graph points at these ids, so a silent rename would orphan everything the reviewer can't easily see in a diff. The rule detects a rename by looking for a removed node/edge and an added node/edge that share the same content — that pair is treated as a rename attempt and rejected. Legitimate delete-then-create (genuinely different content) passes.
-- **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Rule 2 is built and tested now but only becomes load-bearing when #12 introduces delete/relink mutations — today, no mutation removes nodes or edges, so it's trivially satisfied.
+- **Rule 1 (id-immutable).** A node's id is the LC IRI verbatim (or, for a `create_node`-minted node, a randomUUID); an edge's id is `edgeId(type, from, to)`. Every reference in the graph points at these ids, so a silent rename would orphan everything the reviewer can't easily see in a diff. The rule compares the proposed state to the **currently-published** graph (not just the pre-mutation state) — a removed-since-publish node and an added-since-publish node with matching content are treated as a rename attempt and rejected, whether the pair occurs inside one mutation OR across a delete+create sequence on the same open draft. Legitimate delete-then-create (genuinely different content) passes.
+- **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Load-bearing since #12: a plain `delete_node` is REFUSED if any incident edge survives. A `force:true` delete cascades the dependent subtree and all incident edges in one atomic mutation, and Rule 2 re-runs on the *result* to prove the cascade itself left nothing dangling — so even the forced path can't produce a broken graph.
 
 **Denylist = just the `id` key** (on nodes and edges). References in this graph are edges-only at the storage level — `properties.raw` carries content and match-keys, never a stored id pointing at another node — so there are no reference-bearing properties to protect. If a future subject introduces one, the denylist extends by a single entry.
 
 **We don't check content.** Whether a title reads well, whether a number is sensible, whether wording matches the KG's own — that's what the draft → review → publish gate is for. A reviewer sees the whole diff and approves it. The machine only guards the two errors a reviewer can't eyeball; anything else would drift toward the schema we deliberately don't build.
 
 A mutation may still add its own `validate(base, after, args)` on top of the shared rules for anything only it can decide; both layers run and their errors compose.
+
+### Referential integrity — block vs warn
+
+The integrity layer draws one line, applied consistently:
+
+- **BLOCK (error, no token)** — anything that would leave the graph **referentially broken**: a dangling edge, a reference pointing at a node that won't exist post-edit, a disguised rename (Rule 1). This is corruption a reviewer can't see in a diff, so the machine refuses it outright. These are the shared, subject-agnostic rules in [`validate.ts`](src/kg-store/validate.ts).
+- **WARN (informational, still confirmable)** — structural **incompleteness that is valid-but-suspect**: a chapter with no lessons, a chapter missing its bilan, a lesson linked to more than one chapter, a maths lesson whose `chapitreNum` disagrees with the chapter it's edge-linked to. A curator may legitimately be mid-edit, so these never block; the approver decides. Warnings ride the dry-run response and `diff_draft`, and are recorded on the publish audit (`warningsAtPublish`) for traceability — but publish proceeds.
+- **CASCADE only on explicit `force`** — never silent, and the dry-run diff shows the full set that will vanish (see `delete_node` below).
+
+**Where the two live.** The BLOCK rules are universal — they know only nodes and edges, never "chapter" or "bilan" — so they sit in the shared `kg-store` layer. The WARN rules are *unit-shaped* — they depend on what a unit IS for a given subject — so they live behind an optional adapter hook, `SubjectAdapter.coverageWarnings(graph)`. Subject-neutral shapes (empty container, a child with two parents) are reusable helpers in [`curriculum/coverage.ts`](src/curriculum/coverage.ts) that any adapter calls with its own kind names; genuinely subject-specific rules (the maths bilan, the `chapitreNum` denormalization) are written in the maths adapter. Reading uses the generic helpers only. Nothing subject-specific leaks into the shared layer.
+
+**The reference regime (and what it means for a future renumber).** Every genuine cross-entity link in the store is an **id-based edge** (`hasChild`, `buildsTowards`) — Rule 2 covers them all. There is exactly one number-based reference: maths reads a chapter↔lesson link from `raw.chapitreNum` rather than the edge. But that number is a *denormalized copy* of a `hasChild` edge that already exists and is Rule-2-protected — so its drift is a **warning**, not corruption. The consequence for the not-yet-built renumber action (a later step): renumbering is only reference-safe if it **cascade-rewrites** every lesson's `chapitreNum` alongside the chapter's; the `chapitreNum`-drift warning is exactly the signal that would fire if it didn't.
 
 ### Audit log (append-only, atomic with the change)
 
@@ -173,7 +185,7 @@ Four MCP tools close the loop:
 
 **Two kinds of diff.** `upsert_property`'s dry-run returns a **per-mutation diff** — what THIS edit alone would change. `diff_draft` and `publish_draft`'s dry-run return the **whole-draft diff** — the cumulative view across every edit landed on the draft. They coincide when the draft has one edit; they diverge with more.
 
-**Pilot edit surface — term wording only.** Only logical keys `title` / `text` / `title_en` / `text_en` are editable, only on node kinds the adapter declares them for, and only when the underlying storage paths currently hold a non-null string (the "existing key" rule: fix wording that's there, don't create new fields). A central `UPSERT_PROPERTY_SAFE_PATHS` allowlist inside the mutation is the safety net — a rogue adapter can't expand the editable surface by declaring an unlisted path. Structural properties (`statementCode`, `chapitreNum`, edge from/to, ids) and non-wording node types stay read-only; those open in #12.
+**Wording edit surface.** Only logical keys `title` / `text` / `title_en` / `text_en` are editable via `upsert_property`, only on node kinds the adapter declares them for, and only when the underlying storage paths currently hold a non-null string (the "existing key" rule: fix wording that's there, don't create new fields). A central `UPSERT_PROPERTY_SAFE_PATHS` allowlist inside the mutation is the safety net — a rogue adapter can't expand the editable surface by declaring an unlisted path. `upsert_property` stays **wording-only**; editing STRUCTURAL properties of existing nodes (`chapitreNum`, `order`, `leconNum`) is done through the composite **recipes** (see "Curriculum recipes" below), which have their own separate `STRUCTURAL_EDIT_SAFE_PATHS` allowlist.
 
 **End-to-end example** (assuming set_context is done):
 
@@ -185,6 +197,77 @@ approver: publish_draft() → dry-run: diff + draft-level token
 approver: publish_draft(confirm:true, confirmationToken:...) → promoted, generation now reads the new wording
 ```
 
+### Structural verbs (create / link / unlink / delete)
+
+Four RAW structural primitives, each a single #5 mutation on top of the same #5/#6/#7/#8 seams as `upsert_property`. Deliberately verbs-only — no cascade, no composite recipes:
+
+- **`create_node(kind, properties)`** — adds a new node. **The server MINTS the id** (returned as `mintedNodeId` in the dry-run response); a caller-supplied id in `properties` is hard-rejected. `kind` must be a node kind already present on this namespace (chapter/lesson/component/task for maths). Missing wording surfaces as a WARNING, not a block — the reviewer at publish is the completeness gate.
+- **`link_nodes(edgeType, fromId, toId, properties?)`** — adds an edge. Edge id is deterministic (`<type>:<from>-><to>`) so re-linking the same triple is rejected as a duplicate. Endpoints must exist and `edgeType` must be an edge type already present on this namespace (`hasChild` / `buildsTowards` for maths). Edge-type LEGALITY across kinds (does `hasChild(task→chapter)` make sense?) is NOT enforced — that judgment is deferred to human review at publish.
+- **`unlink_nodes(edgeId)`** — removes one edge by id. Removing an edge cannot orphan a node (Rule 2 only cares about surviving edges).
+- **`delete_node(nodeId, force?)`** — removes a node. By default (**`force:false`**) it is REFUSED if the node still has incident edges; the validate hook lists them so it's clear what to `unlink_nodes` first. With **`force:true`** it cascade-deletes the node together with its **dependent subtree** (its `hasChild` children, their children, …) and every edge touching any removed node, in ONE atomic mutation — the dry-run diff shows the full set that will vanish, and Rule 1/2 re-run on the result to prove it stays clean. Siblings and progression neighbours survive (only their connecting edge drops). **Cascade never happens without explicit `force`.**
+
+Every primitive is two-phase (dry-run → confirm), curator- or approver-only, audited on both writes and denials. Multi-primitive sequences accumulate on the SAME draft and publish together atomically via the existing `publish_draft` flow — there is no single-call composite in this step; composite recipes (add-chapter, split-chapter) are a separate future step that builds on this integrity layer.
+
+**Rule 1 (id-immutable) protects across the whole draft, not just per-mutation.** Comparing the proposed state to PUBLISHED means a `delete_node(X)` + `create_node(X's content under a new id)` sequence on the same draft is caught as a disguised rename — even though the individual mutations only remove or only add. A legitimate replace (create a node with substantively different content) still passes.
+
+**End-to-end example — add a new chapter+lesson pair:**
+
+```
+curator: create_node(kind="chapter", properties={title:"Nouveau chapitre", raw:{chapitreNum:42, chapitreTitre:"…"}})
+         → dry-run: diff (+1 node), confirmationToken, mintedNodeId="uuid-A"
+curator: create_node(..., confirm:true, confirmationToken:..., mintedNodeId="uuid-A") → applied to draft
+curator: create_node(kind="lesson", properties={text:"Une nouvelle leçon", raw:{osTexte:"…"}})
+         → dry-run + confirm → mintedNodeId="uuid-B" on draft
+curator: link_nodes(edgeType="hasChild", fromId="uuid-A", toId="uuid-B") → dry-run + confirm → edge on draft
+approver: diff_draft() → sees +2 nodes, +1 edge across the whole draft
+approver: publish_draft() → dry-run + confirm → all three changes go live atomically
+```
+
+**Two ways to delete a connected node:**
+
+```
+# (a) manual detach, then delete — full control, one edge at a time
+curator: delete_node(nodeId="…") → BLOCKED: "still has N incident edge(s): <ids>. …either unlink first, or pass force:true."
+curator: unlink_nodes(edgeId=…) → dry-run + confirm  (repeat per incident edge)
+curator: delete_node(nodeId="…") → dry-run + confirm → node removed on draft
+
+# (b) explicit force cascade — one atomic mutation, whole subtree
+curator: delete_node(nodeId="…chapter…", force:true)
+         → dry-run: diff shows the chapter + all its lessons/components/tasks + every incident edge that will be removed
+curator: delete_node(nodeId="…chapter…", force:true, confirm:true, confirmationToken:…)
+         → the whole subtree is gone from the draft, atomically; the result is re-checked and clean
+```
+
+### Curriculum recipes (composite mutations) — the ergonomic layer
+
+The raw verbs above are correct but tedious for real curriculum restructuring: adding a chapter with three lessons is one `create_node` + one `create_node` per lesson + one `link_nodes` per lesson — six confirmations, six chances to leave a half-built draft. **Recipes** collapse each such intent into a **single composite mutation**: one dry-run → one whole-composite diff (every added/removed/changed node and edge together) → one confirmation token → one atomic draft write → one audit event. They are the ergonomic layer over the primitives, **made safe by the same referential-integrity floor** — the whole result is validated by Rule 1/Rule 2 before the token is issued, so an invalid composite (e.g. a move that would orphan a lesson) is rejected **as a whole**; nothing partial lands. Recipes reuse the primitives' own `apply` functions internally — they are server-side composites, never Claude hand-sequencing separate tool calls.
+
+- **`add_lesson(chapterId, text, [text_en, order, isBilan])`** — create a lesson and link it (`hasChild`) to an existing chapter, and set its chapter-membership number so it renders under that chapter, in one edit. Additive: linking to a nonexistent chapter is BLOCKED.
+- **`add_chapter(number, title, [title_en, lessons[]])`** — create a chapter (title + number at birth) with optional seed lessons, as one composite. `number` must be **free** — append after the last chapter or fill a numbering gap; a colliding number is rejected (inserting between chapters and shifting the rest is `renumber`'s job, not this additive path).
+- **`move_lesson(lessonId, toChapterId, [position])`** — rehome a lesson: unlink the old `hasChild` edge, link the new one, and rewrite its chapter-membership number, atomically. Appends to the target by default.
+- **`split_chapter(chapterId, atLessonId, [newTitle, newTitle_en, newNumber])`** — create a new chapter and move the tail lessons (from `atLessonId` onward) into it. The new chapter is **appended at the next free number by default** (no existing chapter is shifted); pass a free `newNumber` to place it in a gap.
+- **`renumber(chapterId, newNumber)`** — change a chapter's number and cascade-rewrite every child lesson's chapter-membership number, atomically. The target number must be **free** (renumber MOVES a chapter to an unoccupied number; insert-with-shift and swap are rejected).
+
+Recipes that create nodes mint the id(s) server-side and surface them on the dry-run (`mintedLessonId` / `mintedChapterId` / `mintedLessonIds`, exactly like `create_node`'s `mintedNodeId`); pass them back on confirm. Recipes are available only for a subject whose adapter declares a `recipeProfile` (maths does; reading does not) — otherwise the tool returns a clear "not available" message rather than guessing.
+
+**Structural-property editing (the foundation move/split/renumber needed).** These recipes must change STRUCTURAL properties of *existing* nodes — a chapter's number, a lesson's position and chapter-membership number — which `upsert_property` deliberately refuses (it is wording-only). That path is a curated set of numeric keys (`order`, `raw.chapitreNum`, `raw.leconNum`) declared per node kind in the adapter's `structuralAliases` and validated against a central `STRUCTURAL_EDIT_SAFE_PATHS` allowlist (the exact analogue of `UPSERT_PROPERTY_SAFE_PATHS`). By design there is **no raw structural-edit tool** — these keys are editable only *through* the recipes, because a bare `chapitreNum` edit is exactly the drift the recipes exist to prevent.
+
+**The block-vs-warn behaviour is inherited from #13, not re-invented.** A composite that would leave the graph referentially broken (a dangling edge, a disguised rename) is BLOCKED; a composite that leaves it valid-but-incomplete (a split that leaves a chapter without a bilan) WARNS on the dry-run and `diff_draft` but never blocks. The approver decides.
+
+**How `renumber` behaves under the reference regime — the sharp edge, stated honestly.** This codebase's chapter→lesson membership is stored **twice**: as an id-based `hasChild` edge (the Rule-2-guarded backbone) *and* as a denormalized number, `raw.chapitreNum`, which the maths presenter actually joins lessons to chapters on. #13 resolved a mismatch between the two (`chapitreNum` drift) as a **WARNING, not a block**, because the edge backbone stays intact. So `renumber`'s safety does **not** come from Rule 2 hard-blocking (a property edit never dangles an edge) — it comes from the recipe **rewriting the whole `chapitreNum` family in one atomic composite**: the chapter's number *and* every child lesson's copy, so the numbers never diverge and no drift warning ever fires. For the same reason, `move_lesson` and `split_chapter` also rewrite the moved lessons' `chapitreNum` — rewiring the edge alone would misfile them under their old chapter. This is why all three share one structural-property edit path.
+
+```text
+# add a chapter with two lessons — ONE composite, ONE confirm
+curator: add_chapter(number=26, title="Nombres décimaux", lessons=[{text:"Découverte"},{text:"Bilan", isBilan:true}])
+         → dry-run: diff shows 1 chapter + 2 lessons + 2 hasChild edges added; token + mintedChapterId + mintedLessonIds
+curator: add_chapter(..., confirm:true, confirmationToken:…, mintedChapterId:…, mintedLessonIds:[…])
+         → all five nodes/edges land on the draft atomically; one audit "apply" event
+
+# renumber chapter 3 → 26 — chapter AND all its lessons rewritten together, no drift
+curator: renumber(chapterId="…", newNumber=26) → dry-run: diff shows the chapter + every child lesson as CHANGED
+curator: renumber(..., confirm:true, confirmationToken:…) → applied atomically; chapitreNum stays consistent
+```
+
 ### `get_capabilities` — a truthful mirror of "what can I do?"
 
 `get_capabilities` is a read-only tool that reports, for the currently-authenticated caller and the active grade/subject:
@@ -192,7 +275,7 @@ approver: publish_draft(confirm:true, confirmationToken:...) → promoted, gener
 - **actor** — verified id, whether the caller is known, and their role (`curator` / `approver` / `null`), all from the JWT — never client-supplied.
 - **actions** — which of `canReadGenerate` / `canReadDraft` / `canEditDraft` / `canDiscardDraft` / `canPublish` are allowed. **Each value is computed by calling `authorize()` — the same function every write tool actually uses.** No role-mapping logic lives in the tool itself.
 - **draft** — whether a draft is open on this namespace, and (if so) who created it and when (from the audit log). Useful for a second curator to see they'd be editing someone else's draft.
-- **editable** — the pilot scope: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist. Both are read from source, not retyped.
+- **editable** — the current edit surface: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist; `structural.verbs` lists the four raw primitives with `cascade: "explicit-force-only"` (so callers know `delete_node` needs `force:true` to cascade and refuses otherwise); `structuralKeys` mirrors the adapter's `structuralAliases` + the `STRUCTURAL_EDIT_SAFE_PATHS` allowlist (the numeric keys editable only through recipes); `recipes` is a **mirror of the `RECIPES` registry** — each recipe's name, params, and its `renumberBearing` / `regimeGated` flags, rendered straight from the code so what Claude discovers can't drift from what's built; `coverageWarnings.enabled` says whether the active subject emits completeness warnings, with a note that they never block. All fields are read from source, not retyped.
 - **rules** — the structural rules (id-immutable, no-orphan) as descriptions imported from `validate.ts`, plus the two-phase confirm expectation.
 
 **Why it exists.** So Claude can tell a curator accurately what they can and cannot do BEFORE trying — instead of discovering limits by hitting errors, or inferring from tool names. Available to any caller: an unknown user gets a truthful "read/generate only" response, not a 401.
@@ -214,6 +297,122 @@ npm test                                 # includes src/kg-store/parity.test.ts
 ```
 
 Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering doesn't cause false diffs, but the response shape itself must not change. A secondary manual check (regenerating a manual and a lessons deliverable with the flag flipped and confirming the pre-LLM generation context is identical) is documented in the roadmap; the LLM output itself is not byte-stable and is not the parity oracle.
+
+## KG explorer (read-only live viewer)
+
+A hosted static page that lets a maths/reading expert pick a knowledge graph and explore it
+**live** — sourced from Firestore's PUBLISHED slot, not a baked snapshot. It is **read-only**:
+it never writes, never sees drafts, and does not touch the MCP tools or their auth. Editing
+stays in the MCP curator tools. See `docs/kg-explorer-findings.md` for the design rationale and
+the data-scope finding.
+
+Two pieces: a read-only **export endpoint** (companion routes on the same Cloud Run service,
+`src/kg-export.ts` + routes in `src/http.ts`) and the **hosted explorer** (`hosting/public/index.html`,
+a fork of the original single-file explorer — same look and interactions, live data).
+
+### Endpoint contract
+
+All routes are additive; the MCP `/mcp` surface is unchanged. Reads resolve to the pointer's
+`publishedSlot` only (a curator's draft never leaks here until they publish).
+
+- `GET /kg/config` — **public**. `{ supabaseUrl, supabaseAnonKey, authRequired }` so the static
+  page can drive its own Supabase login without baking deployment config into the HTML.
+- `GET /kg/namespaces` — **auth-gated**. `{ namespaces: [{ ns, grade, subject, label:{fr,en} }] }`.
+  Lists every installed context that has a published pointer, so a newly seeded KG appears in the
+  selector automatically.
+- `GET /kg?ns=<namespace>` — **auth-gated**. The published **display-JSON** for one namespace:
+
+  ```jsonc
+  {
+    "nodes": [ { "id", "label", "kind", "nt", "st","st_en", "code", "desc","desc_en",
+                 "dom","pal","sem","chapN","chapT", "src","ref","statut", "srcKey", ... } ],
+    "edges": [ { "s", "t", "r", "o" } ],           // r ∈ {hasChild, buildsTowards}; o = sibling order
+    "meta": {
+      "ns", "label", "publishedSlot", "generatedAt",
+      "counts": { "nodes", "edges", "byKind" },
+      "sources": ["RECE","Rwanda P1", ...],        // distinct srcKeys present → source-filter chips
+      "viewConfig": { "views": [ { "id","label","shape","params" } ] }
+    }
+  }
+  ```
+
+**Auth** (decision: Supabase login). When `SUPABASE_URL` is set, `/kg/namespaces` and `/kg`
+require a valid Supabase Bearer JWT — the same trust channel as `/mcp`. The static page runs a
+small `supabase-js` email/password login (mirroring `/oauth/consent`) and sends the token. In
+`ALLOW_UNAUTHENTICATED=1` (local only) the routes are open.
+
+**CORS.** Allow-listed to the Firebase Hosting origin(s); override with `KG_ALLOWED_ORIGINS`
+(comma-separated). `localhost`/`127.0.0.1` are always allowed for local dev. The deployed page
+does not actually need CORS — Firebase Hosting **rewrites** `/kg/**` → the Cloud Run service
+(`firebase.json`), so the browser calls same-origin and Hosting proxies to Cloud Run (the JWT
+passes through). CORS covers direct/local access.
+
+### The raw-LC → display transform
+
+The store holds a NORMALIZED graph (generic `{type, properties:{code,title,text,order,isAssessment,raw}}`).
+`toDisplayNode` maps each stored node to the explorer's display schema, reading `properties.raw.*`
+with both maths (camelCase) and reading (snake_case) spellings:
+
+| display field | source | display field | source |
+|---|---|---|---|
+| `label` | derived from `kind` | `dom`/`dom_en` | `raw.domaine`/`_en` |
+| `kind` | store `type` | `pal`/`sem` | `raw.palier`/`raw.semaine` |
+| `code` | `properties.code` (`raw.statementCode`) | `chapN`/`chapT` | `raw.chapitreNum`/`raw.chapitreTitre` |
+| `desc`/`desc_en` | `properties.text`/`raw.osTexte`/`raw.description` | `os`/`os_en` | `raw.osTexte`/`_en` |
+| `st`/`st_en` | `raw.statementType`/`_en` | `src`/`ref`/`statut` | `raw.source`/`reference`/`statut` |
+| `nt` | `raw.normalizedType`/`raw.contentType` | `srcKey` | `raw.sourceKey` |
+| `ex`/`ex_en`, `apt`, `comm` | `raw.examples`/`aptitudeCI`/`commentaireProgression` | `strand`,`genre` | `raw.strand`,`raw.genre` (reading) |
+
+Edges are the stored `hasChild` + `buildsTowards` as `{s,t,r,o}`. Domaine/Palier/Semaine grouping
+is **synthesized client-side** from node properties (as the original explorer already did for
+Palier/Semaine) — the server emits only spine nodes + edges.
+
+### Data-driven views (`meta.viewConfig`)
+
+The frontend is generic and renders whatever views `meta.viewConfig` declares — no per-namespace
+`if` anywhere. Two view **shapes**:
+
+- `grouped-spine` — nested grouping synthesized from `groupBy` props read off `anchorKind` nodes,
+  then those anchors, then the `hasChild` subtree (optionally stopping at `stopKind`). Maths
+  declares three: *thematic* (Domaine→Chapitre→OS→composant→tâche), *planning* (Palier→Semaine→OS),
+  *chapters* (Domaine→Chapitre→OS).
+- `node-type` — the generic floor, works for ANY namespace: each node type → its nodes → their
+  outgoing relations.
+
+A namespace gets the rich grouped-spine views **only when its data carries the needed fields**
+(chapters with `dom`, lessons with `pal`/`sem`); every namespace always gets the `node-type` view.
+So `ci/maths` shows four tabs, `ce1/reading` shows one (generic) — with no hardcoding.
+
+### Adding a new KG
+
+Seed it into Firestore (see [Seed](#seed)). It then appears in the selector automatically. If its
+data has the maths-shaped fields it gets the rich views; otherwise it renders via the generic
+`node-type` view — no frontend change. To give a differently-shaped KG its own rich views, extend
+`buildViewConfig` in `src/kg-export.ts` with a new detection + a new view `shape` in the frontend.
+
+### Data-scope finding (what's in the graph vs. was only in the old HTML)
+
+**Verified against live Firestore, both namespaces are SPINE-ONLY.** The seed pipeline runs each
+adapter's `parse()` → normalized model → store, which keeps only the curriculum spine
+(`ci/maths`: chapter→lesson→component→task via `hasChild` + chapter→chapter `buildsTowards`;
+`ce1/reading`: week→standard→component). The RECE framework and the six derived-source family
+branches from the old inline-`DATA` explorer are **not** stored as nodes, and the raw graph's
+`supports`/`relatesTo` edges are dropped. But every raw field survives in `properties.raw` —
+including `sourceKey` (all seven tags present on maths components/tasks), so the source-filter
+chips still work, and Domaine/Palier/Semaine are re-synthesized from properties. What does NOT
+render: the RECE/derived branches as separate roots, and the modal's `supports`/`relatesTo`
+cross-link blocks. See `docs/kg-explorer-findings.md` §1 for the full table and the (a) ship-spine
+/ (b) ingest-more decision (shipped: **a**).
+
+### Deploy the explorer
+
+```bash
+firebase deploy --only hosting --project senegal-ci-maths    # → https://senegal-ci-maths.web.app
+```
+
+`firebase.json` rewrites `/kg/**` to the `senegal-mohebs-tlm` Cloud Run service (region
+`europe-west1`). Local dev: run the server (`node dist/http.js` with `ALLOW_UNAUTHENTICATED=1`)
+and open the page with `?api=http://localhost:<port>` so it hits the local endpoint directly.
 
 ## Bucket layout
 
@@ -259,7 +458,9 @@ Run on startup (when a context is active) and via the `reconcile` tool: present 
 
 **Context (subject-agnostic):** `set_context`, `get_context`.
 
-**Subject-agnostic** — work the same for any grade/subject: `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`.
+**Subject-agnostic** — work the same for any grade/subject: `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`, `get_capabilities`.
+
+**Curator loop (subject-agnostic, role-gated):** `diff_draft`, `upsert_property` (wording), `create_node` / `link_nodes` / `unlink_nodes` / `delete_node` (raw structural verbs), `add_lesson` / `add_chapter` / `move_lesson` / `split_chapter` / `renumber` (composite curriculum recipes — available where the adapter declares a `recipeProfile`), `publish_draft`, `discard_draft`.
 
 **Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's adapter:
 

@@ -53,6 +53,14 @@ export type StoredPointer = {
 
 export const otherSlot = (s: Slot): Slot => (s === "a" ? "b" : "a");
 
+// Deterministic edge id — same (type, from, to) always yields the same id, so a
+// re-seed or a re-link overwrites the same document instead of appending. Lives
+// here (leaf) so BOTH curriculum/store-bridge (which builds edges when it
+// serializes a model) and kg-store/structural (which mints edge ids when it
+// links nodes) can share ONE definition without importing each other — that
+// mutual import previously formed a cycle through the kg-store barrel.
+export const edgeId = (type: string, from: string, to: string) => `${type}:${from}->${to}`;
+
 // Input shape for writeSlot. `slot` is added by the store at write time — the
 // caller passes the logical graph, not the wire representation.
 export type SlotWriteBatch = {
@@ -176,6 +184,14 @@ export type AuditRecord = {
    * still spot self-approval — see #8 decision (b).
    */
   selfAuthored?: boolean;
+  /**
+   * publish-only (#13): the coverage/consistency warnings present on the draft
+   * at publish time (e.g. "chapter has no bilan"). Warnings NEVER block a
+   * publish — the approver's call — but recording them here gives the audit
+   * trail a note that the approver published despite them. Empty array when
+   * the draft was clean; omitted when no coverage hook was available.
+   */
+  warningsAtPublish?: string[];
 };
 
 // Query surface — a minimal internal filter. Not user-facing; #7 does not

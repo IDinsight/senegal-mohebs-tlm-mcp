@@ -160,6 +160,49 @@ export type WordingAliases = {
   };
 };
 
+/**
+ * STRUCTURAL aliases (#14) — the exact same shape as `WordingAliases`, but for
+ * a curated set of STRUCTURAL properties (a chapter's number, a lesson's
+ * within-chapter position, a lesson's chapter-membership number) rather than
+ * wording. Kept a distinct type (not just `WordingAliases`) so the two never
+ * blur: wording is edited by `upsert_property`, structural keys are edited only
+ * by the composite recipes, and each has its OWN central safety allowlist in
+ * kg-store. Values these keys carry are NUMERIC (order/number), unlike the
+ * strings wording carries. Declare only the keys a subject's recipes need.
+ */
+export type StructuralAliases = WordingAliases;
+
+/**
+ * The subject vocabulary the curriculum recipes (#14) need to operate without
+ * baking maths knowledge into the subject-agnostic kg-store. A recipe reads
+ * this off the active adapter (like `upsert_property` reads `wordingAliases`)
+ * and passes it through as an argument. A subject that declares NO
+ * `recipeProfile` simply has no recipes (the reading adapter, today).
+ *
+ * The recipes reference well-known LOGICAL key names ("number" on a chapter;
+ * "chapterNumber" / "position" on a lesson; "title" / "text" wording) and rely
+ * on `structuralAliases` / `wordingAliases` to resolve them to storage paths —
+ * so the only genuinely subject-specific vocabulary that lives here is the node
+ * kinds, the container edge type, and where an "assessment" flag is stored.
+ */
+export type RecipeProfile = {
+  chapterKind: string;          // e.g. "chapter" — the container a lesson belongs to
+  lessonKind: string;           // e.g. "lesson"  — the child a chapter holds
+  containerEdge: string;        // e.g. "hasChild" — the id-based backbone edge chapter→lesson
+  assessmentProperty: string;   // e.g. "isAssessment" — node property flagging the bilan
+};
+
+/**
+ * A read-only view of the raw graph (nodes + edges, no storage slot tag) that
+ * the coverage hook inspects. Structurally identical to the kg-store's
+ * `MutationGraph` / `Omit<StoredNode,"slot">`, but declared here so `types.ts`
+ * (a leaf) doesn't import from `kg-store`. The kg-store's own graph type is a
+ * structural match, so the framework can pass its post-apply graph straight in.
+ */
+export type GraphNodeView = { id: string; type: string; namespace: string; properties: Record<string, unknown> };
+export type GraphEdgeView = { id: string; type: string; from: string; to: string; namespace: string; properties: Record<string, unknown> };
+export type GraphView = { nodes: GraphNodeView[]; edges: GraphEdgeView[] };
+
 export interface SubjectAdapter {
   readonly grade: string;
   readonly subject: string;
@@ -173,6 +216,43 @@ export interface SubjectAdapter {
    * `WordingAliases`. Declare `{}` for a subject with no editable wording.
    */
   readonly wordingAliases: WordingAliases;
+
+  /**
+   * STRUCTURAL edit aliases (#14) — the curated structural keys a curator may
+   * change on EXISTING nodes through the composite recipes (a chapter's number,
+   * a lesson's position and chapter-membership number). Optional: a subject
+   * with no recipes omits it. Each logical key resolves to storage paths that
+   * are validated against kg-store's `STRUCTURAL_EDIT_SAFE_PATHS` allowlist, so
+   * a careless adapter cannot widen the editable surface. See `StructuralAliases`.
+   */
+  readonly structuralAliases?: StructuralAliases;
+
+  /**
+   * The curriculum vocabulary the recipes (#14) bind to. Optional — declaring
+   * it is what makes the composite recipes (add_lesson / add_chapter /
+   * move_lesson / split_chapter / renumber) AVAILABLE for this subject. A
+   * subject that omits it has wording + raw structural verbs but no recipes.
+   * See `RecipeProfile`.
+   */
+  readonly recipeProfile?: RecipeProfile;
+
+  /**
+   * Coverage / consistency WARNINGS for a proposed graph state (#13). Optional
+   * — an adapter with no completeness expectations omits it. Returns
+   * human-readable warnings (NEVER errors: warnings inform the reviewer and
+   * never block confirmation or publish). Called by the mutation framework on
+   * a dry-run's post-apply graph and by `diff_draft` on the whole draft.
+   *
+   * This is where UNIT-SHAPED rules live — "this chapter has no lessons", "no
+   * bilan", "this lesson's number disagrees with the chapter it's linked to".
+   * The adapter is the only layer that knows what a unit IS for its subject,
+   * so the subject-agnostic `validateStructural` (which does the universal,
+   * id-based referential checks) never carries any of this. Reusable helpers
+   * for the subject-neutral shapes (empty container, multi-parent) live in
+   * `curriculum/coverage.ts`; subject-specific rules (bilan, number drift) are
+   * written here in the adapter.
+   */
+  coverageWarnings?(graph: GraphView): string[];
 
   // Raw envelope → normalized CurriculumModel. Owns all raw-schema knowledge
   // (envelope layout, endpoint keying, node taxonomy). detect() is the schema

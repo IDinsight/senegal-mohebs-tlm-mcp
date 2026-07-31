@@ -13,12 +13,23 @@
 // number make sense — is the reviewer's job when they look at the diff.
 // We deliberately don't check content values.
 //
+// Rule 1's reference — the "source of truth for identity" to compare `after`
+// against — is PUBLISHED, not "the draft state right before this mutation."
+// That matters: a disguised rename doesn't have to happen inside a single
+// mutation. Delete X in one mutation, then create-a-new-id with X's content
+// in a following mutation on the same draft, and the per-mutation view sees
+// only a lone delete and a lone create — nothing to pair up. Comparing
+// against PUBLISHED catches this: across the whole open draft, if a
+// currently-published id is missing from `after` and there's an added-in-
+// `after` id whose content matches, that pair is a rename attempt. Rule 2
+// still only inspects `after` — self-consistency, no reference needed.
+//
 // Load-bearing status:
-//   - Rule 1 fires today (any mutation that renames a node/edge is blocked).
-//   - Rule 2 only starts doing real work when #12 introduces delete/relink
-//     mutations. Today no mutation removes edges or nodes, so it's trivially
-//     satisfied on live traffic — but it's built and tested now so the check
-//     runs automatically the day structural edits arrive.
+//   - Rule 1 fires today (any mutation that renames a node/edge is blocked)
+//     and, with the published-reference framing, catches cross-mutation
+//     disguised renames as soon as #12 lands the create/delete verbs.
+//   - Rule 2 was trivially satisfied while only wording edits existed; it
+//     becomes load-bearing with #12's delete/link/unlink primitives.
 
 import type { MutationEdge, MutationGraph, MutationNode, ValidationResult } from "./types.js";
 
@@ -28,8 +39,8 @@ import type { MutationEdge, MutationGraph, MutationNode, ValidationResult } from
 // description here changes it everywhere — the tool imports from this
 // module rather than retyping a copy.
 export const STRUCTURAL_RULES: readonly string[] = [
-  "Rule 1 (id-immutable): node and edge ids never change. Every reference in the graph points at them; a silent rename would orphan everything. A remove/add pair with the same content but a different id is rejected as a rename attempt.",
-  "Rule 2 (no-orphan): every edge's from/to must resolve to a node that exists in the graph after the edit. A removed node with surviving incident edges is rejected.",
+  "Rule 1 (id-immutable): node and edge ids never change. Every reference in the graph points at them; a silent rename would orphan everything. A remove/add pair with the same content but a different id is rejected as a rename attempt, whether the pair occurs inside one mutation OR across several edits on the same open draft (the check compares the proposed state against the currently-published snapshot).",
+  "Rule 2 (no-orphan): every edge's from/to must resolve to a node that exists in the graph after the edit. A removed node with surviving incident edges is rejected — the caller must unlink first, since delete_node does not cascade.",
 ];
 
 // Two nodes/edges "look like the same thing" when everything except the id
@@ -41,15 +52,18 @@ function sameContentIgnoringId(a: MutationNode | MutationEdge, b: MutationNode |
   return JSON.stringify(restA) === JSON.stringify(restB);
 }
 
-export function validateStructural(base: MutationGraph, after: MutationGraph): ValidationResult {
+export function validateStructural(reference: MutationGraph, after: MutationGraph): ValidationResult {
   const errors: string[] = [];
 
   // ── Rule 1: no silent rename ─────────────────────────────────────────────
-  // Compare what disappeared to what appeared. A same-content pair with a
-  // different id is a rename attempt.
+  // Compare what disappeared to what appeared, using `reference` (the
+  // published snapshot in production; any before-state in direct tests) as
+  // the identity truth. A same-content pair with a different id is a rename
+  // attempt, whether it happens inside a single mutation or across several
+  // edits on the open draft.
   const afterNodeIds = new Set(after.nodes.map((n) => n.id));
-  const beforeNodeIds = new Set(base.nodes.map((n) => n.id));
-  const removedNodes = base.nodes.filter((n) => !afterNodeIds.has(n.id));
+  const beforeNodeIds = new Set(reference.nodes.map((n) => n.id));
+  const removedNodes = reference.nodes.filter((n) => !afterNodeIds.has(n.id));
   const addedNodes = after.nodes.filter((n) => !beforeNodeIds.has(n.id));
   for (const gone of removedNodes) {
     const twin = addedNodes.find((added) => sameContentIgnoringId(gone, added));
@@ -61,8 +75,8 @@ export function validateStructural(base: MutationGraph, after: MutationGraph): V
   }
 
   const afterEdgeIds = new Set(after.edges.map((e) => e.id));
-  const beforeEdgeIds = new Set(base.edges.map((e) => e.id));
-  const removedEdges = base.edges.filter((e) => !afterEdgeIds.has(e.id));
+  const beforeEdgeIds = new Set(reference.edges.map((e) => e.id));
+  const removedEdges = reference.edges.filter((e) => !afterEdgeIds.has(e.id));
   const addedEdges = after.edges.filter((e) => !beforeEdgeIds.has(e.id));
   for (const gone of removedEdges) {
     const twin = addedEdges.find((added) => sameContentIgnoringId(gone, added));

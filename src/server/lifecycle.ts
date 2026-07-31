@@ -41,6 +41,14 @@ function activeNamespace(): string {
   return kgNamespace(a.grade, a.subject);
 }
 
+// The active adapter's coverage hook (#13) as a plain callback for the
+// subject-agnostic framework. Returns [] when the adapter declares none, so
+// the framework always gets a function and never special-cases absence.
+function activeCoverage(): (graph: import("../kg-store/index.js").MutationGraph) => string[] {
+  const a = getActiveAdapter();
+  return (graph) => a.coverageWarnings?.(graph) ?? [];
+}
+
 export function registerLifecycleTools(server: McpServer) {
   // ── diff_draft ────────────────────────────────────────────────────────────
   // Read side of the draft. Gated to curator + approver (unknown/no-role
@@ -71,7 +79,10 @@ export function registerLifecycleTools(server: McpServer) {
         });
         return asJson({ phase: "unauthorized", action: "readDraft", reason: authz.reason });
       }
-      return asJson(await diffDraft(ns));
+      // Pass the active adapter's coverage hook so the whole-draft view carries
+      // completeness warnings (#13) — the approver's pre-publish "this chapter
+      // has no bilan" surface.
+      return asJson(await diffDraft(ns, activeCoverage()));
     }),
   );
 
@@ -104,6 +115,7 @@ export function registerLifecycleTools(server: McpServer) {
         args: { nodeId: a.nodeId, key: a.key, value: a.value, aliases: adapter.wordingAliases },
         confirm: a.confirm,
         token: a.confirmationToken,
+        coverage: (g) => adapter.coverageWarnings?.(g) ?? [],
       });
       return asJson(result);
     }),
@@ -126,7 +138,10 @@ export function registerLifecycleTools(server: McpServer) {
     },
     guarded(async (a: { confirm?: boolean; confirmationToken?: string }) => {
       const ns = activeNamespace();
-      return asJson(await publishDraftWithConfirm(ns, { confirm: a.confirm, token: a.confirmationToken }));
+      // Coverage hook so the approver's dry-run shows completeness warnings and
+      // the publish audit records any present at publish time (#13). Warnings
+      // never block the publish.
+      return asJson(await publishDraftWithConfirm(ns, { confirm: a.confirm, token: a.confirmationToken, coverage: activeCoverage() }));
     }),
   );
 

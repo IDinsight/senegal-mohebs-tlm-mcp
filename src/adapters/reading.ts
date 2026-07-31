@@ -8,10 +8,10 @@ import { readFileSync } from "node:fs";
 import { CONFIG, kgSource } from "../config.js";
 import { sourcePath, sessionState } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
-import { buildModel, unit, terminologySections, PRELOADED_MODEL_KEY } from "../curriculum/index.js";
+import { buildModel, unit, terminologySections, PRELOADED_MODEL_KEY, emptyContainerWarnings, multiParentWarnings } from "../curriculum/index.js";
 import type {
   SubjectAdapter, DeliverableSpec, CharacterRef,
-  CurriculumModel, CurriculumUnit,
+  CurriculumModel, CurriculumUnit, GraphView,
 } from "../types.js";
 
 // Raw CE1-reading graph shape: two arrays (`nodes` + `relationships`), a `hasChild`
@@ -218,6 +218,18 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
         text: ["text", "raw.description"],
       },
     },
+
+    // Coverage warnings (#13) — reading uses the subject-NEUTRAL shapes only.
+    // Reading has no bilan and no number-based join (weeks are addressed by the
+    // `semaine` scope value, and week→standard→component are all id edges), so
+    // there are no reading-specific rules to add here. An empty week or a
+    // standard with two parents are the generic completeness signals worth
+    // surfacing; anything finer would be inventing expectations the curriculum
+    // doesn't actually assert (weeks legitimately vary in their strand set).
+    coverageWarnings: (graph: GraphView): string[] => [
+      ...emptyContainerWarnings(graph, ["week"]),
+      ...multiParentWarnings(graph, ["standard", "component"]),
+    ],
 
     detect, parse,
 
