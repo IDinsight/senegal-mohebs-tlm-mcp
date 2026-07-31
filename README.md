@@ -110,13 +110,25 @@ The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(typ
 Every graph mutation goes through two shared structural rules in [`src/kg-store/validate.ts`](src/kg-store/validate.ts) before the human review gate. Errors from either rule **block confirmation** — no token is issued, so there's nothing to replay.
 
 - **Rule 1 (id-immutable).** A node's id is the LC IRI verbatim (or, for a `create_node`-minted node, a randomUUID); an edge's id is `edgeId(type, from, to)`. Every reference in the graph points at these ids, so a silent rename would orphan everything the reviewer can't easily see in a diff. The rule compares the proposed state to the **currently-published** graph (not just the pre-mutation state) — a removed-since-publish node and an added-since-publish node with matching content are treated as a rename attempt and rejected, whether the pair occurs inside one mutation OR across a delete+create sequence on the same open draft. Legitimate delete-then-create (genuinely different content) passes.
-- **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Load-bearing since #12: `delete_node` is REFUSED if any incident edge survives, so cascade-on-delete cannot slip in silently — the caller unlinks first, then deletes.
+- **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Load-bearing since #12: a plain `delete_node` is REFUSED if any incident edge survives. A `force:true` delete cascades the dependent subtree and all incident edges in one atomic mutation, and Rule 2 re-runs on the *result* to prove the cascade itself left nothing dangling — so even the forced path can't produce a broken graph.
 
 **Denylist = just the `id` key** (on nodes and edges). References in this graph are edges-only at the storage level — `properties.raw` carries content and match-keys, never a stored id pointing at another node — so there are no reference-bearing properties to protect. If a future subject introduces one, the denylist extends by a single entry.
 
 **We don't check content.** Whether a title reads well, whether a number is sensible, whether wording matches the KG's own — that's what the draft → review → publish gate is for. A reviewer sees the whole diff and approves it. The machine only guards the two errors a reviewer can't eyeball; anything else would drift toward the schema we deliberately don't build.
 
 A mutation may still add its own `validate(base, after, args)` on top of the shared rules for anything only it can decide; both layers run and their errors compose.
+
+### Referential integrity — block vs warn
+
+The integrity layer draws one line, applied consistently:
+
+- **BLOCK (error, no token)** — anything that would leave the graph **referentially broken**: a dangling edge, a reference pointing at a node that won't exist post-edit, a disguised rename (Rule 1). This is corruption a reviewer can't see in a diff, so the machine refuses it outright. These are the shared, subject-agnostic rules in [`validate.ts`](src/kg-store/validate.ts).
+- **WARN (informational, still confirmable)** — structural **incompleteness that is valid-but-suspect**: a chapter with no lessons, a chapter missing its bilan, a lesson linked to more than one chapter, a maths lesson whose `chapitreNum` disagrees with the chapter it's edge-linked to. A curator may legitimately be mid-edit, so these never block; the approver decides. Warnings ride the dry-run response and `diff_draft`, and are recorded on the publish audit (`warningsAtPublish`) for traceability — but publish proceeds.
+- **CASCADE only on explicit `force`** — never silent, and the dry-run diff shows the full set that will vanish (see `delete_node` below).
+
+**Where the two live.** The BLOCK rules are universal — they know only nodes and edges, never "chapter" or "bilan" — so they sit in the shared `kg-store` layer. The WARN rules are *unit-shaped* — they depend on what a unit IS for a given subject — so they live behind an optional adapter hook, `SubjectAdapter.coverageWarnings(graph)`. Subject-neutral shapes (empty container, a child with two parents) are reusable helpers in [`curriculum/coverage.ts`](src/curriculum/coverage.ts) that any adapter calls with its own kind names; genuinely subject-specific rules (the maths bilan, the `chapitreNum` denormalization) are written in the maths adapter. Reading uses the generic helpers only. Nothing subject-specific leaks into the shared layer.
+
+**The reference regime (and what it means for a future renumber).** Every genuine cross-entity link in the store is an **id-based edge** (`hasChild`, `buildsTowards`) — Rule 2 covers them all. There is exactly one number-based reference: maths reads a chapter↔lesson link from `raw.chapitreNum` rather than the edge. But that number is a *denormalized copy* of a `hasChild` edge that already exists and is Rule-2-protected — so its drift is a **warning**, not corruption. The consequence for the not-yet-built renumber action (a later step): renumbering is only reference-safe if it **cascade-rewrites** every lesson's `chapitreNum` alongside the chapter's; the `chapitreNum`-drift warning is exactly the signal that would fire if it didn't.
 
 ### Audit log (append-only, atomic with the change)
 
@@ -192,9 +204,9 @@ Four RAW structural primitives, each a single #5 mutation on top of the same #5/
 - **`create_node(kind, properties)`** — adds a new node. **The server MINTS the id** (returned as `mintedNodeId` in the dry-run response); a caller-supplied id in `properties` is hard-rejected. `kind` must be a node kind already present on this namespace (chapter/lesson/component/task for maths). Missing wording surfaces as a WARNING, not a block — the reviewer at publish is the completeness gate.
 - **`link_nodes(edgeType, fromId, toId, properties?)`** — adds an edge. Edge id is deterministic (`<type>:<from>-><to>`) so re-linking the same triple is rejected as a duplicate. Endpoints must exist and `edgeType` must be an edge type already present on this namespace (`hasChild` / `buildsTowards` for maths). Edge-type LEGALITY across kinds (does `hasChild(task→chapter)` make sense?) is NOT enforced — that judgment is deferred to human review at publish.
 - **`unlink_nodes(edgeId)`** — removes one edge by id. Removing an edge cannot orphan a node (Rule 2 only cares about surviving edges).
-- **`delete_node(nodeId)`** — removes a node. **NON-CASCADING**: the mutation is REFUSED if the node still has incident edges; the caller must `unlink_nodes` each one first. The validate hook lists the incident edges so it's clear what to detach. Auto-cascade is a separate future step.
+- **`delete_node(nodeId, force?)`** — removes a node. By default (**`force:false`**) it is REFUSED if the node still has incident edges; the validate hook lists them so it's clear what to `unlink_nodes` first. With **`force:true`** it cascade-deletes the node together with its **dependent subtree** (its `hasChild` children, their children, …) and every edge touching any removed node, in ONE atomic mutation — the dry-run diff shows the full set that will vanish, and Rule 1/2 re-run on the result to prove it stays clean. Siblings and progression neighbours survive (only their connecting edge drops). **Cascade never happens without explicit `force`.**
 
-Every primitive is two-phase (dry-run → confirm), curator- or approver-only, audited on both writes and denials. Multi-primitive sequences accumulate on the SAME draft and publish together atomically via the existing `publish_draft` flow — there is no single-call composite in this step; composite recipes (add-chapter, split-chapter) are a separate future step.
+Every primitive is two-phase (dry-run → confirm), curator- or approver-only, audited on both writes and denials. Multi-primitive sequences accumulate on the SAME draft and publish together atomically via the existing `publish_draft` flow — there is no single-call composite in this step; composite recipes (add-chapter, split-chapter) are a separate future step that builds on this integrity layer.
 
 **Rule 1 (id-immutable) protects across the whole draft, not just per-mutation.** Comparing the proposed state to PUBLISHED means a `delete_node(X)` + `create_node(X's content under a new id)` sequence on the same draft is caught as a disguised rename — even though the individual mutations only remove or only add. A legitimate replace (create a node with substantively different content) still passes.
 
@@ -211,12 +223,19 @@ approver: diff_draft() → sees +2 nodes, +1 edge across the whole draft
 approver: publish_draft() → dry-run + confirm → all three changes go live atomically
 ```
 
-**Detach-then-delete flow** (delete refuses to cascade):
+**Two ways to delete a connected node:**
 
 ```
-curator: delete_node(nodeId="…") → BLOCKED: "still has N incident edge(s): <ids>. delete_node does not cascade — unlink first."
+# (a) manual detach, then delete — full control, one edge at a time
+curator: delete_node(nodeId="…") → BLOCKED: "still has N incident edge(s): <ids>. …either unlink first, or pass force:true."
 curator: unlink_nodes(edgeId=…) → dry-run + confirm  (repeat per incident edge)
 curator: delete_node(nodeId="…") → dry-run + confirm → node removed on draft
+
+# (b) explicit force cascade — one atomic mutation, whole subtree
+curator: delete_node(nodeId="…chapter…", force:true)
+         → dry-run: diff shows the chapter + all its lessons/components/tasks + every incident edge that will be removed
+curator: delete_node(nodeId="…chapter…", force:true, confirm:true, confirmationToken:…)
+         → the whole subtree is gone from the draft, atomically; the result is re-checked and clean
 ```
 
 ### `get_capabilities` — a truthful mirror of "what can I do?"
@@ -226,7 +245,7 @@ curator: delete_node(nodeId="…") → dry-run + confirm → node removed on dra
 - **actor** — verified id, whether the caller is known, and their role (`curator` / `approver` / `null`), all from the JWT — never client-supplied.
 - **actions** — which of `canReadGenerate` / `canReadDraft` / `canEditDraft` / `canDiscardDraft` / `canPublish` are allowed. **Each value is computed by calling `authorize()` — the same function every write tool actually uses.** No role-mapping logic lives in the tool itself.
 - **draft** — whether a draft is open on this namespace, and (if so) who created it and when (from the audit log). Useful for a second curator to see they'd be editing someone else's draft.
-- **editable** — the current edit surface: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist; `structural.verbs` lists the four raw structural primitives (`create_node`, `link_nodes`, `unlink_nodes`, `delete_node`) with `cascade: false` so callers know `delete_node` is non-cascading (detach with `unlink_nodes` before delete). All fields are read from source, not retyped.
+- **editable** — the current edit surface: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist; `structural.verbs` lists the four raw primitives with `cascade: "explicit-force-only"` (so callers know `delete_node` needs `force:true` to cascade and refuses otherwise); `coverageWarnings.enabled` says whether the active subject emits completeness warnings, with a note that they never block. All fields are read from source, not retyped.
 - **rules** — the structural rules (id-immutable, no-orphan) as descriptions imported from `validate.ts`, plus the two-phase confirm expectation.
 
 **Why it exists.** So Claude can tell a curator accurately what they can and cannot do BEFORE trying — instead of discovering limits by hitting errors, or inferring from tool names. Available to any caller: an unknown user gets a truthful "read/generate only" response, not a 401.

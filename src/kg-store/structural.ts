@@ -276,43 +276,113 @@ export const unlinkNodes: GraphMutation<UnlinkNodesArgs> = {
 };
 
 // ── delete_node ──────────────────────────────────────────────────────────────
-// Removes one node. Does NOT cascade — Rule 2 rejects the mutation if any
-// incident edge would survive. The caller's flow is:
-//   1. link_nodes / unlink_nodes: detach the node.
-//   2. delete_node: remove it once isolated.
+// Removes one node. Two modes, chosen by the EXPLICIT `force` flag — cascade
+// never happens implicitly (#13):
 //
-// This is intentional per the task's scope. Cascade lives in #14; here we
-// keep the verb raw and safe.
+//   force=false (default): the safe, raw verb. Rejected if any incident edge
+//     would survive (Rule 2 would catch it; validate() surfaces exactly which
+//     edges to unlink first). The caller's manual flow stays: unlink each
+//     incident edge, then delete.
+//
+//   force=true: cascade the hasChild SUBTREE in ONE atomic mutation. Removes
+//     the target, every hasChild-descendant whose parents are ALL in the
+//     removed set (a shared child survives — only its edge to the removed
+//     parent drops), and every edge incident to any removed node (this also
+//     drops buildsTowards edges touching the target). Siblings and progression
+//     neighbours survive. The dry-run diff shows the FULL removed set, and the
+//     framework re-runs Rule 1/2 on the result — a correct cascade leaves the
+//     graph referentially clean (no new dangling edge).
+//
+// Dependent-node cascade follows the hasChild edge — the id-based referential
+// backbone. A child attached to the target by a maths chapitreNum number ONLY
+// (no hasChild edge — a drift state the coverage warnings already flag) is NOT
+// in the subtree and would survive; that's an accepted edge case of the
+// number/edge denormalization, surfaced as a coverage warning rather than
+// silently cascaded.
 
 export type DeleteNodeArgs = {
   nodeId: string;
+  force?: boolean;
 };
+
+const HAS_CHILD = "hasChild";
+
+// Compute the full set of node ids removed by a force-cascade delete of
+// `rootId`: the root plus every hasChild-descendant all of whose hasChild
+// parents are themselves in the removed set. Iterates to a fixpoint so a
+// child whose last surviving parent gets removed later is still collected.
+// Pure over the graph; shared by validate (to report) and apply (to enact).
+function cascadeRemovedNodeIds(base: MutationGraph, rootId: string): Set<string> {
+  const removed = new Set<string>([rootId]);
+  // Parents of each node via hasChild, precomputed.
+  const parentsByChild = new Map<string, string[]>();
+  const childrenByParent = new Map<string, string[]>();
+  for (const e of base.edges) {
+    if (e.type !== HAS_CHILD) continue;
+    (parentsByChild.get(e.to) ?? parentsByChild.set(e.to, []).get(e.to)!).push(e.from);
+    (childrenByParent.get(e.from) ?? childrenByParent.set(e.from, []).get(e.from)!).push(e.to);
+  }
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const removedId of [...removed]) {
+      for (const child of childrenByParent.get(removedId) ?? []) {
+        if (removed.has(child)) continue;
+        const parents = parentsByChild.get(child) ?? [];
+        // A child is a dependent orphan only if EVERY hasChild parent is being
+        // removed — so a child shared with a surviving parent stays put.
+        if (parents.every((p) => removed.has(p))) {
+          removed.add(child);
+          changed = true;
+        }
+      }
+    }
+  }
+  return removed;
+}
 
 export const deleteNode: GraphMutation<DeleteNodeArgs> = {
   name: "deleteNode",
-  describe: ({ nodeId }) => `delete node '${nodeId}'`,
+  describe: ({ nodeId, force }) => (force ? `force-delete node '${nodeId}' and its dependent subtree` : `delete node '${nodeId}'`),
   validate: (base, _after, args) => {
     const errors: string[] = [];
     if (!base.nodes.some((n) => n.id === args.nodeId)) {
       errors.push(`delete_node: node '${args.nodeId}' does not exist in the draft.`);
+      return { errors, warnings: [] };
     }
-    // Rule 2 will catch surviving edges automatically, but a targeted error
-    // here tells the caller EXACTLY what to unlink first. Cheaper than
-    // making the operator decode a Rule-2 message.
-    const incident = base.edges.filter((e) => e.from === args.nodeId || e.to === args.nodeId);
-    if (incident.length > 0) {
-      errors.push(
-        `delete_node: node '${args.nodeId}' still has ${incident.length} incident edge(s): ` +
-        `${incident.slice(0, 5).map((e) => e.id).join(", ")}${incident.length > 5 ? ", …" : ""}. ` +
-        `delete_node does not cascade — unlink the edges first, then delete the node.`,
-      );
+    if (!args.force) {
+      // Safe mode: refuse a connected node. Rule 2 would also catch it, but a
+      // targeted error tells the caller EXACTLY what to unlink first — or to
+      // pass force:true to cascade.
+      const incident = base.edges.filter((e) => e.from === args.nodeId || e.to === args.nodeId);
+      if (incident.length > 0) {
+        errors.push(
+          `delete_node: node '${args.nodeId}' still has ${incident.length} incident edge(s): ` +
+          `${incident.slice(0, 5).map((e) => e.id).join(", ")}${incident.length > 5 ? ", …" : ""}. ` +
+          `delete_node does not cascade by default — either unlink the edges first, or pass force:true to cascade-delete the node and its dependent subtree.`,
+        );
+      }
     }
+    // force=true: no incident-edge error; apply() prunes the whole subtree, and
+    // the framework's Rule 1/2 pass proves the result is clean.
     return { errors, warnings: [] };
   },
-  apply: (base, args) => ({
-    nodes: base.nodes.filter((n) => n.id !== args.nodeId),
-    edges: base.edges,
-  }),
+  apply: (base, args) => {
+    if (!args.force) {
+      // Safe mode: remove only the node (edges untouched). If it was connected,
+      // validate() already blocked; if isolated, this is clean.
+      return {
+        nodes: base.nodes.filter((n) => n.id !== args.nodeId),
+        edges: base.edges,
+      };
+    }
+    // Force mode: prune the dependent subtree + every incident edge.
+    const removed = cascadeRemovedNodeIds(base, args.nodeId);
+    return {
+      nodes: base.nodes.filter((n) => !removed.has(n.id)),
+      edges: base.edges.filter((e) => !removed.has(e.from) && !removed.has(e.to)),
+    };
+  },
 };
 
 // ── Convenience helper for the tool layer ────────────────────────────────────

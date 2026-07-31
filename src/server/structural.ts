@@ -51,6 +51,14 @@ function activeNamespace(): string {
   return kgNamespace(a.grade, a.subject);
 }
 
+// The active adapter's coverage hook (#13) as a callback for the framework —
+// so a structural edit's dry-run surfaces completeness warnings (e.g. "the
+// chapter you just emptied has no bilan"). [] when the adapter declares none.
+function activeCoverage(): (graph: import("../kg-store/index.js").MutationGraph) => string[] {
+  const a = getActiveAdapter();
+  return (graph) => a.coverageWarnings?.(graph) ?? [];
+}
+
 // A JSON-serializable value — z.record's element type. Kept loose because
 // `properties` is subject-specific and no schema layer constrains it.
 const JsonValue = z.any();
@@ -92,6 +100,7 @@ export function registerStructuralTools(server: McpServer) {
         },
         confirm: a.confirm,
         token: a.confirmationToken,
+        coverage: (g) => adapter.coverageWarnings?.(g) ?? [],
       });
       // Surface the minted id at the response top level on dry-run so Claude
       // can pass it back on confirm without having to fish it out of the diff.
@@ -132,6 +141,7 @@ export function registerStructuralTools(server: McpServer) {
         },
         confirm: a.confirm,
         token: a.confirmationToken,
+        coverage: activeCoverage(),
       });
       return asJson(result);
     }),
@@ -158,6 +168,7 @@ export function registerStructuralTools(server: McpServer) {
         args: { edgeId: a.edgeId },
         confirm: a.confirm,
         token: a.confirmationToken,
+        coverage: activeCoverage(),
       });
       return asJson(result);
     }),
@@ -169,21 +180,23 @@ export function registerStructuralTools(server: McpServer) {
     {
       title: "Delete a node",
       description:
-        "Remove one node by `nodeId`. **NON-CASCADING**: the mutation is REJECTED if any edge still points at the node — the validate hook lists the incident edges so you can unlink_nodes each one first, then retry. This is intentional; auto-cascade is a separate future step. A node deleted here is gone from the DRAFT; publish_draft makes it live. delete_node followed by create_node with the same content is caught by Rule 1 (id-immutable) as a disguised rename attempt — genuinely replacing a node means creating one with substantively different content. REQUIRES CONFIRMATION.",
+        "Remove one node by `nodeId`. By DEFAULT (force:false) it is REFUSED if any edge still points at the node — the validate hook lists the incident edges so you can unlink_nodes each one first, then retry. Pass `force:true` to instead CASCADE-delete the node together with its dependent subtree (its hasChild children, their children, …) and every edge touching any removed node, all in ONE atomic mutation; the dry-run diff shows the FULL set that will vanish, and the result is re-checked for referential integrity. Cascade NEVER happens without explicit force. A node deleted here is gone from the DRAFT; publish_draft makes it live. delete_node followed by create_node with the same content is caught by Rule 1 (id-immutable) as a disguised rename. REQUIRES CONFIRMATION.",
       inputSchema: {
         nodeId: z.string(),
+        force: z.boolean().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { nodeId: string; confirm?: boolean; confirmationToken?: string }) => {
+    guarded(async (a: { nodeId: string; force?: boolean; confirm?: boolean; confirmationToken?: string }) => {
       const namespace = activeNamespace();
       const result = await runGraphMutation({
         namespace,
         mutation: deleteNode,
-        args: { nodeId: a.nodeId },
+        args: { nodeId: a.nodeId, force: a.force },
         confirm: a.confirm,
         token: a.confirmationToken,
+        coverage: activeCoverage(),
       });
       return asJson(result);
     }),

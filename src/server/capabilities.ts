@@ -97,13 +97,20 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     safePaths: [...UPSERT_PROPERTY_SAFE_PATHS].sort(),
     structural: {
       verbs: ["create_node", "link_nodes", "unlink_nodes", "delete_node"],
-      cascade: false,
+      // delete_node cascades ONLY on an explicit force:true — never implicitly.
+      cascade: "explicit-force-only",
       note:
         "create_node mints a server-side id and sets properties at BIRTH (missing wording surfaces as a WARNING, not a block). " +
         "link_nodes adds an edge; edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across kinds is not enforced (deferred to human review at publish). " +
         "unlink_nodes removes an edge by id. " +
-        "delete_node REFUSES to remove a node with incident edges — no auto-cascade. Detach a node with unlink_nodes calls first, then delete_node. " +
+        "delete_node by default REFUSES to remove a node with incident edges (detach with unlink_nodes first); pass force:true to cascade-delete the node AND its dependent subtree (children, their children, …) plus every incident edge in one atomic mutation — the dry-run diff shows the full set that will vanish. Cascade never happens without explicit force. " +
         "Composite recipes (add-chapter, split-chapter) and structural-property editing of EXISTING nodes (renumber, code change) are not exposed yet.",
+    },
+    coverageWarnings: {
+      // Whether the active subject's adapter emits completeness warnings.
+      enabled: typeof adapter.coverageWarnings === "function",
+      note:
+        "Coverage warnings are INFORMATIONAL — they surface structural incompleteness a reviewer should see (e.g. a chapter with no lessons or no bilan, a lesson linked to more than one chapter, or a maths lesson whose chapitreNum disagrees with the chapter it's linked to). They appear on an edit's dry-run and on diff_draft, and are recorded on the publish audit, but they NEVER block confirmation or publish — completeness is the human reviewer's call, not the machine's.",
     },
   };
 

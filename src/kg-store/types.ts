@@ -176,6 +176,14 @@ export type AuditRecord = {
    * still spot self-approval — see #8 decision (b).
    */
   selfAuthored?: boolean;
+  /**
+   * publish-only (#13): the coverage/consistency warnings present on the draft
+   * at publish time (e.g. "chapter has no bilan"). Warnings NEVER block a
+   * publish — the approver's call — but recording them here gives the audit
+   * trail a note that the approver published despite them. Empty array when
+   * the draft was clean; omitted when no coverage hook was available.
+   */
+  warningsAtPublish?: string[];
 };
 
 // Query surface — a minimal internal filter. Not user-facing; #7 does not

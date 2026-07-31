@@ -229,6 +229,22 @@ describe("editable and rules come from the real sources (no hand-copied literals
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     expect(caps.rules.structural).toEqual([...STRUCTURAL_RULES]);
   });
+
+  it("editable.structural reports the four verbs and explicit-force-only cascade (#13)", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    expect(caps.editable.structural.verbs).toEqual(["create_node", "link_nodes", "unlink_nodes", "delete_node"]);
+    // delete cascades ONLY on explicit force — the report must not read as a
+    // plain boolean 'false' (which pre-#13 meant 'never cascades').
+    expect(caps.editable.structural.cascade).toBe("explicit-force-only");
+  });
+
+  it("editable.coverageWarnings.enabled mirrors whether the adapter has a coverage hook (#13)", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
+    expect(caps.editable.coverageWarnings.enabled).toBe(typeof adapter.coverageWarnings === "function");
+    // Maths ships a coverage hook, so this is true for the target context.
+    expect(caps.editable.coverageWarnings.enabled).toBe(true);
+  });
 });
 
 // ── No-state-change / safe for unknown ──────────────────────────────────────

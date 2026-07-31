@@ -241,12 +241,19 @@ export type RunGraphMutationArgs<Args> = {
   args: Args;
   confirm?: boolean;
   token?: string;
+  // Optional subject-aware coverage hook (#13). When provided, it is called on
+  // the post-apply graph and its output is merged into the dry-run `warnings`.
+  // Injected by the server layer from the active adapter's `coverageWarnings`
+  // so kg-store stays subject-agnostic — the framework never knows what a
+  // "chapter" or "bilan" is. Warnings NEVER block; they ride the normal preview
+  // envelope exactly like a mutation's own validate warnings.
+  coverage?: (graph: MutationGraph) => string[];
 };
 
 export async function runGraphMutation<Args>(
   input: RunGraphMutationArgs<Args>,
 ): Promise<GraphPreviewResult | GraphBlockedResult | GraphApplyResult | GraphUnauthorizedResult> {
-  const { namespace, mutation, args, confirm, token } = input;
+  const { namespace, mutation, args, confirm, token, coverage } = input;
   const store = getKgStore();
 
   // Compose the stakes-accurate action string exactly once. Every path that
@@ -402,8 +409,13 @@ export async function runGraphMutation<Args>(
   const custom = mutation.validate
     ? mutation.validate(snap.graph, after, args)
     : { errors: [], warnings: [] };
+  // Coverage warnings (#13) are subject-shaped completeness hints on the
+  // PROPOSED result. They only inform — never gate the token — so they join
+  // `warnings`, never `errors`. Computed on `after` so the curator sees the
+  // consequence of THIS edit (e.g. "the chapter you just emptied has no bilan").
+  const coverageWarnings = coverage ? coverage(after) : [];
   const errors = [...structural.errors, ...custom.errors];
-  const warnings = [...structural.warnings, ...custom.warnings];
+  const warnings = [...structural.warnings, ...custom.warnings, ...coverageWarnings];
   if (errors.length > 0) {
     // Sample the first error for the reason field — the full array is
     // reflected in the response but audit records stay lightweight.
@@ -468,7 +480,11 @@ async function currentDraftApplies(namespace: string): Promise<AuditRecord[]> {
   return events.filter((r) => r.eventType === "apply" && r.ts >= created.ts);
 }
 
-export async function publishDraft(namespace: string): Promise<PublishResult> {
+// `warningsAtPublish` (optional, #13) is the coverage warnings the caller
+// observed on the draft at publish time — recorded verbatim on the publish
+// audit for traceability. It never affects the outcome (warnings don't block);
+// the two-phase wrapper computes it and hands it down.
+export async function publishDraft(namespace: string, warningsAtPublish?: string[]): Promise<PublishResult> {
   const store = getKgStore();
   const { actor, auditActor } = snapshotActor();
 
@@ -531,6 +547,10 @@ export async function publishDraft(namespace: string): Promise<PublishResult> {
     baseVersion, resultingVersion,
     promotedApplyIds: promotedIds,
     selfAuthored,
+    // Record coverage warnings only when the caller computed them (they had a
+    // coverage hook). Firestore rejects `undefined`, so omit the key entirely
+    // rather than write undefined when none were supplied.
+    ...(warningsAtPublish ? { warningsAtPublish } : {}),
   };
   await store.publishDraft(namespace, rec);
   const newPointer = await store.readPointer(namespace);
@@ -587,9 +607,21 @@ export type WholeDraftDiff = {
   publishedVersion?: string;
   draftVersion?: string;
   diff?: GraphDiff;
+  // Coverage/consistency warnings over the WHOLE draft (#13). This is the
+  // approver's pre-publish view — exactly where "this chapter has no bilan"
+  // should surface. Present (possibly empty) whenever a draft exists and a
+  // coverage hook was supplied; omitted when there's no draft. Warnings NEVER
+  // block publish.
+  warnings?: string[];
 };
 
-export async function diffDraft(namespace: string): Promise<WholeDraftDiff> {
+// `coverage` is the active adapter's subject-aware hook, injected by the server
+// layer (same as runGraphMutation) so this function stays subject-agnostic.
+// When omitted, no warnings are computed (callers that only need the diff).
+export async function diffDraft(
+  namespace: string,
+  coverage?: (graph: MutationGraph) => string[],
+): Promise<WholeDraftDiff> {
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
   if (!pointer || !pointer.draftSlot) return { hasDraft: false };
@@ -606,6 +638,7 @@ export async function diffDraft(namespace: string): Promise<WholeDraftDiff> {
     publishedVersion: hashGraph(published),
     draftVersion: hashGraph(draft),
     diff: diffGraphs(published, draft),
+    warnings: coverage ? coverage(draft) : [],
   };
 }
 
@@ -657,17 +690,18 @@ export type PublishConfirmPreview = {
   publishedVersion?: string;
   draftVersion?: string;
   diff?: GraphDiff;
+  warnings?: string[];          // coverage warnings on the draft (#13) — inform, never block
   confirmationToken?: string;   // absent when there's nothing to publish
 };
 export type PublishConfirmResult =
   | PublishConfirmPreview
   | { phase: "unauthorized"; kind: "publishDraft"; action: "publish"; reason: string }
-  | { phase: "commit"; kind: "publishDraft"; ok: true; publishedSlot: Slot; auditId: string; selfAuthored: boolean }
+  | { phase: "commit"; kind: "publishDraft"; ok: true; publishedSlot: Slot; auditId: string; selfAuthored: boolean; warningsAtPublish?: string[] }
   | { phase: "commit"; kind: "publishDraft"; ok: false; reason: string };
 
 export async function publishDraftWithConfirm(
   namespace: string,
-  opts: { confirm?: boolean; token?: string } = {},
+  opts: { confirm?: boolean; token?: string; coverage?: (graph: MutationGraph) => string[] } = {},
 ): Promise<PublishConfirmResult> {
   const store = getKgStore();
   const { actor, auditActor } = snapshotActor();
@@ -692,21 +726,25 @@ export async function publishDraftWithConfirm(
 
     // Draft-still-current check: recompute the draft hash and compare
     // against the token. If it moved (someone applied since dry-run),
-    // reject — a stale publish could promote unexpected edits.
-    const current = await diffDraft(namespace);
+    // reject — a stale publish could promote unexpected edits. Pass the
+    // coverage hook so we can record the warnings-at-publish on the audit.
+    const current = await diffDraft(namespace, opts.coverage);
     if (!current.hasDraft) return { phase: "commit", kind: "publishDraft", ok: false, reason: "no draft to publish" };
     if (current.draftVersion !== payload.dv) return { phase: "commit", kind: "publishDraft", ok: false, reason: "the draft moved since dry-run — re-preview to see the current diff before publishing" };
 
     // Delegate to the atomic primitive. It runs its own authz (redundant
-    // but cheap and defence-in-depth) and its own self-approve check.
-    const result = await publishDraft(namespace);
+    // but cheap and defence-in-depth) and its own self-approve check. The
+    // warnings we observed are recorded on the publish audit — they never
+    // block (approver's call), they annotate the trail.
+    const warningsAtPublish = opts.coverage ? (current.warnings ?? []) : undefined;
+    const result = await publishDraft(namespace, warningsAtPublish);
     consumedDraftNonces.add(payload.n);
     if (!result.ok) return { phase: "commit", kind: "publishDraft", ok: false, reason: result.reason };
-    return { phase: "commit", kind: "publishDraft", ok: true, publishedSlot: result.publishedSlot, auditId: result.auditId, selfAuthored: result.selfAuthored };
+    return { phase: "commit", kind: "publishDraft", ok: true, publishedSlot: result.publishedSlot, auditId: result.auditId, selfAuthored: result.selfAuthored, ...(warningsAtPublish ? { warningsAtPublish } : {}) };
   }
 
   // ── Dry-run phase ───────────────────────────────────────────────────────
-  const snap = await diffDraft(namespace);
+  const snap = await diffDraft(namespace, opts.coverage);
   if (!snap.hasDraft) {
     // Nothing to publish. Return a preview envelope shape but with no token.
     return {
@@ -727,6 +765,7 @@ export async function publishDraftWithConfirm(
     publishedVersion: snap.publishedVersion,
     draftVersion: snap.draftVersion,
     diff: snap.diff,
+    warnings: snap.warnings,
     confirmationToken: token,
   };
 }

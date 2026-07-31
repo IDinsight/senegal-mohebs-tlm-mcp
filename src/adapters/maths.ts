@@ -12,11 +12,11 @@ import { CONFIG, kgSource } from "../config.js";
 import { sourcePath, sessionState } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
 import { neighborhoodDomains, suggestFreshDomain, domainUsage } from "../generation/index.js";
-import { buildModel, unit, terminologySections, PRELOADED_MODEL_KEY } from "../curriculum/index.js";
+import { buildModel, unit, terminologySections, PRELOADED_MODEL_KEY, emptyContainerWarnings, multiParentWarnings } from "../curriculum/index.js";
 import { noAccents } from "../utils/index.js";
 import type {
   SubjectAdapter, DeliverableSpec, CharacterRef,
-  CurriculumModel, CurriculumUnit,
+  CurriculumModel, CurriculumUnit, GraphView,
 } from "../types.js";
 
 // Raw CI-maths graph shape: a single `graph` array of discriminated nodes and
@@ -112,6 +112,92 @@ function parse(raw: unknown): CurriculumModel {
   }
 
   return buildModel(units);
+}
+
+// ── Coverage / consistency warnings (#13) ────────────────────────────────────
+// Unit-shaped completeness checks for CI maths. All WARNINGS — they inform the
+// reviewer, never block. Two generic shapes (empty chapter, lesson with >1
+// parent) come from the shared helpers; two are maths-specific and live here
+// because only this adapter knows what a "bilan" is and that maths denormalizes
+// the chapter→lesson link into `raw.chapitreNum`.
+//
+// Operates on the raw store graph. Maths store nodes carry `isAssessment` at
+// `properties.isAssessment` and the chapter number at `properties.raw.chapitreNum`.
+//
+// The chapter→lesson relationship used here is the `hasChild` EDGE — the id-based
+// referential backbone that Rule 2 guards. `chapitreNum` is a denormalized copy
+// the presenter happens to read; the drift rule below is exactly the check that
+// the copy still agrees with the backbone. On seed data all four rules are
+// silent (verified): every chapter has lessons, exactly one bilan, and matching
+// numbers.
+const HAS_CHILD = "hasChild";
+const rawChapitreNum = (n: GraphView["nodes"][number]): number | null => {
+  const raw = n.properties.raw as Record<string, unknown> | undefined;
+  const v = raw?.chapitreNum;
+  return typeof v === "number" ? v : null;
+};
+
+function mathsCoverageWarnings(graph: GraphView): string[] {
+  const warnings: string[] = [];
+
+  // (1) + (2) Generic tree shapes, keyed by maths kind names.
+  warnings.push(...emptyContainerWarnings(graph, ["chapter"]));
+  warnings.push(...multiParentWarnings(graph, ["lesson"]));
+
+  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  const chapters = graph.nodes.filter((n) => n.type === "chapter");
+  const lessons = graph.nodes.filter((n) => n.type === "lesson");
+
+  // Edge-children lessons per chapter (the referential backbone).
+  const childLessonsByChapter = new Map<string, GraphView["nodes"]>();
+  for (const e of graph.edges) {
+    if (e.type !== HAS_CHILD) continue;
+    const to = byId.get(e.to);
+    if (!byId.get(e.from) || byId.get(e.from)!.type !== "chapter") continue;
+    if (!to || to.type !== "lesson") continue;
+    (childLessonsByChapter.get(e.from) ?? childLessonsByChapter.set(e.from, []).get(e.from)!).push(to);
+  }
+
+  // (3) Bilan: a chapter WITH lessons is expected to have exactly one bilan
+  // (isAssessment) lesson. Empty chapters are already flagged by (1), so we
+  // only speak to chapters that have lessons — 0 or >1 bilan is the finding.
+  for (const c of chapters) {
+    const childLessons = childLessonsByChapter.get(c.id) ?? [];
+    if (childLessons.length === 0) continue; // covered by emptyContainerWarnings
+    const bilans = childLessons.filter((l) => l.properties.isAssessment === true).length;
+    const label = (c.properties.title as string) ?? c.id;
+    if (bilans === 0)
+      warnings.push(`Coverage: chapter '${label}' has ${childLessons.length} lesson(s) but no bilan (end-of-chapter assessment). Mark one lesson as the bilan before publishing.`);
+    else if (bilans > 1)
+      warnings.push(`Coverage: chapter '${label}' has ${bilans} bilan lessons — exactly one is expected.`);
+  }
+
+  // (4) chapitreNum drift — the regime-B consistency check. The maths presenter
+  // joins lessons to chapters by `raw.chapitreNum`, not by the hasChild edge, so
+  // if the number disagrees with the edge-parent the lesson silently fails to
+  // render under its chapter. WARN (not block): the edge backbone is intact and
+  // Rule-2-guarded; this is a presentation inconsistency the reviewer should see.
+  const chapterNums = new Set(chapters.map(rawChapitreNum).filter((n): n is number => n != null));
+  for (const c of chapters) {
+    const cn = rawChapitreNum(c);
+    for (const l of childLessonsByChapter.get(c.id) ?? []) {
+      const ln = rawChapitreNum(l);
+      if (cn != null && ln != null && cn !== ln) {
+        const label = (l.properties.text as string) ?? l.id;
+        warnings.push(`Coverage: lesson '${label}' is linked to chapter number ${cn} but its own chapitreNum is ${ln} — the maths view joins on chapitreNum, so this lesson will not render under its chapter. Align the numbers.`);
+      }
+    }
+  }
+  // A lesson whose chapitreNum points at no existing chapter number at all.
+  for (const l of lessons) {
+    const ln = rawChapitreNum(l);
+    if (ln != null && !chapterNums.has(ln)) {
+      const label = (l.properties.text as string) ?? l.id;
+      warnings.push(`Coverage: lesson '${label}' has chapitreNum ${ln}, but no chapter has that number — it will not render anywhere in the maths view.`);
+    }
+  }
+
+  return warnings;
 }
 
 // ── Factory: build the (grade, subject)-bound adapter ────────────────────────
@@ -212,6 +298,12 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
         text_en: ["raw.description_en"],
       },
     },
+
+    // Coverage / consistency warnings (#13) — unit-shaped completeness checks.
+    // A module-level pure function so it needs no closure state; see its
+    // definition above for the four rules (empty chapter, missing/>1 bilan,
+    // lesson with >1 parent, chapitreNum drift).
+    coverageWarnings: mathsCoverageWarnings,
 
     detect, parse,
 
