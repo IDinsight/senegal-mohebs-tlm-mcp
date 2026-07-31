@@ -36,6 +36,7 @@ const CAPABILITY_ACTIONS = [
   "canEditDraft",     // #10's upsert_property (any apply)
   "canDiscardDraft",  // #9's discard_draft
   "canPublish",       // #9's publish_draft
+  "canReadAudit",     // #16's read_audit — approver-only, same tier as publish
 ] as const;
 
 // Map each capability action to the underlying authz action name, when
@@ -47,6 +48,7 @@ const CAPABILITY_TO_AUTHZ: Record<Exclude<typeof CAPABILITY_ACTIONS[number], "ca
   canEditDraft: "apply",
   canDiscardDraft: "discard",
   canPublish: "publish",
+  canReadAudit: "readAudit",  // reviewing the append-only trail — approver-only
 };
 
 // The inner logic, exported so tests can drive it without spinning up an
@@ -168,6 +170,17 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       "preview_generation resolves the generation context from the UNPUBLISHED draft (not published) and is scoped to one unit + deliverable — so you can generate a PREVIEW of the material a staged edit would produce before publishing. It closes the loop with the dry-run: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change), curator + approver only. Preview .docx output goes through create_preview_upload_url to a SEGREGATED previews/ prefix with short-lived, clearly-labelled URLs — it never touches the canonical documents bucket, list_documents, or log_generation. With no draft open, preview_generation returns a clear 'no draft to preview' notice. Draft-vs-published output comparison is a deferred follow-on.",
   };
 
+  // ── audit: advertise the approver-only, read-only audit reader (#16), so
+  // Claude can offer "want to review who changed what?" to an approver.
+  // `available` mirrors the SAME readAudit gate the tool enforces (via
+  // actions.canReadAudit → authorize(actor, "readAudit", ns)) — it cannot drift.
+  const audit = {
+    available: actions.canReadAudit,
+    tool: "read_audit",
+    note:
+      "read_audit is a filtered, paginated, READ-ONLY view of the append-only audit log for THIS namespace, newest-first. APPROVERS ONLY (same tier as publish); curators / no-role are blocked and the blocked read is itself audited. It cannot alter, redact, or reorder any record. Namespace-scoped: to review another namespace, set_context to it (there is no namespace argument). Filters: actor, action, outcome (applied|blocked), nodeId, since/until. Modes: 'summary' (compact, no before/after — the default) and 'detail' (full before/after; also for a specific auditId). Pagination via limit (default 25, max 100) + an opaque cursor. Each call appends ONE lightweight 'read' event (actor + query + timestamp + count) — never a before/after — so 'who reviewed history' stays answerable. It is deliberately a reader, not analytics.",
+  };
+
   return {
     actor: {
       id: actor.id,
@@ -186,6 +199,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     },
     editable,
     preview,
+    audit,
     rules,
   };
 }

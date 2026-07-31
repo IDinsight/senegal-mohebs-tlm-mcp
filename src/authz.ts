@@ -21,7 +21,7 @@
 
 import type { Actor } from "./actor.js";
 
-export type AuthAction = "apply" | "discard" | "publish" | "readDraft";
+export type AuthAction = "apply" | "discard" | "publish" | "readDraft" | "readAudit";
 
 export type AuthResult =
   | { ok: true }
@@ -47,6 +47,12 @@ export function authorize(actor: Actor, action: AuthAction, _namespace: string):
     case "publish":
       if (actor.role === "approver") return { ok: true };
       return { ok: false, reason: `role '${actor.role}' cannot publish — only 'approver' may promote a draft` };
+    case "readAudit":
+      // Reviewing the append-only audit trail is the approver's oversight
+      // duty — same tier as publish. A curator authors edits but does not
+      // review the log through the MCP in this version (may widen later).
+      if (actor.role === "approver") return { ok: true };
+      return { ok: false, reason: `role '${actor.role}' cannot read the audit log — only 'approver' may review the trail` };
   }
 }
 

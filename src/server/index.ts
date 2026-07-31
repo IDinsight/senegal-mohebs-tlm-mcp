@@ -14,6 +14,7 @@ import { registerLifecycleTools } from "./lifecycle.js";
 import { registerStructuralTools } from "./structural.js";
 import { registerRecipeTools } from "./recipes.js";
 import { registerCapabilityTools } from "./capabilities.js";
+import { registerAuditTools } from "./audit.js";
 
 export function buildServer(): McpServer {
   const server = new McpServer({ name: "senegal-mohebs-tlm-server", version: "0.4.0" });
@@ -27,5 +28,6 @@ export function buildServer(): McpServer {
   registerStructuralTools(server);   // create_node, link_nodes, unlink_nodes, delete_node (raw structural verbs)
   registerRecipeTools(server);       // add_lesson, add_chapter, move_lesson, split_chapter, renumber (composite recipes)
   registerCapabilityTools(server);   // get_capabilities (read-only mirror of what the caller can do)
+  registerAuditTools(server);        // read_audit (approver-only, read-only reader over the append-only audit log)
   return server;
 }

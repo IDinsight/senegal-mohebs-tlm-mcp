@@ -156,7 +156,7 @@ export type AuditActor = {
   unknown: boolean;
 };
 
-export type AuditEventType = "apply" | "createDraft" | "publish" | "discard" | "blocked" | "preview";
+export type AuditEventType = "apply" | "createDraft" | "publish" | "discard" | "blocked" | "preview" | "read";
 
 // One flat shape covers every event type. Fields are populated per event;
 // which ones apply is discriminated by `eventType`. Kept flat (rather than a
@@ -192,6 +192,16 @@ export type AuditRecord = {
    * the draft was clean; omitted when no coverage hook was available.
    */
   warningsAtPublish?: string[];
+  /**
+   * read-only (read_audit, #16): a compact JSON string of the filters/mode/
+   * cursor the reviewer used. Deliberately NOT a before/after or snapshot —
+   * a `read` event exists only to answer "who reviewed the trail, with what
+   * query". Kept lightweight so read-events cannot bloat the log; appending
+   * one never triggers another read, so growth is linear, never recursive.
+   */
+  readQuery?: string;
+  /** read-only (#16): how many records the read returned. */
+  readCount?: number;
 };
 
 // Query surface — a minimal internal filter. Not user-facing; #7 does not
