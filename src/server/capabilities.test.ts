@@ -111,6 +111,7 @@ describe("mirror property: get_capabilities.actions == authorize() for every rol
     canEditDraft: "apply" as const,
     canDiscardDraft: "discard" as const,
     canPublish: "publish" as const,
+    canReadAudit: "readAudit" as const,
   };
 
   for (const actor of [CURATOR, APPROVER, SIGNED_IN_NO_ROLE]) {
@@ -133,6 +134,7 @@ describe("mirror property: get_capabilities.actions == authorize() for every rol
     expect(caps.actions.canEditDraft).toBe(false);
     expect(caps.actions.canDiscardDraft).toBe(false);
     expect(caps.actions.canPublish).toBe(false);
+    expect(caps.actions.canReadAudit).toBe(false);
     expect(caps.actor.isKnown).toBe(false);
     expect(caps.actor.role).toBe(null);
   });
@@ -146,6 +148,12 @@ describe("changing the caller's role changes the response with NO edit to the to
     const asApprover = await withActiveContext(APPROVER, callGetCapabilities);
     expect(asCurator.actions.canPublish).toBe(false);
     expect(asApprover.actions.canPublish).toBe(true);
+    // read_audit is approver-only too — same tier as publish (#16).
+    expect(asCurator.actions.canReadAudit).toBe(false);
+    expect(asApprover.actions.canReadAudit).toBe(true);
+    // The audit section's `available` mirrors the same gate — no drift.
+    expect(asCurator.audit.available).toBe(false);
+    expect(asApprover.audit.available).toBe(true);
     // Everything else a curator can do, an approver can too (superset).
     expect(asCurator.actions.canEditDraft).toBe(true);
     expect(asApprover.actions.canEditDraft).toBe(true);
