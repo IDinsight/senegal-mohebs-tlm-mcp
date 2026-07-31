@@ -78,3 +78,12 @@ const scope = () => { const { grade, subject } = requireContext(); return `${gra
 export const docsPrefix = () => basePrefix() + scope() + "documents/";
 export const historyKey = () => basePrefix() + scope() + "history.json";
 export const docKey = (relPath: string) => docsPrefix() + relPath;
+
+// Preview objects live under a SIBLING prefix to documents/ (never inside it),
+// so a preview .docx is observably non-canonical: reconcile/discoverDocuments
+// only scan docsPrefix(), so nothing under previews/ can ever reach the tracked
+// document history. Used only by the preview-generation output path. Kept
+// separate from docKey deliberately — a preview must not share the canonical
+// documents keyspace.
+export const previewsPrefix = () => basePrefix() + scope() + "previews/";
+export const previewKey = (relPath: string) => previewsPrefix() + relPath;

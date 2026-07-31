@@ -219,14 +219,23 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
     return (model = parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
   };
 
-  const chapters = () => ensure().unitsOfKind("chapter");
+  // Every projection is parametrized by the CurriculumModel it reads. The
+  // public methods pass `ensure()` (published); buildGenerationContext can pass
+  // an explicit draft-resolved model instead (preview). Threading the model as
+  // an argument — rather than a shared/mutable override — keeps a preview read
+  // fully isolated from a concurrent published read in the same session.
+  const chaptersIn = (m: CurriculumModel) => m.unitsOfKind("chapter");
+  const chapters = () => chaptersIn(ensure());
   const lessonsOf = (m: CurriculumModel, chapNum: number) =>
     m.unitsOfKind("lesson").filter((l) => l.properties.chapitreNum === chapNum).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const chapterOf = (chapNum: number) => chapters().find((c) => c.properties.chapitreNum === chapNum) ?? null;
+  const chapterOf = (m: CurriculumModel, chapNum: number) => chaptersIn(m).find((c) => c.properties.chapitreNum === chapNum) ?? null;
+  const listUnitsIn = (m: CurriculumModel) =>
+    chaptersIn(m)
+      .map((c) => ({ chapitreNum: c.properties.chapitreNum, chapitreTitre: c.properties.chapitreTitre ?? null, domaine: c.properties.domaine ?? null }))
+      .sort((a, b) => (a.chapitreNum as number) - (b.chapitreNum as number));
 
-  const buildSlice = (chapNum: number) => {
-    const m = ensure();
-    const chapterUnit = chapterOf(chapNum);
+  const buildSlice = (chapNum: number, m: CurriculumModel = ensure()) => {
+    const chapterUnit = chapterOf(m, chapNum);
     const lessonUnits = lessonsOf(m, chapNum);
     if (lessonUnits.length === 0 && !chapterUnit) return null;
     const bilanId = lessonUnits.find((l) => l.isAssessment)?.id ?? null;
@@ -258,9 +267,8 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
     };
   };
 
-  const buildProgression = (chapNum: number) => {
-    const m = ensure();
-    const chapterUnit = chapterOf(chapNum);
+  const buildProgression = (chapNum: number, m: CurriculumModel = ensure()) => {
+    const chapterUnit = chapterOf(m, chapNum);
     if (!chapterUnit) return { buildsTowards: [] as number[], buildsFrom: [] as number[] };
     const numOf = (id: string) => m.byId.get(id)?.properties.chapitreNum as number | undefined;
     return {
@@ -343,10 +351,7 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
 
     detect, parse,
 
-    listUnits: () =>
-      chapters()
-        .map((c) => ({ chapitreNum: c.properties.chapitreNum, chapitreTitre: c.properties.chapitreTitre ?? null, domaine: c.properties.domaine ?? null }))
-        .sort((a, b) => (a.chapitreNum as number) - (b.chapitreNum as number)),
+    listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),
     progression: (scope) => buildProgression(Number(scope)),
     requiredCoverage: (scope) => {
@@ -355,8 +360,14 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
     },
     scopeValues: () => chapters().map((c) => c.properties.chapitreNum as number).sort((a, b) => a - b),
 
-    // Reproduces the historical getGenerationContext output verbatim.
-    async buildGenerationContext(scope, deliverableKey) {
+    // Reproduces the historical getGenerationContext output verbatim. `model`
+    // (optional) is a pre-resolved CurriculumModel to build from — preview
+    // generation passes a DRAFT-resolved model here; every other caller omits
+    // it and gets the published model via ensure(). Only the curriculum
+    // projection differs by model; characters/coverage/domains come from
+    // document history + the domain pool, which are the SAME regardless.
+    async buildGenerationContext(scope, deliverableKey, model) {
+      const m = model ?? ensure();
       const chapter = Number(scope);
       const docType = deliverableKey;
       const notes: string[] = [];
@@ -381,7 +392,7 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
       }
       const establishedCharacters = [...charMap.values()].sort((a, b) => a.firstChapter - b.firstChapter || a.name.localeCompare(b.name));
 
-      const coverage = (this.listUnits() as Array<{ chapitreNum: number }>).map((c) => ({
+      const coverage = listUnitsIn(m).map((c) => ({
         chapter: c.chapitreNum,
         hasManual: entries.some((e) => e.chapter === c.chapitreNum && e.type === "manual"),
         hasLessons: entries.some((e) => e.chapter === c.chapitreNum && e.type === "lessons"),
@@ -390,11 +401,14 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
       const manualForThisChapter = entries.find((e) => e.id === `${chapter}:manual`) ?? null;
       if (docType === "lessons" && !manualForThisChapter) notes.push(`No pupil manual is tracked for chapter ${chapter}. Lesson sheets build on the manual — generate or ingest the manual first.`);
 
-      const curriculumSlice = this.slice(chapter);
+      const curriculumSlice = buildSlice(chapter, m);
       if (!curriculumSlice) notes.push(`Chapter ${chapter} was not found in the knowledge graph.`);
+      const requiredLessonCoverage = curriculumSlice
+        ? curriculumSlice.lessons.filter((l) => !l.isBilan).map((l) => ({ leconNum: l.leconNum, osTexte: l.osTexte }))
+        : [];
 
       return {
-        unit: chapter, deliverable: docType, curriculum: curriculumSlice, progression: this.progression(chapter), requiredLessonCoverage: this.requiredCoverage(chapter),
+        unit: chapter, deliverable: docType, curriculum: curriculumSlice, progression: buildProgression(chapter, m), requiredLessonCoverage,
         establishedCharacters,
         exampleDomains: await (async () => {
           const avoidNearby = await neighborhoodDomains(chapter);

@@ -7,6 +7,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerContextTools } from "./context.js";
 import { registerCurriculumTools } from "./curriculum.js";
 import { registerGenerationTools } from "./generation.js";
+import { registerPreviewTools } from "./preview.js";
 import { registerMathsTools } from "./maths.js";
 import { registerDocumentTools } from "./documents.js";
 import { registerLifecycleTools } from "./lifecycle.js";
@@ -19,6 +20,7 @@ export function buildServer(): McpServer {
   registerContextTools(server);      // set_context, get_context
   registerCurriculumTools(server);   // list_units, get_curriculum, terminology
   registerGenerationTools(server);   // get_prompt, get_generation_context
+  registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)
   registerMathsTools(server);        // suggest_fresh_domain, domain_usage (maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log
   registerLifecycleTools(server);    // diff_draft, upsert_property, publish_draft, discard_draft
