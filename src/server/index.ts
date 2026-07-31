@@ -10,6 +10,7 @@ import { registerGenerationTools } from "./generation.js";
 import { registerMathsTools } from "./maths.js";
 import { registerDocumentTools } from "./documents.js";
 import { registerLifecycleTools } from "./lifecycle.js";
+import { registerStructuralTools } from "./structural.js";
 import { registerCapabilityTools } from "./capabilities.js";
 
 export function buildServer(): McpServer {
@@ -20,6 +21,7 @@ export function buildServer(): McpServer {
   registerMathsTools(server);        // suggest_fresh_domain, domain_usage (maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log
   registerLifecycleTools(server);    // diff_draft, upsert_property, publish_draft, discard_draft
+  registerStructuralTools(server);   // create_node, link_nodes, unlink_nodes, delete_node (raw structural verbs)
   registerCapabilityTools(server);   // get_capabilities (read-only mirror of what the caller can do)
   return server;
 }

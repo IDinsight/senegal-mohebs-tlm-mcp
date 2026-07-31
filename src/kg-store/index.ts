@@ -8,6 +8,8 @@ export { otherSlot } from "./types.js";
 export { runGraphMutation, publishDraft, discardDraft, diffGraphs, __resetMutationsForTest } from "./mutations.js";
 export { diffDraft, publishDraftWithConfirm, discardDraftWithConfirm, __resetDraftTokensForTest } from "./mutations.js";
 export { upsertProperty, UPSERT_PROPERTY_SAFE_PATHS } from "./mutations.js";
+export { createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId } from "./structural.js";
+export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } from "./structural.js";
 export type {
   GraphMutation, MutationGraph, MutationNode, MutationEdge, ValidationResult,
   GraphDiff, DiffEntry, GraphPreviewResult, GraphBlockedResult, GraphApplyResult, GraphUnauthorizedResult,

@@ -194,23 +194,40 @@ export const diffGraphs = (before: MutationGraph, after: MutationGraph): GraphDi
 // otherwise PUBLISHED (which becomes the draft's starting point on confirm).
 // The `kind` tells confirm which invariant to re-check.
 
-type BaseSnapshot = { graph: MutationGraph; kind: "onDraft" | "onPublished"; publishedSlot: Slot; meta: StoredMeta | null };
+type BaseSnapshot = {
+  graph: MutationGraph;             // the slot we'll compute the diff / apply against
+  kind: "onDraft" | "onPublished";  // which slot classification `graph` came from
+  publishedSlot: Slot;
+  meta: StoredMeta | null;
+  publishedGraph: MutationGraph;    // ALWAYS the current published slot — Rule 1's reference
+};
 
 async function readBase(namespace: string): Promise<BaseSnapshot | { unseeded: true }> {
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
   if (!pointer) return { unseeded: true };
   const targetSlot = pointer.draftSlot ?? pointer.publishedSlot;
-  const [nodes, edges, meta] = await Promise.all([
+  const publishedSlot = pointer.publishedSlot;
+  // Always read the published slot separately so Rule 1's rename-detection has
+  // a stable identity reference — the published snapshot is the source of
+  // truth for "what ids belong to which content." If no draft exists,
+  // targetSlot === publishedSlot and the two reads return identical graphs;
+  // in that case the extra listNodes/listEdges pair is a modest re-read cost
+  // (Firestore's small graph today) that keeps this branch dead-simple —
+  // preferable to a "same slot? skip" special case that would drift.
+  const [nodes, edges, meta, pubNodes, pubEdges] = await Promise.all([
     store.listNodes(namespace, targetSlot),
     store.listEdges(namespace, targetSlot),
     store.readMeta(namespace, targetSlot),
+    store.listNodes(namespace, publishedSlot),
+    store.listEdges(namespace, publishedSlot),
   ]);
   return {
     graph: { nodes: nodes.map(stripSlot), edges: edges.map(stripSlot) },
     kind: pointer.draftSlot ? "onDraft" : "onPublished",
-    publishedSlot: pointer.publishedSlot,
+    publishedSlot,
     meta,
+    publishedGraph: { nodes: pubNodes.map(stripSlot), edges: pubEdges.map(stripSlot) },
   };
 }
 
@@ -371,11 +388,17 @@ export async function runGraphMutation<Args>(
   // Two layers of validation, always in this order:
   //   1. The shared structural rules (id-immutable, no-orphan). Every
   //      mutation gets these, whether or not it defines its own validate.
+  //      Rule 1's reference is PUBLISHED — cross-mutation rename attempts
+  //      (delete X, then create-under-a-new-id with X's content) don't
+  //      pair up inside a single mutation's diff, so the check compares
+  //      the proposed state against published for a whole-draft view.
   //   2. The mutation's own validate, if any — for anything the mutation
-  //      alone can decide.
+  //      alone can decide. Receives (base = draft-just-before-this-mutation,
+  //      after, args) — the local pre-mutation state, which is what
+  //      mutation-specific rules typically need.
   // Errors from either layer block confirmation; per #5's contract we
   // return them via a `phase: "blocked"` result with NO token.
-  const structural = validateStructural(snap.graph, after);
+  const structural = validateStructural(snap.publishedGraph, after);
   const custom = mutation.validate
     ? mutation.validate(snap.graph, after, args)
     : { errors: [], warnings: [] };

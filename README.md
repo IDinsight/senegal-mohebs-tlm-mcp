@@ -109,8 +109,8 @@ The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(typ
 
 Every graph mutation goes through two shared structural rules in [`src/kg-store/validate.ts`](src/kg-store/validate.ts) before the human review gate. Errors from either rule **block confirmation** — no token is issued, so there's nothing to replay.
 
-- **Rule 1 (id-immutable).** A node's id is the LC IRI verbatim; an edge's id is `edgeId(type, from, to)`. Every reference in the graph points at these ids, so a silent rename would orphan everything the reviewer can't easily see in a diff. The rule detects a rename by looking for a removed node/edge and an added node/edge that share the same content — that pair is treated as a rename attempt and rejected. Legitimate delete-then-create (genuinely different content) passes.
-- **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Rule 2 is built and tested now but only becomes load-bearing when #12 introduces delete/relink mutations — today, no mutation removes nodes or edges, so it's trivially satisfied.
+- **Rule 1 (id-immutable).** A node's id is the LC IRI verbatim (or, for a `create_node`-minted node, a randomUUID); an edge's id is `edgeId(type, from, to)`. Every reference in the graph points at these ids, so a silent rename would orphan everything the reviewer can't easily see in a diff. The rule compares the proposed state to the **currently-published** graph (not just the pre-mutation state) — a removed-since-publish node and an added-since-publish node with matching content are treated as a rename attempt and rejected, whether the pair occurs inside one mutation OR across a delete+create sequence on the same open draft. Legitimate delete-then-create (genuinely different content) passes.
+- **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Load-bearing since #12: `delete_node` is REFUSED if any incident edge survives, so cascade-on-delete cannot slip in silently — the caller unlinks first, then deletes.
 
 **Denylist = just the `id` key** (on nodes and edges). References in this graph are edges-only at the storage level — `properties.raw` carries content and match-keys, never a stored id pointing at another node — so there are no reference-bearing properties to protect. If a future subject introduces one, the denylist extends by a single entry.
 
@@ -173,7 +173,7 @@ Four MCP tools close the loop:
 
 **Two kinds of diff.** `upsert_property`'s dry-run returns a **per-mutation diff** — what THIS edit alone would change. `diff_draft` and `publish_draft`'s dry-run return the **whole-draft diff** — the cumulative view across every edit landed on the draft. They coincide when the draft has one edit; they diverge with more.
 
-**Pilot edit surface — term wording only.** Only logical keys `title` / `text` / `title_en` / `text_en` are editable, only on node kinds the adapter declares them for, and only when the underlying storage paths currently hold a non-null string (the "existing key" rule: fix wording that's there, don't create new fields). A central `UPSERT_PROPERTY_SAFE_PATHS` allowlist inside the mutation is the safety net — a rogue adapter can't expand the editable surface by declaring an unlisted path. Structural properties (`statementCode`, `chapitreNum`, edge from/to, ids) and non-wording node types stay read-only; those open in #12.
+**Wording edit surface.** Only logical keys `title` / `text` / `title_en` / `text_en` are editable via `upsert_property`, only on node kinds the adapter declares them for, and only when the underlying storage paths currently hold a non-null string (the "existing key" rule: fix wording that's there, don't create new fields). A central `UPSERT_PROPERTY_SAFE_PATHS` allowlist inside the mutation is the safety net — a rogue adapter can't expand the editable surface by declaring an unlisted path. Editing STRUCTURAL properties of existing nodes (`statementCode`, `chapitreNum`, `order`) is a separate future step; `upsert_property` stays wording-only.
 
 **End-to-end example** (assuming set_context is done):
 
@@ -185,6 +185,40 @@ approver: publish_draft() → dry-run: diff + draft-level token
 approver: publish_draft(confirm:true, confirmationToken:...) → promoted, generation now reads the new wording
 ```
 
+### Structural verbs (create / link / unlink / delete)
+
+Four RAW structural primitives, each a single #5 mutation on top of the same #5/#6/#7/#8 seams as `upsert_property`. Deliberately verbs-only — no cascade, no composite recipes:
+
+- **`create_node(kind, properties)`** — adds a new node. **The server MINTS the id** (returned as `mintedNodeId` in the dry-run response); a caller-supplied id in `properties` is hard-rejected. `kind` must be a node kind already present on this namespace (chapter/lesson/component/task for maths). Missing wording surfaces as a WARNING, not a block — the reviewer at publish is the completeness gate.
+- **`link_nodes(edgeType, fromId, toId, properties?)`** — adds an edge. Edge id is deterministic (`<type>:<from>-><to>`) so re-linking the same triple is rejected as a duplicate. Endpoints must exist and `edgeType` must be an edge type already present on this namespace (`hasChild` / `buildsTowards` for maths). Edge-type LEGALITY across kinds (does `hasChild(task→chapter)` make sense?) is NOT enforced — that judgment is deferred to human review at publish.
+- **`unlink_nodes(edgeId)`** — removes one edge by id. Removing an edge cannot orphan a node (Rule 2 only cares about surviving edges).
+- **`delete_node(nodeId)`** — removes a node. **NON-CASCADING**: the mutation is REFUSED if the node still has incident edges; the caller must `unlink_nodes` each one first. The validate hook lists the incident edges so it's clear what to detach. Auto-cascade is a separate future step.
+
+Every primitive is two-phase (dry-run → confirm), curator- or approver-only, audited on both writes and denials. Multi-primitive sequences accumulate on the SAME draft and publish together atomically via the existing `publish_draft` flow — there is no single-call composite in this step; composite recipes (add-chapter, split-chapter) are a separate future step.
+
+**Rule 1 (id-immutable) protects across the whole draft, not just per-mutation.** Comparing the proposed state to PUBLISHED means a `delete_node(X)` + `create_node(X's content under a new id)` sequence on the same draft is caught as a disguised rename — even though the individual mutations only remove or only add. A legitimate replace (create a node with substantively different content) still passes.
+
+**End-to-end example — add a new chapter+lesson pair:**
+
+```
+curator: create_node(kind="chapter", properties={title:"Nouveau chapitre", raw:{chapitreNum:42, chapitreTitre:"…"}})
+         → dry-run: diff (+1 node), confirmationToken, mintedNodeId="uuid-A"
+curator: create_node(..., confirm:true, confirmationToken:..., mintedNodeId="uuid-A") → applied to draft
+curator: create_node(kind="lesson", properties={text:"Une nouvelle leçon", raw:{osTexte:"…"}})
+         → dry-run + confirm → mintedNodeId="uuid-B" on draft
+curator: link_nodes(edgeType="hasChild", fromId="uuid-A", toId="uuid-B") → dry-run + confirm → edge on draft
+approver: diff_draft() → sees +2 nodes, +1 edge across the whole draft
+approver: publish_draft() → dry-run + confirm → all three changes go live atomically
+```
+
+**Detach-then-delete flow** (delete refuses to cascade):
+
+```
+curator: delete_node(nodeId="…") → BLOCKED: "still has N incident edge(s): <ids>. delete_node does not cascade — unlink first."
+curator: unlink_nodes(edgeId=…) → dry-run + confirm  (repeat per incident edge)
+curator: delete_node(nodeId="…") → dry-run + confirm → node removed on draft
+```
+
 ### `get_capabilities` — a truthful mirror of "what can I do?"
 
 `get_capabilities` is a read-only tool that reports, for the currently-authenticated caller and the active grade/subject:
@@ -192,7 +226,7 @@ approver: publish_draft(confirm:true, confirmationToken:...) → promoted, gener
 - **actor** — verified id, whether the caller is known, and their role (`curator` / `approver` / `null`), all from the JWT — never client-supplied.
 - **actions** — which of `canReadGenerate` / `canReadDraft` / `canEditDraft` / `canDiscardDraft` / `canPublish` are allowed. **Each value is computed by calling `authorize()` — the same function every write tool actually uses.** No role-mapping logic lives in the tool itself.
 - **draft** — whether a draft is open on this namespace, and (if so) who created it and when (from the audit log). Useful for a second curator to see they'd be editing someone else's draft.
-- **editable** — the pilot scope: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist. Both are read from source, not retyped.
+- **editable** — the current edit surface: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist; `structural.verbs` lists the four raw structural primitives (`create_node`, `link_nodes`, `unlink_nodes`, `delete_node`) with `cascade: false` so callers know `delete_node` is non-cascading (detach with `unlink_nodes` before delete). All fields are read from source, not retyped.
 - **rules** — the structural rules (id-immutable, no-orphan) as descriptions imported from `validate.ts`, plus the two-phase confirm expectation.
 
 **Why it exists.** So Claude can tell a curator accurately what they can and cannot do BEFORE trying — instead of discovering limits by hitting errors, or inferring from tool names. Available to any caller: an unknown user gets a truthful "read/generate only" response, not a 401.
@@ -259,7 +293,9 @@ Run on startup (when a context is active) and via the `reconcile` tool: present 
 
 **Context (subject-agnostic):** `set_context`, `get_context`.
 
-**Subject-agnostic** — work the same for any grade/subject: `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`.
+**Subject-agnostic** — work the same for any grade/subject: `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`, `get_capabilities`.
+
+**Curator loop (subject-agnostic, role-gated):** `diff_draft`, `upsert_property` (wording), `create_node` / `link_nodes` / `unlink_nodes` / `delete_node` (raw structural verbs), `publish_draft`, `discard_draft`.
 
 **Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's adapter:
 

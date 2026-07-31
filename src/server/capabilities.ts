@@ -81,15 +81,30 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     }
   }
 
-  // ── editable: sourced from #10. The active adapter's wordingAliases
-  // is a live object (not a copy) — an adapter change flows through
-  // to this response with no code edit here. safePaths is the central
-  // allowlist; convert the Set to a sorted array so the JSON is stable.
+  // ── editable: sourced from #10 (wording) + #12 (structural). The active
+  // adapter's wordingAliases is a live object (not a copy) — an adapter
+  // change flows through to this response with no code edit here.
+  // `safePaths` is the central allowlist; converted to a sorted array so
+  // the JSON is stable. `structural` describes the four raw verbs a
+  // curator has for growing / connecting / detaching / pruning the graph;
+  // they observe the current graph's vocabulary rather than a schema.
   const editable = {
-    scope: "term-wording",
-    note: "Only wording — chapter titles, lesson objectives, component/task descriptions — is editable in this pilot. Structural properties (identity, ordering, statement codes) and creating/deleting nodes or edges are not exposed yet.",
+    scope: "term-wording + structural verbs",
+    note:
+      "Wording (chapter titles, lesson objectives, component/task descriptions) is editable via upsert_property. " +
+      "The graph structure is editable via four raw primitives (see `structural.verbs`); those primitives are non-cascading and do NOT include composite recipes yet.",
     keysByNodeKind: adapter.wordingAliases,
     safePaths: [...UPSERT_PROPERTY_SAFE_PATHS].sort(),
+    structural: {
+      verbs: ["create_node", "link_nodes", "unlink_nodes", "delete_node"],
+      cascade: false,
+      note:
+        "create_node mints a server-side id and sets properties at BIRTH (missing wording surfaces as a WARNING, not a block). " +
+        "link_nodes adds an edge; edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across kinds is not enforced (deferred to human review at publish). " +
+        "unlink_nodes removes an edge by id. " +
+        "delete_node REFUSES to remove a node with incident edges — no auto-cascade. Detach a node with unlink_nodes calls first, then delete_node. " +
+        "Composite recipes (add-chapter, split-chapter) and structural-property editing of EXISTING nodes (renumber, code change) are not exposed yet.",
+    },
   };
 
   // ── rules: structural rules and confirm expectation. structural
