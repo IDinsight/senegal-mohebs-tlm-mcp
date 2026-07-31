@@ -881,7 +881,9 @@ export const UPSERT_PROPERTY_SAFE_PATHS: ReadonlySet<string> = new Set([
 // Walk a dotted path over an object, returning the leaf value or undefined.
 // Deliberately shallow — no array indexing, no bracket notation — since
 // the allowlist paths are all dot-separated object keys.
-function readAtPath(obj: unknown, path: string): unknown {
+// Exported so the recipes module (#14) can reuse the exact same path semantics
+// for its structural-property edits instead of forking a second copy.
+export function readAtPath(obj: unknown, path: string): unknown {
   const segments = path.split(".");
   let cur: unknown = obj;
   for (const seg of segments) {
@@ -894,7 +896,8 @@ function readAtPath(obj: unknown, path: string): unknown {
 // Return a new object with the leaf at `path` set to `value`, without
 // mutating any input. Intermediate objects along the path are cloned;
 // siblings are structurally shared.
-function writeAtPath(obj: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+// Exported for reuse by the recipes module (#14) — same reason as readAtPath.
+export function writeAtPath(obj: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
   const segments = path.split(".");
   const clone = { ...obj };
   let cur: Record<string, unknown> = clone;

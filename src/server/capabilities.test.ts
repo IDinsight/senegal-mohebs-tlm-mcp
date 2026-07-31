@@ -22,7 +22,7 @@ import { CONFIG } from "../config.js";
 import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../context/index.js";
 import { resolveAdapter } from "../adapters/index.js";
 import { serializeModel } from "../curriculum/index.js";
-import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, upsertProperty, STRUCTURAL_RULES, UPSERT_PROPERTY_SAFE_PATHS, __resetMutationsForTest } from "../kg-store/index.js";
+import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, upsertProperty, STRUCTURAL_RULES, UPSERT_PROPERTY_SAFE_PATHS, STRUCTURAL_EDIT_SAFE_PATHS, RECIPES, __resetMutationsForTest } from "../kg-store/index.js";
 import { __setStorageForTest } from "../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../actor.js";
 import { authorize } from "../authz.js";
@@ -244,6 +244,30 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.coverageWarnings.enabled).toBe(typeof adapter.coverageWarnings === "function");
     // Maths ships a coverage hook, so this is true for the target context.
     expect(caps.editable.coverageWarnings.enabled).toBe(true);
+  });
+
+  it("editable.recipes IS a MIRROR of the RECIPES registry (#14) — no hand-authored copy", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    expect(caps.editable.recipes.available).toBe(true);
+    // Names, order, and the renumber/regime flags all come straight from RECIPES.
+    expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(RECIPES.map((r) => r.name));
+    expect(caps.editable.recipes.list).toEqual(RECIPES.map((r) => ({
+      name: r.name, summary: r.summary, params: r.params,
+      renumberBearing: r.renumberBearing, regimeGated: r.regimeGated,
+    })));
+    // renumber is the one renumber-bearing recipe; move/split/renumber are
+    // regime-gated (they rewrite the chapitreNum join key).
+    const byName = new Map<string, { renumberBearing: boolean; regimeGated: boolean }>(caps.editable.recipes.list.map((r: { name: string }) => [r.name, r]));
+    expect(byName.get("renumber")!.renumberBearing).toBe(true);
+    expect(["move_lesson", "split_chapter", "renumber"].every((n) => byName.get(n)!.regimeGated)).toBe(true);
+    expect(["add_lesson", "add_chapter"].every((n) => byName.get(n)!.regimeGated === false)).toBe(true);
+  });
+
+  it("editable.structuralKeys mirrors the adapter's structuralAliases + the central allowlist (#14)", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
+    expect(caps.editable.structuralKeys.keysByNodeKind).toEqual(adapter.structuralAliases);
+    expect(caps.editable.structuralKeys.safePaths).toEqual([...STRUCTURAL_EDIT_SAFE_PATHS].sort());
   });
 });
 

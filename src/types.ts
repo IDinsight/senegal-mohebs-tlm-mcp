@@ -161,6 +161,38 @@ export type WordingAliases = {
 };
 
 /**
+ * STRUCTURAL aliases (#14) — the exact same shape as `WordingAliases`, but for
+ * a curated set of STRUCTURAL properties (a chapter's number, a lesson's
+ * within-chapter position, a lesson's chapter-membership number) rather than
+ * wording. Kept a distinct type (not just `WordingAliases`) so the two never
+ * blur: wording is edited by `upsert_property`, structural keys are edited only
+ * by the composite recipes, and each has its OWN central safety allowlist in
+ * kg-store. Values these keys carry are NUMERIC (order/number), unlike the
+ * strings wording carries. Declare only the keys a subject's recipes need.
+ */
+export type StructuralAliases = WordingAliases;
+
+/**
+ * The subject vocabulary the curriculum recipes (#14) need to operate without
+ * baking maths knowledge into the subject-agnostic kg-store. A recipe reads
+ * this off the active adapter (like `upsert_property` reads `wordingAliases`)
+ * and passes it through as an argument. A subject that declares NO
+ * `recipeProfile` simply has no recipes (the reading adapter, today).
+ *
+ * The recipes reference well-known LOGICAL key names ("number" on a chapter;
+ * "chapterNumber" / "position" on a lesson; "title" / "text" wording) and rely
+ * on `structuralAliases` / `wordingAliases` to resolve them to storage paths —
+ * so the only genuinely subject-specific vocabulary that lives here is the node
+ * kinds, the container edge type, and where an "assessment" flag is stored.
+ */
+export type RecipeProfile = {
+  chapterKind: string;          // e.g. "chapter" — the container a lesson belongs to
+  lessonKind: string;           // e.g. "lesson"  — the child a chapter holds
+  containerEdge: string;        // e.g. "hasChild" — the id-based backbone edge chapter→lesson
+  assessmentProperty: string;   // e.g. "isAssessment" — node property flagging the bilan
+};
+
+/**
  * A read-only view of the raw graph (nodes + edges, no storage slot tag) that
  * the coverage hook inspects. Structurally identical to the kg-store's
  * `MutationGraph` / `Omit<StoredNode,"slot">`, but declared here so `types.ts`
@@ -184,6 +216,25 @@ export interface SubjectAdapter {
    * `WordingAliases`. Declare `{}` for a subject with no editable wording.
    */
   readonly wordingAliases: WordingAliases;
+
+  /**
+   * STRUCTURAL edit aliases (#14) — the curated structural keys a curator may
+   * change on EXISTING nodes through the composite recipes (a chapter's number,
+   * a lesson's position and chapter-membership number). Optional: a subject
+   * with no recipes omits it. Each logical key resolves to storage paths that
+   * are validated against kg-store's `STRUCTURAL_EDIT_SAFE_PATHS` allowlist, so
+   * a careless adapter cannot widen the editable surface. See `StructuralAliases`.
+   */
+  readonly structuralAliases?: StructuralAliases;
+
+  /**
+   * The curriculum vocabulary the recipes (#14) bind to. Optional — declaring
+   * it is what makes the composite recipes (add_lesson / add_chapter /
+   * move_lesson / split_chapter / renumber) AVAILABLE for this subject. A
+   * subject that omits it has wording + raw structural verbs but no recipes.
+   * See `RecipeProfile`.
+   */
+  readonly recipeProfile?: RecipeProfile;
 
   /**
    * Coverage / consistency WARNINGS for a proposed graph state (#13). Optional

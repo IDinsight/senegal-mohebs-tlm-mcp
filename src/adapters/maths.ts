@@ -299,6 +299,42 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
       },
     },
 
+    // Structural keys the recipes (#14) may edit on EXISTING nodes. Mirrors the
+    // wordingAliases shape — a logical key → the storage paths it keeps in sync.
+    // These are the number/order fields, kept deliberately minimal (#14 Step 0
+    // decision (a)); `code`/`statementCode` are display-only and stay out.
+    //   • chapter.number      — a chapter's number, stored in BOTH the normalized
+    //     `order` (what the presenter sorts on) and `raw.chapitreNum` (the join
+    //     key the maths view matches lessons against). Renumber rewrites both.
+    //   • lesson.chapterNumber — which chapter a lesson joins to. This is the ONE
+    //     Regime-B reference (#13): the maths view joins a lesson to its chapter
+    //     by `raw.chapitreNum`, NOT by the hasChild edge, so move/split/renumber
+    //     MUST rewrite it or the lesson renders under the wrong chapter (the
+    //     drift coverage warning is exactly that signal).
+    //   • lesson.position     — a lesson's within-chapter order, stored in both
+    //     `order` and `raw.leconNum`. Preserved (not renumbered) by move/split
+    //     unless the caller asks — #14 decision (b).
+    structuralAliases: {
+      chapter: {
+        number:        ["order", "raw.chapitreNum"],
+      },
+      lesson: {
+        chapterNumber: ["raw.chapitreNum"],
+        position:      ["order", "raw.leconNum"],
+      },
+    },
+
+    // The curriculum vocabulary the recipes bind to (#14). Declaring this is
+    // what makes add_lesson / add_chapter / move_lesson / split_chapter /
+    // renumber available for maths. chapter→lesson is the `hasChild` id-edge
+    // backbone; the bilan is flagged by `isAssessment` on a lesson node.
+    recipeProfile: {
+      chapterKind: "chapter",
+      lessonKind: "lesson",
+      containerEdge: "hasChild",
+      assessmentProperty: "isAssessment",
+    },
+
     // Coverage / consistency warnings (#13) — unit-shaped completeness checks.
     // A module-level pure function so it needs no closure state; see its
     // definition above for the four rules (empty chapter, missing/>1 bilan,

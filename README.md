@@ -185,7 +185,7 @@ Four MCP tools close the loop:
 
 **Two kinds of diff.** `upsert_property`'s dry-run returns a **per-mutation diff** — what THIS edit alone would change. `diff_draft` and `publish_draft`'s dry-run return the **whole-draft diff** — the cumulative view across every edit landed on the draft. They coincide when the draft has one edit; they diverge with more.
 
-**Wording edit surface.** Only logical keys `title` / `text` / `title_en` / `text_en` are editable via `upsert_property`, only on node kinds the adapter declares them for, and only when the underlying storage paths currently hold a non-null string (the "existing key" rule: fix wording that's there, don't create new fields). A central `UPSERT_PROPERTY_SAFE_PATHS` allowlist inside the mutation is the safety net — a rogue adapter can't expand the editable surface by declaring an unlisted path. Editing STRUCTURAL properties of existing nodes (`statementCode`, `chapitreNum`, `order`) is a separate future step; `upsert_property` stays wording-only.
+**Wording edit surface.** Only logical keys `title` / `text` / `title_en` / `text_en` are editable via `upsert_property`, only on node kinds the adapter declares them for, and only when the underlying storage paths currently hold a non-null string (the "existing key" rule: fix wording that's there, don't create new fields). A central `UPSERT_PROPERTY_SAFE_PATHS` allowlist inside the mutation is the safety net — a rogue adapter can't expand the editable surface by declaring an unlisted path. `upsert_property` stays **wording-only**; editing STRUCTURAL properties of existing nodes (`chapitreNum`, `order`, `leconNum`) is done through the composite **recipes** (see "Curriculum recipes" below), which have their own separate `STRUCTURAL_EDIT_SAFE_PATHS` allowlist.
 
 **End-to-end example** (assuming set_context is done):
 
@@ -238,6 +238,36 @@ curator: delete_node(nodeId="…chapter…", force:true, confirm:true, confirmat
          → the whole subtree is gone from the draft, atomically; the result is re-checked and clean
 ```
 
+### Curriculum recipes (composite mutations) — the ergonomic layer
+
+The raw verbs above are correct but tedious for real curriculum restructuring: adding a chapter with three lessons is one `create_node` + one `create_node` per lesson + one `link_nodes` per lesson — six confirmations, six chances to leave a half-built draft. **Recipes** collapse each such intent into a **single composite mutation**: one dry-run → one whole-composite diff (every added/removed/changed node and edge together) → one confirmation token → one atomic draft write → one audit event. They are the ergonomic layer over the primitives, **made safe by the same referential-integrity floor** — the whole result is validated by Rule 1/Rule 2 before the token is issued, so an invalid composite (e.g. a move that would orphan a lesson) is rejected **as a whole**; nothing partial lands. Recipes reuse the primitives' own `apply` functions internally — they are server-side composites, never Claude hand-sequencing separate tool calls.
+
+- **`add_lesson(chapterId, text, [text_en, order, isBilan])`** — create a lesson and link it (`hasChild`) to an existing chapter, and set its chapter-membership number so it renders under that chapter, in one edit. Additive: linking to a nonexistent chapter is BLOCKED.
+- **`add_chapter(number, title, [title_en, lessons[]])`** — create a chapter (title + number at birth) with optional seed lessons, as one composite. `number` must be **free** — append after the last chapter or fill a numbering gap; a colliding number is rejected (inserting between chapters and shifting the rest is `renumber`'s job, not this additive path).
+- **`move_lesson(lessonId, toChapterId, [position])`** — rehome a lesson: unlink the old `hasChild` edge, link the new one, and rewrite its chapter-membership number, atomically. Appends to the target by default.
+- **`split_chapter(chapterId, atLessonId, [newTitle, newTitle_en, newNumber])`** — create a new chapter and move the tail lessons (from `atLessonId` onward) into it. The new chapter is **appended at the next free number by default** (no existing chapter is shifted); pass a free `newNumber` to place it in a gap.
+- **`renumber(chapterId, newNumber)`** — change a chapter's number and cascade-rewrite every child lesson's chapter-membership number, atomically. The target number must be **free** (renumber MOVES a chapter to an unoccupied number; insert-with-shift and swap are rejected).
+
+Recipes that create nodes mint the id(s) server-side and surface them on the dry-run (`mintedLessonId` / `mintedChapterId` / `mintedLessonIds`, exactly like `create_node`'s `mintedNodeId`); pass them back on confirm. Recipes are available only for a subject whose adapter declares a `recipeProfile` (maths does; reading does not) — otherwise the tool returns a clear "not available" message rather than guessing.
+
+**Structural-property editing (the foundation move/split/renumber needed).** These recipes must change STRUCTURAL properties of *existing* nodes — a chapter's number, a lesson's position and chapter-membership number — which `upsert_property` deliberately refuses (it is wording-only). That path is a curated set of numeric keys (`order`, `raw.chapitreNum`, `raw.leconNum`) declared per node kind in the adapter's `structuralAliases` and validated against a central `STRUCTURAL_EDIT_SAFE_PATHS` allowlist (the exact analogue of `UPSERT_PROPERTY_SAFE_PATHS`). By design there is **no raw structural-edit tool** — these keys are editable only *through* the recipes, because a bare `chapitreNum` edit is exactly the drift the recipes exist to prevent.
+
+**The block-vs-warn behaviour is inherited from #13, not re-invented.** A composite that would leave the graph referentially broken (a dangling edge, a disguised rename) is BLOCKED; a composite that leaves it valid-but-incomplete (a split that leaves a chapter without a bilan) WARNS on the dry-run and `diff_draft` but never blocks. The approver decides.
+
+**How `renumber` behaves under the reference regime — the sharp edge, stated honestly.** This codebase's chapter→lesson membership is stored **twice**: as an id-based `hasChild` edge (the Rule-2-guarded backbone) *and* as a denormalized number, `raw.chapitreNum`, which the maths presenter actually joins lessons to chapters on. #13 resolved a mismatch between the two (`chapitreNum` drift) as a **WARNING, not a block**, because the edge backbone stays intact. So `renumber`'s safety does **not** come from Rule 2 hard-blocking (a property edit never dangles an edge) — it comes from the recipe **rewriting the whole `chapitreNum` family in one atomic composite**: the chapter's number *and* every child lesson's copy, so the numbers never diverge and no drift warning ever fires. For the same reason, `move_lesson` and `split_chapter` also rewrite the moved lessons' `chapitreNum` — rewiring the edge alone would misfile them under their old chapter. This is why all three share one structural-property edit path.
+
+```text
+# add a chapter with two lessons — ONE composite, ONE confirm
+curator: add_chapter(number=26, title="Nombres décimaux", lessons=[{text:"Découverte"},{text:"Bilan", isBilan:true}])
+         → dry-run: diff shows 1 chapter + 2 lessons + 2 hasChild edges added; token + mintedChapterId + mintedLessonIds
+curator: add_chapter(..., confirm:true, confirmationToken:…, mintedChapterId:…, mintedLessonIds:[…])
+         → all five nodes/edges land on the draft atomically; one audit "apply" event
+
+# renumber chapter 3 → 26 — chapter AND all its lessons rewritten together, no drift
+curator: renumber(chapterId="…", newNumber=26) → dry-run: diff shows the chapter + every child lesson as CHANGED
+curator: renumber(..., confirm:true, confirmationToken:…) → applied atomically; chapitreNum stays consistent
+```
+
 ### `get_capabilities` — a truthful mirror of "what can I do?"
 
 `get_capabilities` is a read-only tool that reports, for the currently-authenticated caller and the active grade/subject:
@@ -245,7 +275,7 @@ curator: delete_node(nodeId="…chapter…", force:true, confirm:true, confirmat
 - **actor** — verified id, whether the caller is known, and their role (`curator` / `approver` / `null`), all from the JWT — never client-supplied.
 - **actions** — which of `canReadGenerate` / `canReadDraft` / `canEditDraft` / `canDiscardDraft` / `canPublish` are allowed. **Each value is computed by calling `authorize()` — the same function every write tool actually uses.** No role-mapping logic lives in the tool itself.
 - **draft** — whether a draft is open on this namespace, and (if so) who created it and when (from the audit log). Useful for a second curator to see they'd be editing someone else's draft.
-- **editable** — the current edit surface: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist; `structural.verbs` lists the four raw primitives with `cascade: "explicit-force-only"` (so callers know `delete_node` needs `force:true` to cascade and refuses otherwise); `coverageWarnings.enabled` says whether the active subject emits completeness warnings, with a note that they never block. All fields are read from source, not retyped.
+- **editable** — the current edit surface: `keysByNodeKind` is the active adapter's `wordingAliases` live object; `safePaths` is the central `UPSERT_PROPERTY_SAFE_PATHS` allowlist; `structural.verbs` lists the four raw primitives with `cascade: "explicit-force-only"` (so callers know `delete_node` needs `force:true` to cascade and refuses otherwise); `structuralKeys` mirrors the adapter's `structuralAliases` + the `STRUCTURAL_EDIT_SAFE_PATHS` allowlist (the numeric keys editable only through recipes); `recipes` is a **mirror of the `RECIPES` registry** — each recipe's name, params, and its `renumberBearing` / `regimeGated` flags, rendered straight from the code so what Claude discovers can't drift from what's built; `coverageWarnings.enabled` says whether the active subject emits completeness warnings, with a note that they never block. All fields are read from source, not retyped.
 - **rules** — the structural rules (id-immutable, no-orphan) as descriptions imported from `validate.ts`, plus the two-phase confirm expectation.
 
 **Why it exists.** So Claude can tell a curator accurately what they can and cannot do BEFORE trying — instead of discovering limits by hitting errors, or inferring from tool names. Available to any caller: an unknown user gets a truthful "read/generate only" response, not a 401.
@@ -430,7 +460,7 @@ Run on startup (when a context is active) and via the `reconcile` tool: present 
 
 **Subject-agnostic** — work the same for any grade/subject: `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`, `get_capabilities`.
 
-**Curator loop (subject-agnostic, role-gated):** `diff_draft`, `upsert_property` (wording), `create_node` / `link_nodes` / `unlink_nodes` / `delete_node` (raw structural verbs), `publish_draft`, `discard_draft`.
+**Curator loop (subject-agnostic, role-gated):** `diff_draft`, `upsert_property` (wording), `create_node` / `link_nodes` / `unlink_nodes` / `delete_node` (raw structural verbs), `add_lesson` / `add_chapter` / `move_lesson` / `split_chapter` / `renumber` (composite curriculum recipes — available where the adapter declares a `recipeProfile`), `publish_draft`, `discard_draft`.
 
 **Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's adapter:
 

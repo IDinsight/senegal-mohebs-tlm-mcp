@@ -10,6 +10,14 @@ export { diffDraft, publishDraftWithConfirm, discardDraftWithConfirm, __resetDra
 export { upsertProperty, UPSERT_PROPERTY_SAFE_PATHS } from "./mutations.js";
 export { createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId } from "./structural.js";
 export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } from "./structural.js";
+export {
+  addLesson, addChapter, moveLesson, splitChapter, renumber,
+  STRUCTURAL_EDIT_SAFE_PATHS, structuralEditErrors, RECIPES,
+} from "./recipes.js";
+export type {
+  AddLessonArgs, AddChapterArgs, MoveLessonArgs, SplitChapterArgs, RenumberArgs,
+  RecipeDescriptor, RecipeParam,
+} from "./recipes.js";
 export type {
   GraphMutation, MutationGraph, MutationNode, MutationEdge, ValidationResult,
   GraphDiff, DiffEntry, GraphPreviewResult, GraphBlockedResult, GraphApplyResult, GraphUnauthorizedResult,
