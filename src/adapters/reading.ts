@@ -165,13 +165,19 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
     return (model = parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
   };
 
-  const weeks = () => ensure().unitsOfKind("week").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const weekOf = (wk: number) => weeks().find((w) => w.properties.semaine === wk) ?? null;
+  // Projections are parametrized by the model they read (published via ensure()
+  // for the public methods; a draft-resolved model when buildGenerationContext
+  // is called for a preview). Threading the model as an argument keeps a preview
+  // read isolated from any concurrent published read in the same session.
+  const weeksIn = (m: CurriculumModel) => m.unitsOfKind("week").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const weeks = () => weeksIn(ensure());
+  const weekOf = (m: CurriculumModel, wk: number) => weeksIn(m).find((w) => w.properties.semaine === wk) ?? null;
+  const listUnitsIn = (m: CurriculumModel) =>
+    weeksIn(m).map((w) => ({ semaine: w.properties.semaine, palier: w.properties.palier ?? null, genre: w.properties.genre ?? null }));
   const STRAND_ORDER = ["Vocabulaire", "Grammaire", "Orthographe", "Conjugaison", "Production d'écrits", "Écriture / Copie"];
 
-  const buildSlice = (wk: number) => {
-    const m = ensure();
-    const week = weekOf(wk);
+  const buildSlice = (wk: number, m: CurriculumModel = ensure()) => {
+    const week = weekOf(m, wk);
     if (!week) return null;
     const standards = m.childrenOf(week.id)
       .filter((c) => c.kind === "standard")
@@ -192,8 +198,8 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
 
   // Progression by week ordering across the weeks the KG actually carries (it
   // skips integration/evaluation weeks, so neighbours may not be wk±1).
-  const buildProgression = (wk: number) => {
-    const nums = weeks().map((w) => w.properties.semaine as number);
+  const buildProgression = (wk: number, m: CurriculumModel = ensure()) => {
+    const nums = weeksIn(m).map((w) => w.properties.semaine as number);
     const i = nums.indexOf(wk);
     return {
       buildsFrom: i > 0 ? [nums[i - 1]] : [],
@@ -233,8 +239,7 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
 
     detect, parse,
 
-    listUnits: () =>
-      weeks().map((w) => ({ semaine: w.properties.semaine, palier: w.properties.palier ?? null, genre: w.properties.genre ?? null })),
+    listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),
     progression: (scope) => buildProgression(Number(scope)),
     requiredCoverage: (scope) => {
@@ -243,7 +248,8 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
     },
     scopeValues: () => weeks().map((w) => w.properties.semaine as number),
 
-    async buildGenerationContext(scope, deliverableKey) {
+    async buildGenerationContext(scope, deliverableKey, model) {
+      const m = model ?? ensure();
       const week = Number(scope);
       const notes: string[] = [];
       const entries = await listEntries();
@@ -274,12 +280,12 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
         .sort((a, b) => b.chapter - a.chapter)
         .flatMap((e) => (e.content.exampleDomains ?? []).map((t) => ({ theme: t, week: e.chapter })));
 
-      const coverage = (this.listUnits() as Array<{ semaine: number }>).map((w) => ({
+      const coverage = listUnitsIn(m).map((w) => ({
         week: w.semaine,
         hasGuide: entries.some((e) => e.chapter === w.semaine && e.type === "teacher_guide"),
       }));
 
-      const curriculumSlice = this.slice(week);
+      const curriculumSlice = buildSlice(week, m);
       if (!curriculumSlice) {
         notes.push(
           NON_GUIDE_WEEKS.has(week)
@@ -290,7 +296,8 @@ export function buildReadingAdapter(grade: string, subject: string): SubjectAdap
 
       return {
         unit: week, deliverable: deliverableKey,
-        curriculum: curriculumSlice, progression: this.progression(week), requiredLanguageToolCoverage: this.requiredCoverage(week),
+        curriculum: curriculumSlice, progression: buildProgression(week, m),
+        requiredLanguageToolCoverage: curriculumSlice ? curriculumSlice.languageToolStandards.map((st) => ({ strand: st.strand, osTexte: st.osTexte })) : [],
         establishedCharacters, recentThemes,
         terminology: { note: "Session titles and metalinguistic terms come from the KG's own bilingual wording; when a term's wording is missing, search the MOHEBS FR/Wolof terminology via get_terminology and use that (Wolof for L1 sessions, French for L2). Do not invent wording.", sections: terminologySections() },
         coverage, notes,

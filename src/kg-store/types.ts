@@ -156,7 +156,7 @@ export type AuditActor = {
   unknown: boolean;
 };
 
-export type AuditEventType = "apply" | "createDraft" | "publish" | "discard" | "blocked";
+export type AuditEventType = "apply" | "createDraft" | "publish" | "discard" | "blocked" | "preview";
 
 // One flat shape covers every event type. Fields are populated per event;
 // which ones apply is discriminated by `eventType`. Kept flat (rather than a
@@ -176,7 +176,7 @@ export type AuditRecord = {
   diff?: GraphDiff;                    // apply (inline; see #5)
   promotedApplyIds?: string[];         // publish
   discardedApplyIds?: string[];        // discard
-  reason?: string;                     // blocked
+  reason?: string;                     // blocked | preview (human descriptor of what was previewed)
   /**
    * publish-only: true if the promoted apply chain contains at least one
    * record authored by the SAME actor doing the publish. Recorded even

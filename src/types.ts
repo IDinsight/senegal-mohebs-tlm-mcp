@@ -61,6 +61,13 @@ export interface StorageAdapter {
   downloadDocx(relPath: string): Promise<Buffer>;
   createUploadUrl(relPath: string): Promise<{ url: string; objectKey: string; contentType: string; expiresAt: string }>;
   createDownloadUrl(relPath: string): Promise<{ url: string; objectKey: string; expiresAt: string; exists: boolean }>;
+  // Preview output path (Phase 3). Signs a short-lived write+read URL pair for a
+  // throwaway .docx under the SIBLING previews/ prefix — never the canonical
+  // documents/ keyspace, never logged to history. Optional on the interface so
+  // storage backends that don't support previews (and test stubs) can omit it;
+  // the preview tool checks for its presence. `objectKey` proves segregation
+  // (it lives under previews/, invisible to reconcile/list_documents).
+  createPreviewUpload?(relPath: string): Promise<{ uploadUrl: string; downloadUrl: string; objectKey: string; contentType: string; expiresAt: string }>;
   readHistory(): Promise<HistoryFile | null>;
   writeHistory(h: HistoryFile): Promise<void>;
 }
@@ -267,8 +274,13 @@ export interface SubjectAdapter {
   requiredCoverage(scope: number | string): unknown[];
   scopeValues(): Array<number | string>;
 
-  // Pre-generation payload.
-  buildGenerationContext(scope: number | string, deliverableKey: DeliverableKey): Promise<unknown>;
+  // Pre-generation payload. `model` is an OPTIONAL pre-resolved CurriculumModel
+  // to build the context from instead of the adapter's default (published)
+  // model — the seam preview_generation uses to generate from a DRAFT-resolved
+  // model (Phase 3) without touching the published read path. When omitted, the
+  // adapter resolves its own (published) model exactly as before, so existing
+  // callers (get_generation_context) are unaffected.
+  buildGenerationContext(scope: number | string, deliverableKey: DeliverableKey, model?: CurriculumModel): Promise<unknown>;
 
   // Optional, capability-gated at the tool boundary.
   suggestFreshDomain?(): Promise<unknown>;

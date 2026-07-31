@@ -5,7 +5,7 @@
 // grade/subject via the docsPrefix/historyKey helpers from context/state.
 import { createRequire } from "node:module";
 import { CONFIG, DOCX_MIME } from "../config.js";
-import { docsPrefix, docKey, historyKey } from "../context/index.js";
+import { docsPrefix, docKey, historyKey, previewKey } from "../context/index.js";
 import type { StorageAdapter, StoredObject, HistoryFile } from "../types.js";
 
 const require = createRequire(import.meta.url);
@@ -86,6 +86,19 @@ export function createFirebaseStorage(): StorageAdapter {
       const expiresMs = Date.now() + 15 * 60 * 1000;
       const [url] = await f.getSignedUrl({ version: "v4", action: "read", expires: expiresMs });
       return { url, objectKey: docKey(relPath), expiresAt: new Date(expiresMs).toISOString(), exists };
+    },
+    async createPreviewUpload(relPath) {
+      // Preview objects are throwaway, so a SHORTER 10-minute lifetime than the
+      // 15-minute canonical URLs — long enough to upload the generated .docx and
+      // open it, short enough that a preview link doesn't linger. Both the write
+      // (PUT) and read (GET) URLs are signed for the SAME previews/ object key,
+      // so the caller uploads to `uploadUrl` and hands the human `downloadUrl`.
+      const key = previewKey(relPath);
+      const f = bucket().file(key);
+      const expiresMs = Date.now() + 10 * 60 * 1000;
+      const [uploadUrl] = await f.getSignedUrl({ version: "v4", action: "write", expires: expiresMs, contentType: DOCX_MIME });
+      const [downloadUrl] = await f.getSignedUrl({ version: "v4", action: "read", expires: expiresMs });
+      return { uploadUrl, downloadUrl, objectKey: key, contentType: DOCX_MIME, expiresAt: new Date(expiresMs).toISOString() };
     },
     async readHistory() {
       const f = bucket().file(historyKey());

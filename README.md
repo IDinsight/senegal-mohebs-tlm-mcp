@@ -423,8 +423,11 @@ gs://<FIREBASE_STORAGE_BUCKET>/
     documents/
       chapitre_05/<Manuel …>.docx
       chapitre_05/<Fiches de leçons …>.docx
+    previews/                    # throwaway preview .docx (draft-resolved); NOT canonical
+      chapitre_05/<Manuel …>.docx
     history.json
 ```
+`previews/` is a **sibling** of `documents/`, never inside it — reconciliation only scans `documents/`, so a preview object can never enter the tracked history (see *Preview generation* below).
 Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within a grade/subject**; the scope is the first integer in the subfolder name, and the active subject's adapter classifies the filename into a deliverable (for maths: a file named "Fiches de leçons …" is the lesson-sheets doc, anything else is the manual).
 
 ## The generation flow (cross-host, no shared disk)
@@ -442,6 +445,28 @@ Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within
 > Input validation (e.g. unknown deliverable) runs before the gate, so bad calls fail first. All read-only tools are ungated. Note: in a fully headless run (no user, no elicitation) these tools cannot get approval by design — drive them only where a human is reachable.
 >
 > **Two lifecycles share only the envelope shape.** Document tools write **live** to the bucket / history — the confirm is the ONLY gate, and the `action` field says "writes NOW … no draft, no undo". Graph mutations (see below) **stage a draft edit** — the same envelope, but the `action` says "STAGES a draft edit … nothing reaches generation until you separately publish". Uniform mechanics; deliberately different stakes.
+
+## Preview generation (draft-resolved, isolated from published)
+
+An expert who has staged a draft edit can generate a **preview** of the teaching material that edit would produce — reading the **draft** instead of published — **without touching published, the canonical documents bucket, or the canonical generation history.** This closes the editing loop: the dry-run (per-mutation diff) and `diff_draft` show the **graph change**; preview shows the **result** — the material that change yields.
+
+- **`preview_generation(unit, deliverable)`** — the draft-resolved analog of `get_generation_context`. It resolves the unit's curriculum from the **draft slot** (the same slot `diff_draft` reads) via the store-bridge and the subject adapter, then runs the adapter's *own* `buildGenerationContext` on that model. Same inputs and same output shape as the published path, but the returned context is **tagged `preview`** and carries the label *"PREVIEW — generated from an unpublished draft, not a published deliverable."* Read-only on the draft — it does **not** mutate the graph.
+- **`create_preview_upload_url(relPath)`** — the preview **output** path. Signs short-lived (10 min) write + read URLs for a throwaway `.docx` under the **segregated `previews/` prefix**. Never the canonical `documents/` bucket, never `log_generation`, never `list_documents`/`reconcile`. `PUT` the generated file to `uploadUrl`, hand the human `downloadUrl`.
+
+**Isolation guarantees** (all covered by `src/server/preview.test.ts`):
+- A preview reflects a staged-but-unpublished edit, while published generation still reflects the old wording.
+- After a preview run, the published slot, the pointer, the canonical bucket, `history.json`, and `log_generation` records are **byte-for-byte unaffected**; the only audit added is a distinct **`preview`** event (never an `apply`/`publish`/real-generation record).
+- Preview output lives under `previews/` — structurally invisible to the tracked document history.
+
+**No draft?** `preview_generation` returns a clear *"no draft to preview"* notice (and no output) rather than silently previewing published — which would be misleading.
+
+**Who?** Same trust tier as `diff_draft`: **curators and approvers** may preview; unknown / no-role callers are blocked (and the denial is audited). It is read-like, so there is no two-phase confirm and no token.
+
+**Scope.** A preview always targets **one unit + one deliverable** — there is no implicit whole-curriculum preview (generation is LLM-driven and costly).
+
+**Deferred.** A draft-vs-published output *comparison* (previewing both for the same scope so the expert sees exactly what changes in the material) is a follow-on — it doubles LLM cost, and the graph-level change is already available via `diff_draft`.
+
+`get_capabilities` advertises this under a `preview` block, so an agent can offer "want to see what this generates before publishing?".
 
 ## Ingesting a doc authored elsewhere (e.g. an expert wrote chapter 2)
 
@@ -465,6 +490,7 @@ Run on startup (when a context is active) and via the `reconcile` tool: present 
 **Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's adapter:
 
 - `list_units`, `get_curriculum`, `get_generation_context`, `record_document_content`, `log_generation`. These take a `unit` (the subject's scope value — a chapter for maths, a week for CE1 reading) and, where relevant, a `deliverable` key. The shapes are subject-specific: maths returns `chapitreNum`/`leconNum` etc., and the `content` payload (characters, example domains, amorce/bilan) follows the maths storybook model — all fields optional.
+- `preview_generation` (draft-resolved generation context, role-gated to curator/approver) and `create_preview_upload_url` (segregated, short-lived, non-canonical preview output) — see *Preview generation* above. Isolated from published, the canonical bucket, `list_documents`, and `log_generation`.
 - *Capability-specific* (`exampleDomainRotation`, maths only) — `suggest_fresh_domain`, `domain_usage`. Example-domain rotation is a maths storybook feature; they are gated on the capability, so for a subject whose adapter doesn't enable it they return a `notApplicable` message instead of running.
 
 ## Setup

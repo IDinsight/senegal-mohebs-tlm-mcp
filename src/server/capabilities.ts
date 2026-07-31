@@ -32,6 +32,7 @@ import {
 const CAPABILITY_ACTIONS = [
   "canReadGenerate",  // reads and generation are ungated (no authorize() call needed)
   "canReadDraft",     // #9's diff_draft
+  "canPreview",       // preview_generation (draft-resolved) — same tier as readDraft
   "canEditDraft",     // #10's upsert_property (any apply)
   "canDiscardDraft",  // #9's discard_draft
   "canPublish",       // #9's publish_draft
@@ -42,6 +43,7 @@ const CAPABILITY_ACTIONS = [
 // open to unknown actors too.
 const CAPABILITY_TO_AUTHZ: Record<Exclude<typeof CAPABILITY_ACTIONS[number], "canReadGenerate">, AuthAction> = {
   canReadDraft: "readDraft",
+  canPreview: "readDraft",   // previewing reads the unpublished draft — same trust tier
   canEditDraft: "apply",
   canDiscardDraft: "discard",
   canPublish: "publish",
@@ -154,6 +156,18 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       "Every write is two-phase: call the tool once without confirm to get a diff and a confirmationToken (no state change), then call again with confirm:true and the token to actually apply. Publish/discard tokens are checked against the current draft state — if the draft moved since the dry-run, the confirm is rejected.",
   };
 
+  // ── preview: advertise the draft-resolved preview generation surface, so
+  // Claude can proactively offer "want to see what this edit generates before
+  // publishing?". `available` mirrors the same readDraft gate the tool enforces;
+  // `hasDraft` says whether there is anything to preview right now.
+  const preview = {
+    available: actions.canPreview,
+    hasDraft: draftExists,
+    tools: ["preview_generation", "create_preview_upload_url"],
+    note:
+      "preview_generation resolves the generation context from the UNPUBLISHED draft (not published) and is scoped to one unit + deliverable — so you can generate a PREVIEW of the material a staged edit would produce before publishing. It closes the loop with the dry-run: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change), curator + approver only. Preview .docx output goes through create_preview_upload_url to a SEGREGATED previews/ prefix with short-lived, clearly-labelled URLs — it never touches the canonical documents bucket, list_documents, or log_generation. With no draft open, preview_generation returns a clear 'no draft to preview' notice. Draft-vs-published output comparison is a deferred follow-on.",
+  };
+
   return {
     actor: {
       id: actor.id,
@@ -171,6 +185,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       createdBy,
     },
     editable,
+    preview,
     rules,
   };
 }
