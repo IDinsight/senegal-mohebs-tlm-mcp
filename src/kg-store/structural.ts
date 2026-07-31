@@ -40,7 +40,7 @@
 // present in the base of the second mutation.
 
 import { randomUUID } from "node:crypto";
-import { edgeId } from "../curriculum/store-bridge.js";
+import { edgeId } from "./types.js";
 import type { MutationEdge, MutationGraph, MutationNode } from "./types.js";
 import type { GraphMutation } from "./mutations.js";
 import type { WordingAliases } from "../types.js";

@@ -25,7 +25,7 @@ import {
   createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId,
   __resetMutationsForTest, __resetDraftTokensForTest,
 } from "./index.js";
-import { edgeId as makeEdgeId } from "../curriculum/store-bridge.js";
+import { edgeId as makeEdgeId } from "../curriculum/index.js";
 import { __setStorageForTest } from "../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../actor.js";
 import type { MutationGraph } from "./index.js";

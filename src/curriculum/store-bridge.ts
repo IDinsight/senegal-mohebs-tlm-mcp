@@ -7,6 +7,7 @@
 import { buildModel, unit } from "./model.js";
 import type { CurriculumModel, CurriculumUnit } from "../types.js";
 import type { StoredNode, StoredEdge } from "../kg-store/index.js";
+import { edgeId } from "../kg-store/index.js";
 
 // The graph shape the seed / lifecycle produces: no `slot` tag — the store
 // stamps that at write time. Reads still return the wire `StoredNode` /
@@ -19,9 +20,11 @@ type LogicalEdge = Omit<StoredEdge, "slot">;
 // context switch that clears the bag automatically drops the preloaded model.
 export const PRELOADED_MODEL_KEY = "curriculum.preloadedModel";
 
-// Deterministic edge id — same input always produces the same id, so a re-seed
-// overwrites the same document instead of appending a new one.
-export const edgeId = (type: string, from: string, to: string) => `${type}:${from}->${to}`;
+// Deterministic edge id — defined in the kg-store leaf (kg-store/types.ts) so
+// the store's structural linker and this serializer share ONE definition
+// without cycling. Re-exported here to keep curriculum's public surface stable
+// (curriculum/index.ts re-exports it from this module).
+export { edgeId };
 
 const numeric = (v: unknown, fallback: number): number => (typeof v === "number" && Number.isFinite(v) ? v : fallback);
 

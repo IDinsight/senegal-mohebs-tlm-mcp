@@ -53,6 +53,14 @@ export type StoredPointer = {
 
 export const otherSlot = (s: Slot): Slot => (s === "a" ? "b" : "a");
 
+// Deterministic edge id — same (type, from, to) always yields the same id, so a
+// re-seed or a re-link overwrites the same document instead of appending. Lives
+// here (leaf) so BOTH curriculum/store-bridge (which builds edges when it
+// serializes a model) and kg-store/structural (which mints edge ids when it
+// links nodes) can share ONE definition without importing each other — that
+// mutual import previously formed a cycle through the kg-store barrel.
+export const edgeId = (type: string, from: string, to: string) => `${type}:${from}->${to}`;
+
 // Input shape for writeSlot. `slot` is added by the store at write time — the
 // caller passes the logical graph, not the wire representation.
 export type SlotWriteBatch = {
