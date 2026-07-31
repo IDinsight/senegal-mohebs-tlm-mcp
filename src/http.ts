@@ -25,6 +25,7 @@ import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.
 import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
+import { listExportNamespaces, exportNamespace } from "./kg-export.js";
 import { CONFIG, basePrefix, kgSource } from "./config.js";
 import { newSessionState, runInSession, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
@@ -65,6 +66,78 @@ function supabaseVerifier(): OAuthTokenVerifier {
       }
     },
   };
+}
+
+// ── Read-only KG export routes ───────────────────────────────────────────────
+// Registered on the shared Express app. Three routes:
+//   GET /kg/config      — PUBLIC. { supabaseUrl, supabaseAnonKey, authRequired }
+//                         so the static page can drive its own Supabase login
+//                         without baking deployment config into the HTML.
+//   GET /kg/namespaces  — auth-gated. The selector list.
+//   GET /kg?ns=<ns>     — auth-gated. Published display-JSON for one namespace.
+// CORS is allow-listed to the hosting origin(s); auth requires a valid Supabase
+// Bearer JWT whenever auth is enabled (mirrors /mcp). All read-only, published-only.
+function registerKgRoutes(app: express.Express, authEnabled: boolean, verifier: OAuthTokenVerifier | null): void {
+  const allowed = (process.env.KG_ALLOWED_ORIGINS
+    ?? "https://senegal-ci-maths.web.app,https://senegal-ci-maths.firebaseapp.com")
+    .split(",").map((s) => s.trim()).filter(Boolean);
+  const isLocalhost = (o: string) => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
+
+  // CORS: echo the origin only when it is allow-listed (or localhost for dev).
+  const cors: express.RequestHandler = (req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && (allowed.includes(origin) || isLocalhost(origin))) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "authorization,content-type");
+      res.setHeader("Access-Control-Max-Age", "3600");
+    }
+    if (req.method === "OPTIONS") { res.status(204).end(); return; }
+    next();
+  };
+
+  // Auth: require a verifiable Supabase Bearer JWT when auth is on. In
+  // ALLOW_UNAUTHENTICATED mode (local only) it is a pass-through.
+  const requireJwt: express.RequestHandler = async (req, res, next) => {
+    if (!authEnabled) return next();
+    const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
+    if (!m) { res.status(401).json({ error: "missing_bearer_token" }); return; }
+    try { await verifier!.verifyAccessToken(m[1]); next(); }
+    catch { res.status(401).json({ error: "invalid_token" }); }
+  };
+
+  app.options(/^\/kg(\/.*)?$/, cors);
+
+  app.get("/kg/config", cors, (_req, res) => {
+    res.json({
+      supabaseUrl: SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
+      authRequired: authEnabled,
+    });
+  });
+
+  app.get("/kg/namespaces", cors, requireJwt, async (_req, res) => {
+    try {
+      res.json({ namespaces: await listExportNamespaces() });
+    } catch (e) {
+      console.error(`${LOG} /kg/namespaces failed:`, (e as Error).message);
+      res.status(500).json({ error: "export_failed", message: (e as Error).message });
+    }
+  });
+
+  app.get("/kg", cors, requireJwt, async (req, res) => {
+    const ns = String(req.query.ns ?? "").trim();
+    if (!ns) { res.status(400).json({ error: "missing_ns" }); return; }
+    try {
+      const graph = await exportNamespace(ns);
+      if (!graph) { res.status(404).json({ error: "unknown_or_unseeded_namespace", ns }); return; }
+      res.json(graph);
+    } catch (e) {
+      console.error(`${LOG} /kg?ns=${ns} failed:`, (e as Error).message);
+      res.status(500).json({ error: "export_failed", message: (e as Error).message });
+    }
+  });
 }
 
 // ── Sessions: one transport + server + state per MCP session ─────────────────
@@ -130,10 +203,23 @@ async function main() {
   app.get("/healthz", (_req, res) => { res.status(200).send("ok"); });
 
   const authEnabled = !!SUPABASE_URL;
+  // One verifier instance, shared by /mcp's bearer middleware and the read-only
+  // /kg endpoint (below). Building it creates a cached remote JWKS, so reusing
+  // one instance avoids a second JWKS fetcher.
+  const verifier = authEnabled ? supabaseVerifier() : null;
   if (!authEnabled && process.env.ALLOW_UNAUTHENTICATED !== "1") {
     console.error(`${LOG} refusing to start: SUPABASE_URL is not set. Set it, or set ALLOW_UNAUTHENTICATED=1 for local testing.`);
     process.exit(1);
   }
+
+  // ── Read-only KG export (companion to the MCP server) ──────────────────────
+  // Serves the live explorer: GET /kg/namespaces (selector) and GET /kg?ns=…
+  // (published display-JSON). Purely additive; the MCP tools/auth are untouched.
+  // CORS is allow-listed to the Firebase Hosting origin(s) (override with
+  // KG_ALLOWED_ORIGINS, comma-separated) plus localhost for local dev. Auth: a
+  // valid Supabase Bearer JWT is required whenever auth is enabled — the same
+  // trust channel as /mcp — so the endpoint honours the same access model.
+  registerKgRoutes(app, authEnabled, verifier);
 
   if (authEnabled) {
     if (!PUBLIC_URL) { console.error(`${LOG} PUBLIC_URL is required when auth is enabled.`); process.exit(1); }
@@ -146,7 +232,7 @@ async function main() {
         bearer_methods_supported: ["header"],
       });
     });
-    app.use("/mcp", requireBearerAuth({ verifier: supabaseVerifier(), resourceMetadataUrl }));
+    app.use("/mcp", requireBearerAuth({ verifier: verifier!, resourceMetadataUrl }));
 
     // Supabase's OAuth server delegates the login/consent UI to the application
     // (dashboard: Site URL = this service, Authorization Path = /oauth/consent).

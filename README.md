@@ -268,6 +268,122 @@ npm test                                 # includes src/kg-store/parity.test.ts
 
 Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering doesn't cause false diffs, but the response shape itself must not change. A secondary manual check (regenerating a manual and a lessons deliverable with the flag flipped and confirming the pre-LLM generation context is identical) is documented in the roadmap; the LLM output itself is not byte-stable and is not the parity oracle.
 
+## KG explorer (read-only live viewer)
+
+A hosted static page that lets a maths/reading expert pick a knowledge graph and explore it
+**live** — sourced from Firestore's PUBLISHED slot, not a baked snapshot. It is **read-only**:
+it never writes, never sees drafts, and does not touch the MCP tools or their auth. Editing
+stays in the MCP curator tools. See `docs/kg-explorer-findings.md` for the design rationale and
+the data-scope finding.
+
+Two pieces: a read-only **export endpoint** (companion routes on the same Cloud Run service,
+`src/kg-export.ts` + routes in `src/http.ts`) and the **hosted explorer** (`hosting/public/index.html`,
+a fork of the original single-file explorer — same look and interactions, live data).
+
+### Endpoint contract
+
+All routes are additive; the MCP `/mcp` surface is unchanged. Reads resolve to the pointer's
+`publishedSlot` only (a curator's draft never leaks here until they publish).
+
+- `GET /kg/config` — **public**. `{ supabaseUrl, supabaseAnonKey, authRequired }` so the static
+  page can drive its own Supabase login without baking deployment config into the HTML.
+- `GET /kg/namespaces` — **auth-gated**. `{ namespaces: [{ ns, grade, subject, label:{fr,en} }] }`.
+  Lists every installed context that has a published pointer, so a newly seeded KG appears in the
+  selector automatically.
+- `GET /kg?ns=<namespace>` — **auth-gated**. The published **display-JSON** for one namespace:
+
+  ```jsonc
+  {
+    "nodes": [ { "id", "label", "kind", "nt", "st","st_en", "code", "desc","desc_en",
+                 "dom","pal","sem","chapN","chapT", "src","ref","statut", "srcKey", ... } ],
+    "edges": [ { "s", "t", "r", "o" } ],           // r ∈ {hasChild, buildsTowards}; o = sibling order
+    "meta": {
+      "ns", "label", "publishedSlot", "generatedAt",
+      "counts": { "nodes", "edges", "byKind" },
+      "sources": ["RECE","Rwanda P1", ...],        // distinct srcKeys present → source-filter chips
+      "viewConfig": { "views": [ { "id","label","shape","params" } ] }
+    }
+  }
+  ```
+
+**Auth** (decision: Supabase login). When `SUPABASE_URL` is set, `/kg/namespaces` and `/kg`
+require a valid Supabase Bearer JWT — the same trust channel as `/mcp`. The static page runs a
+small `supabase-js` email/password login (mirroring `/oauth/consent`) and sends the token. In
+`ALLOW_UNAUTHENTICATED=1` (local only) the routes are open.
+
+**CORS.** Allow-listed to the Firebase Hosting origin(s); override with `KG_ALLOWED_ORIGINS`
+(comma-separated). `localhost`/`127.0.0.1` are always allowed for local dev. The deployed page
+does not actually need CORS — Firebase Hosting **rewrites** `/kg/**` → the Cloud Run service
+(`firebase.json`), so the browser calls same-origin and Hosting proxies to Cloud Run (the JWT
+passes through). CORS covers direct/local access.
+
+### The raw-LC → display transform
+
+The store holds a NORMALIZED graph (generic `{type, properties:{code,title,text,order,isAssessment,raw}}`).
+`toDisplayNode` maps each stored node to the explorer's display schema, reading `properties.raw.*`
+with both maths (camelCase) and reading (snake_case) spellings:
+
+| display field | source | display field | source |
+|---|---|---|---|
+| `label` | derived from `kind` | `dom`/`dom_en` | `raw.domaine`/`_en` |
+| `kind` | store `type` | `pal`/`sem` | `raw.palier`/`raw.semaine` |
+| `code` | `properties.code` (`raw.statementCode`) | `chapN`/`chapT` | `raw.chapitreNum`/`raw.chapitreTitre` |
+| `desc`/`desc_en` | `properties.text`/`raw.osTexte`/`raw.description` | `os`/`os_en` | `raw.osTexte`/`_en` |
+| `st`/`st_en` | `raw.statementType`/`_en` | `src`/`ref`/`statut` | `raw.source`/`reference`/`statut` |
+| `nt` | `raw.normalizedType`/`raw.contentType` | `srcKey` | `raw.sourceKey` |
+| `ex`/`ex_en`, `apt`, `comm` | `raw.examples`/`aptitudeCI`/`commentaireProgression` | `strand`,`genre` | `raw.strand`,`raw.genre` (reading) |
+
+Edges are the stored `hasChild` + `buildsTowards` as `{s,t,r,o}`. Domaine/Palier/Semaine grouping
+is **synthesized client-side** from node properties (as the original explorer already did for
+Palier/Semaine) — the server emits only spine nodes + edges.
+
+### Data-driven views (`meta.viewConfig`)
+
+The frontend is generic and renders whatever views `meta.viewConfig` declares — no per-namespace
+`if` anywhere. Two view **shapes**:
+
+- `grouped-spine` — nested grouping synthesized from `groupBy` props read off `anchorKind` nodes,
+  then those anchors, then the `hasChild` subtree (optionally stopping at `stopKind`). Maths
+  declares three: *thematic* (Domaine→Chapitre→OS→composant→tâche), *planning* (Palier→Semaine→OS),
+  *chapters* (Domaine→Chapitre→OS).
+- `node-type` — the generic floor, works for ANY namespace: each node type → its nodes → their
+  outgoing relations.
+
+A namespace gets the rich grouped-spine views **only when its data carries the needed fields**
+(chapters with `dom`, lessons with `pal`/`sem`); every namespace always gets the `node-type` view.
+So `ci/maths` shows four tabs, `ce1/reading` shows one (generic) — with no hardcoding.
+
+### Adding a new KG
+
+Seed it into Firestore (see [Seed](#seed)). It then appears in the selector automatically. If its
+data has the maths-shaped fields it gets the rich views; otherwise it renders via the generic
+`node-type` view — no frontend change. To give a differently-shaped KG its own rich views, extend
+`buildViewConfig` in `src/kg-export.ts` with a new detection + a new view `shape` in the frontend.
+
+### Data-scope finding (what's in the graph vs. was only in the old HTML)
+
+**Verified against live Firestore, both namespaces are SPINE-ONLY.** The seed pipeline runs each
+adapter's `parse()` → normalized model → store, which keeps only the curriculum spine
+(`ci/maths`: chapter→lesson→component→task via `hasChild` + chapter→chapter `buildsTowards`;
+`ce1/reading`: week→standard→component). The RECE framework and the six derived-source family
+branches from the old inline-`DATA` explorer are **not** stored as nodes, and the raw graph's
+`supports`/`relatesTo` edges are dropped. But every raw field survives in `properties.raw` —
+including `sourceKey` (all seven tags present on maths components/tasks), so the source-filter
+chips still work, and Domaine/Palier/Semaine are re-synthesized from properties. What does NOT
+render: the RECE/derived branches as separate roots, and the modal's `supports`/`relatesTo`
+cross-link blocks. See `docs/kg-explorer-findings.md` §1 for the full table and the (a) ship-spine
+/ (b) ingest-more decision (shipped: **a**).
+
+### Deploy the explorer
+
+```bash
+firebase deploy --only hosting --project senegal-ci-maths    # → https://senegal-ci-maths.web.app
+```
+
+`firebase.json` rewrites `/kg/**` to the `senegal-mohebs-tlm` Cloud Run service (region
+`europe-west1`). Local dev: run the server (`node dist/http.js` with `ALLOW_UNAUTHENTICATED=1`)
+and open the page with `?api=http://localhost:<port>` so it hits the local endpoint directly.
+
 ## Bucket layout
 
 ```
