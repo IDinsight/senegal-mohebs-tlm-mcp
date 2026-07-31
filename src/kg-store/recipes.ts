@@ -40,7 +40,7 @@
 import { edgeId } from "./types.js";
 import type { MutationGraph, MutationNode } from "./types.js";
 import type { GraphMutation } from "./mutations.js";
-import { readAtPath, writeAtPath } from "./mutations.js";
+import { readAtPath, writeAtPath } from "./upsert-property.js";
 import { createNode, linkNodes, unlinkNodes } from "./structural.js";
 import type { WordingAliases, StructuralAliases, RecipeProfile } from "../types.js";
 
