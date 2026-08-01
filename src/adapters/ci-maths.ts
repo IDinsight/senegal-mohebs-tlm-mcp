@@ -75,7 +75,7 @@ function parse(raw: unknown): CurriculumModel {
 
   const byId = new Map(units.map((u) => [u.id, u]));
 
-  // Chapter→lesson: shared property (chapitreNum), NOT an edge. Match the maths schema.
+  // Chapter→lesson: shared property (chapitreNum), NOT an edge. Match the CI maths schema.
   const chaptersByNum = new Map<number, CurriculumUnit>();
   for (const c of units) if (c.kind === "chapter") chaptersByNum.set(c.properties.chapitreNum as number, c);
   for (const l of units) {
@@ -117,7 +117,7 @@ function parse(raw: unknown): CurriculumModel {
 // ── Coverage / consistency warnings (#13) ────────────────────────────────────
 // Unit-shaped completeness checks for CI maths. All WARNINGS — they inform the
 // reviewer, never block. Two generic shapes (empty chapter, lesson with >1
-// parent) come from the shared helpers; two are maths-specific and live here
+// parent) come from the shared helpers; two are CI-CI-maths-specific and live here
 // because only this adapter knows what a "bilan" is and that maths denormalizes
 // the chapter→lesson link into `raw.chapitreNum`.
 //
@@ -137,7 +137,7 @@ const rawChapitreNum = (n: GraphView["nodes"][number]): number | null => {
   return typeof v === "number" ? v : null;
 };
 
-function mathsCoverageWarnings(graph: GraphView): string[] {
+function ciMathsCoverageWarnings(graph: GraphView): string[] {
   const warnings: string[] = [];
 
   // (1) + (2) Generic tree shapes, keyed by maths kind names.
@@ -172,7 +172,7 @@ function mathsCoverageWarnings(graph: GraphView): string[] {
       warnings.push(`Coverage: chapter '${label}' has ${bilans} bilan lessons — exactly one is expected.`);
   }
 
-  // (4) chapitreNum drift — the regime-B consistency check. The maths presenter
+  // (4) chapitreNum drift — the regime-B consistency check. The CI maths presenter
   // joins lessons to chapters by `raw.chapitreNum`, not by the hasChild edge, so
   // if the number disagrees with the edge-parent the lesson silently fails to
   // render under its chapter. WARN (not block): the edge backbone is intact and
@@ -184,7 +184,7 @@ function mathsCoverageWarnings(graph: GraphView): string[] {
       const ln = rawChapitreNum(l);
       if (cn != null && ln != null && cn !== ln) {
         const label = (l.properties.text as string) ?? l.id;
-        warnings.push(`Coverage: lesson '${label}' is linked to chapter number ${cn} but its own chapitreNum is ${ln} — the maths view joins on chapitreNum, so this lesson will not render under its chapter. Align the numbers.`);
+        warnings.push(`Coverage: lesson '${label}' is linked to chapter number ${cn} but its own chapitreNum is ${ln} — the CI maths view joins on chapitreNum, so this lesson will not render under its chapter. Align the numbers.`);
       }
     }
   }
@@ -193,7 +193,7 @@ function mathsCoverageWarnings(graph: GraphView): string[] {
     const ln = rawChapitreNum(l);
     if (ln != null && !chapterNums.has(ln)) {
       const label = (l.properties.text as string) ?? l.id;
-      warnings.push(`Coverage: lesson '${label}' has chapitreNum ${ln}, but no chapter has that number — it will not render anywhere in the maths view.`);
+      warnings.push(`Coverage: lesson '${label}' has chapitreNum ${ln}, but no chapter has that number — it will not render anywhere in the CI maths view.`);
     }
   }
 
@@ -203,7 +203,7 @@ function mathsCoverageWarnings(graph: GraphView): string[] {
 // ── Factory: build the (grade, subject)-bound adapter ────────────────────────
 // Closure cache for the parsed model is safe without a reset hook: activateContext
 // builds a fresh adapter (and thus a fresh empty cache) on every context switch.
-export function buildMathsAdapter(grade: string, subject: string): SubjectAdapter {
+export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdapter {
   let model: CurriculumModel | null = null;
   const ensure = (): CurriculumModel => {
     if (model) return model;
@@ -313,9 +313,9 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
     // decision (a)); `code`/`statementCode` are display-only and stay out.
     //   • chapter.number      — a chapter's number, stored in BOTH the normalized
     //     `order` (what the presenter sorts on) and `raw.chapitreNum` (the join
-    //     key the maths view matches lessons against). Renumber rewrites both.
+    //     key the CI maths view matches lessons against). Renumber rewrites both.
     //   • lesson.chapterNumber — which chapter a lesson joins to. This is the ONE
-    //     Regime-B reference (#13): the maths view joins a lesson to its chapter
+    //     Regime-B reference (#13): the CI maths view joins a lesson to its chapter
     //     by `raw.chapitreNum`, NOT by the hasChild edge, so move/split/renumber
     //     MUST rewrite it or the lesson renders under the wrong chapter (the
     //     drift coverage warning is exactly that signal).
@@ -347,7 +347,7 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
     // A module-level pure function so it needs no closure state; see its
     // definition above for the four rules (empty chapter, missing/>1 bilan,
     // lesson with >1 parent, chapitreNum drift).
-    coverageWarnings: mathsCoverageWarnings,
+    coverageWarnings: ciMathsCoverageWarnings,
 
     detect, parse,
 
@@ -421,7 +421,7 @@ export function buildMathsAdapter(grade: string, subject: string): SubjectAdapte
     },
 
     // Maths-only capability: exampleDomainRotation. Gated at the tool boundary
-    // in src/server/maths.ts via capabilities.exampleDomainRotation.
+    // in src/server/ci-maths.ts via capabilities.exampleDomainRotation.
     suggestFreshDomain: () => suggestFreshDomain(),
     domainUsage: () => domainUsage(),
   };

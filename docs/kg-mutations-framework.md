@@ -361,10 +361,10 @@ There is no "glossary node" in the KG; glossary lives in the local
 "wording" targets are the human-readable text fields on curriculum
 nodes:
 
-- Maths chapter: `properties.title` (was `raw.chapitreTitre`)
-- Maths lesson: `properties.text` (was `raw.osTexte`)
-- Maths component + task: `properties.text` (was `raw.description`)
-- Reading standard + component: `properties.text` (was `raw.description`)
+- CI maths chapter: `properties.title` (was `raw.chapitreTitre`)
+- CI maths lesson: `properties.text` (was `raw.osTexte`)
+- CI maths component + task: `properties.text` (was `raw.description`)
+- CE1 reading standard + component: `properties.text` (was `raw.description`)
 - English mirrors: `raw.*_en` where present
 
 The adapter's `wordingAliases` declares which LOGICAL keys map to which
@@ -514,7 +514,7 @@ LC's own domain/range and class definitions are NOT machine-readable in
 this codebase: the raw KG file lists `schemaEntities` and
 `schemaRelationships` as flat name lists in metadata, and the adapter's
 `parse()` drops even those and replaces them with internal kinds
-(`chapter`/`lesson`/`component`/`task` for maths). The declarative
+(`chapter`/`lesson`/`component`/`task` for CI maths). The declarative
 schema was deliberately dropped in earlier steps; #12 does not
 reintroduce one.
 
@@ -595,8 +595,8 @@ read path:
   `from`/`to` node id. Rule 2 already guards all of them. Covers
   lesson→component, component→task, week→standard, standard→component, and
   chapter→chapter progression.
-- **Exactly one number-based reference (Regime B), maths only: `raw.chapitreNum`.**
-  The maths *presenter* joins a chapter to its lessons by matching
+- **Exactly one number-based reference (Regime B), CI maths only: `raw.chapitreNum`.**
+  The CI maths *presenter* joins a chapter to its lessons by matching
   `raw.chapitreNum` (`lessonsOf` filters `lesson.raw.chapitreNum === chapNum`),
   NOT by the `hasChild` edge. But that chapter→lesson `hasChild` edge ALSO
   exists in the store (serialize emits it from the number-derived `childIds`),
@@ -604,9 +604,9 @@ read path:
   Rule-2-protected — not an independent reference.
 
 Enumerated reference sites: `edge.from`/`edge.to` (id, all subjects, Rule 2);
-`raw.chapitreNum` (number, maths chapter↔lesson, denormalized); `order` /
+`raw.chapitreNum` (number, CI maths chapter↔lesson, denormalized); `order` /
 `raw.leconNum` (ordering only, not a cross-ref); `code` / `raw.statementCode`
-(display only); reading's `raw.case_identifier_uuid` (parse-time join for raw
+(display only); CE1 reading's `raw.case_identifier_uuid` (parse-time join for raw
 `supports`, resolved to an id-edge at serialize — not a store-level ref).
 
 **Verified on seed data** (via a serialize + count check): 25 chapters, all
@@ -631,10 +631,10 @@ edge case the coverage warnings already flag.
 
 Grounded in real curriculum expectations, not invented:
 - **Empty container** (generic) — a chapter/week with zero hasChild children.
-- **Missing / duplicate bilan** (maths) — a chapter with lessons but no
+- **Missing / duplicate bilan** (CI maths) — a chapter with lessons but no
   `isAssessment` lesson, or more than one.
 - **Lesson with >1 parent** (generic) — a hasChild child with two parents.
-- **`chapitreNum` drift** (maths, Regime-B consistency) — a lesson whose
+- **`chapitreNum` drift** (CI maths, Regime-B consistency) — a lesson whose
   `chapitreNum` disagrees with its hasChild-parent chapter's, or matches no
   chapter at all. This is exactly the check that the denormalized copy still
   agrees with the edge backbone.
@@ -664,7 +664,7 @@ graph) AND the whole-draft `diff_draft` (the approver's pre-publish view). The
 - New optional `SubjectAdapter.coverageWarnings(graph): string[]` — the
   unit-shaped WARN layer. Subject-neutral shapes (empty container, multi-parent)
   are reusable helpers in `curriculum/coverage.ts`; subject-specific rules
-  (bilan, `chapitreNum` drift) live in the maths adapter. Reading uses the
+  (bilan, `chapitreNum` drift) live in the CI maths adapter. CE1 reading uses the
   generic helpers only.
 - `runGraphMutation` and `diffDraft` gain an optional injected `coverage`
   callback (wired by the server layer from the active adapter) and merge its
@@ -688,14 +688,14 @@ never happens without explicit force. No new schema/profile/template layer.
 ### Restated reference regime (REUSED from #13, not re-derived)
 
 Predominantly **Regime A** (id-based edges), with **exactly one denormalized
-Regime-B field: maths `raw.chapitreNum`.**
+Regime-B field: CI maths `raw.chapitreNum`.**
 
 - **Referential backbone = 100% id-based `hasChild` / `buildsTowards` edges.**
   Rule 2 blocks any dangling edge. Every recipe's rewire runs on this spine, and
   the note about "hasLesson" in the task is nominal only — the store's
   chapter→lesson relation is a `hasChild` **edge**, not an edge type named
   "hasLesson".
-- **`raw.chapitreNum` is a number-based reference the maths PRESENTER joins on.**
+- **`raw.chapitreNum` is a number-based reference the CI maths PRESENTER joins on.**
   `lessonsOf` filters `lesson.raw.chapitreNum === chapNum`, NOT the hasChild
   edge. That edge also exists (denormalized copy), so the number is a copy of an
   already-Rule-2-guarded edge. #13 resolved its drift as a **WARNING, not a
@@ -703,7 +703,7 @@ Regime-B field: maths `raw.chapitreNum`.**
   inconsistency, not corruption.
 
 **Enumerated referrers a recipe must keep consistent:** `edge.from`/`edge.to`
-(id — Rule 2, blocks); `raw.chapitreNum` (number — maths chapter↔lesson join;
+(id — Rule 2, blocks); `raw.chapitreNum` (number — CI maths chapter↔lesson join;
 drift WARNED); `order` / `raw.leconNum` (within-chapter ordering only); `code` /
 `raw.statementCode` (display only, NOT a reference).
 
@@ -737,7 +737,7 @@ Subject-agnosticism is preserved exactly as #10/#12 did it: kg-store never names
 "chapter"/"lesson"/"hasChild". Each recipe reads that vocabulary from a
 `RecipeProfile` + `structuralAliases` + `wordingAliases` threaded through its
 args; the server tool layer reads them off the active adapter. A subject with no
-`recipeProfile` (reading, today) simply has no recipes — the tool returns a
+`recipeProfile` (CE1 reading, today) simply has no recipes — the tool returns a
 clear "not available" message.
 
 ### Decisions (a)–(f) — as implemented (all recommended options, user-confirmed)

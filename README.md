@@ -58,8 +58,8 @@ later steps can expose editing tools without rewiring the read layer. Two
 collections, each namespaced by `${TLM_BUCKET_PREFIX}<grade>/<subject>` (the
 same key the docs bucket and history use):
 
-- `kg_nodes` — one document per curriculum unit: `{ id, type, namespace, properties }`. `type` is the adapter-produced kind (maths: `chapter, lesson, component, task`; reading: `week, standard, component`). `properties` carries the normalized fields (`code, title, text, order, isAssessment`) plus the raw graph passthrough under `raw`. Ids are the verbatim UUIDs from the bundled KGs — never regenerated.
-- `kg_edges` — one document per adapter-produced link: `{ id, type, from, to, namespace, properties }`. `type` is either `hasChild` (parent→child hierarchy) or `buildsTowards` (maths cross-chapter progression). `properties` records `orderInParent` / `sequenceInFrom` / `sequenceInTo` so child and progression ordering round-trip byte-identically.
+- `kg_nodes` — one document per curriculum unit: `{ id, type, namespace, properties }`. `type` is the adapter-produced kind (CI maths: `chapter, lesson, component, task`; CE1 reading: `week, standard, component`). `properties` carries the normalized fields (`code, title, text, order, isAssessment`) plus the raw graph passthrough under `raw`. Ids are the verbatim UUIDs from the bundled KGs — never regenerated.
+- `kg_edges` — one document per adapter-produced link: `{ id, type, from, to, namespace, properties }`. `type` is either `hasChild` (parent→child hierarchy) or `buildsTowards` (CI maths cross-chapter progression). `properties` records `orderInParent` / `sequenceInFrom` / `sequenceInTo` so child and progression ordering round-trip byte-identically.
 - `kg_meta` — one doc per namespace holding the seed provenance stamp: `{ contentHash, seededAt, adapterId, nodeCount, edgeCount }`. The seed writes it last, so its presence is the signal that the namespace was successfully seeded; `activateContext` refuses to load an unseeded namespace when `KG_SOURCE=firestore`.
 
 The store is still **read-only from the outside in this phase** — no MCP write tools, no user-facing lifecycle tools, no permissioning. But it now has a **draft/published split** under the hood so later steps have somewhere to write. See [Draft/published state](#draftpublished-state) below.
@@ -123,12 +123,12 @@ A mutation may still add its own `validate(base, after, args)` on top of the sha
 The integrity layer draws one line, applied consistently:
 
 - **BLOCK (error, no token)** — anything that would leave the graph **referentially broken**: a dangling edge, a reference pointing at a node that won't exist post-edit, a disguised rename (Rule 1). This is corruption a reviewer can't see in a diff, so the machine refuses it outright. These are the shared, subject-agnostic rules in [`validate.ts`](src/kg-store/validate.ts).
-- **WARN (informational, still confirmable)** — structural **incompleteness that is valid-but-suspect**: a chapter with no lessons, a chapter missing its bilan, a lesson linked to more than one chapter, a maths lesson whose `chapitreNum` disagrees with the chapter it's edge-linked to. A curator may legitimately be mid-edit, so these never block; the approver decides. Warnings ride the dry-run response and `diff_draft`, and are recorded on the publish audit (`warningsAtPublish`) for traceability — but publish proceeds.
+- **WARN (informational, still confirmable)** — structural **incompleteness that is valid-but-suspect**: a chapter with no lessons, a chapter missing its bilan, a lesson linked to more than one chapter, a CI maths lesson whose `chapitreNum` disagrees with the chapter it's edge-linked to. A curator may legitimately be mid-edit, so these never block; the approver decides. Warnings ride the dry-run response and `diff_draft`, and are recorded on the publish audit (`warningsAtPublish`) for traceability — but publish proceeds.
 - **CASCADE only on explicit `force`** — never silent, and the dry-run diff shows the full set that will vanish (see `delete_node` below).
 
-**Where the two live.** The BLOCK rules are universal — they know only nodes and edges, never "chapter" or "bilan" — so they sit in the shared `kg-store` layer. The WARN rules are *unit-shaped* — they depend on what a unit IS for a given subject — so they live behind an optional adapter hook, `SubjectAdapter.coverageWarnings(graph)`. Subject-neutral shapes (empty container, a child with two parents) are reusable helpers in [`curriculum/coverage.ts`](src/curriculum/coverage.ts) that any adapter calls with its own kind names; genuinely subject-specific rules (the maths bilan, the `chapitreNum` denormalization) are written in the maths adapter. Reading uses the generic helpers only. Nothing subject-specific leaks into the shared layer.
+**Where the two live.** The BLOCK rules are universal — they know only nodes and edges, never "chapter" or "bilan" — so they sit in the shared `kg-store` layer. The WARN rules are *unit-shaped* — they depend on what a unit IS for a given subject — so they live behind an optional adapter hook, `SubjectAdapter.coverageWarnings(graph)`. Subject-neutral shapes (empty container, a child with two parents) are reusable helpers in [`curriculum/coverage.ts`](src/curriculum/coverage.ts) that any adapter calls with its own kind names; genuinely subject-specific rules (the CI maths bilan, the `chapitreNum` denormalization) are written in the CI maths adapter. CE1 reading uses the generic helpers only. Nothing subject-specific leaks into the shared layer.
 
-**The reference regime (and what it means for a future renumber).** Every genuine cross-entity link in the store is an **id-based edge** (`hasChild`, `buildsTowards`) — Rule 2 covers them all. There is exactly one number-based reference: maths reads a chapter↔lesson link from `raw.chapitreNum` rather than the edge. But that number is a *denormalized copy* of a `hasChild` edge that already exists and is Rule-2-protected — so its drift is a **warning**, not corruption. The consequence for the not-yet-built renumber action (a later step): renumbering is only reference-safe if it **cascade-rewrites** every lesson's `chapitreNum` alongside the chapter's; the `chapitreNum`-drift warning is exactly the signal that would fire if it didn't.
+**The reference regime (and what it means for a future renumber).** Every genuine cross-entity link in the store is an **id-based edge** (`hasChild`, `buildsTowards`) — Rule 2 covers them all. There is exactly one number-based reference: CI maths reads a chapter↔lesson link from `raw.chapitreNum` rather than the edge. But that number is a *denormalized copy* of a `hasChild` edge that already exists and is Rule-2-protected — so its drift is a **warning**, not corruption. The consequence for the not-yet-built renumber action (a later step): renumbering is only reference-safe if it **cascade-rewrites** every lesson's `chapitreNum` alongside the chapter's; the `chapitreNum`-drift warning is exactly the signal that would fire if it didn't.
 
 ### Audit log (append-only, atomic with the change)
 
@@ -179,7 +179,7 @@ Two server-side authorization roles gate every graph state change:
 Four MCP tools close the loop:
 
 - **`diff_draft`** — read-only. Returns the CUMULATIVE draft-vs-published diff for the active grade/subject. This is the "approver's view" — everything that will go live on publish. Curator + approver only; unknown/no-role callers are blocked (a draft is pre-publish work-in-progress).
-- **`upsert_property(nodeId, key, value)`** — the first real edit. `key` is a **logical** wording name (`"title"`, `"text"`, `"title_en"`, `"text_en"`); the active subject's adapter (`SubjectAdapter.wordingAliases`) resolves it to the concrete storage paths its wording lives under, and updates them **atomically in one call**. For maths chapters, `title` covers both `properties.title` (what presenters read) and `properties.raw.chapitreTitre` (the source-truth) — the curator doesn't need to know the storage layout. Two-phase confirm from #5: dry-run returns a per-mutation diff + token; confirm applies to the draft. Curator + approver.
+- **`upsert_property(nodeId, key, value)`** — the first real edit. `key` is a **logical** wording name (`"title"`, `"text"`, `"title_en"`, `"text_en"`); the active subject's adapter (`SubjectAdapter.wordingAliases`) resolves it to the concrete storage paths its wording lives under, and updates them **atomically in one call**. For CI maths chapters, `title` covers both `properties.title` (what presenters read) and `properties.raw.chapitreTitre` (the source-truth) — the curator doesn't need to know the storage layout. Two-phase confirm from #5: dry-run returns a per-mutation diff + token; confirm applies to the draft. Curator + approver.
 - **`publish_draft`** — approver only. Two-phase: dry-run shows the whole-draft diff + a draft-level token; confirm promotes atomically via #7's audit, with self-authorship marked per #8. If the draft moved since dry-run (someone else edited), confirm is rejected (retry).
 - **`discard_draft`** — curator or approver. Two-phase: dry-run shows what will be thrown away; confirm drops the draft. Published is byte-untouched. Audited.
 
@@ -201,8 +201,8 @@ approver: publish_draft(confirm:true, confirmationToken:...) → promoted, gener
 
 Four RAW structural primitives, each a single #5 mutation on top of the same #5/#6/#7/#8 seams as `upsert_property`. Deliberately verbs-only — no cascade, no composite recipes:
 
-- **`create_node(kind, properties)`** — adds a new node. **The server MINTS the id** (returned as `mintedNodeId` in the dry-run response); a caller-supplied id in `properties` is hard-rejected. `kind` must be a node kind already present on this namespace (chapter/lesson/component/task for maths). Missing wording surfaces as a WARNING, not a block — the reviewer at publish is the completeness gate.
-- **`link_nodes(edgeType, fromId, toId, properties?)`** — adds an edge. Edge id is deterministic (`<type>:<from>-><to>`) so re-linking the same triple is rejected as a duplicate. Endpoints must exist and `edgeType` must be an edge type already present on this namespace (`hasChild` / `buildsTowards` for maths). Edge-type LEGALITY across kinds (does `hasChild(task→chapter)` make sense?) is NOT enforced — that judgment is deferred to human review at publish.
+- **`create_node(kind, properties)`** — adds a new node. **The server MINTS the id** (returned as `mintedNodeId` in the dry-run response); a caller-supplied id in `properties` is hard-rejected. `kind` must be a node kind already present on this namespace (chapter/lesson/component/task for CI maths). Missing wording surfaces as a WARNING, not a block — the reviewer at publish is the completeness gate.
+- **`link_nodes(edgeType, fromId, toId, properties?)`** — adds an edge. Edge id is deterministic (`<type>:<from>-><to>`) so re-linking the same triple is rejected as a duplicate. Endpoints must exist and `edgeType` must be an edge type already present on this namespace (`hasChild` / `buildsTowards` for CI maths). Edge-type LEGALITY across kinds (does `hasChild(task→chapter)` make sense?) is NOT enforced — that judgment is deferred to human review at publish.
 - **`unlink_nodes(edgeId)`** — removes one edge by id. Removing an edge cannot orphan a node (Rule 2 only cares about surviving edges).
 - **`delete_node(nodeId, force?)`** — removes a node. By default (**`force:false`**) it is REFUSED if the node still has incident edges; the validate hook lists them so it's clear what to `unlink_nodes` first. With **`force:true`** it cascade-deletes the node together with its **dependent subtree** (its `hasChild` children, their children, …) and every edge touching any removed node, in ONE atomic mutation — the dry-run diff shows the full set that will vanish, and Rule 1/2 re-run on the result to prove it stays clean. Siblings and progression neighbours survive (only their connecting edge drops). **Cascade never happens without explicit `force`.**
 
@@ -248,13 +248,13 @@ The raw verbs above are correct but tedious for real curriculum restructuring: a
 - **`split_chapter(chapterId, atLessonId, [newTitle, newTitle_en, newNumber])`** — create a new chapter and move the tail lessons (from `atLessonId` onward) into it. The new chapter is **appended at the next free number by default** (no existing chapter is shifted); pass a free `newNumber` to place it in a gap.
 - **`renumber(chapterId, newNumber)`** — change a chapter's number and cascade-rewrite every child lesson's chapter-membership number, atomically. The target number must be **free** (renumber MOVES a chapter to an unoccupied number; insert-with-shift and swap are rejected).
 
-Recipes that create nodes mint the id(s) server-side and surface them on the dry-run (`mintedLessonId` / `mintedChapterId` / `mintedLessonIds`, exactly like `create_node`'s `mintedNodeId`); pass them back on confirm. Recipes are available only for a subject whose adapter declares a `recipeProfile` (maths does; reading does not) — otherwise the tool returns a clear "not available" message rather than guessing.
+Recipes that create nodes mint the id(s) server-side and surface them on the dry-run (`mintedLessonId` / `mintedChapterId` / `mintedLessonIds`, exactly like `create_node`'s `mintedNodeId`); pass them back on confirm. Recipes are available only for a subject whose adapter declares a `recipeProfile` (CI maths does; CE1 reading does not) — otherwise the tool returns a clear "not available" message rather than guessing.
 
 **Structural-property editing (the foundation move/split/renumber needed).** These recipes must change STRUCTURAL properties of *existing* nodes — a chapter's number, a lesson's position and chapter-membership number — which `upsert_property` deliberately refuses (it is wording-only). That path is a curated set of numeric keys (`order`, `raw.chapitreNum`, `raw.leconNum`) declared per node kind in the adapter's `structuralAliases` and validated against a central `STRUCTURAL_EDIT_SAFE_PATHS` allowlist (the exact analogue of `UPSERT_PROPERTY_SAFE_PATHS`). By design there is **no raw structural-edit tool** — these keys are editable only *through* the recipes, because a bare `chapitreNum` edit is exactly the drift the recipes exist to prevent.
 
 **The block-vs-warn behaviour is inherited from #13, not re-invented.** A composite that would leave the graph referentially broken (a dangling edge, a disguised rename) is BLOCKED; a composite that leaves it valid-but-incomplete (a split that leaves a chapter without a bilan) WARNS on the dry-run and `diff_draft` but never blocks. The approver decides.
 
-**How `renumber` behaves under the reference regime — the sharp edge, stated honestly.** This codebase's chapter→lesson membership is stored **twice**: as an id-based `hasChild` edge (the Rule-2-guarded backbone) *and* as a denormalized number, `raw.chapitreNum`, which the maths presenter actually joins lessons to chapters on. #13 resolved a mismatch between the two (`chapitreNum` drift) as a **WARNING, not a block**, because the edge backbone stays intact. So `renumber`'s safety does **not** come from Rule 2 hard-blocking (a property edit never dangles an edge) — it comes from the recipe **rewriting the whole `chapitreNum` family in one atomic composite**: the chapter's number *and* every child lesson's copy, so the numbers never diverge and no drift warning ever fires. For the same reason, `move_lesson` and `split_chapter` also rewrite the moved lessons' `chapitreNum` — rewiring the edge alone would misfile them under their old chapter. This is why all three share one structural-property edit path.
+**How `renumber` behaves under the reference regime — the sharp edge, stated honestly.** This codebase's chapter→lesson membership is stored **twice**: as an id-based `hasChild` edge (the Rule-2-guarded backbone) *and* as a denormalized number, `raw.chapitreNum`, which the CI maths presenter actually joins lessons to chapters on. #13 resolved a mismatch between the two (`chapitreNum` drift) as a **WARNING, not a block**, because the edge backbone stays intact. So `renumber`'s safety does **not** come from Rule 2 hard-blocking (a property edit never dangles an edge) — it comes from the recipe **rewriting the whole `chapitreNum` family in one atomic composite**: the chapter's number *and* every child lesson's copy, so the numbers never diverge and no drift warning ever fires. For the same reason, `move_lesson` and `split_chapter` also rewrite the moved lessons' `chapitreNum` — rewiring the edge alone would misfile them under their old chapter. This is why all three share one structural-property edit path.
 
 ```text
 # add a chapter with two lessons — ONE composite, ONE confirm
@@ -314,7 +314,7 @@ Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering
 
 ## KG explorer (read-only live viewer)
 
-A hosted static page that lets a maths/reading expert pick a knowledge graph and explore it
+A hosted static page that lets a CI maths/CE1 reading expert pick a knowledge graph and explore it
 **live** — sourced from Firestore's PUBLISHED slot, not a baked snapshot. It is **read-only**:
 it never writes, never sees drafts, and does not touch the MCP tools or their auth. Editing
 stays in the MCP curator tools. See `docs/kg-explorer-findings.md` for the design rationale and
@@ -365,7 +365,7 @@ passes through). CORS covers direct/local access.
 
 The store holds a NORMALIZED graph (generic `{type, properties:{code,title,text,order,isAssessment,raw}}`).
 `toDisplayNode` maps each stored node to the explorer's display schema, reading `properties.raw.*`
-with both maths (camelCase) and reading (snake_case) spellings:
+with both CI maths (camelCase) and CE1 reading (snake_case) spellings:
 
 | display field | source | display field | source |
 |---|---|---|---|
@@ -375,7 +375,7 @@ with both maths (camelCase) and reading (snake_case) spellings:
 | `desc`/`desc_en` | `properties.text`/`raw.osTexte`/`raw.description` | `os`/`os_en` | `raw.osTexte`/`_en` |
 | `st`/`st_en` | `raw.statementType`/`_en` | `src`/`ref`/`statut` | `raw.source`/`reference`/`statut` |
 | `nt` | `raw.normalizedType`/`raw.contentType` | `srcKey` | `raw.sourceKey` |
-| `ex`/`ex_en`, `apt`, `comm` | `raw.examples`/`aptitudeCI`/`commentaireProgression` | `strand`,`genre` | `raw.strand`,`raw.genre` (reading) |
+| `ex`/`ex_en`, `apt`, `comm` | `raw.examples`/`aptitudeCI`/`commentaireProgression` | `strand`,`genre` | `raw.strand`,`raw.genre` (CE1 reading) |
 
 Edges are the stored `hasChild` + `buildsTowards` as `{s,t,r,o}`. Domaine/Palier/Semaine grouping
 is **synthesized client-side** from node properties (as the original explorer already did for
@@ -387,7 +387,7 @@ The frontend is generic and renders whatever views `meta.viewConfig` declares �
 `if` anywhere. Two view **shapes**:
 
 - `grouped-spine` — nested grouping synthesized from `groupBy` props read off `anchorKind` nodes,
-  then those anchors, then the `hasChild` subtree (optionally stopping at `stopKind`). Maths
+  then those anchors, then the `hasChild` subtree (optionally stopping at `stopKind`). CI maths
   declares three: *thematic* (Domaine→Chapitre→OS→composant→tâche), *planning* (Palier→Semaine→OS),
   *chapters* (Domaine→Chapitre→OS).
 - `node-type` — the generic floor, works for ANY namespace: each node type → its nodes → their
@@ -400,7 +400,7 @@ So `ci/maths` shows four tabs, `ce1/reading` shows one (generic) — with no har
 ### Adding a new KG
 
 Seed it into Firestore (see [Seed](#seed)). It then appears in the selector automatically. If its
-data has the maths-shaped fields it gets the rich views; otherwise it renders via the generic
+data has the CI maths-shaped fields it gets the rich views; otherwise it renders via the generic
 `node-type` view — no frontend change. To give a differently-shaped KG its own rich views, extend
 `buildViewConfig` in `src/kg-export.ts` with a new detection + a new view `shape` in the frontend.
 
@@ -412,7 +412,7 @@ adapter's `parse()` → normalized model → store, which keeps only the curricu
 `ce1/reading`: week→standard→component). The RECE framework and the six derived-source family
 branches from the old inline-`DATA` explorer are **not** stored as nodes, and the raw graph's
 `supports`/`relatesTo` edges are dropped. But every raw field survives in `properties.raw` —
-including `sourceKey` (all seven tags present on maths components/tasks), so the source-filter
+including `sourceKey` (all seven tags present on CI maths components/tasks), so the source-filter
 chips still work, and Domaine/Palier/Semaine are re-synthesized from properties. What does NOT
 render: the RECE/derived branches as separate roots, and the modal's `supports`/`relatesTo`
 cross-link blocks. See `docs/kg-explorer-findings.md` §1 for the full table and the (a) ship-spine
@@ -442,12 +442,12 @@ gs://<FIREBASE_STORAGE_BUCKET>/
     history.json
 ```
 `previews/` is a **sibling** of `documents/`, never inside it — reconciliation only scans `documents/`, so a preview object can never enter the tracked history (see *Preview generation* below).
-Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within a grade/subject**; the scope is the first integer in the subfolder name, and the active subject's adapter classifies the filename into a deliverable (for maths: a file named "Fiches de leçons …" is the lesson-sheets doc, anything else is the manual).
+Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within a grade/subject**; the scope is the first integer in the subfolder name, and the active subject's adapter classifies the filename into a deliverable (for CI maths: a file named "Fiches de leçons …" is the lesson-sheets doc, anything else is the manual).
 
 ## The generation flow (cross-host, no shared disk)
 
 0. `set_context(grade, subject)` — pick what you're working on. `get_context` lists the installed pairs and the current selection.
-1. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology guidance, coverage, and (for the teacher guide) the manual to build on. `unit` is the scope value (for maths, the chapter number) and `deliverable` is a deliverable key (`manual`/`lessons`). For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
+1. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology guidance, coverage, and (for the teacher guide) the manual to build on. `unit` is the scope value (for CI maths, the chapter number) and `deliverable` is a deliverable key (`manual`/`lessons`). For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
 2. Generate the `.docx`.
 3. `create_upload_url(relPath, confirm)` → the server returns a short-lived **signed URL**. Upload the file with an HTTP `PUT` (Content-Type `application/vnd.openxmlformats-officedocument.wordprocessingml.document`). No large payloads go through the MCP channel. **Requires confirmation** — see below.
 4. `log_generation(unit, deliverable, relPath, content, confirm)` — the server reads the uploaded object's md5 from storage and records what you produced. History updated; no local file needed. **Requires confirmation** — see below.
@@ -503,9 +503,9 @@ Run on startup (when a context is active) and via the `reconcile` tool: present 
 
 **Subject-specific payloads** — generically named, but what they accept/return is shaped by the active subject's adapter:
 
-- `list_units`, `get_curriculum`, `get_generation_context`, `record_document_content`, `log_generation`. These take a `unit` (the subject's scope value — a chapter for maths, a week for CE1 reading) and, where relevant, a `deliverable` key. The shapes are subject-specific: maths returns `chapitreNum`/`leconNum` etc., and the `content` payload (characters, example domains, amorce/bilan) follows the maths storybook model — all fields optional.
+- `list_units`, `get_curriculum`, `get_generation_context`, `record_document_content`, `log_generation`. These take a `unit` (the subject's scope value — a chapter for CI maths, a week for CE1 reading) and, where relevant, a `deliverable` key. The shapes are subject-specific: CI maths returns `chapitreNum`/`leconNum` etc., and the `content` payload (characters, example domains, amorce/bilan) follows the CI maths storybook model — all fields optional.
 - `preview_generation` (draft-resolved generation context, role-gated to curator/approver) and `create_preview_upload_url` (segregated, short-lived, non-canonical preview output) — see *Preview generation* above. Isolated from published, the canonical bucket, `list_documents`, and `log_generation`.
-- *Capability-specific* (`exampleDomainRotation`, maths only) — `suggest_fresh_domain`, `domain_usage`. Example-domain rotation is a maths storybook feature; they are gated on the capability, so for a subject whose adapter doesn't enable it they return a `notApplicable` message instead of running.
+- *Capability-specific* (`exampleDomainRotation`, CI maths only) — `suggest_fresh_domain`, `domain_usage`. Example-domain rotation is a CI maths storybook feature; they are gated on the capability, so for a subject whose adapter doesn't enable it they return a `notApplicable` message instead of running.
 
 ## Setup
 
@@ -601,7 +601,7 @@ enforced yet. Flip this by editing the `unknown-actor policy` block in
 
 The server supports many grades/subjects whose curriculum graphs and deliverables genuinely differ (CI maths is a `graph[]` of `Chapitre`/`OS` nodes; CE1 reading is `nodes`/`relationships` with a `hasChild` tree and no chapters). Behaviour is therefore **pluggable per subject**, not hard-coded — one **adapter module** per subject owns everything subject-specific in one place.
 
-- **Subject adapter** (`src/adapters/*.ts`) — one module per subject. Each module exposes a common behavior interface: raw-graph `detect`/`parse` (the schema knowledge each subject already owns), the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), `buildGenerationContext`, plus the subject's `deliverables` and `capabilities`. Capability-gated helpers (`suggestFreshDomain`/`domainUsage`, only maths today) are optional on the interface. Storage round-trip is handled generically on top of the parsed model by `curriculum/store-bridge.ts` (`serializeModel` / `deserializeToModel`), so no serialize/deserialize methods hang off the adapter.
+- **Subject adapter** (`src/adapters/*.ts`) — one module per subject. Each module exposes a common behavior interface: raw-graph `detect`/`parse` (the schema knowledge each subject already owns), the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), `buildGenerationContext`, plus the subject's `deliverables` and `capabilities`. Capability-gated helpers (`suggestFreshDomain`/`domainUsage`, only CI maths today) are optional on the interface. Storage round-trip is handled generically on top of the parsed model by `curriculum/store-bridge.ts` (`serializeModel` / `deserializeToModel`), so no serialize/deserialize methods hang off the adapter.
 - **Adapter registry** (`src/adapters/index.ts`) — binds each `(grade, subject)` pair to an adapter builder. Resolution is many-to-one capable: several `${grade}/${subject}` keys may point at the same builder when their graphs share a shape, but different grades of the "same" subject stay independent by default — a graph with a different envelope registers its own adapter.
 
 Adapters are **behavior only**. There is no `schema` field, no LC property/edge/cardinality declaration, and no integrity rules on the adapter — that's deliberate. The write-safety rules that will land in the next phase live *in the write tools*, not on the adapter (and they'll key on the raw LC IRI — the stored `id` is the LC UUID verbatim, and friendly properties like `chapitreNum`/`semaine` live inside `properties.raw`).
@@ -625,7 +625,7 @@ Adding a subject takes its **sources** (data) and an **adapter** (code). If the 
 
 2. **Reuse or write an adapter** (`src/adapters/`):
    - *Same graph shape as an existing subject* → register the new `(grade, subject)` key against that subject's builder in `src/adapters/index.ts`. That's the many-to-one case.
-   - *Different shape* → add `src/adapters/<subject>.ts` exporting a `buildXxxAdapter(grade, subject): SubjectAdapter`. The adapter carries everything: raw-envelope `detect`/`parse`, the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), the `deliverables` list (`key`, `label`, `scopeKind`, `classify(filename)`, `dependsOn`, `promptFile` — one per document kind), the `capabilities` flags (`exampleDomainRotation`, `characterConsistency`), and `buildGenerationContext(scope, deliverableKey)`. Optional maths-style helpers (`suggestFreshDomain`, `domainUsage`) are only added when the subject enables the matching capability.
+   - *Different shape* → add `src/adapters/<subject>.ts` exporting a `buildXxxAdapter(grade, subject): SubjectAdapter`. The adapter carries everything: raw-envelope `detect`/`parse`, the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), the `deliverables` list (`key`, `label`, `scopeKind`, `classify(filename)`, `dependsOn`, `promptFile` — one per document kind), the `capabilities` flags (`exampleDomainRotation`, `characterConsistency`), and `buildGenerationContext(scope, deliverableKey)`. Optional CI maths-style helpers (`suggestFreshDomain`, `domainUsage`) are only added when the subject enables the matching capability.
 
 3. **Register it** in `src/adapters/index.ts` under the `"<grade>/<subject>"` key (in the `REGISTRY` object). Grade × subject: e.g. `"ci/maths"` and `"cp/maths"` may point at the same builder or different ones — that's a per-pair choice, not an assumption.
 

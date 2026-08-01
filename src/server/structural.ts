@@ -70,7 +70,7 @@ export function registerStructuralTools(server: McpServer) {
     {
       title: "Create a new node",
       description:
-        "Add a new node to the graph. `kind` must be a node kind already used on this namespace (e.g. chapter/lesson/component/task for maths). `properties` sets the wording and other subject-specific fields at BIRTH; missing wording keys surface as WARNINGS (not blocks) so the reviewer can spot incomplete nodes at publish. The node id is MINTED SERVER-SIDE (returned as `mintedNodeId` in the response) — the caller cannot supply an id. REQUIRES CONFIRMATION: called without confirm:true it returns a preview (diff + confirmationToken + mintedNodeId); ask the user, then call again with confirm:true, the token, AND the same mintedNodeId. This is a DRAFT edit — publish_draft to make it live. Structural verbs are non-cascading; linking the new node to the graph is a separate link_nodes call.",
+        "Add a new node to the graph. `kind` must be a node kind already used on this namespace (e.g. chapter/lesson/component/task for CI maths). `properties` sets the wording and other subject-specific fields at BIRTH; missing wording keys surface as WARNINGS (not blocks) so the reviewer can spot incomplete nodes at publish. The node id is MINTED SERVER-SIDE (returned as `mintedNodeId` in the response) — the caller cannot supply an id. REQUIRES CONFIRMATION: called without confirm:true it returns a preview (diff + confirmationToken + mintedNodeId); ask the user, then call again with confirm:true, the token, AND the same mintedNodeId. This is a DRAFT edit — publish_draft to make it live. Structural verbs are non-cascading; linking the new node to the graph is a separate link_nodes call.",
       inputSchema: {
         kind: z.string(),
         properties: z.record(JsonValue).optional(),
@@ -117,7 +117,7 @@ export function registerStructuralTools(server: McpServer) {
     {
       title: "Link two nodes with an edge",
       description:
-        "Add an edge of `edgeType` from `fromId` to `toId`. Both endpoints must already exist in the draft; `edgeType` must be a type already used on this namespace (hasChild / buildsTowards for maths). Edge id is deterministic — the same (type, from, to) triple always produces the same id, and re-linking the same triple is rejected as a duplicate. Edge-type LEGALITY across kinds (e.g. does hasChild make sense from a task to a chapter?) is not enforced here — that's a judgment for the reviewer at publish. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken; call again with confirm:true and the token to stage the edit on the draft.",
+        "Add an edge of `edgeType` from `fromId` to `toId`. Both endpoints must already exist in the draft; `edgeType` must be a type already used on this namespace (hasChild / buildsTowards for CI maths). Edge id is deterministic — the same (type, from, to) triple always produces the same id, and re-linking the same triple is rejected as a duplicate. Edge-type LEGALITY across kinds (e.g. does hasChild make sense from a task to a chapter?) is not enforced here — that's a judgment for the reviewer at publish. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken; call again with confirm:true and the token to stage the edit on the draft.",
       inputSchema: {
         edgeType: z.string(),
         fromId: z.string(),

@@ -17,7 +17,7 @@ doc specifies the seam that lets a new grade/subject plug in its own graph
 parsing and its own set of documents without rewriting the core each time.
 
 The trigger is concrete: we now have a second real curriculum graph (CE1
-reading), and it differs from maths at every structural level. We are no longer
+reading), and it differs from CI maths at every structural level. We are no longer
 designing against a guess.
 
 ## 2. What we learned from two real graphs
@@ -36,8 +36,8 @@ Two graphs, two genuinely different architectures — not a renamed schema.
 | Progression | `buildsTowards` edges | `hasChild` / `relatesTo` |
 
 The decisive point: the two graphs use a **different mechanism** for hierarchy.
-Maths encodes chapter membership as a *property on the node*; reading encodes it
-as a *tree of edges*. There is no "chapter" or "lesson" to rename — the reading
+CI maths encodes chapter membership as a *property on the node*; CE1 reading encodes it
+as a *tree of edges*. There is no "chapter" or "lesson" to rename — the CE1 reading
 spine is `Framework → section → substage (Palier) → competency grouping →
 skill-area`, with learning components hanging off the leaves. A profile that only
 remapped field *names* would not survive this file.
@@ -129,12 +129,12 @@ type CurriculumUnit = {
   childIds: string[];
   buildsTowards: string[];         // unit ids (empty if the subject has no progression)
   buildsFrom: string[];
-  isAssessment: boolean;           // generalizes maths "bilan"
+  isAssessment: boolean;           // generalizes CI maths "bilan"
   properties: Record<string, unknown>;
 };
 
 type CurriculumModel = {
-  roots: string[];                 // top-level unit ids (maths: chapters; reading: framework/section)
+  roots: string[];                 // top-level unit ids (CI maths: chapters; CE1 reading: framework/section)
   byId: Map<string, CurriculumUnit>;
   // Convenience indexes the core builds once from the tree:
   unitsOfKind(kind: string): CurriculumUnit[];
@@ -143,19 +143,19 @@ type CurriculumModel = {
 ```
 
 Notes:
-- **Progression** is normalized to `buildsTowards`/`buildsFrom` id lists. Maths
-  fills them from `buildsTowards` edges; reading may leave them empty or derive
+- **Progression** is normalized to `buildsTowards`/`buildsFrom` id lists. CI maths
+  fills them from `buildsTowards` edges; CE1 reading may leave them empty or derive
   them from `hasChild` ordering. The core doesn't care how.
-- **Assessment** (`isAssessment`) replaces the maths-only bilan regex. Each
+- **Assessment** (`isAssessment`) replaces the CI maths-only bilan regex. Each
   adapter decides how to flag it.
-- The maths notions `chapitreNum`/`leconNum`/`domaine`/`semaine`/`palier` become
+- The CI maths notions `chapitreNum`/`leconNum`/`domaine`/`semaine`/`palier` become
   either first-class fields (`order`) or `properties` passthrough, so nothing is
-  lost and nothing maths-specific leaks into the core types.
+  lost and nothing CI maths-specific leaks into the core types.
 
 ### 5.2 Curriculum adapter (axis 1, code)
 
 One module per *graph shape*. Two subjects that happen to share a shape can share
-an adapter; maths and reading do not, so each gets its own.
+an adapter; CI maths and CE1 reading do not, so each gets its own.
 
 ```ts
 interface CurriculumAdapter {
@@ -166,8 +166,8 @@ interface CurriculumAdapter {
 ```
 
 - `detect` is the **guard**. It answers "does this KG look like the one I know
-  how to read?" — e.g. maths checks for a top-level `graph` array with `Chapitre`
-  nodes; reading checks for `nodes`/`relationships` arrays with `hasChild` edges.
+  how to read?" — e.g. CI maths checks for a top-level `graph` array with `Chapitre`
+  nodes; CE1 reading checks for `nodes`/`relationships` arrays with `hasChild` edges.
   `set_context` runs it and refuses the context with a clear message on mismatch.
 - `parse` owns *all* the raw-schema knowledge that lives in
   `curriculum/knowledge-graph.ts` today. After this call, no other code touches
@@ -192,8 +192,8 @@ type SubjectProfile = {
   graph: CurriculumAdapter;
   deliverables: DeliverableSpec[];
   capabilities: {
-    exampleDomainRotation: boolean;  // maths storybook variety; false for reading
-    characterConsistency: boolean;   // maths; false for reading
+    exampleDomainRotation: boolean;  // CI maths storybook variety; false for CE1 reading
+    characterConsistency: boolean;   // CI maths; false for CE1 reading
     // add flags as features prove subject-specific
   };
 };
@@ -212,15 +212,15 @@ name and `type` from `classify()`. Generalize to:
 documentId = `${scopeValue}:${deliverableKey}`
 ```
 
-where `scopeValue` identifies the scoped unit (for maths, the chapter number; for
-reading, a Palier id or the literal subject when `scopeKind === "subject"`), and
+where `scopeValue` identifies the scoped unit (for CI maths, the chapter number; for
+CE1 reading, a Palier id or the literal subject when `scopeKind === "subject"`), and
 `deliverableKey` comes from `DeliverableSpec.key`.
 
-**Back-compat:** for maths, `scopeValue` = chapter number and `deliverableKey` ∈
+**Back-compat:** for CI maths, `scopeValue` = chapter number and `deliverableKey` ∈
 {`manual`,`lessons`}, so ids stay exactly `5:manual` — existing history keys are
 untouched. Discovery generalizes from "first int of folder + classify filename"
 to a small per-profile mapping `relPath → {scopeValue, deliverableKey}`, with the
-maths mapping reproducing today's behavior.
+CI maths mapping reproducing today's behavior.
 
 ### 5.5 Registry and resolution
 
@@ -256,7 +256,7 @@ A student book can be added later as another `DeliverableSpec` with no core chan
 
 | Module | Change |
 |---|---|
-| `curriculum/knowledge-graph.ts` | Split: raw-schema logic moves into per-subject adapters behind `CurriculumAdapter`; the file becomes the maths adapter (or a `curriculum/adapters/maths.ts`). |
+| `curriculum/knowledge-graph.ts` | Split: raw-schema logic moves into per-subject adapters behind `CurriculumAdapter`; the file becomes the CI maths adapter (or a `curriculum/adapters/maths.ts`). |
 | `types.ts` | `DocType` union → `deliverableKey: string`; add `CurriculumUnit`/`CurriculumModel`/`SubjectProfile`/`DeliverableSpec`. |
 | `storage/documents.ts` | `classify()` → per-profile `relPath` mapping + deliverable `classify`. |
 | `generation/context.ts` | Dependency warning reads `deliverable.dependsOn`; domain/character sections gated by `capabilities`. |
@@ -267,21 +267,21 @@ A student book can be added later as another `DeliverableSpec` with no core chan
 
 ## 8. Backward compatibility & migration
 
-- **No data migration.** Maths ids and bucket paths are reproduced exactly by the
-  maths profile. The 46 tracked documents keep reconciling as tracked.
+- **No data migration.** CI maths ids and bucket paths are reproduced exactly by the
+  CI maths profile. The 46 tracked documents keep reconciling as tracked.
 - **Guard is additive.** It only rejects graphs that would have mis-parsed
-  anyway (reading currently throws inside `kgReload`; the guard turns that into a
+  anyway (CE1 reading currently throws inside `kgReload`; the guard turns that into a
   clear message).
-- **New deliverables are additive.** Adding a reading student book later is a new
+- **New deliverables are additive.** Adding a CE1 reading student book later is a new
   `DeliverableSpec`; existing history is unaffected.
 
 ## 9. Open questions
 
-1. **Reading scope unit.** ANSWERED (2026-07-21): **per week** — one teaching
+1. **CE1 reading scope unit.** ANSWERED (2026-07-21): **per week** — one teaching
    guide document per week. So `scopeKind: "week"`, the scope value is a week
-   number, and the document id is like `${week}:teacher_guide`. The reading KG
+   number, and the document id is like `${week}:teacher_guide`. The CE1 reading KG
    carries week information ("bés / semaines" in the palier groupings); the
-   reading adapter will need to surface a week ordinal per unit so discovery and
+   CE1 reading adapter will need to surface a week ordinal per unit so discovery and
    history key on it. (CE1 wiring deferred — see phase 4.)
 2. **Tool naming.** RESOLVED (2026-07-22): renamed to generic vocabulary.
    `list_chapters` → `list_units`; the `chapter` parameter → `unit` and the
@@ -291,9 +291,9 @@ A student book can be added later as another `DeliverableSpec` with no core chan
    tool boundary) so no `history.json` migration is needed. Callers of the old
    tool names/params must update.
 3. **Terminology per subject.** The FR/Wolof glossary is already per-context; no
-   change expected, but confirm reading ships its own `terminology.json`.
-4. **Adapter granularity.** If a third subject shares reading's envelope, does it
-   reuse the reading adapter or get its own? Prefer sharing by *graph shape*, not
+   change expected, but confirm CE1 reading ships its own `terminology.json`.
+4. **Adapter granularity.** If a third subject shares CE1 reading's envelope, does it
+   reuse the CE1 reading adapter or get its own? Prefer sharing by *graph shape*, not
    by subject.
 
 ## 10. Alternatives considered
@@ -304,25 +304,25 @@ A student book can be added later as another `DeliverableSpec` with no core chan
 - **Full pluggable everything (each subject ships all logic).** Rejected as the
   default: most divergence is in graph parsing; deliverables and capabilities are
   well captured declaratively. Code only where code is warranted (the adapter).
-- **Do nothing / keep maths-only.** Rejected: reading is a real, funded second
+- **Do nothing / keep CI maths-only.** Rejected: CE1 reading is a real, funded second
   subject; the silent-failure risk is live today.
 
 ## 11. Suggested phasing
 
-1. **Guard only.** Add `CurriculumAdapter.detect` for maths + wire into
-   `set_context`. Non-maths contexts fail clearly. Ships value immediately, no
+1. **Guard only.** Add `CurriculumAdapter.detect` for CI maths + wire into
+   `set_context`. Non-CI maths contexts fail clearly. Ships value immediately, no
    refactor. *(This is the "Guard + document" option; this doc is the "document".)*
-2. **Extract the maths adapter + normalized model.** Move raw-schema logic behind
-   the interface; core consumes `CurriculumModel`. Behavior-neutral for maths.
+2. **Extract the CI maths adapter + normalized model.** Move raw-schema logic behind
+   the interface; core consumes `CurriculumModel`. Behavior-neutral for CI maths.
 3. **Open the deliverable model.** Replace `DocType` with profile-driven keys +
    `DeliverableSpec`; gate generation features by `capabilities`.
-4. **Add the reading adapter + profile.** *(Done, 2026-07-24.)* §9.1 resolved
+4. **Add the CE1 reading adapter + profile.** *(Done, 2026-07-24.)* §9.1 resolved
    (per-week scope). Registered under **`ce1/reading`** (not `ce1/lecture`): the
-   reading KG lives at `sources/ce1/reading/knowledge_graph.json`, the teacher-guide
+   CE1 reading KG lives at `sources/ce1/reading/knowledge_graph.json`, the teacher-guide
    prompt at `PROMPT_generate_lessons.md`, `curriculum/adapters/reading.ts` parses
    the `nodes`/`relationships` + `hasChild` tree, and `profiles/reading.ts` declares
    a single standalone `teacher_guide` deliverable. History keys on the week number
-   via `HistoryEntry.chapter` as planned. What the reading KG turned out to need,
+   via `HistoryEntry.chapter` as planned. What the CE1 reading KG turned out to need,
    beyond the original sketch:
    - **Week ordinal** = a `Standard Grouping` node whose `description` is the week
      number (global, 1-based). Weeks 9/17/24 (integration) and 25 (evaluation) have
@@ -336,7 +336,7 @@ A student book can be added later as another `DeliverableSpec` with no core chan
    - **Palier/genre** are derived (palier from the enclosing `substage` description
      "Palier N …"; genre mapped per palier), since the KG has no explicit field.
 
-   Follow-ups still open: reading ships no `terminology.json` yet (`get_terminology`
+   Follow-ups still open: CE1 reading ships no `terminology.json` yet (`get_terminology`
    returns `[]` — loading is now tolerant of the missing file); `slice()` surfaces
    only the six week-scoped language-tool standards, not the constant Lecture / oral
    / récitation domain competencies; example-domain rotation stays off (theme

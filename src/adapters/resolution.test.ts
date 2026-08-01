@@ -10,7 +10,7 @@
 // folders for them) — the resolution mapping is source-independent by design.
 import { describe, it, expect, afterEach } from "vitest";
 import { resolveAdapter, __registerAdapterForTest } from "./index.js";
-import { buildMathsAdapter } from "./maths.js";
+import { buildCiMathsAdapter } from "./ci-maths.js";
 
 const TEST_KEYS: Array<[string, string]> = [
   ["testgrade1", "testsubject"],
@@ -27,12 +27,12 @@ describe("adapter resolution", () => {
     // A passing assertion here is the "explicit many-to-one" guarantee the
     // task requires — the registry is source-independent, so we don't need
     // to ship synthetic source folders to exercise it.
-    for (const [g, s] of TEST_KEYS) __registerAdapterForTest(g, s, buildMathsAdapter);
+    for (const [g, s] of TEST_KEYS) __registerAdapterForTest(g, s, buildCiMathsAdapter);
 
     const [a1, a2] = TEST_KEYS.map(([g, s]) => resolveAdapter(g, s));
     expect(a1).toBeTruthy();
     expect(a2).toBeTruthy();
-    // Both adapters share the maths adapter id and deliverable set — same
+    // Both adapters share the CI maths adapter id and deliverable set — same
     // behavior module, bound to different (grade, subject) pairs.
     expect(a1!.id).toBe(a2!.id);
     expect(a1!.deliverables.map((d) => d.key)).toEqual(a2!.deliverables.map((d) => d.key));

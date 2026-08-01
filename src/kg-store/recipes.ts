@@ -20,7 +20,7 @@
 //     leaves a chapter without a bilan warns, never blocks.
 //
 // ── The Regime-B fact that shapes move/split/renumber (from #13) ──────────────
-// The maths *presenter* joins a lesson to its chapter by matching
+// The CI maths *presenter* joins a lesson to its chapter by matching
 // `raw.chapitreNum`, NOT by the `hasChild` edge. That number is a DENORMALIZED
 // copy of the (Rule-2-guarded) edge. #13 resolved its drift as a WARNING, not a
 // block. So a recipe that rewires the hasChild edge but leaves `raw.chapitreNum`
@@ -53,8 +53,8 @@ import type { WordingAliases, StructuralAliases, RecipeProfile } from "../types.
 // never relies on an adapter being careful.
 export const STRUCTURAL_EDIT_SAFE_PATHS: ReadonlySet<string> = new Set([
   "order",           // normalized ordering (chapter number / lesson within-chapter position)
-  "raw.chapitreNum", // maths: chapter number + the lesson→chapter join key (Regime-B)
-  "raw.leconNum",    // maths: lesson within-chapter number
+  "raw.chapitreNum", // CI maths: chapter number + the lesson→chapter join key (Regime-B)
+  "raw.leconNum",    // CI maths: lesson within-chapter number
 ]);
 
 // Well-known LOGICAL structural/wording key names the recipes reference. The
@@ -221,7 +221,7 @@ type RecipeCommon = {
 // ── Recipe 1: add_lesson ──────────────────────────────────────────────────────
 // Create a lesson node + link it (hasChild) to an EXISTING chapter, as one
 // composite. Additive. The new lesson's `chapterNumber` (raw.chapitreNum) is set
-// to the target chapter's number so the maths view joins it correctly — an
+// to the target chapter's number so the CI maths view joins it correctly — an
 // add_lesson that skipped this would create an immediately-drifting lesson.
 export type AddLessonArgs = RecipeCommon & {
   chapterId: string;

@@ -294,7 +294,7 @@ export const unlinkNodes: GraphMutation<UnlinkNodesArgs> = {
 //     graph referentially clean (no new dangling edge).
 //
 // Dependent-node cascade follows the hasChild edge — the id-based referential
-// backbone. A child attached to the target by a maths chapitreNum number ONLY
+// backbone. A child attached to the target by a CI maths chapitreNum number ONLY
 // (no hasChild edge — a drift state the coverage warnings already flag) is NOT
 // in the subtree and would survive; that's an accepted edge case of the
 // number/edge denormalization, surfaced as a coverage warning rather than

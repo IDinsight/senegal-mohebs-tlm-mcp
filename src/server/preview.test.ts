@@ -75,7 +75,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   return s;
 }
 
-// Run fn inside a session with an active maths context and a chosen actor.
+// Run fn inside a session with an active CI CI maths context and a chosen actor.
 async function withCtx<T>(actor: Actor | null, fn: () => Promise<T>): Promise<T> {
   const state = newSessionState();
   return runInSession(state, async () => {

@@ -13,8 +13,8 @@
 // per-unit slice. It reads the same normalized store those adapters hydrate from.
 //
 // Data-scope note (see docs/kg-explorer-findings.md): the store holds the
-// curriculum SPINE only — for maths `chapter → lesson → component → task`
-// (hasChild) + `chapter → chapter` (buildsTowards); for reading
+// curriculum SPINE only — for CI maths `chapter → lesson → component → task`
+// (hasChild) + `chapter → chapter` (buildsTowards); for CE1 reading
 // `week → standard → component` (hasChild). The RECE framework and the six
 // derived-source family branches from the old inline-DATA explorer are NOT in
 // the store; their per-leaf `sourceKey` tag survives inside `properties.raw`,
@@ -45,7 +45,7 @@ export type DisplayNode = {
   os: string; os_en: string;
   src: string; ref: string; statut: string; statut_en: string;
   srcKey: string;                // source key → drives the source-filter chips
-  strand: string; genre: string; // reading extras (harmless/empty for maths)
+  strand: string; genre: string; // CE1 CE1 reading extras (harmless/empty for CI maths)
 };
 
 export type DisplayEdge = { s: string; t: string; r: string; o: number };
@@ -107,8 +107,8 @@ export async function listExportNamespaces(): Promise<
 
 // ── raw-LC → display node transform ──────────────────────────────────────────
 // Maps a stored node ({type, properties:{code,title,text,order,isAssessment,raw}})
-// to the explorer's display node. Reads raw.* with both maths (camelCase) and
-// reading (snake_case) spellings where they differ, so ONE mapping serves both.
+// to the explorer's display node. Reads raw.* with both CI CI maths (camelCase) and
+// CE1 CE1 reading (snake_case) spellings where they differ, so ONE mapping serves both.
 const LABEL_BY_KIND: Record<string, string> = {
   chapter: "StandardsFrameworkItem",
   lesson: "StandardsFrameworkItem",

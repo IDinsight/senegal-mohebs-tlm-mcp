@@ -15,8 +15,8 @@
 // rules for later phases live in the write tools, not on the adapter.
 import type { SubjectAdapter } from "../types.js";
 import { ContextNotSetError, listAvailableContexts, sessionState } from "../context/index.js";
-import { buildMathsAdapter } from "./maths.js";
-import { buildReadingAdapter } from "./reading.js";
+import { buildCiMathsAdapter } from "./ci-maths.js";
+import { buildCe1ReadingAdapter } from "./ce1-reading.js";
 
 // Registry: (grade/subject) → adapter builder. Add a subject by registering
 // its builder here. A subject with sources on disk but no entry here is
@@ -29,8 +29,8 @@ import { buildReadingAdapter } from "./reading.js";
 export type AdapterBuilder = (grade: string, subject: string) => SubjectAdapter;
 
 const REGISTRY: Record<string, AdapterBuilder> = {
-  "ci/maths": buildMathsAdapter,
-  "ce1/reading": buildReadingAdapter,
+  "ci/maths": buildCiMathsAdapter,
+  "ce1/reading": buildCe1ReadingAdapter,
 };
 
 export function resolveAdapter(grade: string, subject: string): SubjectAdapter | null {

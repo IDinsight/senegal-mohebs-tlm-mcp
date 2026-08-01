@@ -153,7 +153,7 @@ function parse(raw: unknown): CurriculumModel {
 // standards with their learning components, plus the palier, genre, and
 // cross-week progression derived from week ordering (the KG carries no
 // progression edges).
-export function buildReadingAdapter(grade: string, subject: string): SubjectAdapter {
+export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectAdapter {
   let model: CurriculumModel | null = null;
   const ensure = (): CurriculumModel => {
     if (model) return model;
