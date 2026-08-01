@@ -7,7 +7,7 @@
 // structural-property edits atomically to the draft.
 //
 // Recipes are available only for a subject whose adapter declares a
-// `recipeProfile` + `structuralAliases` (maths does; reading does not) — the
+// `recipeProfile` + `structuralAliases` (CI CI maths does; CE1 CE1 reading does not) — the
 // tool returns a clear "not available" message otherwise, rather than guessing.
 //
 // id-minting mirrors create_node: recipes that CREATE nodes (add_lesson,
@@ -199,7 +199,7 @@ export function registerRecipeTools(server: McpServer) {
     {
       title: "Renumber a chapter",
       description:
-        "COMPOSITE recipe (the regime-gated one): change a chapter's number AND cascade-rewrite every child lesson's chapter-membership number in ONE atomic draft edit, so the whole family stays consistent and nothing drifts. The target number must be FREE — renumber MOVES a chapter to an unoccupied number; moving into an occupied slot (insert-with-shift or swap) is a separate, explicit operation and is rejected here. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live. (Under this codebase's reference regime, a maths chapter's number is a denormalized presentation join key, so leaving lessons un-rewritten would misfile them — this recipe rewrites the whole family to prevent exactly that.)",
+        "COMPOSITE recipe (the regime-gated one): change a chapter's number AND cascade-rewrite every child lesson's chapter-membership number in ONE atomic draft edit, so the whole family stays consistent and nothing drifts. The target number must be FREE — renumber MOVES a chapter to an unoccupied number; moving into an occupied slot (insert-with-shift or swap) is a separate, explicit operation and is rejected here. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live. (Under this codebase's reference regime, a CI maths chapter's number is a denormalized presentation join key, so leaving lessons un-rewritten would misfile them — this recipe rewrites the whole family to prevent exactly that.)",
       inputSchema: {
         chapterId: z.string(),
         newNumber: z.number(),

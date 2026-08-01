@@ -8,7 +8,7 @@ import { registerContextTools } from "./context.js";
 import { registerCurriculumTools } from "./curriculum.js";
 import { registerGenerationTools } from "./generation.js";
 import { registerPreviewTools } from "./preview.js";
-import { registerMathsTools } from "./maths.js";
+import { registerCiMathsTools } from "./ci-maths.js";
 import { registerDocumentTools } from "./documents.js";
 import { registerLifecycleTools } from "./lifecycle.js";
 import { registerStructuralTools } from "./structural.js";
@@ -22,7 +22,7 @@ export function buildServer(): McpServer {
   registerCurriculumTools(server);   // list_units, get_curriculum, terminology
   registerGenerationTools(server);   // get_prompt, get_generation_context
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)
-  registerMathsTools(server);        // suggest_fresh_domain, domain_usage (maths-specific)
+  registerCiMathsTools(server);        // suggest_fresh_domain, domain_usage (CI-CI-maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log
   registerLifecycleTools(server);    // diff_draft, upsert_property, publish_draft, discard_draft
   registerStructuralTools(server);   // create_node, link_nodes, unlink_nodes, delete_node (raw structural verbs)

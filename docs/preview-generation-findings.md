@@ -39,7 +39,7 @@ the canonical `log_generation`.
 optional third param `model?: CurriculumModel`. When provided (preview passes a
 draft-resolved model), the adapter builds from it; when omitted, it resolves the
 published model via `ensure()` exactly as before. The projection helpers in both
-adapters (`adapters/maths.ts`, `adapters/reading.ts`) were refactored to take the
+adapters (`adapters/ci-maths.ts`, `adapters/ce1-reading.ts`) were refactored to take the
 model as an **argument** (not a shared/mutable override) so a preview read is
 fully isolated from any concurrent published read in the same session.
 
@@ -101,7 +101,7 @@ Draft-only preview ships now; the comparison is a follow-on.
 ## Files touched
 
 - `types.ts` — `buildGenerationContext(…, model?)`; optional `StorageAdapter.createPreviewUpload`.
-- `adapters/maths.ts`, `adapters/reading.ts` — model threaded through projections.
+- `adapters/ci-maths.ts`, `adapters/ce1-reading.ts` — model threaded through projections.
 - `context/state.ts` — `previewsPrefix` / `previewKey`.
 - `storage/firebase.ts` — `createPreviewUpload` (10-min write+read URLs under `previews/`).
 - `kg-store/types.ts` — `preview` audit event type.

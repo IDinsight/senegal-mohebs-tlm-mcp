@@ -8,7 +8,7 @@
 //     the dry-run diff shows the FULL set, and the result is integrity-clean.
 //     Cascade never happens without explicit force.
 //   • WARN (never blocks): coverage warnings fire on dry-run AND diff_draft for
-//     the real maths rules (empty chapter, missing bilan, lesson >1 parent,
+//     the real CI maths rules (empty chapter, missing bilan, lesson >1 parent,
 //     chapitreNum drift), but the edit stays confirmable and publishable.
 //   • publish-with-warnings succeeds and records warningsAtPublish.
 //   • role matrix + audit intact; parity green; regime-B (chapitreNum) warns.
@@ -53,7 +53,7 @@ const contexts = listAvailableContexts();
 const targetCtx = contexts.find((c) => c.grade === "ci" && c.subject === "maths")!;
 const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
 
-// The maths adapter's coverage hook as a callback — this is exactly what the
+// The CI maths adapter's coverage hook as a callback — this is exactly what the
 // server layer injects into runGraphMutation / diffDraft in production.
 const coverage = (graph: MutationGraph): string[] =>
   resolveAdapter(targetCtx.grade, targetCtx.subject)!.coverageWarnings?.(graph as GraphView) ?? [];

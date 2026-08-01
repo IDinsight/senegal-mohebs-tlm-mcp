@@ -27,7 +27,7 @@ export type DocumentContent = {
 };
 
 export type HistoryEntry = {
-  id: string;                 // `${scope}:${deliverableKey}` (maths: `${chapter}:manual`)
+  id: string;                 // `${scope}:${deliverableKey}` (CI maths: `${chapter}:manual`)
   chapter: number;            // scope value; numeric for every subject shipped so far
   type: DeliverableKey;
   relPath: string;
@@ -89,7 +89,7 @@ export type CurriculumUnit = {
   childIds: string[];                  // ordered children
   buildsTowards: string[];             // unit ids (empty if the subject has no progression)
   buildsFrom: string[];
-  isAssessment: boolean;               // generalizes the maths "bilan"
+  isAssessment: boolean;               // generalizes the CI maths "bilan"
   properties: Record<string, unknown>; // subject-specific passthrough
 };
 
@@ -114,8 +114,8 @@ export type DeliverableSpec = {
 };
 
 export type Capabilities = {
-  exampleDomainRotation: boolean;   // maths storybook variety; false for reading
-  characterConsistency: boolean;    // maths; false for reading
+  exampleDomainRotation: boolean;   // CI CI maths storybook variety; false for CE1 reading
+  characterConsistency: boolean;    // CI maths; false for CE1 reading
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -181,10 +181,10 @@ export type StructuralAliases = WordingAliases;
 
 /**
  * The subject vocabulary the curriculum recipes (#14) need to operate without
- * baking maths knowledge into the subject-agnostic kg-store. A recipe reads
+ * baking CI CI maths knowledge into the subject-agnostic kg-store. A recipe reads
  * this off the active adapter (like `upsert_property` reads `wordingAliases`)
  * and passes it through as an argument. A subject that declares NO
- * `recipeProfile` simply has no recipes (the reading adapter, today).
+ * `recipeProfile` simply has no recipes (the CE1 CE1 reading adapter, today).
  *
  * The recipes reference well-known LOGICAL key names ("number" on a chapter;
  * "chapterNumber" / "position" on a lesson; "title" / "text" wording) and rely

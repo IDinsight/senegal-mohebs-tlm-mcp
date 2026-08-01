@@ -53,7 +53,7 @@ const APPROVER: Actor = { id: "approver-uid", email: "approver@test", role: "app
 const priorEnv = process.env.KG_SOURCE;
 let store: KgNodeStore;
 const contexts = listAvailableContexts();
-// This loop test targets the maths adapter specifically — that's where
+// This loop test targets the CI maths adapter specifically — that's where
 // wordingAliases carry both chapter (title) and lesson (text) mappings.
 const firstCtx = contexts.find((c) => c.grade === "ci" && c.subject === "maths")!;
 const ns = kgNamespace(firstCtx.grade, firstCtx.subject);
@@ -76,7 +76,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
 }
 
 // Find a chapter node with an editable title and a lesson node with an
-// editable text on the maths graph — the test loop edits both.
+// editable text on the CI maths graph — the test loop edits both.
 async function pickChapterAndLesson() {
   const nodes = await store.listNodes(ns, "a");
   const chapter = nodes.find((n) => n.type === "chapter" && typeof (n.properties as any).title === "string")!;

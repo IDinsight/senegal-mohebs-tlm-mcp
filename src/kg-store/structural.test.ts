@@ -88,7 +88,7 @@ async function readPublishedGraph(namespace: string): Promise<MutationGraph> {
   return readSlotGraph(namespace, pointer!.publishedSlot);
 }
 
-// The maths adapter's wordingAliases (read once here so tests don't depend
+// The CI maths adapter's wordingAliases (read once here so tests don't depend
 // on a specific adapter's static object).
 const aliases = (): WordingAliases => resolveAdapter(targetCtx.grade, targetCtx.subject)!.wordingAliases;
 

@@ -38,13 +38,13 @@ field carried along inside `properties.raw`.
 - `ci/maths` `raw.statementType` values present: only spine subtypes —
   `Chapitre, OS (Objectif Spécifique), OS (Objectif Spécifique) — intégration du palier`.
 - `ce1/reading` `raw.*` keys: `description, strand, palier, semaine, genre, statementCode,
-  caseUuid, metadata, …`. No `sourceKey`, no `statementType` (reading has neither).
+  caseUuid, metadata, …`. No `sourceKey`, no `statementType` (CE1 reading has neither).
 
 ### What is IN the store (reproducible live)
-The whole **spine**: for maths `chapter → lesson → component(LearningComponent) →
+The whole **spine**: for CI maths `chapter → lesson → component(LearningComponent) →
 task(Curriculum)` via `hasChild`, plus `chapter → chapter` `buildsTowards` progression; for
-reading `week → standard → component`. Chapters/weeks are roots. A handful of nodes are
-legitimately orphaned (maths: 3 lessons, 10 components, 7 tasks; reading: 644 components) —
+CE1 reading `week → standard → component`. Chapters/weeks are roots. A handful of nodes are
+legitimately orphaned (CI maths: 3 lessons, 10 components, 7 tasks; CE1 reading: 644 components) —
 components/tasks the source graph never linked into the spine.
 
 ### What is NOT in the store (present only in the old HTML / raw bundle)
@@ -73,7 +73,7 @@ branches, 265 `supports`, 6 `relatesTo`). The adapter drops all of it. So the st
 | Modal: "RECE competency exercised", "Level-1↔2 contrast", chapter-level alignment backlinks | ❌ Depend on dropped `supports`/`relatesTo` edges |
 
 **Verdict:** In the task's dichotomy this is **SPINE-ONLY** — but a *rich* spine. All three
-maths views, the deep OS→composant→tâche drilldown, and the source chips are fully live; the
+CI maths views, the deep OS→composant→tâche drilldown, and the source chips are fully live; the
 gaps are (a) the RECE + derived-source branches as separate roots, and (b) a few modal
 cross-reference blocks that need the `supports`/`relatesTo` edges.
 
@@ -82,7 +82,7 @@ cross-reference blocks that need the `supports`/`relatesTo` edges.
   delivers ~90% of the explorer live, with zero graph reshape. The two gaps above simply
   don't render.
 - **(b) Ingest the missing framework/derived nodes + cross-link edges first.** Requires
-  extending the maths adapter's `parse()`/serialize to keep the grouping/family nodes and to
+  extending the CI maths adapter's `parse()`/serialize to keep the grouping/family nodes and to
   store `supports`/`relatesTo` as edges (additive new node kinds + edge types), then a
   **re-seed**. This is a modest, additive graph-content change (a Step-0 non-goal unless the
   user opts in) — it makes Firestore a more faithful mirror of the raw KG and lights up the
@@ -145,7 +145,7 @@ stored `{type, properties:{code,title,text,order,isAssessment, raw:{…}}}`:
 | display field | source | notes |
 |---|---|---|
 | `id` | `node.id` | verbatim |
-| `label` | derived from `type` | maths: chapter/lesson→`StandardsFrameworkItem`, component→`LearningComponent`, task→`Curriculum`; reading: standard→`StandardsFrameworkItem`, week→grouping, component→`LearningComponent` |
+| `label` | derived from `type` | CI maths: chapter/lesson→`StandardsFrameworkItem`, component→`LearningComponent`, task→`Curriculum`; CE1 reading: standard→`StandardsFrameworkItem`, week→grouping, component→`LearningComponent` |
 | `nt` | `raw.normalizedType` / `raw.contentType` | task Activity/Assessment classification for the stats chip |
 | `st` / `st_en` | `raw.statementType` / `raw.statementType_en` | spine subtype |
 | `code` | `properties.code` (`raw.statementCode`) | e.g. "Leçon 64" |

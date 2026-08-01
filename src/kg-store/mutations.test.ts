@@ -383,7 +383,7 @@ describe("graph-mutation framework — reusability & parity", () => {
     // check is to search the built tool source for the mutation names.
     const files = [
       "server/documents.ts", "server/context.ts", "server/curriculum.ts",
-      "server/generation.ts", "server/maths.ts", "server/index.ts",
+      "server/generation.ts", "server/ci-maths.ts", "server/index.ts",
     ];
     for (const f of files) {
       const text = readFileSync(resolve("src", f), "utf8");
