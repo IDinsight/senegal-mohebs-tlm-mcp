@@ -13,11 +13,11 @@ export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } f
 export {
   addLesson, addChapter, moveLesson, splitChapter, renumber,
   STRUCTURAL_EDIT_SAFE_PATHS, structuralEditErrors, RECIPES,
-} from "./recipes.js";
+} from "./recipes/index.js";
 export type {
   AddLessonArgs, AddChapterArgs, MoveLessonArgs, SplitChapterArgs, RenumberArgs,
   RecipeDescriptor, RecipeParam,
-} from "./recipes.js";
+} from "./recipes/index.js";
 export type {
   GraphMutation, MutationGraph, MutationNode, MutationEdge, ValidationResult,
   GraphDiff, DiffEntry, GraphPreviewResult, GraphBlockedResult, GraphApplyResult, GraphUnauthorizedResult,

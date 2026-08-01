@@ -20,21 +20,21 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { CONFIG } from "../config.js";
-import { listAvailableContexts, subjectDir } from "../context/index.js";
-import { resolveAdapter } from "../adapters/index.js";
-import { serializeModel, deserializeToModel } from "../curriculum/index.js";
+import { CONFIG } from "../../config.js";
+import { listAvailableContexts, subjectDir } from "../../context/index.js";
+import { resolveAdapter } from "../../adapters/index.js";
+import { serializeModel, deserializeToModel } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
   runGraphMutation, publishDraftWithConfirm, diffDraft, mintNodeId,
   addLesson, addChapter, moveLesson, splitChapter, renumber, edgeId as makeEdgeId,
   __resetMutationsForTest, __resetDraftTokensForTest,
-} from "./index.js";
-import { __setStorageForTest } from "../storage/index.js";
-import { __setActorForTest, type Actor } from "../actor.js";
-import type { MutationGraph, GraphMutation } from "./index.js";
-import type { KgNodeStore, StoredMeta } from "./types.js";
-import type { StorageAdapter, HistoryFile, RecipeProfile, StructuralAliases, WordingAliases } from "../types.js";
+} from "../index.js";
+import { __setStorageForTest } from "../../storage/index.js";
+import { __setActorForTest, type Actor } from "../../actor.js";
+import type { MutationGraph, GraphMutation } from "../index.js";
+import type { KgNodeStore, StoredMeta } from "../types.js";
+import type { StorageAdapter, HistoryFile, RecipeProfile, StructuralAliases, WordingAliases } from "../../types.js";
 
 const emptyHistory: HistoryFile = { version: 2, entries: [] };
 const fakeStorage: StorageAdapter = {
