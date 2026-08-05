@@ -46,7 +46,41 @@ export type DisplayNode = {
   src: string; ref: string; statut: string; statut_en: string;
   srcKey: string;                // source key → drives the source-filter chips
   strand: string; genre: string; // CE1 CE1 reading extras (harmless/empty for CI maths)
+  cat: string;                   // graph-agnostic legend category (see categoryOf) — drives colour/legend/stats
 };
+
+// ── Graph-agnostic taxonomy (drives legend, node colour, and stats) ──────────
+// The explorer must speak ONE vocabulary across every subject, so it never
+// hardcodes subject words like "chapter"/"lesson". Each display node is tagged
+// with a `cat` drawn from the converged Learning-Commons `metadata.role` (for
+// containers) or the node kind (for the two leaf types). `meta.taxonomy` then
+// lists — in canonical order — only the categories actually present, each with a
+// bilingual label + colour, so the page renders whatever it is handed.
+export type TaxonomyEntry = { key: string; label: { fr: string; en: string }; color: string };
+
+// Colours reuse the page's existing palette (kept in sync with the CSS vars in
+// hosting/public/index.html). One colour per category — no per-domain rainbow.
+const CATEGORY_DEFS: TaxonomyEntry[] = [
+  { key: "strand",      label: { fr: "Composante",                en: "Strand" },             color: "#7f77dd" },
+  { key: "subtopic",    label: { fr: "Sous-thème",                en: "Subtopic" },           color: "#378add" },
+  { key: "expectation", label: { fr: "Objectif spécifique",       en: "Expectation" },        color: "#1d9e75" },
+  { key: "component",   label: { fr: "Composant d'apprentissage", en: "Learning component" }, color: "#d4537e" },
+  { key: "task",        label: { fr: "Tâche illustrative",        en: "Illustrative task" },  color: "#c98a1a" },
+  { key: "week",        label: { fr: "Semaine",                   en: "Week" },               color: "#888780" },
+];
+
+// Node → category. Role (converged LC scheme) wins for the container spine; the
+// two leaf kinds (component/task) carry no role, so they resolve by kind. Any
+// node that fits neither stays untagged and simply gets a neutral colour.
+function categoryOf(kind: string, role: string): string {
+  if (kind === "task") return "task";
+  if (kind === "component") return "component";
+  if (kind === "week" || role === "week") return "week";
+  if (role === "strand") return "strand";
+  if (role === "subtopic") return "subtopic";
+  if (role === "expectation" || role === "intégration du palier") return "expectation";
+  return "";
+}
 
 export type DisplayEdge = { s: string; t: string; r: string; o: number };
 
@@ -69,6 +103,7 @@ export type DisplayGraph = {
     publishedSlot: string;
     counts: { nodes: number; edges: number; byKind: Record<string, number> };
     sources: string[];           // distinct srcKeys present → source-filter chips
+    taxonomy: TaxonomyEntry[];   // graph-agnostic legend categories present, in canonical order
     viewConfig: ViewConfig;
     generatedAt: string;
     note: string;                // human note: published-only, spine-scope
@@ -137,6 +172,7 @@ function toDisplayNode(n: StoredNode): DisplayNode {
     id: n.id,
     label: LABEL_BY_KIND[n.type] ?? n.type,
     kind: n.type,
+    cat: categoryOf(n.type, str(m.role)),
     nt: str(r("normalized_statement_type") ?? r("content_type")),
     st: str(r("statement_type")),
     st_en: str(en("statement_type")),
@@ -302,6 +338,9 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
   const byKind: Record<string, number> = {};
   for (const n of nodes) byKind[n.kind] = (byKind[n.kind] ?? 0) + 1;
   const sources = [...new Set(nodes.map((n) => n.srcKey).filter(Boolean))].sort();
+  // Legend/colour taxonomy — only the categories actually present, canonical order.
+  const presentCats = new Set(nodes.map((n) => n.cat).filter(Boolean));
+  const taxonomy = CATEGORY_DEFS.filter((d) => presentCats.has(d.key));
 
   // Label from the installed context list (so we get the pretty per-subject name).
   const ctx = listAvailableContexts().find((c) => kgNamespace(c.grade, c.subject) === ns);
@@ -316,6 +355,7 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
       publishedSlot: slot,
       counts: { nodes: nodes.length, edges: edges.length, byKind },
       sources,
+      taxonomy,
       viewConfig: buildViewConfig(nodes),
       generatedAt: new Date().toISOString(),
       note: "Read-only, published slot only (no draft). Curriculum spine transformed from raw Learning-Commons nodes/edges.",
