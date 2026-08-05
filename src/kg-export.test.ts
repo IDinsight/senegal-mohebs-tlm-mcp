@@ -65,6 +65,21 @@ describe("kg-export — maths (converged two-axis shape)", () => {
     expect(childrenOf(g, wk.id).some((n) => n.kind === "lesson")).toBe(true);
   });
 
+  it("tags nodes with a graph-agnostic category and emits the taxonomy legend", async () => {
+    const g = (await exportNamespace(mathsNs))!;
+    // role/kind → category, independent of the subject's own vocabulary
+    const catCount = (c: string) => g.nodes.filter((n) => n.cat === c).length;
+    expect(catCount("strand")).toBe(4);       // domaine
+    expect(catCount("subtopic")).toBe(25);     // chapter
+    expect(catCount("expectation")).toBe(112); // lesson (OS)
+    expect(catCount("week")).toBe(23);
+    expect(catCount("component")).toBeGreaterThan(0);
+    expect(catCount("task")).toBeGreaterThan(0);
+    // taxonomy lists present categories in canonical order, each with a colour
+    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["strand", "subtopic", "expectation", "component", "task", "week"]);
+    expect(g.meta.taxonomy.every((x) => /^#[0-9a-f]{6}$/i.test(x.color) && x.label.fr && x.label.en)).toBe(true);
+  });
+
   it("declares thematic (domaine) + planification (palier→week) + generic", async () => {
     const g = (await exportNamespace(mathsNs))!;
     expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["thematique", "planification", "generic"]);
@@ -91,5 +106,14 @@ describe("kg-export — reading", () => {
     expect(standards.length).toBeGreaterThan(0);
     expect(standards.every((s) => isChild.has(s.id))).toBe(true);
     expect(standards.every((s) => s.strand)).toBe(true);
+  });
+
+  it("categorizes the reading spine (standards = expectation) and its taxonomy omits absent categories", async () => {
+    const g = (await exportNamespace(readingNs))!;
+    // reading spine is week → standard → component; standards carry role=expectation
+    expect(g.nodes.filter((n) => n.kind === "standard").every((s) => s.cat === "expectation")).toBe(true);
+    // no strand/subtopic/task NODES in the reading spine → those legend entries drop out
+    const keys = g.meta.taxonomy.map((x) => x.key);
+    expect(keys).toEqual(["expectation", "component", "week"]);
   });
 });
