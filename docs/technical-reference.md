@@ -340,18 +340,34 @@ The frontend is generic and renders whatever views `meta.viewConfig` declares �
 `if` anywhere. Two view **shapes**:
 
 - `grouped-spine` — anchors on `anchorKind` nodes (optionally bucketed by `groupBy` props; empty
-  `groupBy` = the anchors ARE the roots), then walks the `expandEdge` subtree (optionally stopping
-  at `stopKind`). Because domaine/week are real nodes, the maths views anchor on them and expand
-  `hasChild`: *thematic* (anchor `domaine` → Chapitre → OS → composant → tâche), *chapters* (anchor
-  `domaine`, stop at `lesson`), *planning* (anchor `week` → OS → …). Reading anchors on `week` → standard → composant.
+  `groupBy` = the anchors ARE the roots), then walks the `expandEdge` (`hasChild`) subtree.
 - `node-type` — the generic floor, works for ANY namespace: each node type → its nodes → their
   outgoing relations.
 
-`buildViewConfig` picks views by which node **kinds** are present (domaine+chapter+lesson → thematic/chapters;
-week+lesson → planning; week+standard → reading weeks); every namespace always gets `node-type`. So
-`ci/maths` shows four tabs, `ce1/reading` shows two — with no hardcoding. The backend is covered by
-`src/kg-export.test.ts`; the static frontend (`hosting/public/index.html`) is data-driven and adapts,
-but re-verify it in-browser after deploy.
+Both subjects declare the same three tabs: **thematic**, **planification**, **generic**.
+
+- **Thematic** — by the subject's thematic categories. Maths anchors on the real `domaine` node and
+  walks `hasChild` (Domaine → Chapitre → OS → composant → tâche). Reading has no seeded grouping nodes,
+  so it groups standards by their language-tool **strand** (`groupBy: [strand]`, `order` = the six
+  outils de langue) → the standards → their components.
+- **Planification** — `Palier → Semaine → …`: anchor `week`, `groupBy: [palier]`, expand `hasChild`.
+  Reading weeks carry their palier; maths weeks borrow it from a scheduled lesson (derived in
+  `exportNamespace`, see below).
+- **Generic** — `node-type`.
+
+`buildViewConfig` picks the thematic anchor by which kinds are present (`domaine` → maths hierarchy;
+else `standard` → reading strand grouping). The backend is covered by `src/kg-export.test.ts`; the
+static frontend (`hosting/public/index.html`) is data-driven and adapts — **re-verify in-browser after
+`gcloud run deploy` (the /kg endpoint) + `firebase deploy --only hosting`.**
+
+**Explorer post-processing** (`exportNamespace`, display-only — never touches the store): (1) domaine
+**colour** is propagated down the content axis so a whole subtree shares its domaine's colour; (2) a
+maths **week palier** is derived from its scheduled lessons; (3) a **navigable-spine filter** keeps
+only nodes reachable from a root (`week`/`domaine`) via `hasChild`. Reading's parse is now
+spine-scoped (its `postParse` keeps only the six language-tool week-standards + their components), so
+this filter is a no-op there; it still trims maths's few borrowed-framework component/task leftovers
+(pre-existing — the maths parse maps every `LearningComponent`/`Curriculum` node). A safety net that
+de-noises the explorer without a re-seed.
 
 ### Adding a new KG
 
