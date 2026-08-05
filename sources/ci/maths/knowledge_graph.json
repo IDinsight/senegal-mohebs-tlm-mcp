@@ -995,7 +995,7 @@
         "palier": 1,
         "os_texte": "former et représenter un ensemble d'objets",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 1,
           "en": {
             "description": "form and represent a set of objects",
@@ -1029,7 +1029,7 @@
         "palier": 1,
         "os_texte": "appartenance et non-appartenance à un ensemble",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 2,
           "en": {
             "description": "belonging and not belonging to a set",
@@ -1063,7 +1063,7 @@
         "palier": 1,
         "os_texte": "identifier la droite et la gauche sur mon corps",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 3,
           "en": {
             "description": "identify right and left on my body",
@@ -1097,7 +1097,7 @@
         "palier": 1,
         "os_texte": "estimer des longueurs (long/court)",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 4,
           "en": {
             "description": "estimate lengths (long / short)",
@@ -1131,7 +1131,7 @@
         "palier": 1,
         "os_texte": "chercher des indices : informations utiles",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 5,
           "en": {
             "description": "look for clues: useful information",
@@ -1165,7 +1165,7 @@
         "palier": 1,
         "os_texte": "reconnaître et représenter un sous-ensemble à l'intérieur d'un ensemble donné",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 6,
           "en": {
             "description": "recognise and represent a subset within a given set",
@@ -1199,7 +1199,7 @@
         "palier": 1,
         "os_texte": "classer un ensemble selon qu'il contient rien, peu ou beaucoup d'éléments",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 7,
           "en": {
             "description": "classify a set as containing nothing, few, or many elements",
@@ -1233,7 +1233,7 @@
         "palier": 1,
         "os_texte": "identifier une partie du corps ou une position en utilisant devant/derrière, sur/sous et au même niveau",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 8,
           "en": {
             "description": "identify a body part or position using in front / behind, on / under, and at the same level",
@@ -1267,7 +1267,7 @@
         "palier": 1,
         "os_texte": "comparer des longueurs (plus long/plus court)",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 9,
           "en": {
             "description": "compare lengths (longer / shorter)",
@@ -1301,7 +1301,7 @@
         "palier": 1,
         "os_texte": "reconnaître l'intrus sur une image : informations inutiles",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 10,
           "en": {
             "description": "spot the odd one out in an image: useless information",
@@ -1335,7 +1335,7 @@
         "palier": 1,
         "os_texte": "classer les éléments d'un ensemble selon une caractéristique commune (forme ou couleur)",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 11,
           "en": {
             "description": "classify elements of a set by a common characteristic (shape or colour)",
@@ -1369,7 +1369,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 1 : Les ensembles",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 12,
           "en": {
             "description": "Chapter 1 review: Sets",
@@ -1403,7 +1403,7 @@
         "palier": 1,
         "os_texte": "décrire une position en utilisant en haut/en bas, près de/loin de, avant/après et au même niveau",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 13,
           "en": {
             "description": "describe a position using above / below, near / far, before / after, and at the same level",
@@ -1437,7 +1437,7 @@
         "palier": 1,
         "os_texte": "estimer et comparer des tailles (grand/petit ; plus grand/plus petit)",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 14,
           "en": {
             "description": "estimate and compare sizes (big / small; bigger / smaller)",
@@ -1471,7 +1471,7 @@
         "palier": 1,
         "os_texte": "trouver ce qui manque sur une image : informations manquantes",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 15,
           "en": {
             "description": "find what is missing in an image: missing information",
@@ -1505,7 +1505,7 @@
         "palier": 1,
         "os_texte": "je compare des ensembles et des sous-ensembles : inclusion de sous-ensembles",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 16,
           "en": {
             "description": "I compare sets and subsets: inclusion of subsets",
@@ -1539,7 +1539,7 @@
         "palier": 1,
         "os_texte": "je compare des ensembles et des sous-ensembles : partition d'ensemble",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 17,
           "en": {
             "description": "I compare sets and subsets: partitioning a set",
@@ -1573,7 +1573,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 2 — Je me repère avec mon corps",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 18,
           "en": {
             "description": "Chapter 2 review — I orient myself with my body",
@@ -1607,7 +1607,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 3 — J'estime et je compare des longueurs et des tailles",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 19,
           "en": {
             "description": "Chapter 3 review — I estimate and compare lengths and sizes",
@@ -1641,7 +1641,7 @@
         "palier": 1,
         "os_texte": "remettre de l'ordre dans une série d'images : règles logiques",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 20,
           "en": {
             "description": "put a series of images in order: logical rules",
@@ -1675,7 +1675,7 @@
         "palier": 1,
         "os_texte": "réunion d'ensembles",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 21,
           "en": {
             "description": "union of sets",
@@ -1709,7 +1709,7 @@
         "palier": 1,
         "os_texte": "je compare des ensembles : plus que/moins que/autant que",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 22,
           "en": {
             "description": "I compare sets: more than / less than / as many as",
@@ -1743,7 +1743,7 @@
         "palier": 1,
         "os_texte": "je me situe dans un espace réel ou représenté : à gauche de, à droite, devant, derrière, en haut de, en bas de",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 23,
           "en": {
             "description": "I locate myself in a real or represented space: to the left of, to the right, in front, behind, above, below",
@@ -1777,7 +1777,7 @@
         "palier": 1,
         "os_texte": "estimer des distances : près de/loin de",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 24,
           "en": {
             "description": "estimate distances: near / far",
@@ -1811,7 +1811,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 4 — Je lis les images",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 25,
           "en": {
             "description": "Chapter 4 review — I read images",
@@ -1845,7 +1845,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 5 — Je compare des ensembles et des sous-ensembles",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 26,
           "en": {
             "description": "Chapter 5 review — I compare sets and subsets",
@@ -1913,7 +1913,7 @@
         "palier": 1,
         "os_texte": "je me situe dans un espace réel ou représenté : sous, sur, loin de, près de, au même niveau",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 28,
           "en": {
             "description": "I locate myself in a real or represented space: under, on, far from, near, at the same level",
@@ -1947,7 +1947,7 @@
         "palier": 1,
         "os_texte": "comparer des distances : plus près/plus loin",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 29,
           "en": {
             "description": "compare distances: nearer / farther",
@@ -1981,7 +1981,7 @@
         "palier": 1,
         "os_texte": "lier un indice à une image",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 30,
           "en": {
             "description": "link a clue to an image",
@@ -2015,7 +2015,7 @@
         "palier": 1,
         "os_texte": "découvrir les nombres de 1 à 5",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 31,
           "en": {
             "description": "discover the numbers from 1 to 5",
@@ -2049,7 +2049,7 @@
         "palier": 1,
         "os_texte": "découvrir le nombre 0",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 32,
           "en": {
             "description": "discover the number 0",
@@ -2083,7 +2083,7 @@
         "palier": 1,
         "os_texte": "je situe des objets dans un espace réel ou représenté : gauche/droite, en haut/en bas, devant/derrière, sous/sur, près de/loin de, plus près de/plus loin de",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 33,
           "en": {
             "description": "I locate objects in a real or represented space: left / right, above / below, in front / behind, under / on, near / far, nearer / farther",
@@ -2117,7 +2117,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 7",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 34,
           "en": {
             "description": "Chapter 7 review",
@@ -2151,7 +2151,7 @@
         "palier": 1,
         "os_texte": "reproduire un modèle",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 35,
           "en": {
             "description": "reproduce a pattern",
@@ -2185,7 +2185,7 @@
         "palier": 1,
         "os_texte": "découvrir les nombres 6 et 7",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 36,
           "en": {
             "description": "discover the numbers 6 and 7",
@@ -2219,7 +2219,7 @@
         "palier": 1,
         "os_texte": "composer et décomposer les nombres 6 et 7",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 37,
           "en": {
             "description": "compose and decompose the numbers 6 and 7",
@@ -2253,7 +2253,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 6 — se situer et situer des objets dans un espace réel ou représenté",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 38,
           "en": {
             "description": "Chapter 6 review — locating oneself and objects in a real or represented space",
@@ -2287,7 +2287,7 @@
         "palier": 1,
         "os_texte": "estimer des capacités : beaucoup/peu",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 39,
           "en": {
             "description": "estimate capacities: a lot / a little",
@@ -2321,7 +2321,7 @@
         "palier": 1,
         "os_texte": "reconnaître et appliquer un algorithme",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 40,
           "en": {
             "description": "recognise and apply an algorithm",
@@ -2355,7 +2355,7 @@
         "palier": 1,
         "os_texte": "découvrir le sens de l'addition",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 41,
           "en": {
             "description": "discover the meaning of addition",
@@ -2389,7 +2389,7 @@
         "palier": 1,
         "os_texte": "découvrir les nombres 8 et 9",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 42,
           "en": {
             "description": "discover the numbers 8 and 9",
@@ -2457,7 +2457,7 @@
         "palier": 1,
         "os_texte": "comparer des capacités : plus…que/moins…que/autant…que",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 44,
           "en": {
             "description": "compare capacities: more than / less than / as much as",
@@ -2491,7 +2491,7 @@
         "palier": 1,
         "os_texte": "Bilan du chapitre 8 — J'applique les règles logiques",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 45,
           "en": {
             "description": "Chapter 8 review — I apply logical rules",
@@ -2556,7 +2556,7 @@
         "palier": 2,
         "os_texte": "composer et décomposer les nombres 8 et 9",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 46,
           "en": {
             "description": "compose and decompose the numbers 8 and 9",
@@ -2590,7 +2590,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 9",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 47,
           "en": {
             "description": "Chapter 9 review",
@@ -2624,7 +2624,7 @@
         "palier": 2,
         "os_texte": "je classifie des solides familiers : cube, cylindre, parallélépipède",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 48,
           "en": {
             "description": "I classify familiar solids: cube, cylinder, rectangular prism",
@@ -2658,7 +2658,7 @@
         "palier": 2,
         "os_texte": "estimer des masses : lourd/léger",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 49,
           "en": {
             "description": "estimate masses: heavy / light",
@@ -2692,7 +2692,7 @@
         "palier": 2,
         "os_texte": "reconnaître un problème mathématique parmi plusieurs situations (énoncés oraux mathématiques et non mathématiques)",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 50,
           "en": {
             "description": "recognise a maths problem among several situations (oral mathematical and non-mathematical statements)",
@@ -2726,7 +2726,7 @@
         "palier": 2,
         "os_texte": "découvrir le nombre 10 et la dizaine",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 51,
           "en": {
             "description": "discover the number 10 and the concept of ten",
@@ -2760,7 +2760,7 @@
         "palier": 2,
         "os_texte": "composer et décomposer le nombre 10",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 52,
           "en": {
             "description": "compose and decompose the number 10",
@@ -2794,7 +2794,7 @@
         "palier": 2,
         "os_texte": "je dessine des solides familiers",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 53,
           "en": {
             "description": "I draw familiar solids",
@@ -2828,7 +2828,7 @@
         "palier": 2,
         "os_texte": "comparer des masses : plus lourd/léger que, moins lourd/léger que, aussi lourd/léger que",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 54,
           "en": {
             "description": "compare masses: heavier / lighter than, less heavy / light than, as heavy / light as",
@@ -2862,7 +2862,7 @@
         "palier": 2,
         "os_texte": "dramatiser un problème mathématique",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 55,
           "en": {
             "description": "act out a mathematical problem",
@@ -2896,7 +2896,7 @@
         "palier": 2,
         "os_texte": "découvrir le nombre 10 et la dizaine",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 56,
           "en": {
             "description": "discover the number 10 and the concept of ten",
@@ -2930,7 +2930,7 @@
         "palier": 2,
         "os_texte": "découvrir le nombre 10 et la dizaine",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 57,
           "en": {
             "description": "discover the number 10 and the concept of ten",
@@ -2964,7 +2964,7 @@
         "palier": 2,
         "os_texte": "je dessine des solides familiers",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 58,
           "en": {
             "description": "I draw familiar solids",
@@ -2998,7 +2998,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 11",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 59,
           "en": {
             "description": "Chapter 11 review",
@@ -3032,7 +3032,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 12",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 60,
           "en": {
             "description": "Chapter 12 review",
@@ -3066,7 +3066,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 13",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 61,
           "en": {
             "description": "Chapter 13 review",
@@ -3100,7 +3100,7 @@
         "palier": 2,
         "os_texte": "découvrir le sens de la soustraction",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 62,
           "en": {
             "description": "discover the meaning of subtraction",
@@ -3134,7 +3134,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 10",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 63,
           "en": {
             "description": "Chapter 10 review",
@@ -3168,7 +3168,7 @@
         "palier": 2,
         "os_texte": "estimer des durées : long/court",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 64,
           "en": {
             "description": "estimate durations: long / short",
@@ -3202,7 +3202,7 @@
         "palier": 2,
         "os_texte": "identifier les données d'un problème mathématique (information numérique et non numérique)",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 65,
           "en": {
             "description": "identify the data of a maths problem (numerical and non-numerical information)",
@@ -3236,7 +3236,7 @@
         "palier": 2,
         "os_texte": "découvrir les notions de double et de moitié d'un nombre",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 66,
           "en": {
             "description": "discover the concepts of double and half of a number",
@@ -3270,7 +3270,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 17 — je découvre le sens de la soustraction, la notion de double et de moitié",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 67,
           "en": {
             "description": "Chapter 17 review — I discover the meaning of subtraction, the concept of double and half",
@@ -3304,7 +3304,7 @@
         "palier": 2,
         "os_texte": "classifier des figures planes (selon la forme) : carré, rectangle, triangle, rond",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 68,
           "en": {
             "description": "classify plane figures (by shape): square, rectangle, triangle, circle",
@@ -3338,7 +3338,7 @@
         "palier": 2,
         "os_texte": "estimer des durées : lent/rapide",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 69,
           "en": {
             "description": "estimate durations: slow / fast",
@@ -3372,7 +3372,7 @@
         "palier": 2,
         "os_texte": "identifier les questions/consignes dans un énoncé",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 70,
           "en": {
             "description": "identify the questions / instructions in a problem statement",
@@ -3406,7 +3406,7 @@
         "palier": 2,
         "os_texte": "découvrir les nombres de 11 à 19",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 71,
           "en": {
             "description": "discover the numbers from 11 to 19",
@@ -3440,7 +3440,7 @@
         "palier": 2,
         "os_texte": "composer et décomposer les nombres de 11 à 19",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 72,
           "en": {
             "description": "compose and decompose the numbers from 11 to 19",
@@ -3474,7 +3474,7 @@
         "palier": 2,
         "os_texte": "dessiner puis décrire des figures planes simples : carré, rectangle, triangle, rond",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 73,
           "en": {
             "description": "draw then describe simple plane figures: square, rectangle, triangle, circle",
@@ -3508,7 +3508,7 @@
         "palier": 2,
         "os_texte": "comparer des durées : plus (long/court/rapide) que, aussi (long/court/rapide) que",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 74,
           "en": {
             "description": "compare durations: longer / shorter / faster than, as long / short / fast as",
@@ -3542,7 +3542,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 16",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 75,
           "en": {
             "description": "Chapter 16 review",
@@ -3576,7 +3576,7 @@
         "palier": 2,
         "os_texte": "découvrir, composer et décomposer le nombre 20",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 76,
           "en": {
             "description": "discover, compose, and decompose the number 20",
@@ -3610,7 +3610,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 21",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 77,
           "en": {
             "description": "Chapter 21 review",
@@ -3644,7 +3644,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 18",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 78,
           "en": {
             "description": "Chapter 18 review",
@@ -3678,7 +3678,7 @@
         "palier": 2,
         "os_texte": "Bilan du chapitre 15",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 79,
           "en": {
             "description": "Chapter 15 review",
@@ -3777,7 +3777,7 @@
         "palier": 3,
         "os_texte": "découvrir les nombres de 21 à 29",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 81,
           "en": {
             "description": "discover the numbers from 21 to 29",
@@ -3811,7 +3811,7 @@
         "palier": 3,
         "os_texte": "composer et décomposer les nombres de 21 à 29",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 82,
           "en": {
             "description": "compose and decompose the numbers from 21 to 29",
@@ -3845,7 +3845,7 @@
         "palier": 3,
         "os_texte": "notion de ligne ouverte et de ligne fermée",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 83,
           "en": {
             "description": "concept of open line and closed line",
@@ -3879,7 +3879,7 @@
         "palier": 3,
         "os_texte": "estimer des durées : long/court ; lent/rapide",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 84,
           "en": {
             "description": "estimate durations: long / short; slow / fast",
@@ -3913,7 +3913,7 @@
         "palier": 3,
         "os_texte": "trouver les données utiles d'un problème",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 85,
           "en": {
             "description": "find the useful data of a problem",
@@ -3947,7 +3947,7 @@
         "palier": 3,
         "os_texte": "découvrir le nombre 30, composer et décomposer le nombre 30",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 86,
           "en": {
             "description": "discover the number 30, compose and decompose the number 30",
@@ -3981,7 +3981,7 @@
         "palier": 3,
         "os_texte": "Bilan du chapitre 25",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 87,
           "en": {
             "description": "Chapter 25 review",
@@ -4015,7 +4015,7 @@
         "palier": 3,
         "os_texte": "tracer des lignes ouvertes/fermées : rythme graphique",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 88,
           "en": {
             "description": "draw open / closed lines: graphic rhythm",
@@ -4049,7 +4049,7 @@
         "palier": 3,
         "os_texte": "comparer des durées : plus long/court ; plus (lent/rapide) ; aussi (long/court/rapide)",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 89,
           "en": {
             "description": "compare durations: longer / shorter; faster / slower; as long / short / fast",
@@ -4083,7 +4083,7 @@
         "palier": 3,
         "os_texte": "trouver les données inutiles d'un problème",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 90,
           "en": {
             "description": "find the useless data of a problem",
@@ -4117,7 +4117,7 @@
         "palier": 3,
         "os_texte": "découvrir les nombres de 31 à 39",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 91,
           "en": {
             "description": "discover the numbers from 31 to 39",
@@ -4151,7 +4151,7 @@
         "palier": 3,
         "os_texte": "composer et décomposer les nombres de 31 à 39",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 92,
           "en": {
             "description": "compose and decompose the numbers from 31 to 39",
@@ -4185,7 +4185,7 @@
         "palier": 3,
         "os_texte": "intérieur/extérieur/frontière",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 93,
           "en": {
             "description": "inside / outside / boundary",
@@ -4219,7 +4219,7 @@
         "palier": 3,
         "os_texte": "Bilan du chapitre 19",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 94,
           "en": {
             "description": "Chapter 19 review",
@@ -4253,7 +4253,7 @@
         "palier": 3,
         "os_texte": "Bilan du chapitre 20",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 95,
           "en": {
             "description": "Chapter 20 review",
@@ -4287,7 +4287,7 @@
         "palier": 3,
         "os_texte": "découvrir les nombres de 31 à 39",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 96,
           "en": {
             "description": "discover the numbers from 31 to 39",
@@ -4321,7 +4321,7 @@
         "palier": 3,
         "os_texte": "composer et décomposer les nombres de 31 à 39",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 97,
           "en": {
             "description": "compose and decompose the numbers from 31 to 39",
@@ -4355,7 +4355,7 @@
         "palier": 3,
         "os_texte": "utiliser en situation le vocabulaire adéquat : quadrillage/case/nœud",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 98,
           "en": {
             "description": "use appropriate vocabulary in context: grid / cell / node",
@@ -4389,7 +4389,7 @@
         "palier": 3,
         "os_texte": "repérer des moments dans la journée : matin, midi, soir, rythmes scolaires",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 99,
           "en": {
             "description": "identify moments of the day: morning, noon, evening, school routines",
@@ -4423,7 +4423,7 @@
         "palier": 3,
         "os_texte": "reconnaître la question finale d'un énoncé mathématique",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 100,
           "en": {
             "description": "recognise the final question of a mathematical statement",
@@ -4457,7 +4457,7 @@
         "palier": 3,
         "os_texte": "Bilan du chapitre 25",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 101,
           "en": {
             "description": "Chapter 25 review",
@@ -4491,7 +4491,7 @@
         "palier": 3,
         "os_texte": "découvrir les nombres de 40 à 49",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 102,
           "en": {
             "description": "discover the numbers from 40 to 49",
@@ -4525,7 +4525,7 @@
         "palier": 3,
         "os_texte": "Bilan du chapitre 22",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 103,
           "en": {
             "description": "Chapter 22 review",
@@ -4559,7 +4559,7 @@
         "palier": 3,
         "os_texte": "se repérer dans la semaine : les jours de la semaine",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 104,
           "en": {
             "description": "navigate the week: the days of the week",
@@ -4593,7 +4593,7 @@
         "palier": 3,
         "os_texte": "reconnaître les questions intermédiaires d'un énoncé mathématique",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 105,
           "en": {
             "description": "recognise the intermediate questions of a mathematical statement",
@@ -4627,7 +4627,7 @@
         "palier": 3,
         "os_texte": "composer et décomposer les nombres de 40 à 49",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 106,
           "en": {
             "description": "compose and decompose the numbers from 40 to 49",
@@ -4661,7 +4661,7 @@
         "palier": 3,
         "os_texte": "effectuer des opérations (soustraction sans emprunt) portant sur les nombres de 0 à 49",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 107,
           "en": {
             "description": "perform operations (subtraction without borrowing) on numbers from 0 to 49",
@@ -4695,7 +4695,7 @@
         "palier": 3,
         "os_texte": "découvrir le nombre 50, composer et décomposer le nombre 50",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 108,
           "en": {
             "description": "discover the number 50, compose and decompose the number 50",
@@ -4729,7 +4729,7 @@
         "palier": 3,
         "os_texte": "découvrir le nombre 50, composer et décomposer le nombre 50",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 109,
           "en": {
             "description": "discover the number 50, compose and decompose the number 50",
@@ -4763,7 +4763,7 @@
         "palier": 3,
         "os_texte": "Bilan du chapitre 24",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 110,
           "en": {
             "description": "Chapter 24 review",
@@ -4797,7 +4797,7 @@
         "palier": 3,
         "os_texte": "effectuer des opérations (addition sans retenue) portant sur les nombres de 0 à 50",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 111,
           "en": {
             "description": "perform operations (addition without carrying) on numbers from 0 to 50",
@@ -4831,7 +4831,7 @@
         "palier": 3,
         "os_texte": "Bilan du chapitre 29",
         "metadata": {
-          "role": "objectif spécifique",
+          "role": "expectation",
           "order": 112,
           "en": {
             "description": "Chapter 29 review",
