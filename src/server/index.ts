@@ -15,9 +15,11 @@ import { registerStructuralTools } from "./structural.js";
 import { registerRecipeTools } from "./recipes.js";
 import { registerCapabilityTools } from "./capabilities.js";
 import { registerAuditTools } from "./audit.js";
+import { registerHealthTools } from "./health.js";
 
 export function buildServer(): McpServer {
   const server = new McpServer({ name: "senegal-mohebs-tlm-server", version: "0.4.0" });
+  registerHealthTools(server);       // ping (no datastore — transport liveness probe)
   registerContextTools(server);      // set_context, get_context
   registerCurriculumTools(server);   // list_units, get_curriculum, terminology
   registerGenerationTools(server);   // get_prompt, get_generation_context

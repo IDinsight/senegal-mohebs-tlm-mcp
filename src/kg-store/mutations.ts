@@ -64,6 +64,11 @@ export type GraphPreviewResult = {
   diff: GraphDiff;
   warnings: string[];
   confirmationToken: string;
+  // Absolute expiry of the token (ISO-8601). After this instant a confirm is
+  // rejected as TOKEN_EXPIRED *only if the base is otherwise unchanged*; a moved
+  // base still reports STALE_TOKEN first. Surfaced so the caller knows how long
+  // it has to get the user's approval before needing a fresh dry-run.
+  expiresAt: string;
 };
 
 // What a validation-blocked dry-run returns instead. No token: confirm has
@@ -77,13 +82,21 @@ export type GraphBlockedResult = {
   warnings: string[];
 };
 
-// Confirm outcomes. `stale` covers every "base moved" case (pointer moved,
-// published shifted while token was against published, draft shifted while
-// token was against draft, or a draft appeared/disappeared under our feet).
-// The caller is expected to retry with a fresh preview.
+// Confirm outcomes. Two "retry" families the caller must tell apart:
+//   • STALE_TOKEN (`reason:"stale"`) — the base graph MOVED since preview
+//     (someone edited): the diff you approved no longer applies, so re-preview
+//     and RE-REVIEW the new diff.
+//   • TOKEN_EXPIRED (`reason:"expired"`) — the token simply aged past its TTL
+//     while the base is UNCHANGED: nothing substantive changed, just re-run the
+//     dry-run to get a fresh token.
+// Every failure carries a stable `code` (issue #3's typed-error vocabulary)
+// alongside the legacy `reason`. `idempotent:true` marks a successful result
+// that was REPLAYED from the idempotency cache rather than freshly applied.
+export type GraphApplyFailCode =
+  | "STALE_TOKEN" | "TOKEN_EXPIRED" | "REPLAY" | "INVALID_TOKEN" | "ARGS_MISMATCH" | "MUTATION_MISMATCH" | "UNSEEDED";
 export type GraphApplyResult =
-  | { phase: "apply"; ok: true; kind: "graphMutation"; applied: string; draftSlot: Slot; diff: GraphDiff }
-  | { phase: "apply"; ok: false; kind: "graphMutation"; reason: "stale" | "replay" | "invalidToken" | "argsMismatch" | "mutationMismatch" | "unseeded"; message: string };
+  | { phase: "apply"; ok: true; kind: "graphMutation"; applied: string; draftSlot: Slot; diff: GraphDiff; idempotent?: boolean }
+  | { phase: "apply"; ok: false; kind: "graphMutation"; reason: "stale" | "expired" | "replay" | "invalidToken" | "argsMismatch" | "mutationMismatch" | "unseeded"; code: GraphApplyFailCode; message: string };
 
 // A distinct result for role-denied calls. Kept separate from `blocked`
 // (which stays for validation errors from #6) and from `apply ok:false`
@@ -136,7 +149,19 @@ type TokenPayload = {
   k: "onDraft" | "onPublished"; // which base the diff was computed against
   v: string;   // hashGraph(base) at preview time
   n: string;   // nonce (one-time use)
+  exp: number; // absolute expiry, epoch ms (issue #4 TTL)
 };
+
+// Token time-to-live. State-based validation (the `v` hash) is still the
+// PRIMARY guard — a slow round-trip or restart never invalidates a token while
+// the underlying graph is unchanged. The TTL is a secondary bound so a token
+// left lying around eventually forces a fresh dry-run. Override with
+// TLM_CONFIRM_TTL_MS; default 15 minutes. Read lazily (not memoised) so the
+// override can be toggled per-test in one run.
+function tokenTtlMs(): number {
+  const raw = Number(process.env.TLM_CONFIRM_TTL_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 15 * 60 * 1000;
+}
 
 const encodeToken = (p: TokenPayload): string =>
   Buffer.from(JSON.stringify(p), "utf8").toString("base64url");
@@ -148,7 +173,11 @@ const decodeToken = (token: string): TokenPayload | null => {
     const c = p as Record<string, unknown>;
     if (typeof c.m !== "string" || typeof c.a !== "string" || typeof c.v !== "string" || typeof c.n !== "string") return null;
     if (c.k !== "onDraft" && c.k !== "onPublished") return null;
-    return { m: c.m, a: c.a, k: c.k, v: c.v, n: c.n };
+    // `exp` is required on tokens this build issues; tolerate its absence
+    // (treat as non-expiring) so an in-flight token from an older build isn't
+    // rejected as malformed across a rolling deploy.
+    const exp = typeof c.exp === "number" ? c.exp : Number.POSITIVE_INFINITY;
+    return { m: c.m, a: c.a, k: c.k, v: c.v, n: c.n, exp };
   } catch { return null; }
 };
 
@@ -157,7 +186,18 @@ const decodeToken = (token: string): TokenPayload | null => {
 // scale out, this becomes per-instance and a replay across instances is
 // theoretically possible — a follow-up would move this onto the pointer doc.
 const consumedNonces = new Set<string>();
-export const __resetMutationsForTest = (): void => { consumedNonces.clear(); };
+
+// Idempotency ledger (issue #4). When a caller passes an `idempotencyKey`, the
+// SUCCESSFUL apply result is cached under it; a retried confirm with the same
+// key returns that cached result verbatim (marked `idempotent:true`) instead
+// of re-applying or erroring. This is what makes a confirm safe to retry after
+// a network blip that lost the response — the double-apply is prevented, and
+// the caller gets a clear success rather than a confusing "replay" rejection.
+// Same process-scoped caveat as the nonce ledger; a restart clears it, after
+// which the base-hash CAS still prevents any double-apply (a landed edit moved
+// the base, so the retry reports STALE_TOKEN — safe, if less friendly).
+const idempotentResults = new Map<string, GraphApplyResult>();
+export const __resetMutationsForTest = (): void => { consumedNonces.clear(); idempotentResults.clear(); };
 
 // ── Diff computation ─────────────────────────────────────────────────────────
 // Simple id-keyed diff: added, removed, and changed (deep property inequality).
@@ -244,6 +284,11 @@ export type RunGraphMutationArgs<Args> = {
   args: Args;
   confirm?: boolean;
   token?: string;
+  // Optional idempotency key (issue #4). When set on a confirm, a retry with
+  // the same key returns the first apply's cached result instead of re-applying
+  // — a safe no-op after a lost-response retry. Omit it and confirm keeps its
+  // strict one-time-token behaviour (a replay is rejected).
+  idempotencyKey?: string;
   // Optional subject-aware coverage hook (#13). When provided, it is called on
   // the post-apply graph and its output is merged into the dry-run `warnings`.
   // Injected by the server layer from the active adapter's `coverageWarnings`
@@ -256,7 +301,7 @@ export type RunGraphMutationArgs<Args> = {
 export async function runGraphMutation<Args>(
   input: RunGraphMutationArgs<Args>,
 ): Promise<GraphPreviewResult | GraphBlockedResult | GraphApplyResult | GraphUnauthorizedResult> {
-  const { namespace, mutation, args, confirm, token, coverage } = input;
+  const { namespace, mutation, args, confirm, token, coverage, idempotencyKey } = input;
   const store = getKgStore();
 
   // Compose the stakes-accurate action string exactly once. Every path that
@@ -299,26 +344,45 @@ export async function runGraphMutation<Args>(
 
   // ── Confirm phase ────────────────────────────────────────────────────────
   if (confirm) {
-    if (!token) { await auditBlocked("invalidToken: missing"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", message: "confirm=true was passed without a confirmationToken; re-run without confirm to get a fresh preview." }; }
+    if (!token) { await auditBlocked("invalidToken: missing"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", code: "INVALID_TOKEN", message: "confirm=true was passed without a confirmationToken; re-run without confirm to get a fresh preview." }; }
     const payload = decodeToken(token);
-    if (!payload) { await auditBlocked("invalidToken: malformed"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", message: "confirmationToken is malformed; re-run without confirm to get a fresh preview." }; }
-    if (payload.m !== mutation.name) { await auditBlocked(`mutationMismatch: token was for '${payload.m}'`); return { phase: "apply", ok: false, kind: "graphMutation", reason: "mutationMismatch", message: `confirmationToken was issued for mutation '${payload.m}', not '${mutation.name}'.` }; }
-    if (payload.a !== hashArgs(args)) { await auditBlocked("argsMismatch"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "argsMismatch", message: "args differ from the previewed values; re-run without confirm to preview the new args." }; }
-    if (consumedNonces.has(payload.n)) { await auditBlocked("replay"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "replay", message: "This confirmation token has already been used; a mutation cannot be applied twice from one preview." }; }
+    if (!payload) { await auditBlocked("invalidToken: malformed"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", code: "INVALID_TOKEN", message: "confirmationToken is malformed; re-run without confirm to get a fresh preview." }; }
+    if (payload.m !== mutation.name) { await auditBlocked(`mutationMismatch: token was for '${payload.m}'`); return { phase: "apply", ok: false, kind: "graphMutation", reason: "mutationMismatch", code: "MUTATION_MISMATCH", message: `confirmationToken was issued for mutation '${payload.m}', not '${mutation.name}'.` }; }
+    if (payload.a !== hashArgs(args)) { await auditBlocked("argsMismatch"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "argsMismatch", code: "ARGS_MISMATCH", message: "args differ from the previewed values; re-run without confirm to preview the new args." }; }
+
+    // Idempotency (issue #4): a retry carrying the SAME idempotencyKey returns
+    // the first apply's cached result — a safe no-op — BEFORE the one-time-nonce
+    // check below would reject it as a replay. Checked after the mutation/args
+    // guards so a key can never mask a mismatched retry.
+    if (idempotencyKey != null && idempotentResults.has(idempotencyKey)) {
+      const cached = idempotentResults.get(idempotencyKey)!;
+      return cached.ok ? { ...cached, idempotent: true } : cached;
+    }
+
+    if (consumedNonces.has(payload.n)) { await auditBlocked("replay"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "replay", code: "REPLAY", message: "This confirmation token has already been used; a mutation cannot be applied twice from one preview. (Pass an idempotencyKey on confirm to make a retried confirm a safe no-op instead.)" }; }
 
     const snap = await readBase(namespace);
-    if ("unseeded" in snap) { await auditBlocked("unseeded"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "unseeded", message: `Namespace '${namespace}' has no seed; run the seed before mutating.` }; }
+    if ("unseeded" in snap) { await auditBlocked("unseeded"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "unseeded", code: "UNSEEDED", message: `Namespace '${namespace}' has no seed; run the seed before mutating.` }; }
 
-    // A preview against 'published' expects (a) no draft has appeared since,
-    // and (b) published hasn't shifted. A preview against 'draft' expects the
-    // draft hash still matches. Any mismatch → stale, retry.
+    // STALE takes priority over EXPIRED: a moved base means the approved diff no
+    // longer applies (re-REVIEW), which is more important than "token aged out".
+    // A preview against 'published' expects (a) no draft has appeared since, and
+    // (b) published hasn't shifted. A preview against 'draft' expects the draft
+    // hash still matches. Any mismatch → STALE_TOKEN, re-preview.
     if (snap.kind !== payload.k) {
       await auditBlocked(`stale: base slot changed (was '${payload.k}', now '${snap.kind}')`);
-      return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", message: `The base slot changed since preview (was '${payload.k}', now '${snap.kind}'); re-preview.` };
+      return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", code: "STALE_TOKEN", message: `The base slot changed since preview (was '${payload.k}', now '${snap.kind}'); re-preview to review the new diff.` };
     }
     if (hashGraph(snap.graph) !== payload.v) {
       await auditBlocked("stale: base graph changed");
-      return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", message: `The base graph changed since preview; re-preview to see the current diff.` };
+      return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", code: "STALE_TOKEN", message: `The base graph changed since preview; re-preview to review the current diff.` };
+    }
+    // Base is UNCHANGED — only now does TTL matter. Expiry with an unchanged
+    // base is purely a timing signal: re-run the dry-run for a fresh token; the
+    // diff you'd approve is identical.
+    if (Date.now() > payload.exp) {
+      await auditBlocked("expired: token past TTL");
+      return { phase: "apply", ok: false, kind: "graphMutation", reason: "expired", code: "TOKEN_EXPIRED", message: "The confirmationToken has expired (base unchanged); re-run without confirm to get a fresh token — the diff will be the same." };
     }
 
     // Lazy draft creation. When the preview was against 'published' the draft
@@ -340,7 +404,7 @@ export async function runGraphMutation<Args>(
     const pointerAfter = await store.readPointer(namespace);
     if (!pointerAfter || !pointerAfter.draftSlot) {
       await auditBlocked("stale: draft could not be established");
-      return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", message: `Draft could not be established for namespace '${namespace}'; re-preview.` };
+      return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", code: "STALE_TOKEN", message: `Draft could not be established for namespace '${namespace}'; re-preview.` };
     }
     const draftSlot = pointerAfter.draftSlot;
 
@@ -380,7 +444,13 @@ export async function runGraphMutation<Args>(
     // Consume the nonce LAST — if writeSlot throws, the token remains usable
     // for a legitimate retry after the operator fixes the underlying issue.
     consumedNonces.add(payload.n);
-    return { phase: "apply", ok: true, kind: "graphMutation", applied: mutation.describe(args), draftSlot, diff };
+    const result: GraphApplyResult = { phase: "apply", ok: true, kind: "graphMutation", applied: mutation.describe(args), draftSlot, diff };
+    // Record the success under the idempotency key (if any) so a retried confirm
+    // returns THIS result rather than re-applying. Set together with the nonce
+    // so "nonce consumed" always implies "result cached" — no window where a
+    // retry sees a used nonce but finds no cached success.
+    if (idempotencyKey != null) idempotentResults.set(idempotencyKey, result);
+    return result;
   }
 
   // ── Preview phase ────────────────────────────────────────────────────────
@@ -427,12 +497,14 @@ export async function runGraphMutation<Args>(
   }
 
   const diff = diffGraphs(snap.graph, after);
+  const expMs = Date.now() + tokenTtlMs();
   const issuedToken = encodeToken({
     m: mutation.name,
     a: hashArgs(args),
     k: snap.kind,
     v: hashGraph(snap.graph),
     n: randomBytes(16).toString("base64url"),
+    exp: expMs,
   });
   return {
     phase: "preview",
@@ -443,5 +515,6 @@ export async function runGraphMutation<Args>(
     diff,
     warnings,
     confirmationToken: issuedToken,
+    expiresAt: new Date(expMs).toISOString(),
   };
 }

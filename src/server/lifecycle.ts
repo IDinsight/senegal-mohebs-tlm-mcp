@@ -97,16 +97,17 @@ export function registerLifecycleTools(server: McpServer) {
     {
       title: "Update wording on a curriculum node",
       description:
-        "Edit an existing wording property on an existing node (a chapter title, a lesson objective, a component description, etc.). `key` is a logical name — 'title', 'text', 'title_en', 'text_en' — and the active subject's adapter decides which storage paths that name updates (typically both the normalized field and its source-truth mirror, atomically). REQUIRES CONFIRMATION: called without confirm:true it returns a preview with a per-mutation diff and a confirmationToken; ask the user to approve, then call again with confirm:true and the token. This is a DRAFT edit — nothing reaches generation until an approver calls publish_draft. Pilot scope: term wording only; adding new fields or editing structural properties is not exposed yet.",
+        "Edit an existing wording property on an existing node (a chapter title, a lesson objective, a component description, etc.). `key` is a logical name — 'title', 'text', 'title_en', 'text_en' — and the active subject's adapter decides which storage paths that name updates (typically both the normalized field and its source-truth mirror, atomically). REQUIRES CONFIRMATION: called without confirm:true it returns a preview with a per-mutation diff, a confirmationToken, and an expiresAt; ask the user to approve, then call again with confirm:true and the token. To make a confirm safe to retry after a dropped connection, also pass a stable `idempotencyKey` on the confirm — a retry with the same key returns the first result instead of re-applying. This is a DRAFT edit — nothing reaches generation until an approver calls publish_draft. Pilot scope: term wording only; adding new fields or editing structural properties is not exposed yet.",
       inputSchema: {
         nodeId: z.string(),
         key: z.string(),
         value: z.string(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
+        idempotencyKey: z.string().optional(),
       },
     },
-    guarded(async (a: { nodeId: string; key: string; value: string; confirm?: boolean; confirmationToken?: string }) => {
+    guarded(async (a: { nodeId: string; key: string; value: string; confirm?: boolean; confirmationToken?: string; idempotencyKey?: string }) => {
       const adapter = getActiveAdapter();
       const ns = kgNamespace(adapter.grade, adapter.subject);
       const result = await runGraphMutation({
@@ -115,6 +116,7 @@ export function registerLifecycleTools(server: McpServer) {
         args: { nodeId: a.nodeId, key: a.key, value: a.value, aliases: adapter.wordingAliases },
         confirm: a.confirm,
         token: a.confirmationToken,
+        idempotencyKey: a.idempotencyKey,
         coverage: (g) => adapter.coverageWarnings?.(g) ?? [],
       });
       return asJson(result);

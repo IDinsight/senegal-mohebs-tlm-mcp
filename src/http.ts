@@ -32,6 +32,7 @@ import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
 import { activateContext } from "./activate.js";
 import { consentPage } from "./consent.js";
 import { resolveActor, runAsActor, type Actor } from "./actor.js";
+import { installProcessGuards } from "./utils/index.js";
 
 const LOG = "[senegal-mohebs-tlm:http]";
 const PORT = parseInt(process.env.PORT ?? "8080", 10);
@@ -192,11 +193,20 @@ function newSession(): Session {
     });
   }
   // Connect inside the session so any context-touching init sees session state.
-  void runInSession(state, () => server.connect(transport));
+  // Attach a .catch: an un-awaited connect that rejected would be an unhandled
+  // rejection — and this runs on EVERY new session (claude.ai opens one per
+  // call), so a floating rejection here was a prime crash-loop trigger.
+  runInSession(state, () => server.connect(transport)).catch((e) =>
+    console.error(`${LOG} session connect failed:`, (e as Error).message));
   return { transport, state, restoreTried: false, ready: readyPromise };
 }
 
 async function main() {
+  // Install BEFORE any request can arrive: a single stray unhandled rejection or
+  // uncaught exception (e.g. an aborted GCS stream) would otherwise kill the
+  // whole process and take EVERY session down at once — the crash-loop we saw.
+  installProcessGuards(LOG);
+
   const app = express();
   app.use(express.json({ limit: "8mb" }));
 

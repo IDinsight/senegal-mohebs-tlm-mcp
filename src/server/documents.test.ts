@@ -92,4 +92,46 @@ describe("pageDocuments", () => {
     expect(r.entries[0].id).toBe("1:lessons");
     expect(r.count).toBe(3);
   });
+
+  it("filters by chapter, narrowing total but keeping totalUnfiltered", () => {
+    const r = ok(pageDocuments(ALL, { chapter: 3 }));
+    expect(r.entries.map((e) => e.id)).toEqual(["3:lessons", "3:manual"]);
+    expect(r.total).toBe(2);              // the filtered set
+    expect(r.totalUnfiltered).toBe(20);   // the whole history
+    expect(r.nextCursor).toBeNull();
+  });
+
+  it("filters by type across all chapters", () => {
+    const r = ok(pageDocuments(ALL, { type: "manual", limit: 100 }));
+    expect(r.count).toBe(10);
+    expect(r.entries.every((e) => e.type === "manual")).toBe(true);
+    expect(r.total).toBe(10);
+  });
+
+  it("combines chapter + type to a single entry", () => {
+    const r = ok(pageDocuments(ALL, { chapter: 7, type: "lessons" }));
+    expect(r.entries.map((e) => e.id)).toEqual(["7:lessons"]);
+    expect(r.total).toBe(1);
+  });
+
+  it("paginates WITHIN a filtered set without leaking other chapters", () => {
+    const seen: string[] = [];
+    let cursor: string | null | undefined;
+    let guard = 0;
+    do {
+      const r = ok(pageDocuments(ALL, { type: "manual", cursor: cursor ?? undefined, limit: 4 }));
+      seen.push(...r.entries.map((e) => e.id));
+      cursor = r.nextCursor;
+      if (++guard > 50) throw new Error("did not terminate");
+    } while (cursor != null);
+    expect(seen).toEqual(ALL.filter((e) => e.type === "manual").map((e) => e.id));
+    expect(seen.every((id) => id.endsWith(":manual"))).toBe(true);
+  });
+
+  it("returns an empty page (not an error) when a filter matches nothing", () => {
+    const r = ok(pageDocuments(ALL, { chapter: 999 }));
+    expect(r.count).toBe(0);
+    expect(r.total).toBe(0);
+    expect(r.nextCursor).toBeNull();
+  });
 });

@@ -9,14 +9,32 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { getStorageAdapter, extractDocxText, listEntries, recordContent, reconcile } from "../storage/index.js";
 import type { HistoryEntry } from "../types.js";
 
-// ── list_documents pagination ────────────────────────────────────────────────
+// ── list_documents pagination + filters ──────────────────────────────────────
 // listEntries() is sorted (chapter asc, type asc) and stable, so we page with an
 // opaque cursor pinned to the last entry's (chapter, type) — the same limit +
 // cursor contract as read_audit. The cursor carries both keys (not the raw id
 // string) because the id `${chapter}:${type}` sorts lexically, which would break
 // the numeric chapter order (e.g. "10:manual" < "2:manual").
+//
+// SINGLE SOURCE OF TRUTH: `listDocumentsShape` below is the ONE Zod shape used
+// both as the tool's advertised `inputSchema` (so clients see limit/cursor/
+// chapter/type and their types) AND as the runtime validator (the MCP SDK parses
+// arguments against it before the handler runs). There is no second, divergent
+// hand-rolled validator — the "schema says nothing / handler enforces a number"
+// split that surfaced in live testing cannot recur.
 const DEFAULT_PAGE = 25;
 const MAX_PAGE = 100;
+
+// The advertised + enforced input schema (mirrors read_audit's limit/cursor
+// convention). `type` is a free string here — the set of valid deliverable keys
+// is subject-specific and only known at runtime — validated in the handler
+// against the active adapter, with a helpful error listing the valid keys.
+export const listDocumentsShape = {
+  cursor: z.string().optional().describe("Opaque cursor from a prior page's nextCursor. Omit to start at the first document."),
+  limit: z.number().int().min(1).max(MAX_PAGE).optional().describe(`Page size, 1..${MAX_PAGE} (default ${DEFAULT_PAGE}).`),
+  chapter: z.number().int().optional().describe("Filter to one unit (CI maths: chapter number)."),
+  type: z.string().optional().describe("Filter to one deliverable key (CI maths: 'manual' or 'lessons')."),
+};
 
 type DocCursor = { chapter: number; type: string };
 
@@ -40,22 +58,29 @@ function decodeCursor(s: string): DocCursor | null {
 const isAfterCursor = (e: HistoryEntry, c: DocCursor): boolean =>
   e.chapter > c.chapter || (e.chapter === c.chapter && e.type.localeCompare(c.type) > 0);
 
-// Pure paging over the already-sorted history. Exported so the paging contract
-// can be unit-tested without standing up the storage/adapter stack.
+// Pure paging (+ optional chapter/type filtering) over the already-sorted
+// history. Exported so the paging contract can be unit-tested without standing
+// up the storage/adapter stack. `total` reflects the FILTERED set being paged
+// (the meaningful denominator for the cursor walk); `totalUnfiltered` reports
+// the whole history size so a caller can see a filter narrowed the result.
 export function pageDocuments(
   all: HistoryEntry[],
-  args: { cursor?: string; limit?: number }
-): { entries: HistoryEntry[]; count: number; total: number; nextCursor: string | null } | { error: string } {
+  args: { cursor?: string; limit?: number; chapter?: number; type?: string }
+): { entries: HistoryEntry[]; count: number; total: number; totalUnfiltered: number; nextCursor: string | null } | { error: string } {
   const cursor = args.cursor != null ? decodeCursor(args.cursor) : null;
   if (args.cursor != null && cursor == null) {
     return { error: "Invalid cursor — pass a cursor returned by a prior list_documents page, or omit it to start from the first document." };
   }
   const limit = Math.min(Math.max(1, Math.floor(args.limit ?? DEFAULT_PAGE)), MAX_PAGE);
-  const rows = cursor ? all.filter((e) => isAfterCursor(e, cursor)) : all;
+  // Filters first (they define the set being paged), then the cursor slice.
+  const filtered = all.filter(
+    (e) => (args.chapter == null || e.chapter === args.chapter) && (args.type == null || e.type === args.type),
+  );
+  const rows = cursor ? filtered.filter((e) => isAfterCursor(e, cursor)) : filtered;
   const page = rows.slice(0, limit);
   const last = page[page.length - 1];
   const nextCursor = rows.length > limit && last ? encodeCursor({ chapter: last.chapter, type: last.type }) : null;
-  return { entries: page, count: page.length, total: all.length, nextCursor };
+  return { entries: page, count: page.length, total: filtered.length, totalUnfiltered: all.length, nextCursor };
 }
 
 // SUBJECT-SPECIFIC (CI-maths-leaning). The structured content recorded per
@@ -83,8 +108,14 @@ export function registerDocumentTools(server: McpServer) {
   server.registerTool("reconcile", { title: "Reconcile bucket with history", description: "List the documents in Firebase Storage and diff against history: tracked docs, UNTRACKED docs needing ingestion, entries dropped because their object is gone, and duplicate resolutions.", inputSchema: {} },
     guarded(async () => asJson(await reconcile(getActiveAdapter().deliverables))));
 
-  server.registerTool("list_documents", { title: "List tracked documents", description: "Current history: one canonical entry per document, with its known content, ordered by unit then deliverable. Paginated: pass limit (default 25, max 100) and an opaque cursor. Returns { entries, count, total, nextCursor }; nextCursor is null on the last page — pass it back to fetch the next page.", inputSchema: { cursor: z.string().optional(), limit: z.number().int().optional() } },
-    guarded(async (a: { cursor?: string; limit?: number }) => asJson(pageDocuments(await listEntries(), a))));
+  server.registerTool("list_documents", { title: "List tracked documents", description: "Current history: one canonical entry per document, with its known content, ordered by unit then deliverable. Paginated: pass limit (default 25, max 100) and an opaque cursor. Optional filters: chapter (a unit number) and type (a deliverable key — CI maths: 'manual' or 'lessons'). Returns { entries, count, total, totalUnfiltered, nextCursor }; nextCursor is null on the last page — pass it back to fetch the next page.", inputSchema: listDocumentsShape },
+    guarded(async (a: { cursor?: string; limit?: number; chapter?: number; type?: string }) => {
+      // `type` is validated at runtime (not in the schema) because the valid
+      // deliverable keys are subject-specific and known only from the active
+      // adapter — same reason record_document_content/log_generation use badDeliverable.
+      if (a.type != null) { const bad = badDeliverable(a.type); if (bad) return bad; }
+      return asJson(pageDocuments(await listEntries(), a));
+    }));
 
   server.registerTool("create_upload_url", { title: "Create document upload URL", description: "Get a short-lived signed URL to upload a generated .docx to the bucket. Upload with an HTTP PUT, Content-Type application/vnd.openxmlformats-officedocument.wordprocessingml.document. relPath is like 'chapitre_05/Manuel - Chapitre 5.docx'. After uploading, call log_generation with the same relPath. REQUIRES CONFIRMATION: called without confirm:true it only returns a needsConfirmation notice — ask the user to approve the upload, then call again with confirm:true.", inputSchema: { relPath: z.string(), confirm: z.boolean().optional() } },
     guarded(async (a: { relPath: string; confirm?: boolean }) => {

@@ -417,6 +417,97 @@ describe("graph-mutation framework — reusability & parity", () => {
   });
 });
 
+describe("graph-mutation framework — idempotency & TTL (issue #4)", () => {
+  it("preview carries an expiresAt", async () => {
+    const before = await readPublishedGraph(ns);
+    const preview = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: before.nodes[0].id, key: "k", value: 1 } });
+    if (preview.phase !== "preview") throw new Error("preview");
+    expect(typeof preview.expiresAt).toBe("string");
+    expect(Number.isNaN(Date.parse(preview.expiresAt))).toBe(false);
+  });
+
+  it("a retried confirm with the same idempotencyKey is a safe no-op (no double-apply)", async () => {
+    const before = await readPublishedGraph(ns);
+    const targetId = before.nodes[0].id;
+    const preview = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "once" } });
+    if (preview.phase !== "preview") throw new Error("preview");
+
+    const first = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "once" }, confirm: true, token: preview.confirmationToken, idempotencyKey: "retry-1" });
+    expect(first).toMatchObject({ ok: true });
+
+    // Same token + same idempotencyKey → cached success, marked idempotent.
+    const retry = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "once" }, confirm: true, token: preview.confirmationToken, idempotencyKey: "retry-1" });
+    expect(retry).toMatchObject({ ok: true, idempotent: true });
+
+    // Applied EXACTLY once: one apply audit, draft carries the single value.
+    const committed = await store.listAudit({ namespace: ns, eventType: "apply" });
+    expect(committed).toHaveLength(1);
+    const draftNodes = await store.listNodes(ns, "b");
+    expect((draftNodes.find((n) => n.id === targetId)!.properties as Record<string, unknown>).k).toBe("once");
+  });
+
+  it("the idempotency cache never masks a mismatched retry (args checked first)", async () => {
+    const before = await readPublishedGraph(ns);
+    const targetId = before.nodes[0].id;
+    const preview = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "A" } });
+    if (preview.phase !== "preview") throw new Error("preview");
+    await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "A" }, confirm: true, token: preview.confirmationToken, idempotencyKey: "retry-2" });
+    // Reusing the key but with DIFFERENT args must not return the cached success.
+    const mismatched = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "B" }, confirm: true, token: preview.confirmationToken, idempotencyKey: "retry-2" });
+    expect(mismatched).toMatchObject({ ok: false, reason: "argsMismatch", code: "ARGS_MISMATCH" });
+  });
+
+  it("without an idempotencyKey, a replay is still rejected (strict one-time token)", async () => {
+    const before = await readPublishedGraph(ns);
+    const targetId = before.nodes[0].id;
+    const preview = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: 1 } });
+    if (preview.phase !== "preview") throw new Error("preview");
+    await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: 1 }, confirm: true, token: preview.confirmationToken });
+    const replay = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: 1 }, confirm: true, token: preview.confirmationToken });
+    expect(replay).toMatchObject({ ok: false, reason: "replay", code: "REPLAY" });
+  });
+
+  it("an expired token with an UNCHANGED base is TOKEN_EXPIRED (re-run the dry-run)", async () => {
+    process.env.TLM_CONFIRM_TTL_MS = "1";     // 1 ms — expires almost immediately
+    try {
+      const before = await readPublishedGraph(ns);
+      const targetId = before.nodes[0].id;
+      const preview = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: 1 } });
+      if (preview.phase !== "preview") throw new Error("preview");
+      await new Promise((r) => setTimeout(r, 8));  // let the 1 ms TTL lapse
+      const expired = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: 1 }, confirm: true, token: preview.confirmationToken });
+      expect(expired).toMatchObject({ ok: false, reason: "expired", code: "TOKEN_EXPIRED" });
+      // Nothing applied — no draft was created.
+      expect((await store.readPointer(ns))?.draftSlot).toBe(null);
+    } finally {
+      delete process.env.TLM_CONFIRM_TTL_MS;
+    }
+  });
+
+  it("a MOVED base reports STALE_TOKEN even when the token is also expired (stale wins)", async () => {
+    const before = await readPublishedGraph(ns);
+    const targetId = before.nodes[0].id;
+    // Land one edit so the base moves.
+    const p1 = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "landed" } });
+    if (p1.phase !== "preview") throw new Error("p1");
+    // Preview p2 against published BEFORE p1 lands would be onPublished→onDraft
+    // (already covered). Here: expire a token whose base then moves.
+    process.env.TLM_CONFIRM_TTL_MS = "1";
+    try {
+      const p2 = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "p2" } });
+      if (p2.phase !== "preview") throw new Error("p2");
+      // Land p1 (moves the base). p1 used the default TTL from before the override? No —
+      // p1 was previewed with default TTL, so its token is still fresh; confirm it.
+      await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "landed" }, confirm: true, token: p1.confirmationToken });
+      await new Promise((r) => setTimeout(r, 8));
+      const stale = await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: targetId, key: "k", value: "p2" }, confirm: true, token: p2.confirmationToken });
+      expect(stale).toMatchObject({ ok: false, reason: "stale", code: "STALE_TOKEN" });
+    } finally {
+      delete process.env.TLM_CONFIRM_TTL_MS;
+    }
+  });
+});
+
 describe("shared confirm envelope — two lifecycles, stakes-accurate messaging", () => {
   it("document tools emit the shared envelope with LIVE-WRITE phrasing", () => {
     const env = buildConfirmEnvelope("write NOW to the bucket");
