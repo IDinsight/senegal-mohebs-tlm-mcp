@@ -5,15 +5,26 @@
 // re-exported here so each tool group imports all its helpers from one place
 // ("./shared.js").
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { asJson, buildConfirmEnvelope, type ToolResult } from "../utils/index.js";
+import { asJson, buildConfirmEnvelope, classifyError, toolError, isDebug, type ToolResult } from "../utils/index.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { ContextNotSetError } from "../context/index.js";
 
-export { asJson, type ToolResult };
+export { asJson, toolError, type ToolResult };
 
-// Wrap a tool handler so that, when no grade/subject is active, the server asks
-// the caller to pick one (and lists the options) instead of throwing. Every
-// source- or bucket-dependent tool is registered through this.
+const LOG = "[senegal-mohebs-tlm]";
+
+// Wrap a tool handler so that:
+//   • no grade/subject active → a friendly `needsContext` prompt (not an error);
+//   • any other throw → a STRUCTURED, typed `{ error: { code, message } }`
+//     envelope with `isError` set, instead of the SDK's bare `error.message`.
+// The typed code (STORE_UNAVAILABLE vs INTERNAL_ERROR vs …) is what lets a
+// caller tell a datastore outage apart from a logic bug — the distinction that
+// was impossible when every failure read "Tool execution failed". The real
+// message is always included; a stack is added only in debug mode (TLM_DEBUG=1).
+// (Argument-validation failures are caught by the SDK BEFORE the handler runs,
+// so they surface as the SDK's own "Input validation error: …" — already
+// distinct from the handler-side codes below.)
+// Every source- or bucket-dependent tool is registered through this.
 export const guarded = <A>(fn: (a: A) => ToolResult | Promise<ToolResult>) => async (a: A): Promise<ToolResult> => {
   try {
     return await fn(a);
@@ -25,7 +36,12 @@ export const guarded = <A>(fn: (a: A) => ToolResult | Promise<ToolResult>) => as
         available: e.available,
       });
     }
-    throw e;
+    const { code, message } = classifyError(e);
+    // One structured stderr line so an operator can correlate the client-facing
+    // typed error with the server log (and see the stack there even in prod).
+    console.error(`${LOG} tool handler error [${code}]:`, e instanceof Error ? (e.stack ?? e.message) : String(e));
+    const detail = isDebug() && e instanceof Error ? { stack: e.stack } : undefined;
+    return toolError(code, message, detail);
   }
 };
 

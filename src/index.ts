@@ -22,6 +22,7 @@ import { getActiveContext, listAvailableContexts } from "./context/index.js";
 import { activateContext } from "./activate.js";
 import { getActiveAdapter } from "./adapters/index.js";
 import { reconcile } from "./storage/index.js";
+import { installProcessGuards } from "./utils/index.js";
 
 export { CONFIG } from "./config.js";
 export { getActiveContext, listAvailableContexts } from "./context/index.js";
@@ -47,6 +48,8 @@ async function applyStartupContext() {
 }
 
 async function main() {
+  // Keep a stray async failure from taking the process down (see http.ts).
+  installProcessGuards(LOG);
   await applyStartupContext();
   if (getActiveContext()) {
     try {
