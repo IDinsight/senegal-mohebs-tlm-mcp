@@ -43,6 +43,24 @@ const READING_PARSE: GraphParseDescriptor = {
   roleToKind: { week: "week", expectation: "standard" },
   labelToKind: { LearningComponent: "component" },
   numberFrom: "description", // week number is a bare-number description
+  // Spine-scope. The generic parser maps EVERY LC expectation to a "standard", but
+  // the reading spine is only the six language-tool strands hanging directly off a
+  // week. Keep weeks + those standards + their components; drop the rest (oral/
+  // reading standards, and expectations whose sous-domaine/subtopic parents aren't
+  // seeded → orphans). Matches the pre-convergence parse — reads are identical
+  // (buildSlice already filters to STRAND_TYPES), this just keeps the store lean.
+  postParse: (units) => {
+    const byId = new Map(units.map((u) => [u.id, u]));
+    const keep = new Set<string>();
+    for (const u of units) if (u.kind === "week") keep.add(u.id);
+    for (const u of units) {
+      if (u.kind !== "standard") continue;
+      const parent = byId.get(u.parentId ?? "");
+      if (parent?.kind === "week" && STRAND_TYPES.has(String(u.properties.statement_type ?? ""))) keep.add(u.id);
+    }
+    for (const u of units) if (u.kind === "component") { const p = byId.get(u.parentId ?? ""); if (p && keep.has(p.id)) keep.add(u.id); }
+    return units.filter((u) => keep.has(u.id));
+  },
 };
 
 function detect(raw: unknown): boolean {
