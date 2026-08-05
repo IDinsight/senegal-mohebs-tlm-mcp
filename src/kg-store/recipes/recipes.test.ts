@@ -92,7 +92,9 @@ async function readDraft(): Promise<MutationGraph | null> {
 
 // ── graph inspection helpers ──────────────────────────────────────────────────
 const HAS_CHILD = "hasChild";
-const chapterNum = (n: { properties: Record<string, unknown> }): number | undefined => (n.properties.raw as Record<string, unknown> | undefined)?.chapitreNum as number | undefined;
+// A chapter's number now lives in the normalized `order` field (mirrored under
+// raw.metadata.order). Chapter→lesson membership is the hasChild edge, not a number.
+const chapterNum = (n: { properties: Record<string, unknown> }): number | undefined => n.properties.order as number | undefined;
 const findChapter = (g: MutationGraph, num: number) => g.nodes.find((n) => n.type === "chapter" && chapterNum(n) === num)!;
 const lessonIdsOf = (g: MutationGraph, chapterId: string) =>
   g.edges.filter((e) => e.type === HAS_CHILD && e.from === chapterId).map((e) => e.to).filter((id) => g.nodes.find((n) => n.id === id)?.type === "lesson");
@@ -153,11 +155,9 @@ describe("add_lesson", () => {
     const draft = await readDraft();
     expect(draft).not.toBeNull();
     const newLesson = draft!.nodes.find((n) => n.id === lessonId)!;
-    // Regime-aware: the new lesson's chapitreNum matches its chapter, so it is
-    // NOT drifting — no drift warning fires.
-    expect(nodeRawNum(draft!, lessonId)).toBe(1);
-    expect((newLesson.properties.raw as Record<string, unknown>).osTexte).toBe("Nouvelle leçon");
-    expect(coverage(draft!).some((w) => /disagrees|will not render/.test(w))).toBe(false);
+    // Chapter membership is the hasChild edge (asserted above); the converged
+    // edge-based model gives a lesson no chapter-membership number to drift.
+    expect(newLesson.properties.text).toBe("Nouvelle leçon");
   });
 
   it("BLOCKS linking to a nonexistent chapter (no token)", async () => {
@@ -225,7 +225,7 @@ describe("add_chapter", () => {
 
 // ── move_lesson ───────────────────────────────────────────────────────────────
 describe("move_lesson", () => {
-  it("rehomes a lesson atomically and rewrites its chapitreNum (no drift)", async () => {
+  it("rehomes a lesson atomically by rewiring the hasChild edge", async () => {
     const published = await readPublished();
     const src = findChapter(published, 1);
     const dst = findChapter(published, 2);
@@ -242,9 +242,7 @@ describe("move_lesson", () => {
     const draft = await readDraft();
     expect(lessonIdsOf(draft!, src.id)).not.toContain(movable);
     expect(lessonIdsOf(draft!, dst.id)).toContain(movable);
-    // Mandatory Regime-B rewrite: the moved lesson now joins chapter 2.
-    expect(nodeRawNum(draft!, movable)).toBe(2);
-    expect(coverage(draft!).some((w) => w.includes(movable) && /disagrees|will not render/.test(w))).toBe(false);
+    // Membership is the edge — the moved lesson keeps its own number; nothing drifts.
   });
 
   it("BLOCKS a move to a nonexistent chapter", async () => {
@@ -290,12 +288,10 @@ describe("split_chapter", () => {
     const moved = lessonIdsOf(draft!, newChapterId);
     expect(moved).toContain(atLesson);
     expect(lessonIdsOf(draft!, src.id)).not.toContain(atLesson);
-    // Every moved lesson's chapitreNum was rewritten to the new chapter → no drift.
-    for (const id of moved) expect(nodeRawNum(draft!, id)).toBe(appendedNum);
+    // The moved lessons keep their own numbers — membership followed the edge.
     // Whole draft is referentially clean: diff_draft reflects it, no dangling.
     const whole = await diffDraft(ns, coverage);
     expect(whole.hasDraft).toBe(true);
-    expect(coverage(draft!).some((w) => /will not render|disagrees/.test(w))).toBe(false);
   });
 
   it("BLOCKS (as a whole) a split whose atLesson is not in the chapter — nothing partial lands", async () => {
@@ -310,25 +306,25 @@ describe("split_chapter", () => {
 
 // ── renumber (the regime-gated recipe) ────────────────────────────────────────
 describe("renumber", () => {
-  it("rewrites the chapter number AND every child lesson's chapitreNum atomically → no drift", async () => {
+  it("rewrites ONLY the chapter number; lessons follow via the edge (no cascade)", async () => {
     const published = await readPublished();
     const chapter = findChapter(published, 3);
     const lessons = lessonIdsOf(published, chapter.id);
 
     const { preview, confirm } = await runRecipe(renumber, { ...bag(), chapterId: chapter.id, newNumber: 26 });
     if (preview.phase !== "preview") throw new Error("expected preview");
-    // The chapter + every child lesson show up as CHANGED nodes (numbers rewritten).
+    // ONLY the chapter is a CHANGED node — lessons are untouched, since membership
+    // is the hasChild edge, not a denormalized number.
     const changedIds = preview.diff.nodes.changed.map((e) => e.id);
     expect(changedIds).toContain(chapter.id);
-    for (const id of lessons) expect(changedIds).toContain(id);
+    for (const id of lessons) expect(changedIds).not.toContain(id);
     expect(confirm?.phase).toBe("apply");
 
     const draft = await readDraft();
     expect(nodeRawNum(draft!, chapter.id)).toBe(26);
     expect((draft!.nodes.find((n) => n.id === chapter.id)!.properties.order)).toBe(26);
-    for (const id of lessons) expect(nodeRawNum(draft!, id)).toBe(26);
-    // The family stays consistent → the Regime-B drift warning does NOT fire.
-    expect(coverage(draft!).some((w) => /disagrees|will not render/.test(w))).toBe(false);
+    // The lessons still belong to the (renumbered) chapter via the edge.
+    expect(lessonIdsOf(draft!, chapter.id).sort()).toEqual(lessons.sort());
   });
 
   it("BLOCKS a renumber into an already-used number", async () => {
@@ -379,10 +375,10 @@ describe("recipes end-to-end", () => {
     // A published read (deserialized like the presenter) shows the new structure.
     const pub = await readPublished();
     const model = deserializeToModel(pub);
-    expect(model.byId.get(chapId)!.properties.chapitreNum).toBe(gap);
-    expect(model.byId.get(newChap)!.properties.chapitreNum).toBe(appendedNum);
-    // The moved lesson now joins the split-off chapter (Regime-B key rewritten).
-    expect((model.byId.get(lIds[0])!.properties.chapitreNum)).toBe(appendedNum);
+    expect(model.byId.get(chapId)!.order).toBe(gap);
+    expect(model.byId.get(newChap)!.order).toBe(appendedNum);
+    // The moved lesson now belongs to the split-off chapter via the hasChild edge.
+    expect(lessonIdsOf(pub, newChap).includes(lIds[0])).toBe(true);
     // #2 parity: an untouched chapter's lessons are unchanged.
     expect(lessonIdsOf(pub, findChapter(pub, 10).id).sort()).toEqual(untouchedLessons);
   });

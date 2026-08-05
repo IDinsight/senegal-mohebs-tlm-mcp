@@ -2,7 +2,7 @@
 // Subject-NEUTRAL coverage helpers (#13). These compute structural-completeness
 // WARNINGS that any adapter can reuse by naming its own kinds — they carry no
 // subject vocabulary of their own. Subject-SPECIFIC rules (a CI maths chapter's
-// bilan, the CI maths chapitreNum denormalization) live in the adapter, not here.
+// bilan, or its chapter-parent-scoped multi-parent rule) live in the adapter, not here.
 //
 // Why these two shapes are generic: they're properties of a `hasChild` tree,
 // which every subject's graph is, regardless of what the levels are called.

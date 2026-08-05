@@ -83,8 +83,8 @@ export type CurriculumUnit = {
   kind: string;                        // subject-defined role: "chapter","lesson","component","task",…
   code: string | null;                 // statement_code / statementCode
   title: string | null;                // short display label
-  text: string | null;                 // full statement text (osTexte / description)
-  order: number | null;                // leconNum, or derived ordinal within siblings
+  text: string | null;                 // full statement text (description)
+  order: number | null;                // metadata.order, or derived ordinal within siblings
   parentId: string | null;
   childIds: string[];                  // ordered children
   buildsTowards: string[];             // unit ids (empty if the subject has no progression)
@@ -149,12 +149,12 @@ export type Capabilities = {
  * a curator would ask about (`"title"`, `"text"`, `"title_en"`, `"text_en"`)
  * to the concrete `StoredNode.properties` paths that back it for a given
  * node kind. When both a normalized field (e.g. `title`) and its raw
- * source (`raw.chapitreTitre`) hold the same wording, the adapter lists
+ * source (`raw.description`) hold the same wording, the adapter lists
  * BOTH here so one curator call updates them together — the "call twice
  * or drift" trap doesn't reach the curator's mental model.
  *
  * Paths are dot-notation relative to `StoredNode.properties`, e.g.
- * `"title"` or `"raw.chapitreTitre"`. The mutation validates every path
+ * `"title"` or `"raw.description"`. The mutation validates every path
  * against a central safety allowlist regardless — a rogue adapter cannot
  * expand the editable surface by declaring a path outside the pilot.
  *
@@ -213,7 +213,7 @@ export type GraphView = { nodes: GraphNodeView[]; edges: GraphEdgeView[] };
 export interface SubjectAdapter {
   readonly grade: string;
   readonly subject: string;
-  readonly id: string;                          // stable adapter id, e.g. "ci-maths/graph-array-v1"
+  readonly id: string;                          // stable adapter id, e.g. "ci-maths/nodes-relationships-v1"
   readonly deliverables: DeliverableSpec[];
   readonly capabilities: Capabilities;
   /**

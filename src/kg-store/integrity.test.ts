@@ -261,26 +261,10 @@ describe("coverage warnings — inform, never block", () => {
     expect(typeof preview.confirmationToken).toBe("string"); // not blocked
   });
 
-  it("chapitreNum drift (regime B) WARNS, does not block", async () => {
-    // Create a chapter (num 902) and a lesson whose chapitreNum is 903, then
-    // link them by edge. The numbers disagree with the edge → drift warning.
-    const chapterId = mintNodeId();
-    await apply(createNode, { kind: "chapter", properties: { title: "Drift chap", raw: { chapitreNum: 902, chapitreTitre: "Drift chap" } }, namespace: ns, aliases: aliases(), newNodeId: chapterId });
-    const lessonId = mintNodeId();
-    await apply(createNode, { kind: "lesson", properties: { text: "Drift lesson", isAssessment: true, raw: { osTexte: "Drift lesson", chapitreNum: 903 } }, namespace: ns, aliases: aliases(), newNodeId: lessonId });
+  // (The old "chapitreNum drift (regime B)" warning is gone: chapter→lesson is a
+  // real hasChild edge now, so there is no denormalized number that can drift.)
 
-    const preview = await runGraphMutation({
-      namespace: ns, mutation: linkNodes,
-      args: { edgeType: "hasChild", fromId: chapterId, toId: lessonId, properties: {}, namespace: ns },
-      coverage,
-    });
-    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
-    expect(preview.warnings.some((w) => w.includes("chapitreNum") || w.toLowerCase().includes("render under its chapter"))).toBe(true);
-    // Still confirmable — drift is a warning, not corruption.
-    expect(typeof preview.confirmationToken).toBe("string");
-  });
-
-  it("lesson linked to two chapters warns (>1 parent), still confirmable", async () => {
+  it("lesson linked to two chapters warns (>1 chapter parent), still confirmable", async () => {
     // Reuse two real chapters, and a real lesson child of the first; link the
     // same lesson under a second chapter too.
     const g = await readPublished(ns);

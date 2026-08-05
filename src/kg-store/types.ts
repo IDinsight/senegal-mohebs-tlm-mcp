@@ -37,7 +37,7 @@ export type StoredEdge = {
 export type StoredMeta = {
   contentHash: string;                     // sha256 hex of the raw KG bundle
   seededAt: string;                        // ISO-8601 UTC
-  adapterId: string;                       // e.g. "ci-maths/graph-array-v1"
+  adapterId: string;                       // e.g. "ci-maths/nodes-relationships-v1"
   nodeCount: number;
   edgeCount: number;
 };

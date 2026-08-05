@@ -9,7 +9,7 @@ import type { GraphMutation } from "../mutations.js";
 import { createNode, linkNodes } from "../structural.js";
 import {
   type RecipeCommon,
-  K_CHAPTER_NUMBER, K_LESSON_CHAPTER, K_LESSON_POSITION, W_TITLE, W_TITLE_EN, W_TEXT, W_TEXT_EN,
+  K_CHAPTER_NUMBER, K_LESSON_POSITION, W_TITLE, W_TITLE_EN, W_TEXT, W_TEXT_EN,
   asNum, buildProps, usedChapterNumbers,
 } from "./shared.js";
 
@@ -57,7 +57,6 @@ export const addChapter: GraphMutation<AddChapterArgs> = {
         [
           { aliases: a.wordingAliases, kind: a.profile.lessonKind, key: W_TEXT, value: l.text },
           { aliases: a.wordingAliases, kind: a.profile.lessonKind, key: W_TEXT_EN, value: l.text_en },
-          { aliases: a.structuralAliases, kind: a.profile.lessonKind, key: K_LESSON_CHAPTER, value: a.number },
           { aliases: a.structuralAliases, kind: a.profile.lessonKind, key: K_LESSON_POSITION, value: position },
         ],
         [{ path: a.profile.assessmentProperty, value: l.isBilan ?? false }],

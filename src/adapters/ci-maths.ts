@@ -1,38 +1,32 @@
 // ── Module: adapters · CI maths ───────────────────────────────────────────────
-// The single per-subject adapter module for CI maths. Consolidates what used
-// to live in three files — the raw-graph parser (curriculum/adapters/maths.ts),
-// the LC→friendly presenter (createMathsCurriculum), and the subject profile
-// (profiles/maths.ts) — into one place. Behavior only: no schema, no LC
-// property/edge/cardinality declarations, no integrity rules. Storage
+// The single per-subject adapter module for CI maths. Behavior only: no schema,
+// no LC property/edge/cardinality declarations, no integrity rules. Storage
 // round-trip lives in curriculum/store-bridge.ts and runs on the parsed
-// CurriculumModel (subject-agnostic) — the adapter doesn't know about the
-// store shape.
+// CurriculumModel (subject-agnostic).
+//
+// The source graph is now the CONVERGED `{ nodes, relationships }` envelope with
+// the LC metadata scheme (normalized_statement_type = container/leaf,
+// metadata.role = fine role, metadata.order = number, statement_type = category
+// on leaves, description = text/title). Parsing is delegated to the generic
+// `parseGraph`; this module only supplies the descriptor and the read-time
+// projection. The two axes — schedule (week→OS) and content (domaine→chapter→OS)
+// — are read through the edges (childrenOf), never a denormalized number.
 import { readFileSync } from "node:fs";
 import { CONFIG, kgSource } from "../config.js";
 import { sourcePath, sessionState } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
 import { neighborhoodDomains, suggestFreshDomain, domainUsage } from "../generation/index.js";
-import { buildModel, unit, terminologySections, PRELOADED_MODEL_KEY, emptyContainerWarnings, multiParentWarnings } from "../curriculum/index.js";
+import { parseGraph, terminologySections, PRELOADED_MODEL_KEY, emptyContainerWarnings, type GraphParseDescriptor } from "../curriculum/index.js";
 import { noAccents } from "../utils/index.js";
 import type {
   SubjectAdapter, DeliverableSpec, CharacterRef,
   CurriculumModel, CurriculumUnit, GraphView,
 } from "../types.js";
 
-// Raw CI-maths graph shape: a single `graph` array of discriminated nodes and
-// relationships. This module is the ONLY place that knows it.
-type RawNode = { type: "node"; identifier: string; labels: string[]; properties: Record<string, any> };
-type RawRel = { type: "relationship"; identifier: string; label: string; source_identifier: string; target_identifier: string };
-type RawGraph = { graph: (RawNode | RawRel)[] };
-
-const isNode = (e: any): e is RawNode => e?.type === "node";
-const isRel = (e: any): e is RawRel => e?.type === "relationship";
-
-const ADAPTER_ID = "ci-maths/graph-array-v1";
+const ADAPTER_ID = "ci-maths/nodes-relationships-v1";
 
 // Teacher guide filenames contain "fiche(s) de leçon"; everything else is the
-// pupil manual. The two rules are mutually exclusive, so discovery matches
-// exactly one deliverable per file.
+// pupil manual. Mutually exclusive, so discovery matches exactly one deliverable.
 const isLessons = (filename: string) => noAccents(filename).includes("fiches de lecons") || noAccents(filename).includes("fiche de lecon");
 
 const DELIVERABLES: DeliverableSpec[] = [
@@ -40,177 +34,99 @@ const DELIVERABLES: DeliverableSpec[] = [
   { key: "lessons", label: "Fiches de leçons (teacher guide)", scopeKind: "chapter", classify: isLessons, dependsOn: ["manual"], promptFile: "PROMPT_generate_lessons.md" },
 ];
 
+// ── Small typed accessors over the raw passthrough (unit.properties) ──────────
+type Meta = { role?: string; order?: number; en?: Record<string, any> };
+const meta = (u: CurriculumUnit): Meta => (u.properties.metadata as Meta) ?? {};
+const rawStr = (u: CurriculumUnit, k: string): string | null => (u.properties[k] as string) ?? null;
+
 // ── Raw envelope → CurriculumModel ──────────────────────────────────────────
-// Kept as module-level pure functions (no closure state) so they can be
-// referenced from the built adapter object without allocation per activation.
+// Delegated to the generic parser; the descriptor is all that is subject-specific.
+// The bilan (end-of-chapter assessment) is the one raw quirk that needs a hook:
+// per chapter, the last lesson whose text mentions "bilan", else the last lesson.
+const MATHS_PARSE: GraphParseDescriptor = {
+  roleToKind: {
+    week: "week",
+    subtopic: "chapter",
+    strand: "domaine",
+    "objectif spécifique": "lesson",
+    "intégration du palier": "lesson",
+  },
+  labelToKind: { LearningComponent: "component", Curriculum: "task" },
+  numberFrom: "order",
+  progressionEdge: "buildsTowards",
+  postParse: (units) => {
+    const byId = new Map(units.map((u) => [u.id, u]));
+    for (const c of units) {
+      if (c.kind !== "chapter") continue;
+      const lessons = c.childIds
+        .map((id) => byId.get(id))
+        .filter((u): u is CurriculumUnit => !!u && u.kind === "lesson")
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const bilan = [...lessons].reverse().find((l) => /bilan/i.test(String(l.text ?? ""))) ?? lessons[lessons.length - 1];
+      if (bilan) bilan.isAssessment = true;
+    }
+  },
+};
 
 function detect(raw: unknown): boolean {
-  const g = (raw as RawGraph | undefined)?.graph;
-  return Array.isArray(g) && g.some((e) => isNode(e) && e.properties?.statementType === "Chapitre");
+  const g = raw as { nodes?: unknown[]; relationships?: unknown[] } | undefined;
+  if (!Array.isArray(g?.nodes) || !Array.isArray(g?.relationships)) return false;
+  // Maths-specific signal: a chapter grouping (a `Chapitre` with role "subtopic").
+  return g!.nodes.some((n: any) => n?.properties?.statement_type === "Chapitre" && n?.properties?.metadata?.role === "subtopic");
 }
 
 function parse(raw: unknown): CurriculumModel {
-  const graph = (raw as RawGraph).graph ?? [];
-  const nodes = graph.filter(isNode);
-  const rels = graph.filter(isRel);
-  const nodeById = new Map(nodes.map((n) => [n.identifier, n]));
-  const label0 = (id: string) => nodeById.get(id)?.labels?.[0];
-
-  const units: CurriculumUnit[] = [];
-
-  // Chapters and lessons (both StandardsFrameworkItem, told apart by statementType).
-  const chapterNodes = nodes.filter((n) => n.labels[0] === "StandardsFrameworkItem" && n.properties.statementType === "Chapitre");
-  const lessonNodes = nodes.filter((n) => n.labels[0] === "StandardsFrameworkItem" && String(n.properties.statementType ?? "").startsWith("OS") && n.properties.leconNum != null);
-  const componentNodes = nodes.filter((n) => n.labels[0] === "LearningComponent");
-  const taskNodes = nodes.filter((n) => n.labels[0] === "Curriculum");
-
-  for (const n of chapterNodes)
-    units.push(unit({ id: n.identifier, kind: "chapter", title: n.properties.chapitreTitre ?? null, order: n.properties.chapitreNum ?? null, properties: n.properties }));
-  for (const n of lessonNodes)
-    units.push(unit({ id: n.identifier, kind: "lesson", code: n.properties.statementCode ?? null, text: n.properties.osTexte ?? null, order: n.properties.leconNum ?? null, properties: n.properties }));
-  for (const n of componentNodes)
-    units.push(unit({ id: n.identifier, kind: "component", text: n.properties.description ?? null, properties: n.properties }));
-  for (const n of taskNodes)
-    units.push(unit({ id: n.identifier, kind: "task", text: n.properties.description ?? null, properties: n.properties }));
-
-  const byId = new Map(units.map((u) => [u.id, u]));
-
-  // Chapter→lesson: shared property (chapitreNum), NOT an edge. Match the CI maths schema.
-  const chaptersByNum = new Map<number, CurriculumUnit>();
-  for (const c of units) if (c.kind === "chapter") chaptersByNum.set(c.properties.chapitreNum as number, c);
-  for (const l of units) {
-    if (l.kind !== "lesson") continue;
-    const parent = chaptersByNum.get(l.properties.chapitreNum as number);
-    if (parent) { l.parentId = parent.id; parent.childIds.push(l.id); }
-  }
-
-  // Lesson→component and component→task: `supports` edges (source=child, target=parent).
-  // Iterate rels in file order so child ordering matches the historical output.
-  for (const r of rels) {
-    if (r.label !== "supports") continue;
-    const child = byId.get(r.source_identifier);
-    const parent = byId.get(r.target_identifier);
-    if (!child || !parent) continue;
-    if (parent.kind === "lesson" && label0(r.source_identifier) === "LearningComponent") { child.parentId = parent.id; parent.childIds.push(child.id); }
-    else if (parent.kind === "component" && label0(r.source_identifier) === "Curriculum") { child.parentId = parent.id; parent.childIds.push(child.id); }
-  }
-
-  // Cross-chapter progression: `buildsTowards` edges between chapter nodes.
-  for (const r of rels) {
-    if (r.label !== "buildsTowards") continue;
-    const from = byId.get(r.source_identifier);
-    const to = byId.get(r.target_identifier);
-    if (from?.kind === "chapter" && to?.kind === "chapter") { from.buildsTowards.push(to.id); to.buildsFrom.push(from.id); }
-  }
-
-  // Assessment (bilan): last lesson matching /bilan/i on its text, else the last lesson.
-  for (const c of units) {
-    if (c.kind !== "chapter") continue;
-    const lessons = c.childIds.map((id) => byId.get(id)!).filter((u) => u.kind === "lesson").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const bilan = [...lessons].reverse().find((l) => /bilan/i.test(String(l.text ?? ""))) ?? lessons[lessons.length - 1];
-    if (bilan) bilan.isAssessment = true;
-  }
-
-  return buildModel(units);
+  return parseGraph(raw, MATHS_PARSE);
 }
 
 // ── Coverage / consistency warnings (#13) ────────────────────────────────────
-// Unit-shaped completeness checks for CI maths. All WARNINGS — they inform the
-// reviewer, never block. Two generic shapes (empty chapter, lesson with >1
-// parent) come from the shared helpers; two are CI-CI-maths-specific and live here
-// because only this adapter knows what a "bilan" is and that maths denormalizes
-// the chapter→lesson link into `raw.chapitreNum`.
-//
-// Operates on the raw store graph. Maths store nodes carry `isAssessment` at
-// `properties.isAssessment` and the chapter number at `properties.raw.chapitreNum`.
-//
-// The chapter→lesson relationship used here is the `hasChild` EDGE — the id-based
-// referential backbone that Rule 2 guards. `chapitreNum` is a denormalized copy
-// the presenter happens to read; the drift rule below is exactly the check that
-// the copy still agrees with the backbone. On seed data all four rules are
-// silent (verified): every chapter has lessons, exactly one bilan, and matching
-// numbers.
+// Simplified by the convergence: chapter→lesson is now a real `hasChild` edge, so
+// the whole chapitreNum-drift machinery is gone. Two rules remain: a chapter with
+// no lessons (generic), and a chapter with 0 or >1 bilan. NOTE: multiParentWarnings
+// is deliberately NOT applied to lessons — a lesson legitimately has TWO parents
+// now (its week on the schedule axis, its chapter on the content axis).
 const HAS_CHILD = "hasChild";
-const rawChapitreNum = (n: GraphView["nodes"][number]): number | null => {
-  const raw = n.properties.raw as Record<string, unknown> | undefined;
-  const v = raw?.chapitreNum;
-  return typeof v === "number" ? v : null;
-};
-
 function ciMathsCoverageWarnings(graph: GraphView): string[] {
   const warnings: string[] = [];
-
-  // (1) + (2) Generic tree shapes, keyed by maths kind names.
   warnings.push(...emptyContainerWarnings(graph, ["chapter"]));
-  warnings.push(...multiParentWarnings(graph, ["lesson"]));
 
   const byId = new Map(graph.nodes.map((n) => [n.id, n]));
-  const chapters = graph.nodes.filter((n) => n.type === "chapter");
-  const lessons = graph.nodes.filter((n) => n.type === "lesson");
-
-  // Edge-children lessons per chapter (the referential backbone).
+  // chapter→lesson children via the content backbone edge, and the count of
+  // CHAPTER parents per lesson. A lesson legitimately has one chapter parent
+  // (content axis) and one week parent (schedule axis) — so we count only chapter
+  // parents; >1 is the genuine ambiguity (the generic multi-parent rule can't be
+  // used here because every lesson has two parents by design).
   const childLessonsByChapter = new Map<string, GraphView["nodes"]>();
+  const chapterParents = new Map<string, number>();
   for (const e of graph.edges) {
     if (e.type !== HAS_CHILD) continue;
-    const to = byId.get(e.to);
-    if (!byId.get(e.from) || byId.get(e.from)!.type !== "chapter") continue;
-    if (!to || to.type !== "lesson") continue;
+    const from = byId.get(e.from), to = byId.get(e.to);
+    if (!from || from.type !== "chapter" || !to || to.type !== "lesson") continue;
     (childLessonsByChapter.get(e.from) ?? childLessonsByChapter.set(e.from, []).get(e.from)!).push(to);
+    chapterParents.set(e.to, (chapterParents.get(e.to) ?? 0) + 1);
   }
-
-  // (3) Bilan: a chapter WITH lessons is expected to have exactly one bilan
-  // (isAssessment) lesson. Empty chapters are already flagged by (1), so we
-  // only speak to chapters that have lessons — 0 or >1 bilan is the finding.
-  for (const c of chapters) {
-    const childLessons = childLessonsByChapter.get(c.id) ?? [];
-    if (childLessons.length === 0) continue; // covered by emptyContainerWarnings
-    const bilans = childLessons.filter((l) => l.properties.isAssessment === true).length;
+  for (const [lessonId, count] of chapterParents) {
+    if (count <= 1) continue;
+    const l = byId.get(lessonId)!;
+    warnings.push(`Coverage: lesson '${(l.properties.text as string) ?? lessonId}' has ${count} chapter parents — a lesson belongs to exactly one chapter (its week is a separate axis). Detach it from all but one.`);
+  }
+  for (const c of graph.nodes) {
+    if (c.type !== "chapter") continue;
+    const lessons = childLessonsByChapter.get(c.id) ?? [];
+    if (lessons.length === 0) continue; // covered by emptyContainerWarnings
+    const bilans = lessons.filter((l) => l.properties.isAssessment === true).length;
     const label = (c.properties.title as string) ?? c.id;
-    if (bilans === 0)
-      warnings.push(`Coverage: chapter '${label}' has ${childLessons.length} lesson(s) but no bilan (end-of-chapter assessment). Mark one lesson as the bilan before publishing.`);
-    else if (bilans > 1)
-      warnings.push(`Coverage: chapter '${label}' has ${bilans} bilan lessons — exactly one is expected.`);
+    if (bilans === 0) warnings.push(`Coverage: chapter '${label}' has ${lessons.length} lesson(s) but no bilan (end-of-chapter assessment). Mark one lesson as the bilan before publishing.`);
+    else if (bilans > 1) warnings.push(`Coverage: chapter '${label}' has ${bilans} bilan lessons — exactly one is expected.`);
   }
-
-  // (4) chapitreNum drift — the regime-B consistency check. The CI maths presenter
-  // joins lessons to chapters by `raw.chapitreNum`, not by the hasChild edge, so
-  // if the number disagrees with the edge-parent the lesson silently fails to
-  // render under its chapter. WARN (not block): the edge backbone is intact and
-  // Rule-2-guarded; this is a presentation inconsistency the reviewer should see.
-  const chapterNums = new Set(chapters.map(rawChapitreNum).filter((n): n is number => n != null));
-  for (const c of chapters) {
-    const cn = rawChapitreNum(c);
-    for (const l of childLessonsByChapter.get(c.id) ?? []) {
-      const ln = rawChapitreNum(l);
-      if (cn != null && ln != null && cn !== ln) {
-        const label = (l.properties.text as string) ?? l.id;
-        warnings.push(`Coverage: lesson '${label}' is linked to chapter number ${cn} but its own chapitreNum is ${ln} — the CI maths view joins on chapitreNum, so this lesson will not render under its chapter. Align the numbers.`);
-      }
-    }
-  }
-  // A lesson whose chapitreNum points at no existing chapter number at all.
-  for (const l of lessons) {
-    const ln = rawChapitreNum(l);
-    if (ln != null && !chapterNums.has(ln)) {
-      const label = (l.properties.text as string) ?? l.id;
-      warnings.push(`Coverage: lesson '${label}' has chapitreNum ${ln}, but no chapter has that number — it will not render anywhere in the CI maths view.`);
-    }
-  }
-
   return warnings;
 }
 
 // ── Factory: build the (grade, subject)-bound adapter ────────────────────────
-// Closure cache for the parsed model is safe without a reset hook: activateContext
-// builds a fresh adapter (and thus a fresh empty cache) on every context switch.
 export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdapter {
   let model: CurriculumModel | null = null;
   const ensure = (): CurriculumModel => {
     if (model) return model;
-    // KG_SOURCE=firestore: activate.ts hydrates the model asynchronously and
-    // stashes it in the session bag before returning. Anything reaching this
-    // adapter without a preloaded model is a wiring bug — reads must not fall
-    // through to a bundle in Firestore mode.
     if (kgSource() === "firestore") {
       const preloaded = sessionState().bag.get(PRELOADED_MODEL_KEY) as CurriculumModel | undefined;
       if (!preloaded) throw new Error("KG_SOURCE=firestore but curriculum was not preloaded from the store. Call activateContext() first.");
@@ -219,50 +135,57 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     return (model = parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
   };
 
-  // Every projection is parametrized by the CurriculumModel it reads. The
-  // public methods pass `ensure()` (published); buildGenerationContext can pass
-  // an explicit draft-resolved model instead (preview). Threading the model as
-  // an argument — rather than a shared/mutable override — keeps a preview read
-  // fully isolated from a concurrent published read in the same session.
+  // Read helpers, all parametrized by the CurriculumModel they read (published via
+  // ensure(); a draft-resolved model for preview). Chapter→lesson and week→lesson
+  // are followed through the EDGES (childrenOf), not any number.
   const chaptersIn = (m: CurriculumModel) => m.unitsOfKind("chapter");
   const chapters = () => chaptersIn(ensure());
-  const lessonsOf = (m: CurriculumModel, chapNum: number) =>
-    m.unitsOfKind("lesson").filter((l) => l.properties.chapitreNum === chapNum).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const chapterOf = (m: CurriculumModel, chapNum: number) => chaptersIn(m).find((c) => c.properties.chapitreNum === chapNum) ?? null;
+  const chapterOf = (m: CurriculumModel, chapNum: number) => chaptersIn(m).find((c) => c.order === chapNum) ?? null;
+  const domaineOf = (m: CurriculumModel, chapter: CurriculumUnit) => m.byId.get(chapter.parentId ?? "")?.title ?? null;
+  const lessonsOf = (m: CurriculumModel, chapter: CurriculumUnit) =>
+    m.childrenOf(chapter.id).filter((u) => u.kind === "lesson").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  // lesson id → its week number (schedule axis).
+  const weekMap = (m: CurriculumModel) => {
+    const map = new Map<string, number | null>();
+    for (const w of m.unitsOfKind("week")) for (const l of m.childrenOf(w.id)) if (l.kind === "lesson") map.set(l.id, w.order);
+    return map;
+  };
+
   const listUnitsIn = (m: CurriculumModel) =>
     chaptersIn(m)
-      .map((c) => ({ chapitreNum: c.properties.chapitreNum, chapitreTitre: c.properties.chapitreTitre ?? null, domaine: c.properties.domaine ?? null }))
-      .sort((a, b) => (a.chapitreNum as number) - (b.chapitreNum as number));
+      .map((c) => ({ chapitreNum: c.order, chapitreTitre: c.title, domaine: domaineOf(m, c) }))
+      .sort((a, b) => (a.chapitreNum ?? 0) - (b.chapitreNum ?? 0));
 
   const buildSlice = (chapNum: number, m: CurriculumModel = ensure()) => {
-    const chapterUnit = chapterOf(m, chapNum);
-    const lessonUnits = lessonsOf(m, chapNum);
-    if (lessonUnits.length === 0 && !chapterUnit) return null;
+    const chapter = chapterOf(m, chapNum);
+    if (!chapter) return null;
+    const lessonUnits = lessonsOf(m, chapter);
+    const weekOf = weekMap(m);
     const bilanId = lessonUnits.find((l) => l.isAssessment)?.id ?? null;
 
     const lessons = lessonUnits.map((ln) => {
       const components = m.childrenOf(ln.id).filter((c) => c.kind === "component").map((cn) => ({
         identifier: cn.id,
-        description: (cn.properties.description as string) ?? null,
-        description_en: (cn.properties.description_en as string) ?? null,
-        reference: (cn.properties.reference as string) ?? null,
+        description: cn.text ?? null,
+        description_en: meta(cn).en?.description ?? null,
+        reference: rawStr(cn, "reference"),
         tasks: m.childrenOf(cn.id).filter((t) => t.kind === "task").map((tn) => ({
           identifier: tn.id,
-          description: (tn.properties.description as string) ?? null,
-          contentType: (tn.properties.contentType as string) ?? null,
+          description: tn.text ?? null,
+          contentType: rawStr(tn, "content_type"),
         })),
       }));
       return {
-        identifier: ln.id, leconNum: ln.properties.leconNum ?? null, osTexte: ln.properties.osTexte ?? null,
-        statementType: ln.properties.statementType ?? null, statementCode: ln.properties.statementCode ?? null,
-        semaine: ln.properties.semaine ?? null, palier: ln.properties.palier ?? null,
+        identifier: ln.id, leconNum: ln.order ?? null, osTexte: ln.text ?? null,
+        statementType: meta(ln).role ?? null, statementCode: rawStr(ln, "statement_code"),
+        semaine: weekOf.get(ln.id) ?? null, palier: (ln.properties.palier as number) ?? null,
         isBilan: ln.isAssessment, components,
       };
     });
     return {
       chapitreNum: chapNum,
-      chapitreTitre: (chapterUnit?.properties.chapitreTitre as string) ?? (lessonUnits[0]?.properties.chapitreTitre as string) ?? null,
-      domaine: (chapterUnit?.properties.domaine as string) ?? (lessonUnits[0]?.properties.domaine as string) ?? null,
+      chapitreTitre: chapter.title ?? null,
+      domaine: domaineOf(m, chapter),
       lessons, bilanLessonId: bilanId,
     };
   };
@@ -270,7 +193,7 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
   const buildProgression = (chapNum: number, m: CurriculumModel = ensure()) => {
     const chapterUnit = chapterOf(m, chapNum);
     if (!chapterUnit) return { buildsTowards: [] as number[], buildsFrom: [] as number[] };
-    const numOf = (id: string) => m.byId.get(id)?.properties.chapitreNum as number | undefined;
+    const numOf = (id: string) => m.byId.get(id)?.order ?? undefined;
     return {
       buildsTowards: chapterUnit.buildsTowards.map(numOf).filter((n): n is number => n != null),
       buildsFrom: chapterUnit.buildsFrom.map(numOf).filter((n): n is number => n != null),
@@ -282,60 +205,43 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     id: ADAPTER_ID,
     deliverables: DELIVERABLES,
     capabilities: { exampleDomainRotation: true, characterConsistency: true },
-    // Wording paths a curator may edit via upsert_property (#10). Each
-    // logical key maps to the storage paths its wording is stored under.
-    // Chapter's title lives in BOTH the normalized field (what presenters
-    // read) AND the raw source (what preserves the source graph faithfully)
-    // — declaring both here means one curator call keeps them in sync
-    // without the curator having to know the storage layout.
+
+    // Wording paths a curator may edit via upsert_property (#10). In the store a
+    // node's normalized field (title/text) and its raw source (raw.description)
+    // hold the same wording; declare both so one call keeps them in sync. English
+    // wording now lives under raw.metadata.en.*.
     wordingAliases: {
       chapter: {
-        title:    ["title", "raw.chapitreTitre"],
-        title_en: ["raw.chapitreTitre_en"],
+        title:    ["title", "raw.description"],
+        title_en: ["raw.metadata.en.description"],
       },
       lesson: {
-        text:    ["text", "raw.osTexte"],
-        text_en: ["raw.osTexte_en"],
+        text:    ["text", "raw.description", "raw.os_texte"],
+        text_en: ["raw.metadata.en.description", "raw.metadata.en.os_texte"],
       },
       component: {
         text:    ["text", "raw.description"],
-        text_en: ["raw.description_en"],
+        text_en: ["raw.metadata.en.description"],
       },
       task: {
         text:    ["text", "raw.description"],
-        text_en: ["raw.description_en"],
+        text_en: ["raw.metadata.en.description"],
       },
     },
 
-    // Structural keys the recipes (#14) may edit on EXISTING nodes. Mirrors the
-    // wordingAliases shape — a logical key → the storage paths it keeps in sync.
-    // These are the number/order fields, kept deliberately minimal (#14 Step 0
-    // decision (a)); `code`/`statementCode` are display-only and stay out.
-    //   • chapter.number      — a chapter's number, stored in BOTH the normalized
-    //     `order` (what the presenter sorts on) and `raw.chapitreNum` (the join
-    //     key the CI maths view matches lessons against). Renumber rewrites both.
-    //   • lesson.chapterNumber — which chapter a lesson joins to. This is the ONE
-    //     Regime-B reference (#13): the CI maths view joins a lesson to its chapter
-    //     by `raw.chapitreNum`, NOT by the hasChild edge, so move/split/renumber
-    //     MUST rewrite it or the lesson renders under the wrong chapter (the
-    //     drift coverage warning is exactly that signal).
-    //   • lesson.position     — a lesson's within-chapter order, stored in both
-    //     `order` and `raw.leconNum`. Preserved (not renumbered) by move/split
-    //     unless the caller asks — #14 decision (b).
+    // Structural keys the recipes (#14) may edit. The chapitreNum join key is
+    // GONE — chapter→lesson is the hasChild edge now — so `lesson.chapterNumber`
+    // is dropped. A number lives in BOTH the normalized `order` and its raw
+    // mirror `raw.metadata.order`.
     structuralAliases: {
       chapter: {
-        number:        ["order", "raw.chapitreNum"],
+        number:   ["order", "raw.metadata.order"],
       },
       lesson: {
-        chapterNumber: ["raw.chapitreNum"],
-        position:      ["order", "raw.leconNum"],
+        position: ["order", "raw.metadata.order"],
       },
     },
 
-    // The curriculum vocabulary the recipes bind to (#14). Declaring this is
-    // what makes add_lesson / add_chapter / move_lesson / split_chapter /
-    // renumber available for maths. chapter→lesson is the `hasChild` id-edge
-    // backbone; the bilan is flagged by `isAssessment` on a lesson node.
     recipeProfile: {
       chapterKind: "chapter",
       lessonKind: "lesson",
@@ -343,10 +249,6 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       assessmentProperty: "isAssessment",
     },
 
-    // Coverage / consistency warnings (#13) — unit-shaped completeness checks.
-    // A module-level pure function so it needs no closure state; see its
-    // definition above for the four rules (empty chapter, missing/>1 bilan,
-    // lesson with >1 parent, chapitreNum drift).
     coverageWarnings: ciMathsCoverageWarnings,
 
     detect, parse,
@@ -358,14 +260,8 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       const s = buildSlice(Number(scope));
       return s ? s.lessons.filter((l) => !l.isBilan).map((l) => ({ leconNum: l.leconNum, osTexte: l.osTexte })) : [];
     },
-    scopeValues: () => chapters().map((c) => c.properties.chapitreNum as number).sort((a, b) => a - b),
+    scopeValues: () => chapters().map((c) => c.order).filter((n): n is number => n != null).sort((a, b) => a - b),
 
-    // Reproduces the historical getGenerationContext output verbatim. `model`
-    // (optional) is a pre-resolved CurriculumModel to build from — preview
-    // generation passes a DRAFT-resolved model here; every other caller omits
-    // it and gets the published model via ensure(). Only the curriculum
-    // projection differs by model; characters/coverage/domains come from
-    // document history + the domain pool, which are the SAME regardless.
     async buildGenerationContext(scope, deliverableKey, model) {
       const m = model ?? ensure();
       const chapter = Number(scope);
@@ -380,13 +276,10 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
           const c: CharacterRef = typeof raw === "string" ? { name: raw } : raw;
           if (!c?.name) continue;
           const existing = charMap.get(c.name);
-          if (!existing) {
-            charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstChapter: e.chapter });
-          } else {
+          if (!existing) charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstChapter: e.chapter });
+          else {
             existing.firstChapter = Math.min(existing.firstChapter, e.chapter);
-            existing.type ??= c.type;
-            existing.role ??= c.role;
-            existing.description ??= c.description;
+            existing.type ??= c.type; existing.role ??= c.role; existing.description ??= c.description;
           }
         }
       }
@@ -420,8 +313,6 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       };
     },
 
-    // Maths-only capability: exampleDomainRotation. Gated at the tool boundary
-    // in src/server/ci-maths.ts via capabilities.exampleDomainRotation.
     suggestFreshDomain: () => suggestFreshDomain(),
     domainUsage: () => domainUsage(),
   };

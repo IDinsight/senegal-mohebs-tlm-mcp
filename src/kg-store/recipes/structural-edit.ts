@@ -1,19 +1,14 @@
 // ── Module: kg-store · recipes · the structural-property edit path ────────────
-// The foundation move_lesson / split_chapter / renumber all share: editing the
-// STRUCTURAL numbers on an EXISTING node (chapter number, lesson→chapter join
-// key, within-chapter position). This is the analogue of #10's
+// renumber / add_* share: editing the STRUCTURAL numbers on a node — a chapter's
+// number, a lesson's within-chapter position. This is the analogue of #10's
 // UPSERT_PROPERTY_SAFE_PATHS, kept separate so the two editable surfaces never
 // blur — wording is #10; structure is here.
 //
-// ── The Regime-B fact that makes this path load-bearing (from #13) ───────────
-// The CI maths *presenter* joins a lesson to its chapter by matching
-// `raw.chapitreNum`, NOT by the `hasChild` edge. That number is a DENORMALIZED
-// copy of the (Rule-2-guarded) edge. #13 resolved its drift as a WARNING, not a
-// block. So a recipe that rewires the hasChild edge but leaves `raw.chapitreNum`
-// stale would leave the moved lesson rendering under its OLD chapter (and fire
-// the drift warning). Therefore move/split/renumber all rewrite `raw.chapitreNum`
-// on the affected lessons through THIS path as part of the same atomic composite —
-// Rule 2 only blocks genuine EDGE dangling, which a property edit never causes.
+// NOTE: chapter↔lesson MEMBERSHIP is the `hasChild` edge, not a denormalized
+// number. move/split/renumber therefore rewire edges; they cascade no
+// chapter-membership number (the old CI maths "Regime-B" join key is gone). A
+// chapter's own number is a plain attribute this path edits; lessons follow the
+// edge, so renumbering a chapter never touches them.
 
 import type { MutationNode } from "../types.js";
 import { readAtPath } from "../upsert-property.js";
@@ -25,9 +20,8 @@ import { aliasPaths, writeLogical } from "./shared.js";
 // if it declares anything else, `structuralEditErrors` rejects the edit, so
 // safety never relies on an adapter being careful.
 export const STRUCTURAL_EDIT_SAFE_PATHS: ReadonlySet<string> = new Set([
-  "order",           // normalized ordering (chapter number / lesson within-chapter position)
-  "raw.chapitreNum", // CI maths: chapter number + the lesson→chapter join key (Regime-B)
-  "raw.leconNum",    // CI maths: lesson within-chapter number
+  "order",             // normalized ordering (chapter number / lesson number)
+  "raw.metadata.order", // CI maths: the node's own number, mirrored under metadata (LC scheme)
 ]);
 
 // Apply a STRUCTURAL edit to one existing node in `nodes`, returning a new

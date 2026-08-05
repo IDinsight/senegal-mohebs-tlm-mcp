@@ -257,18 +257,16 @@ describe("editable and rules come from the real sources (no hand-copied literals
   it("editable.recipes IS a MIRROR of the RECIPES registry (#14) — no hand-authored copy", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     expect(caps.editable.recipes.available).toBe(true);
-    // Names, order, and the renumber/regime flags all come straight from RECIPES.
+    // Names, order, and the renumber flag all come straight from RECIPES.
     expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(RECIPES.map((r) => r.name));
     expect(caps.editable.recipes.list).toEqual(RECIPES.map((r) => ({
       name: r.name, summary: r.summary, params: r.params,
-      renumberBearing: r.renumberBearing, regimeGated: r.regimeGated,
+      renumberBearing: r.renumberBearing,
     })));
-    // renumber is the one renumber-bearing recipe; move/split/renumber are
-    // regime-gated (they rewrite the chapitreNum join key).
-    const byName = new Map<string, { renumberBearing: boolean; regimeGated: boolean }>(caps.editable.recipes.list.map((r: { name: string }) => [r.name, r]));
+    // renumber is the one renumber-bearing recipe; the rest are additive/edge-only.
+    const byName = new Map<string, { renumberBearing: boolean }>(caps.editable.recipes.list.map((r: { name: string }) => [r.name, r]));
     expect(byName.get("renumber")!.renumberBearing).toBe(true);
-    expect(["move_lesson", "split_chapter", "renumber"].every((n) => byName.get(n)!.regimeGated)).toBe(true);
-    expect(["add_lesson", "add_chapter"].every((n) => byName.get(n)!.regimeGated === false)).toBe(true);
+    expect(["add_lesson", "add_chapter", "move_lesson", "split_chapter"].every((n) => byName.get(n)!.renumberBearing === false)).toBe(true);
   });
 
   it("editable.structuralKeys mirrors the adapter's structuralAliases + the central allowlist (#14)", async () => {
