@@ -188,49 +188,43 @@ function toDisplayEdge(e: StoredEdge): DisplayEdge {
 // hardcoding a namespace string. Every namespace also gets the generic
 // node-type view as the floor.
 const DOMAINE_ORDER = ["Arithmétique", "Géométrie", "Mesure", "Résolution de problème"];
+// The six language-tool strands, in canonical order (reading's thematic buckets).
+const STRAND_ORDER = ["Vocabulaire", "Grammaire", "Orthographe", "Conjugaison", "Production d'écrits", "Écriture / Copie"];
 
 function buildViewConfig(nodes: DisplayNode[]): ViewConfig {
   const views: ViewSpec[] = [];
   const has = (kind: string) => nodes.some((n) => n.kind === kind);
 
-  // In the converged shape, domaine / semaine / chapitre are REAL nodes joined by
-  // `hasChild` edges (two axes). So the rich views anchor on those nodes and walk
-  // hasChild — no property grouping. An empty `groupBy` makes the anchors the tree
-  // roots directly.
+  // Both subjects get the same two rich views + the generic floor.
 
-  // Maths CONTENT axis: Domaine → Chapitre → OS → composant → tâche.
-  if (has("domaine") && has("chapter") && has("lesson")) {
+  // THEMATIC — organized by the subject's thematic categories.
+  if (has("domaine")) {
+    // Maths: the real hierarchy domaine (strand) → chapter (subtopic) → OS →
+    // composant → tâche, walked via hasChild (empty groupBy = domaines ARE roots).
     views.push({
       id: "thematique",
       label: { fr: "Vue thématique", en: "Thematic view" },
       shape: "grouped-spine",
       params: { anchorKind: "domaine", groupBy: [], expandEdge: "hasChild" },
     });
+  } else if (has("standard")) {
+    // Reading: group standards by their language-tool strand (statement_type →
+    // the `strand` field), then walk hasChild to the components.
     views.push({
-      id: "chapitres",
-      label: { fr: "Vue chapitres", en: "Chapters view" },
+      id: "thematique",
+      label: { fr: "Vue thématique", en: "Thematic view" },
       shape: "grouped-spine",
-      params: { anchorKind: "domaine", groupBy: [], expandEdge: "hasChild", stopKind: "lesson" },
+      params: { anchorKind: "standard", groupBy: [{ key: "strand" }], expandEdge: "hasChild", order: STRAND_ORDER },
     });
   }
 
-  // Maths SCHEDULE axis: Semaine → OS → composant → tâche.
-  if (has("week") && has("lesson")) {
+  // PLANIFICATION — Palier → Semaine → contents (both subjects).
+  if (has("week")) {
     views.push({
       id: "planification",
       label: { fr: "Vue planification", en: "Planning view" },
       shape: "grouped-spine",
-      params: { anchorKind: "week", groupBy: [], expandEdge: "hasChild" },
-    });
-  }
-
-  // Reading spine: Semaine → standard (outil de langue) → composant.
-  if (has("week") && has("standard")) {
-    views.push({
-      id: "semaines",
-      label: { fr: "Vue semaines", en: "Weeks view" },
-      shape: "grouped-spine",
-      params: { anchorKind: "week", groupBy: [], expandEdge: "hasChild" },
+      params: { anchorKind: "week", groupBy: [{ key: "pal", labelFr: "Palier", labelEn: "Tier" }], expandEdge: "hasChild" },
     });
   }
 
@@ -251,22 +245,22 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
     store.listEdges(ns, slot),
   ]);
 
-  const nodes = storedNodes.map(toDisplayNode);
-  const edges = storedEdges.map(toDisplayEdge);
+  let nodes = storedNodes.map(toDisplayNode);
+  let edges = storedEdges.map(toDisplayEdge);
 
-  // Colour propagation: tag every CONTENT-axis descendant of a domaine with that
-  // domaine's name (domaine → chapter → OS → composant → tâche), so the explorer
-  // can colour the whole subtree. Schedule roots (weeks) are separate and stay
-  // untagged. A node already tagged (its own domaine) is never overwritten.
+  // ── Explorer post-processing (display only; never touches the store) ─────────
   {
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const outHasChild = new Map<string, string[]>();
     for (const e of edges) if (e.r === "hasChild") (outHasChild.get(e.s) ?? outHasChild.set(e.s, []).get(e.s)!).push(e.t);
+
+    // (1) Colour propagation — tag every CONTENT-axis descendant of a domaine with
+    //     that domaine's name (domaine → chapter → OS → composant → tâche) so the
+    //     explorer can colour the whole subtree. A node's own domaine wins.
     for (const dom of nodes.filter((n) => n.kind === "domaine")) {
       const name = dom.dom;
       if (!name) continue;
-      const stack = [dom.id];
-      const seen = new Set<string>();
+      const stack = [dom.id], seen = new Set<string>();
       while (stack.length) {
         for (const c of outHasChild.get(stack.pop()!) ?? []) {
           if (seen.has(c)) continue;
@@ -277,6 +271,32 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
         }
       }
     }
+
+    // (2) Week palier — a maths week has no palier of its own; borrow it from a
+    //     scheduled lesson (all a week's lessons share a palier) so the planning
+    //     view can bucket weeks by tier. Reading weeks already carry their palier.
+    for (const wk of nodes.filter((n) => n.kind === "week")) {
+      if (wk.pal !== "" && wk.pal != null) continue;
+      for (const c of outHasChild.get(wk.id) ?? []) {
+        const cn = byId.get(c);
+        if (cn && cn.pal !== "" && cn.pal != null) { wk.pal = cn.pal; break; }
+      }
+    }
+
+    // (3) Navigable-spine filter — keep only nodes reachable from a ROOT
+    //     (week / domaine) via hasChild. Drops disconnected leftovers that would
+    //     otherwise show as unnavigable roots: reading expectations whose
+    //     sous-domaine/subtopic parents aren't seeded (spine-only seeding), and
+    //     maths's borrowed-framework components. Store is untouched; this is the
+    //     explorer's navigable view only.
+    const keep = new Set<string>();
+    const stack: string[] = [];
+    for (const n of nodes) if (n.kind === "week" || n.kind === "domaine") { keep.add(n.id); stack.push(n.id); }
+    while (stack.length) {
+      for (const c of outHasChild.get(stack.pop()!) ?? []) if (!keep.has(c)) { keep.add(c); stack.push(c); }
+    }
+    nodes = nodes.filter((n) => keep.has(n.id));
+    edges = edges.filter((e) => keep.has(e.s) && keep.has(e.t));
   }
 
   const byKind: Record<string, number> = {};

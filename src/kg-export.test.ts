@@ -65,24 +65,31 @@ describe("kg-export — maths (converged two-axis shape)", () => {
     expect(childrenOf(g, wk.id).some((n) => n.kind === "lesson")).toBe(true);
   });
 
-  it("declares thematic + chapters + planning + generic views", async () => {
+  it("declares thematic (domaine) + planification (palier→week) + generic", async () => {
     const g = (await exportNamespace(mathsNs))!;
-    const ids = g.meta.viewConfig.views.map((v) => v.id);
-    expect(ids).toEqual(expect.arrayContaining(["thematique", "chapitres", "planification", "generic"]));
-    const thematic = g.meta.viewConfig.views.find((v) => v.id === "thematique")!;
-    expect(thematic).toMatchObject({ shape: "grouped-spine", params: { anchorKind: "domaine", expandEdge: "hasChild" } });
+    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["thematique", "planification", "generic"]);
+    const thematic = g.meta.viewConfig.views.find((v) => v.id === "thematique") as any;
+    expect(thematic.params).toMatchObject({ anchorKind: "domaine", expandEdge: "hasChild" });
+    const plan = g.meta.viewConfig.views.find((v) => v.id === "planification") as any;
+    expect(plan.params).toMatchObject({ anchorKind: "week", expandEdge: "hasChild" });
+    expect(plan.params.groupBy[0].key).toBe("pal");
+    // weeks carry a (derived) palier so the planning view can bucket them by tier
+    expect(g.nodes.filter((n) => n.kind === "week").every((w) => w.pal !== "" && w.pal != null)).toBe(true);
   });
 });
 
 describe("kg-export — reading", () => {
-  it("weeks + generic views only (no maths thematic), strand carried on standards", async () => {
+  it("thematic (by strand) + planification + generic; spine filter drops orphan standards", async () => {
     const g = (await exportNamespace(readingNs))!;
-    const ids = g.meta.viewConfig.views.map((v) => v.id);
-    expect(ids).toEqual(expect.arrayContaining(["semaines", "generic"]));
-    expect(ids).not.toContain("thematique");
-    const wk = g.nodes.find((n) => n.kind === "week")!;
-    const std = childrenOf(g, wk.id).find((n) => n.kind === "standard");
-    expect(std).toBeTruthy();
-    expect(std!.strand).toBeTruthy(); // reading strand lives in statement_type → strand field
+    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["thematique", "planification", "generic"]);
+    const thematic = g.meta.viewConfig.views.find((v) => v.id === "thematique") as any;
+    expect(thematic.params).toMatchObject({ anchorKind: "standard", expandEdge: "hasChild" });
+    expect(thematic.params.groupBy[0].key).toBe("strand");
+    // every exported standard is week-connected (orphans pruned) and carries its strand
+    const isChild = new Set(g.edges.filter((e) => e.r === "hasChild").map((e) => e.t));
+    const standards = g.nodes.filter((n) => n.kind === "standard");
+    expect(standards.length).toBeGreaterThan(0);
+    expect(standards.every((s) => isChild.has(s.id))).toBe(true);
+    expect(standards.every((s) => s.strand)).toBe(true);
   });
 });
