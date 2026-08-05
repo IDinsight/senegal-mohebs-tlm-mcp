@@ -1,17 +1,15 @@
 // ── Recipe: renumber ──────────────────────────────────────────────────────────
-// Structural-property edit of a chapter's number — the ONE recipe whose safety
-// is fully determined by the #13 regime finding. It rewrites the chapter's
-// `number` (order + raw.chapitreNum) AND cascade-rewrites every child lesson's
-// chapter-membership number (raw.chapitreNum) in the SAME atomic composite, so
-// the family stays consistent and no `chapitreNum` drift warning fires. The
+// Structural-property edit of a chapter's number: rewrites the chapter's `number`
+// (order + raw.metadata.order). Lessons are NOT touched — chapter→lesson is the
+// hasChild edge, so a renumbered chapter keeps its lessons with no cascade. The
 // target number must be FREE (#14 decision (1)) — renumber MOVES a chapter to an
 // unoccupied number; it does not shift or swap other chapters.
 
 import type { GraphMutation } from "../mutations.js";
 import {
   type RecipeCommon,
-  K_CHAPTER_NUMBER, K_LESSON_CHAPTER,
-  asNum, nodeById, childLessons, chapterNumberOf, usedChapterNumbers,
+  K_CHAPTER_NUMBER,
+  asNum, nodeById, chapterNumberOf, usedChapterNumbers,
 } from "./shared.js";
 import { editStructural, structuralEditErrors } from "./structural-edit.js";
 
@@ -38,12 +36,8 @@ export const renumber: GraphMutation<RenumberArgs> = {
     return { errors, warnings: [] };
   },
   apply: (base, a) => {
-    let nodes = editStructural(base.nodes, a.chapterId, K_CHAPTER_NUMBER, a.newNumber, a.structuralAliases);
-    // Cascade-rewrite every child lesson's chapter-membership number so the
-    // Regime-B join key stays consistent with the renumbered chapter.
-    for (const lesson of childLessons(base, a.chapterId, a.profile)) {
-      nodes = editStructural(nodes, lesson.id, K_LESSON_CHAPTER, a.newNumber, a.structuralAliases);
-    }
+    // Only the chapter's own number changes; lessons follow via the hasChild edge.
+    const nodes = editStructural(base.nodes, a.chapterId, K_CHAPTER_NUMBER, a.newNumber, a.structuralAliases);
     return { nodes, edges: base.edges };
   },
 };

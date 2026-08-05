@@ -100,14 +100,13 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   const recipes = {
     available: recipesAvailable,
     note: recipesAvailable
-      ? "Recipes are COMPOSITE mutations: one intent → one whole-composite diff → one confirmation token → one atomic draft write → one audit event. They are the ergonomic layer over the raw structural verbs, made safe by the same referential-integrity floor. `renumberBearing` marks a recipe that changes an existing chapter's number; `regimeGated` marks one whose correctness depends on rewriting the CI maths chapter-number join key (chapitreNum) across the affected lessons — the recipe does that rewrite atomically so nothing drifts."
+      ? "Recipes are COMPOSITE mutations: one intent → one whole-composite diff → one confirmation token → one atomic draft write → one audit event. They are the ergonomic layer over the raw structural verbs, made safe by the same referential-integrity floor. `renumberBearing` marks a recipe that changes an existing chapter's number. Chapter↔lesson membership is the hasChild edge, so move/split/renumber rewire edges — there is no chapter-membership number to cascade."
       : `Composite recipes are not available for ${adapter.grade}/${adapter.subject} (its adapter declares no recipeProfile) — only wording edits and the raw structural verbs are.`,
     list: recipesAvailable ? RECIPES.map((r) => ({
       name: r.name,
       summary: r.summary,
       params: r.params,
       renumberBearing: r.renumberBearing,
-      regimeGated: r.regimeGated,
     })) : [],
   };
 
@@ -146,7 +145,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       // Whether the active subject's adapter emits completeness warnings.
       enabled: typeof adapter.coverageWarnings === "function",
       note:
-        "Coverage warnings are INFORMATIONAL — they surface structural incompleteness a reviewer should see (e.g. a chapter with no lessons or no bilan, a lesson linked to more than one chapter, or a CI maths lesson whose chapitreNum disagrees with the chapter it's linked to). They appear on an edit's dry-run and on diff_draft, and are recorded on the publish audit, but they NEVER block confirmation or publish — completeness is the human reviewer's call, not the machine's.",
+        "Coverage warnings are INFORMATIONAL — they surface structural incompleteness a reviewer should see (e.g. a chapter with no lessons or no bilan, or a lesson linked to more than one chapter). They appear on an edit's dry-run and on diff_draft, and are recorded on the publish audit, but they NEVER block confirmation or publish — completeness is the human reviewer's call, not the machine's.",
     },
   };
 

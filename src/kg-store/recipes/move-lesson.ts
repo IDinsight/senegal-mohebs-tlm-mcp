@@ -1,8 +1,8 @@
 // ── Recipe: move_lesson ───────────────────────────────────────────────────────
-// Unlink a lesson from its current chapter, link it (hasChild) to another, and
-// rewrite its chapter-membership number so it renders under the new chapter.
-// Numbers are preserved (#14 decision (b)): the lesson's within-chapter position
-// defaults to appending at the tail of the target; pass `position` to place it.
+// Unlink a lesson from its current chapter and link it (hasChild) to another.
+// Membership IS the edge, so nothing else moves — the lesson keeps its own number.
+// Its within-chapter position defaults to the tail of the target; pass `position`
+// to place it explicitly.
 
 import { edgeId } from "../types.js";
 import type { MutationGraph } from "../types.js";
@@ -10,7 +10,7 @@ import type { GraphMutation } from "../mutations.js";
 import { linkNodes, unlinkNodes } from "../structural.js";
 import {
   type RecipeCommon,
-  K_CHAPTER_NUMBER, K_LESSON_CHAPTER, K_LESSON_POSITION,
+  K_CHAPTER_NUMBER, K_LESSON_POSITION,
   nodeById, childLessons, chapterParentEdgeIds, chapterNumberOf, positionOf,
 } from "./shared.js";
 import { editStructural } from "./structural-edit.js";
@@ -49,13 +49,10 @@ export const moveLesson: GraphMutation<MoveLessonArgs> = {
     // Detach from every current chapter parent (normally one; more than one is
     // the multi-parent state #13 warns on — moving cleans it up as a side effect).
     for (const id of chapterParentEdgeIds(g, a.lessonId, a.profile)) g = unlinkNodes.apply(g, { edgeId: id });
-    const num = chapterNumberOf(toChapter, a.profile, a.structuralAliases) ?? 0;
     const siblings = childLessons(g, a.toChapterId, a.profile);
     const position = a.position ?? (siblings.reduce((m, l) => Math.max(m, positionOf(l, a.profile, a.structuralAliases)), 0) + 1);
     g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.toChapterId, toId: a.lessonId, properties: { orderInParent: position }, namespace: a.namespace });
-    // Rewrite the moved lesson: chapter-membership number (mandatory, Regime-B)
-    // + within-chapter position.
-    g = { nodes: editStructural(g.nodes, a.lessonId, K_LESSON_CHAPTER, num, a.structuralAliases), edges: g.edges };
+    // Record the lesson's within-chapter position — its chapter membership is the edge above.
     g = { nodes: editStructural(g.nodes, a.lessonId, K_LESSON_POSITION, position, a.structuralAliases), edges: g.edges };
     return g;
   },

@@ -197,10 +197,10 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
     const publishedChapter = publishedNodes.find((n) => n.id === chapterId)!;
     const publishedLesson = publishedNodes.find((n) => n.id === lessonId)!;
     expect((publishedChapter.properties as any).title).toBe(newChapterTitle);
-    // Chapter title is aliased to BOTH title AND raw.chapitreTitre — both should be updated.
-    expect((publishedChapter.properties as any).raw.chapitreTitre).toBe(newChapterTitle);
+    // Chapter title is aliased to BOTH title AND raw.description — both should be updated.
+    expect((publishedChapter.properties as any).raw.description).toBe(newChapterTitle);
     expect((publishedLesson.properties as any).text).toBe(newLessonText);
-    expect((publishedLesson.properties as any).raw.osTexte).toBe(newLessonText);
+    expect((publishedLesson.properties as any).raw.os_texte).toBe(newLessonText);
 
     // ── Audit chain reflects the whole loop ────────────────────────────────
     const audits = await store.listAudit({ namespace: ns });
@@ -259,7 +259,7 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
     const lesson = nodes.find((n) => {
       if (n.type !== "lesson") return false;
       const raw = (n.properties as any).raw ?? {};
-      return typeof raw.osTexte_en !== "string";  // includes null / undefined
+      return typeof raw.metadata?.en?.os_texte !== "string";  // includes null / undefined
     });
     if (!lesson) return; // no such lesson in this dataset — skip
     await runAsActor(CURATOR, async () => {
@@ -455,9 +455,10 @@ describe("parity: published reads unaffected until publish, then reflect the cha
       await publishDraftWithConfirm(ns, { confirm: true, token: dry.confirmationToken });
     });
     const after = await reads() as { units: Array<{ chapitreNum: number; chapitreTitre: string | null }> };
-    // The units list is derived from published.raw.chapitreTitre; find the
-    // edited chapter and confirm the new wording is what generation sees.
-    const editedChapterNum = (chapter.properties as any).raw?.chapitreNum;
+    // The units list is derived from the published chapter title; find the
+    // edited chapter (by its number = normalized order) and confirm the new
+    // wording is what generation sees.
+    const editedChapterNum = (chapter.properties as any).order;
     const editedListEntry = after.units.find((u) => u.chapitreNum === editedChapterNum);
     expect(editedListEntry?.chapitreTitre).toBe("parity-check-title");
   });

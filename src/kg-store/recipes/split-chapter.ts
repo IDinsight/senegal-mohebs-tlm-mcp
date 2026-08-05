@@ -1,9 +1,9 @@
 // ── Recipe: split_chapter ─────────────────────────────────────────────────────
 // Create a new chapter and MOVE the tail lessons (from `atLessonId` onward, in
-// presentation order) to it — unlink old hasChild, link new, rewrite each moved
-// lesson's chapter-membership number. The new chapter is APPENDED at the next
-// free number by default (#14 decision: no shift of existing chapters); pass a
-// free `newNumber` to place it in a gap. Within-chapter positions are preserved.
+// presentation order) to it — unlink old hasChild, link new. Membership is the
+// edge, so the moved lessons need no number rewrite. The new chapter is APPENDED
+// at the next free number by default (#14 decision: no shift of existing
+// chapters); pass a free `newNumber` to place it in a gap. Positions preserved.
 
 import { edgeId } from "../types.js";
 import type { MutationGraph } from "../types.js";
@@ -11,11 +11,10 @@ import type { GraphMutation } from "../mutations.js";
 import { createNode, linkNodes, unlinkNodes } from "../structural.js";
 import {
   type RecipeCommon,
-  K_CHAPTER_NUMBER, K_LESSON_CHAPTER, W_TITLE, W_TITLE_EN,
+  K_CHAPTER_NUMBER, W_TITLE, W_TITLE_EN,
   asNum, readLogical, buildProps,
   nodeById, childLessons, positionOf, usedChapterNumbers, nextChapterNumber,
 } from "./shared.js";
-import { editStructural } from "./structural-edit.js";
 
 export type SplitChapterArgs = RecipeCommon & {
   chapterId: string;
@@ -75,9 +74,7 @@ export const splitChapter: GraphMutation<SplitChapterArgs> = {
     tail.forEach((lesson, i) => {
       g = unlinkNodes.apply(g, { edgeId: edgeId(a.profile.containerEdge, a.chapterId, lesson.id) });
       g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.newChapterId, toId: lesson.id, properties: { orderInParent: positionOf(lesson, a.profile, a.structuralAliases) || i + 1 }, namespace: a.namespace });
-      // Rewrite ONLY the chapter-membership number — within-chapter positions
-      // are preserved (#14 decision (b): renumber only when explicitly asked).
-      g = { nodes: editStructural(g.nodes, lesson.id, K_LESSON_CHAPTER, effNum, a.structuralAliases), edges: g.edges };
+      // Membership is the new hasChild edge above — positions preserved, no number rewrite.
     });
     return g;
   },

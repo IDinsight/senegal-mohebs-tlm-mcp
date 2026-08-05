@@ -1,5 +1,7 @@
 # Live KG explorer — findings & decisions (Step 0)
 
+> **Update:** the raw field names below are pre-convergence (camelCase `chapitreNum`/`osTexte`). The KG is now snake_case with an LC metadata scheme (`metadata.role`/`metadata.order`/`metadata.en`); `src/kg-export.ts` reads the current names. Kept as a historical record.
+
 **Status:** report before build · **Date:** 2026-07-31 · **Author:** (curator tooling)
 
 This note answers the Step-0 questions for the read-only "live KG explorer" (a hosted

@@ -31,9 +31,10 @@ import type { WordingAliases } from "../types.js";
 // declaring the new alias on the adapter(s). Two edits, on purpose.
 export const UPSERT_PROPERTY_SAFE_PATHS: ReadonlySet<string> = new Set([
   "title", "text",
-  "raw.chapitreTitre", "raw.chapitreTitre_en",
-  "raw.osTexte", "raw.osTexte_en",
-  "raw.description", "raw.description_en",
+  "raw.description",              // FR wording source (chapter title, lesson/component/task text)
+  "raw.os_texte",                 // CI maths lesson objective mirror
+  "raw.metadata.en.description",  // English wording, converged LC scheme
+  "raw.metadata.en.os_texte",
 ]);
 
 // Walk a dotted path over an object, returning the leaf value or undefined.
@@ -63,7 +64,7 @@ export function writeAtPath(obj: Record<string, unknown>, path: string, value: u
     const seg = segments[i];
     const next = cur[seg];
     // The safety allowlist's paths always run through existing objects
-    // (properties has 'raw', 'raw' has 'chapitreTitre', etc.). The
+    // (properties has 'raw', 'raw' has 'description'/'metadata', etc.). The
     // existing-key rule catches a truly-missing leaf earlier; the empty
     // fallback here is defence-in-depth.
     const nextObj = next && typeof next === "object" && !Array.isArray(next) ? { ...(next as Record<string, unknown>) } : {};

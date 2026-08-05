@@ -1,9 +1,9 @@
 // ── The recipe registry — the MIRROR get_capabilities declares (#14 decision f) ─
 // One descriptor per recipe. get_capabilities renders THIS array (never a
 // hand-authored copy), so what Claude discovers can't drift from what's built.
-// `renumberBearing` marks a recipe that changes an EXISTING chapter's number;
-// `regimeGated` marks one whose correctness depends on the Regime-B
-// `chapitreNum` cascade (move/split/renumber rewrite it; add_* set it at birth).
+// `renumberBearing` marks a recipe that changes an EXISTING chapter's number.
+// (Chapter↔lesson membership is the hasChild edge, so there is no number cascade
+// to flag — the old CI maths "Regime-B" join key is gone.)
 
 export type RecipeParam = { name: string; required: boolean; note?: string };
 export type RecipeDescriptor = {
@@ -11,13 +11,12 @@ export type RecipeDescriptor = {
   summary: string;
   params: RecipeParam[];
   renumberBearing: boolean;
-  regimeGated: boolean;
 };
 
 export const RECIPES: readonly RecipeDescriptor[] = [
   {
     name: "add_lesson",
-    summary: "Create a lesson and link it to an existing chapter (additive). Sets the lesson's chapter-membership number so it renders under that chapter.",
+    summary: "Create a lesson and link it to an existing chapter (additive). The lesson renders under that chapter via the hasChild edge.",
     params: [
       { name: "chapterId", required: true },
       { name: "text", required: true, note: "the lesson objective" },
@@ -26,7 +25,6 @@ export const RECIPES: readonly RecipeDescriptor[] = [
       { name: "isBilan", required: false, note: "mark this lesson as the end-of-chapter assessment" },
     ],
     renumberBearing: false,
-    regimeGated: false,
   },
   {
     name: "add_chapter",
@@ -38,18 +36,16 @@ export const RECIPES: readonly RecipeDescriptor[] = [
       { name: "lessons", required: false, note: "array of { text, text_en?, isBilan? } seed lessons" },
     ],
     renumberBearing: false,
-    regimeGated: false,
   },
   {
     name: "move_lesson",
-    summary: "Rehome a lesson from its current chapter to another (unlink + relink) and rewrite its chapter-membership number. Numbers are preserved; appends to the target by default.",
+    summary: "Rehome a lesson from its current chapter to another (unlink + relink the hasChild edge). Appends to the target by default; the lesson keeps its own number.",
     params: [
       { name: "lessonId", required: true },
       { name: "toChapterId", required: true },
       { name: "position", required: false, note: "within-target position; defaults to appending at the end" },
     ],
     renumberBearing: false,
-    regimeGated: true,
   },
   {
     name: "split_chapter",
@@ -62,16 +58,14 @@ export const RECIPES: readonly RecipeDescriptor[] = [
       { name: "newNumber", required: false, note: "must be a free number; omit to append at the end" },
     ],
     renumberBearing: false,
-    regimeGated: true,
   },
   {
     name: "renumber",
-    summary: "Change a chapter's number and cascade-rewrite every child lesson's chapter-membership number in one atomic composite, so nothing drifts. The target number must be FREE (no shift or swap).",
+    summary: "Change a chapter's number. Lessons follow via the hasChild edge — no cascade. The target number must be FREE (no shift or swap).",
     params: [
       { name: "chapterId", required: true },
       { name: "newNumber", required: true, note: "must be a free chapter number" },
     ],
     renumberBearing: true,
-    regimeGated: true,
   },
 ];

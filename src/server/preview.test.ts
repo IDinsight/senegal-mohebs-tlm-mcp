@@ -99,8 +99,8 @@ async function rawSlot(s: KgNodeStore, slot: Slot) {
 // Pick a chapter node that carries a string title, and return its id + number.
 async function pickChapter(): Promise<{ id: string; num: number; title: string }> {
   const nodes = await store.listNodes(ns, "a");
-  const chapter = nodes.find((n) => n.type === "chapter" && typeof (n.properties as any).title === "string" && typeof (n.properties as any).raw?.chapitreNum === "number")!;
-  return { id: chapter.id, num: (chapter.properties as any).raw.chapitreNum, title: (chapter.properties as any).title };
+  const chapter = nodes.find((n) => n.type === "chapter" && typeof (n.properties as any).title === "string" && typeof (n.properties as any).order === "number")!;
+  return { id: chapter.id, num: (chapter.properties as any).order, title: (chapter.properties as any).title };
 }
 
 // Stage a wording edit on the draft as `actor` (two-phase confirm).

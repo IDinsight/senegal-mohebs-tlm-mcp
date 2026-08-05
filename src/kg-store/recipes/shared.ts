@@ -15,8 +15,8 @@ import type { WordingAliases, StructuralAliases, RecipeProfile } from "../../typ
 // adapter's alias maps resolve these to concrete storage paths; the recipe code
 // only ever speaks in these conventional names, so kg-store stays subject-blind.
 export const K_CHAPTER_NUMBER = "number";        // structuralAliases[chapterKind].number
-export const K_LESSON_CHAPTER = "chapterNumber"; // structuralAliases[lessonKind].chapterNumber
 export const K_LESSON_POSITION = "position";     // structuralAliases[lessonKind].position
+// (There is no lesson→chapter number key: chapter membership is the hasChild edge.)
 export const W_TITLE = "title";
 export const W_TITLE_EN = "title_en";
 export const W_TEXT = "text";
