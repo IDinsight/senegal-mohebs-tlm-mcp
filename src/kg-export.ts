@@ -31,9 +31,9 @@ export type DisplayNode = {
   label: string;                 // Learning-Commons ontology label (drives colour/stats)
   kind: string;                  // the raw store `type` (chapter/lesson/component/task/week/standard…)
   nt: string;                    // nodeType (e.g. "Activity") — used for the task stats chip
-  st: string; st_en: string;     // subtype (statementType) FR/EN
+  st: string; st_en: string;     // category (statement_type) FR/EN
   code: string;                  // statementCode, e.g. "Leçon 64"
-  ord: number | null;            // sort order within siblings (leconNum / chapitreNum)
+  ord: number | null;            // the node's own number (metadata.order)
   desc: string; desc_en: string; // display label text
   ex: string[]; ex_en: string[]; // examples
   grp: string; res: string; niv: string;
@@ -110,10 +110,11 @@ export async function listExportNamespaces(): Promise<
 // to the explorer's display node. Reads raw.* with both CI CI maths (camelCase) and
 // CE1 CE1 reading (snake_case) spellings where they differ, so ONE mapping serves both.
 const LABEL_BY_KIND: Record<string, string> = {
+  domaine: "StandardsFrameworkItem",
   chapter: "StandardsFrameworkItem",
   lesson: "StandardsFrameworkItem",
   standard: "StandardsFrameworkItem",
-  week: "StandardsFramework",
+  week: "StandardsFrameworkItem",
   component: "LearningComponent",
   task: "Curriculum",
 };
@@ -126,42 +127,49 @@ function toDisplayNode(n: StoredNode): DisplayNode {
   const p = n.properties ?? {};
   const raw = (p.raw as Record<string, unknown>) ?? {};
   const r = (k: string) => raw[k];
+  // Converged LC scheme: role/order/genre/palier + English live under metadata.
+  const m = (raw.metadata as Record<string, unknown>) ?? {};
+  const en = (k: string) => ((m.en as Record<string, unknown>) ?? {})[k];
+  // Domaine nodes have no number; order them by the canonical domain sequence so
+  // the thematic view lists Arithmétique → Géométrie → Mesure → Résolution.
+  const domIdx = n.type === "domaine" ? DOMAINE_ORDER.indexOf(str(p.title ?? r("description"))) : -1;
   return {
     id: n.id,
     label: LABEL_BY_KIND[n.type] ?? n.type,
     kind: n.type,
-    nt: str(r("normalizedType") ?? r("contentType")),
-    st: str(r("statementType")),
-    st_en: str(r("statementType_en")),
-    code: str(p.code ?? r("statementCode")),
-    ord: typeof p.order === "number" ? (p.order as number) : null,
-    desc: str(p.text ?? r("description") ?? r("osTexte")),
-    desc_en: str(r("description_en") ?? r("osTexte_en")),
+    nt: str(r("normalized_statement_type") ?? r("content_type")),
+    st: str(r("statement_type")),
+    st_en: str(en("statement_type")),
+    code: str(p.code ?? r("statement_code")),
+    ord: n.type === "domaine" ? (domIdx >= 0 ? domIdx : null)
+      : typeof p.order === "number" ? (p.order as number) : (typeof m.order === "number" ? (m.order as number) : null),
+    desc: str(p.text ?? p.title ?? r("description") ?? r("os_texte")),
+    desc_en: str(en("description") ?? en("os_texte")),
     ex: arr(r("examples")),
-    ex_en: arr(r("examples_en")),
-    grp: str(r("receGroupe")),
-    res: str(r("receResultat")),
-    niv: str(r("receNiveau") ?? r("receNiveauScolaire")),
-    apt: str(r("aptitudeCI")),
-    apt_en: str(r("aptitudeCI_en")),
-    comm: str(r("commentaireProgression")),
-    comm_en: str(r("commentaireProgression_en")),
+    ex_en: arr(en("examples")),
+    grp: str(r("rece_groupe")),
+    res: str(r("rece_resultat")),
+    niv: str(r("rece_niveau") ?? r("rece_niveau_scolaire")),
+    apt: str(r("aptitude_ci")),
+    apt_en: str(en("aptitude_ci")),
+    comm: str(r("commentaire_progression")),
+    comm_en: str(en("commentaire_progression")),
     sem: numOrStr(r("semaine")),
-    pal: numOrStr(r("palier")),
-    chapN: numOrStr(r("chapitreNum")),
-    chapT: str(r("chapitreTitre")),
-    chapT_en: str(r("chapitreTitre_en")),
-    dom: str(r("domaine") ?? r("domaineCI")),
-    dom_en: str(r("domaine_en")),
-    os: str(r("osTexte")),
-    os_en: str(r("osTexte_en")),
+    pal: numOrStr(r("palier") ?? m.palier),
+    chapN: numOrStr(typeof m.order === "number" ? (m.order as number) : ""),
+    chapT: "",
+    chapT_en: "",
+    dom: n.type === "domaine" ? str(p.title ?? r("description")) : str(r("domaine")),
+    dom_en: str(en("domaine")),
+    os: str(r("os_texte")),
+    os_en: str(en("os_texte")),
     src: str(r("source")),
     ref: str(r("reference")),
     statut: str(r("statut")),
-    statut_en: str(r("statut_en")),
-    srcKey: str(r("sourceKey")),
-    strand: str(r("strand")),
-    genre: str(r("genre")),
+    statut_en: str(en("statut")),
+    srcKey: str(r("source_key")),
+    strand: n.type === "standard" ? str(r("statement_type")) : "",   // reading strand only
+    genre: str(m.genre),
   };
 }
 
@@ -184,37 +192,45 @@ const DOMAINE_ORDER = ["Arithmétique", "Géométrie", "Mesure", "Résolution de
 function buildViewConfig(nodes: DisplayNode[]): ViewConfig {
   const views: ViewSpec[] = [];
   const has = (kind: string) => nodes.some((n) => n.kind === kind);
-  const chaptersHaveDom = nodes.some((n) => n.kind === "chapter" && n.dom);
-  const lessonsHavePalSem = nodes.some((n) => n.kind === "lesson" && n.pal !== "" && n.sem !== "");
 
-  // Maths-shaped spine: Domaine → Chapitre → OS → composant → tâche.
-  if (has("chapter") && has("lesson") && chaptersHaveDom) {
+  // In the converged shape, domaine / semaine / chapitre are REAL nodes joined by
+  // `hasChild` edges (two axes). So the rich views anchor on those nodes and walk
+  // hasChild — no property grouping. An empty `groupBy` makes the anchors the tree
+  // roots directly.
+
+  // Maths CONTENT axis: Domaine → Chapitre → OS → composant → tâche.
+  if (has("domaine") && has("chapter") && has("lesson")) {
     views.push({
       id: "thematique",
       label: { fr: "Vue thématique", en: "Thematic view" },
       shape: "grouped-spine",
-      params: { anchorKind: "chapter", groupBy: [{ key: "dom" }], expandEdge: "hasChild", order: DOMAINE_ORDER },
+      params: { anchorKind: "domaine", groupBy: [], expandEdge: "hasChild" },
     });
-    if (lessonsHavePalSem) {
-      views.push({
-        id: "planification",
-        label: { fr: "Vue planification", en: "Planning view" },
-        shape: "grouped-spine",
-        params: {
-          anchorKind: "lesson",
-          groupBy: [
-            { key: "pal", labelFr: "Palier", labelEn: "Tier" },
-            { key: "sem", labelFr: "Semaine", labelEn: "Week" },
-          ],
-          expandEdge: "hasChild",
-        },
-      });
-    }
     views.push({
       id: "chapitres",
       label: { fr: "Vue chapitres", en: "Chapters view" },
       shape: "grouped-spine",
-      params: { anchorKind: "chapter", groupBy: [{ key: "dom" }], expandEdge: "hasChild", stopKind: "lesson", order: DOMAINE_ORDER },
+      params: { anchorKind: "domaine", groupBy: [], expandEdge: "hasChild", stopKind: "lesson" },
+    });
+  }
+
+  // Maths SCHEDULE axis: Semaine → OS → composant → tâche.
+  if (has("week") && has("lesson")) {
+    views.push({
+      id: "planification",
+      label: { fr: "Vue planification", en: "Planning view" },
+      shape: "grouped-spine",
+      params: { anchorKind: "week", groupBy: [], expandEdge: "hasChild" },
+    });
+  }
+
+  // Reading spine: Semaine → standard (outil de langue) → composant.
+  if (has("week") && has("standard")) {
+    views.push({
+      id: "semaines",
+      label: { fr: "Vue semaines", en: "Weeks view" },
+      shape: "grouped-spine",
+      params: { anchorKind: "week", groupBy: [], expandEdge: "hasChild" },
     });
   }
 
@@ -237,6 +253,31 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
 
   const nodes = storedNodes.map(toDisplayNode);
   const edges = storedEdges.map(toDisplayEdge);
+
+  // Colour propagation: tag every CONTENT-axis descendant of a domaine with that
+  // domaine's name (domaine → chapter → OS → composant → tâche), so the explorer
+  // can colour the whole subtree. Schedule roots (weeks) are separate and stay
+  // untagged. A node already tagged (its own domaine) is never overwritten.
+  {
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const outHasChild = new Map<string, string[]>();
+    for (const e of edges) if (e.r === "hasChild") (outHasChild.get(e.s) ?? outHasChild.set(e.s, []).get(e.s)!).push(e.t);
+    for (const dom of nodes.filter((n) => n.kind === "domaine")) {
+      const name = dom.dom;
+      if (!name) continue;
+      const stack = [dom.id];
+      const seen = new Set<string>();
+      while (stack.length) {
+        for (const c of outHasChild.get(stack.pop()!) ?? []) {
+          if (seen.has(c)) continue;
+          seen.add(c);
+          const cn = byId.get(c);
+          if (cn && cn.kind !== "domaine" && !cn.dom) cn.dom = name;
+          stack.push(c);
+        }
+      }
+    }
+  }
 
   const byKind: Record<string, number> = {};
   for (const n of nodes) byKind[n.kind] = (byKind[n.kind] ?? 0) + 1;
