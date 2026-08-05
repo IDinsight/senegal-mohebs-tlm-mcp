@@ -16,7 +16,7 @@ const MATHS: GraphParseDescriptor = {
     week: "week",
     subtopic: "chapter",
     strand: "domaine",
-    "objectif spécifique": "lesson",
+    expectation: "lesson",
     "intégration du palier": "lesson",
   },
   labelToKind: { LearningComponent: "component", Curriculum: "task" },
