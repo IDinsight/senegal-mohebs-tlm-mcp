@@ -81,7 +81,7 @@ The integrity layer draws one line, applied consistently:
 
 **Where the two live.** The BLOCK rules are universal — they know only nodes and edges, never "chapter" or "bilan" — so they sit in the shared `kg-store` layer. The WARN rules are *unit-shaped* — they depend on what a unit IS for a given subject — so they live behind an optional adapter hook, `SubjectAdapter.coverageWarnings(graph)`. Subject-neutral shapes (empty container, a child with two parents) are reusable helpers in [`curriculum/coverage.ts`](src/curriculum/coverage.ts) that any adapter calls with its own kind names; genuinely subject-specific rules (the CI maths bilan; a lesson with more than one *chapter* parent) are written in the CI maths adapter. CE1 reading uses the generic helpers only. Nothing subject-specific leaks into the shared layer.
 
-**The reference regime.** Every cross-entity link in the store is an **id-based edge** (`hasChild`, `buildsTowards`) — Rule 2 covers them all. Chapter↔lesson membership is the `hasChild` edge, so renumbering a chapter or moving a lesson is a pure edge/attribute operation with nothing to keep in sync. (CI maths lessons carry a second `hasChild` axis — a `week → OS` schedule edge alongside the `chapter → OS` content edge — so a lesson has two parents by design; the multi-parent coverage rule is scoped to *chapter* parents.)
+**The reference regime.** Every cross-entity link in the store is an **id-based edge** (`hasChild`, `buildsTowards`) — Rule 2 covers them all. Grouping↔lesson membership is the `hasChild` edge, so renumbering a grouping or moving a lesson is a pure edge/attribute operation with nothing to keep in sync. (CI maths lessons carry a second `hasChild` axis — a `week → lesson` schedule edge alongside the `LessonGrouping → lesson` content edge — so a lesson has two parents by design; the multi-parent coverage rule is scoped to *grouping* parents.)
 
 ### Audit log (append-only, atomic with the change)
 
@@ -195,29 +195,32 @@ curator: delete_node(nodeId="…chapter…", force:true, confirm:true, confirmat
 
 The raw verbs above are correct but tedious for real curriculum restructuring: adding a chapter with three lessons is one `create_node` + one `create_node` per lesson + one `link_nodes` per lesson — six confirmations, six chances to leave a half-built draft. **Recipes** collapse each such intent into a **single composite mutation**: one dry-run → one whole-composite diff (every added/removed/changed node and edge together) → one confirmation token → one atomic draft write → one audit event. They are the ergonomic layer over the primitives, **made safe by the same referential-integrity floor** — the whole result is validated by Rule 1/Rule 2 before the token is issued, so an invalid composite (e.g. a move that would orphan a lesson) is rejected **as a whole**; nothing partial lands. Recipes reuse the primitives' own `apply` functions internally — they are server-side composites, never Claude hand-sequencing separate tool calls.
 
-- **`add_lesson(chapterId, text, [text_en, order, isBilan])`** — create a lesson and link it (`hasChild`) to an existing chapter, in one edit — chapter membership IS the edge. Additive: linking to a nonexistent chapter is BLOCKED.
-- **`add_chapter(number, title, [title_en, lessons[]])`** — create a chapter (title + number at birth) with optional seed lessons, as one composite. `number` must be **free** — append after the last chapter or fill a numbering gap; a colliding number is rejected (inserting between chapters and shifting the rest is `renumber`'s job, not this additive path).
-- **`move_lesson(lessonId, toChapterId, [position])`** — rehome a lesson: unlink the old `hasChild` edge and link the new one, atomically. Membership is the edge, so the lesson keeps its own number. Appends to the target by default.
-- **`split_chapter(chapterId, atLessonId, [newTitle, newTitle_en, newNumber])`** — create a new chapter and move the tail lessons (from `atLessonId` onward) into it. The new chapter is **appended at the next free number by default** (no existing chapter is shifted); pass a free `newNumber` to place it in a gap.
-- **`renumber(chapterId, newNumber)`** — change a chapter's number. Lessons follow via the `hasChild` edge — no cascade. The target number must be **free** (renumber MOVES a chapter to an unoccupied number; insert-with-shift and swap are rejected).
+- **`add_lesson(groupingId, expectationId, text, [text_en, order, isBilan])`** — create a content lesson, link it (`hasChild`) under an existing grouping, **and align it (`supports`) to an existing spine `expectation`** (the objective it teaches). `text` is the lesson's own title (the OS text lives on the expectation). Additive: a nonexistent grouping OR expectation is BLOCKED — the standard must already exist. `isBilan` marks the end-of-chapter assessment (stored as `educational_use: "Assessment"`).
+- **`add_lesson_grouping(number, title, [title_en, groupName])`** — create a lesson grouping (an LC `LessonGrouping` — `groupName` is its type: Chapitre/Unité/Module, default "Chapitre"), title + number at birth. Created **empty**; add lessons afterward via `add_lesson`. `number` must be **free** — append or fill a numbering gap; a colliding number is rejected (inserting between groupings and shifting the rest is `renumber`'s job).
+- **`move_lesson(lessonId, toGroupingId, [position])`** — rehome a lesson: unlink the old `hasChild` edge and link the new one, atomically. Membership is the edge, so the lesson keeps its own number. Appends to the target by default.
+- **`split_lesson_grouping(groupingId, atLessonId, [newTitle, newTitle_en, newNumber])`** — create a new grouping (same type as the source) and move the tail lessons (from `atLessonId` onward) into it. **Appended at the next free number by default** (no existing grouping is shifted); pass a free `newNumber` to place it in a gap.
+- **`renumber(groupingId, newNumber)`** — change a grouping's number. Lessons follow via the `hasChild` edge — no cascade. The target number must be **free** (renumber MOVES a grouping to an unoccupied number; insert-with-shift and swap are rejected).
 
-Recipes that create nodes mint the id(s) server-side and surface them on the dry-run (`mintedLessonId` / `mintedChapterId` / `mintedLessonIds`, exactly like `create_node`'s `mintedNodeId`); pass them back on confirm. Recipes are available only for a subject whose adapter declares a `recipeProfile` (CI maths does; CE1 reading does not) — otherwise the tool returns a clear "not available" message rather than guessing.
+Recipes that create nodes mint the id(s) server-side and surface them on the dry-run (`mintedLessonId` / `mintedGroupingId`, exactly like `create_node`'s `mintedNodeId`); pass them back on confirm. Recipes are available only for a subject whose adapter declares a `recipeProfile` (CI maths does; CE1 reading does not) — otherwise the tool returns a clear "not available" message rather than guessing.
 
 **Structural-property editing (the foundation move/split/renumber needed).** These recipes must change STRUCTURAL properties of *existing* nodes — a chapter's number, a lesson's position — which `upsert_property` deliberately refuses (it is wording-only). That path is a curated set of numeric keys (`order`, `raw.metadata.order`) declared per node kind in the adapter's `structuralAliases` and validated against a central `STRUCTURAL_EDIT_SAFE_PATHS` allowlist (the exact analogue of `UPSERT_PROPERTY_SAFE_PATHS`). By design there is **no raw structural-edit tool** — these keys are editable only *through* the recipes.
 
 **The block-vs-warn behaviour is inherited from #13, not re-invented.** A composite that would leave the graph referentially broken (a dangling edge, a disguised rename) is BLOCKED; a composite that leaves it valid-but-incomplete (a split that leaves a chapter without a bilan) WARNS on the dry-run and `diff_draft` but never blocks. The approver decides.
 
-**How `renumber` behaves — edge-based membership.** Chapter↔lesson membership is a single id-based `hasChild` edge (the Rule-2-guarded backbone) — there is no denormalized number join. So `renumber` changes only the chapter's own number; the lessons stay attached by the edge and are untouched. `move_lesson` / `split_chapter` rewire the `hasChild` edge; they too need no number rewrite. (Historically CI maths joined by a denormalized `raw.chapitreNum`, which forced a cross-lesson cascade and a drift warning — that join was removed in the maths↔reading convergence.)
+**How `renumber` behaves — edge-based membership.** Grouping↔lesson membership is a single id-based `hasChild` edge (the Rule-2-guarded backbone) — there is no denormalized number join. So `renumber` changes only the grouping's own number; the lessons stay attached by the edge and are untouched. `move_lesson` / `split_lesson_grouping` rewire the `hasChild` edge; they too need no number rewrite. (Historically CI maths joined by a denormalized `raw.chapitreNum`, which forced a cross-lesson cascade and a drift warning — that join was removed in the maths↔reading convergence.)
 
 ```text
-# add a chapter with two lessons — ONE composite, ONE confirm
-curator: add_chapter(number=26, title="Nombres décimaux", lessons=[{text:"Découverte"},{text:"Bilan", isBilan:true}])
-         → dry-run: diff shows 1 chapter + 2 lessons + 2 hasChild edges added; token + mintedChapterId + mintedLessonIds
-curator: add_chapter(..., confirm:true, confirmationToken:…, mintedChapterId:…, mintedLessonIds:[…])
-         → all five nodes/edges land on the draft atomically; one audit "apply" event
+# add an empty grouping, then a lesson aligned to an existing expectation
+curator: add_lesson_grouping(number=26, title="Nombres décimaux")
+         → dry-run: diff shows 1 LessonGrouping added; token + mintedGroupingId
+curator: add_lesson_grouping(..., confirm:true, confirmationToken:…, mintedGroupingId:…)
+curator: add_lesson(groupingId="…", expectationId="…", text="Découverte")
+         → dry-run: diff shows 1 Lesson + a hasChild edge (grouping→lesson) + a supports edge (lesson→expectation); token + mintedLessonId
+curator: add_lesson(..., confirm:true, confirmationToken:…, mintedLessonId:…)
+         → the composite lands on the draft atomically; one audit "apply" event each
 
-# renumber chapter 3 → 26 — only the chapter's number changes; lessons follow via the edge
-curator: renumber(chapterId="…", newNumber=26) → dry-run: diff shows ONLY the chapter as CHANGED
+# renumber grouping 3 → 26 — only the grouping's number changes; lessons follow via the edge
+curator: renumber(groupingId="…", newNumber=26) → dry-run: diff shows ONLY the grouping as CHANGED
 curator: renumber(..., confirm:true, confirmationToken:…) → applied atomically; lessons stay attached via hasChild
 ```
 
@@ -331,8 +334,9 @@ explorer's display schema:
 | `ex`/`ex_en`, `apt`, `comm` | `raw.examples` / `raw.aptitude_ci` / `raw.commentaire_progression` (`_en` under `raw.metadata.en`) | `strand`,`genre` | `raw.statement_type` (reading standards only), `raw.metadata.genre` (weeks) |
 
 Edges are the stored `hasChild` + `buildsTowards` as `{s,t,r,o}`. Domaine / Semaine / Chapitre are now
-**real nodes** joined by `hasChild` edges (two axes: `domaine → chapter → OS` content, `week → OS`
-schedule) — no client-side grouping synthesis; the views walk the actual node hierarchy.
+**real nodes** joined by `hasChild` edges (two axes: `domaine → LessonGrouping → lesson` content,
+`week → lesson` schedule; the lesson then `supports` its spine `expectation`/OS) — no client-side
+grouping synthesis; the views walk the actual node hierarchy.
 
 ### Data-driven views (`meta.viewConfig`)
 
