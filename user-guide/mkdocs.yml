@@ -1,0 +1,63 @@
+site_name: Guide utilisateur — MOHEBS TLM
+site_description: Comment utiliser les outils MOHEBS pour créer du matériel pédagogique, modifier le graphe de connaissances, et explorer le curriculum.
+docs_dir: docs
+
+theme:
+  name: material
+  language: fr
+  palette:
+    - scheme: default
+      primary: teal
+      toggle:
+        icon: material/weather-night
+        name: Passer en mode sombre
+    - scheme: slate
+      primary: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Passer en mode clair
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+
+plugins:
+  - search
+  # Bilingual FR (default) / EN with a language switcher in the header.
+  # English pages are the same filename with a `.en.md` suffix (e.g. index.en.md).
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: fr
+          name: Français
+          default: true
+        - locale: en
+          name: English
+          nav_translations:
+            Accueil: Home
+            Prise en main: Getting started
+            Créer du matériel pédagogique: Create teaching materials
+            Modifier le graphe de connaissances: Edit the knowledge graph
+            Relire et approuver: Review & approve
+            Explorer le graphe: Explore the graph
+            Référence: Reference
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+nav:
+  - Accueil: index.md
+  - Prise en main: getting-started.md
+  - Créer du matériel pédagogique: create-materials.md
+  - Modifier le graphe de connaissances: edit-knowledge-graph.md
+  - Relire et approuver: review-approve.md
+  - Explorer le graphe: explorer.md
+  - Référence: reference.md
