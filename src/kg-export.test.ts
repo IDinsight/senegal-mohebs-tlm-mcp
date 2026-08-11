@@ -109,20 +109,25 @@ describe("kg-export — reading", () => {
     const g = (await exportNamespace(readingNs))!;
     expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["thematique", "planification", "generic"]);
     const thematic = g.meta.viewConfig.views.find((v) => v.id === "thematique") as any;
-    expect(thematic.params).toMatchObject({ anchorKind: "standard", expandEdge: "hasChild" });
+    expect(thematic.params).toMatchObject({ anchorKind: "expectation", expandEdge: "hasChild" });
     expect(thematic.params.groupBy[0].key).toBe("strand");
-    // every exported standard is week-connected (orphans pruned) and carries its strand
-    const isChild = new Set(g.edges.filter((e) => e.r === "hasChild").map((e) => e.t));
-    const standards = g.nodes.filter((n) => n.kind === "standard");
+    // each language-tool standard (kind expectation) anchors the thematic view:
+    // its Lesson + components fold into the display hasChild tree BELOW it, so it
+    // is a hasChild SOURCE (connected, not orphaned) and carries its strand.
+    const hasChildSource = new Set(g.edges.filter((e) => e.r === "hasChild").map((e) => e.s));
+    const standards = g.nodes.filter((n) => n.kind === "expectation" && n.strand);
     expect(standards.length).toBeGreaterThan(0);
-    expect(standards.every((s) => isChild.has(s.id))).toBe(true);
+    expect(standards.every((s) => hasChildSource.has(s.id))).toBe(true);
     expect(standards.every((s) => s.strand)).toBe(true);
   });
 
   it("categorizes the reading spine (standards = expectation); taxonomy includes surfaced non-spine categories", async () => {
     const g = (await exportNamespace(readingNs))!;
-    // reading spine is week → standard → component; standards carry role=expectation
-    expect(g.nodes.filter((n) => n.kind === "standard").every((s) => s.cat === "expectation")).toBe(true);
+    // reading spine is week → lesson → expectation → component; the language-tool
+    // standards are kind expectation and carry role=expectation.
+    const stds = g.nodes.filter((n) => n.kind === "expectation");
+    expect(stds.length).toBeGreaterThan(0);
+    expect(stds.every((s) => s.cat === "expectation")).toBe(true);
     // Spine categories (expectation/component/week) PLUS the now-surfaced
     // non-spine ones: strand/subtopic grouping nodes and the neutral framework
     // bucket. `task` stays absent (reading has no illustrative-task nodes).

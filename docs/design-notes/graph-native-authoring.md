@@ -3,8 +3,10 @@
 > **Status: Current — implemented and live.** Landed for CI maths via PR #28
 > (split + authoring/edit surface) and PR #29 (bilan as data), both merged; the
 > Firestore store has been re-seeded (ci/maths: 509 nodes / 885 edges). The
-> migration is reproducible via `scripts/migrate-maths-graph.mjs`. CE1 reading is
-> NOT yet migrated (no content layer). LC type/edge vocabulary confirmed against
+> migration is reproducible via `scripts/migrate-maths-graph.mjs`. CE1 reading now has the
+> content layer too (Scope A — one Lesson per language-tool standard per week;
+> `scripts/migrate-reading-graph.mjs`; reads byte-identical). The fuller 22-session
+> timetable (Scope B) is still prompt-hardcoded. LC type/edge vocabulary confirmed against
 > the [LC Curriculum reference](https://docs.learningcommons.org/knowledge-graph/graph-reference/curriculum)
 > (Activity, Material, Lesson, LessonGrouping); this project uses the graph's
 > existing serialization (snake_case, `hasChild`/`supports`), not canonical LC —
