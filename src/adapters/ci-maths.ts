@@ -249,6 +249,27 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       assessmentProperty: "isAssessment",
     },
 
+    // LC identity stamped onto recipe-created nodes so they are faithful LC
+    // nodes (survive a re-parse / re-export) — the inverse of MATHS_PARSE's
+    // roleToKind. A chapter's statement_type is the constant "Chapitre"; a
+    // lesson's is its strand, a denormalized copy of its domaine's name, so it
+    // is inherited from the domaine container-ancestor. `labels` matches the
+    // seeded spine nodes ("StandardsFrameworkItem").
+    lcNodeTemplate: {
+      chapter: {
+        labels: ["StandardsFrameworkItem"],
+        role: "subtopic",
+        normalizedStatementType: "Standard Grouping",
+        statementType: "Chapitre",
+      },
+      lesson: {
+        labels: ["StandardsFrameworkItem"],
+        role: "expectation",
+        normalizedStatementType: "Standard",
+        statementType: { inheritTitleFromAncestorKind: "domaine" },
+      },
+    },
+
     coverageWarnings: ciMathsCoverageWarnings,
 
     detect, parse,

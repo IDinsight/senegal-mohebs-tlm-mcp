@@ -369,12 +369,16 @@ describe("force-delete respects the role gate + audit", () => {
 
   it("a curator force-delete writes an apply audit with the full cascade diff", async () => {
     const g = await readPublished(ns);
-    const chapter = g.nodes.find((n) => n.type === "chapter" && g.edges.some((e) => e.type === "hasChild" && e.from === n.id))!;
-    await apply(deleteNode, { nodeId: chapter.id, force: true });
+    // Pick a node whose children are single-parent so the cascade genuinely
+    // removes a subtree. A domaine works: its chapters hang off it alone. (A
+    // chapter would NOT — in the faithful graph its lessons also hang off a
+    // week, so deleting the chapter leaves them, cascade == 1.)
+    const domaine = g.nodes.find((n) => n.type === "domaine" && g.edges.some((e) => e.type === "hasChild" && e.from === n.id))!;
+    await apply(deleteNode, { nodeId: domaine.id, force: true });
     const [rec] = await store.listAudit({ namespace: ns, eventType: "apply", limit: 1 });
     expect(rec.mutation).toBe("deleteNode");
-    expect(rec.diff!.nodes.removed.some((n) => n.id === chapter.id)).toBe(true);
-    expect(rec.diff!.nodes.removed.length).toBeGreaterThan(1); // subtree, not just the chapter
+    expect(rec.diff!.nodes.removed.some((n) => n.id === domaine.id)).toBe(true);
+    expect(rec.diff!.nodes.removed.length).toBeGreaterThan(1); // domaine + its chapters
   });
 });
 

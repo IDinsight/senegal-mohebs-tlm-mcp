@@ -9,7 +9,7 @@
 
 import type { MutationGraph, MutationNode } from "../types.js";
 import { readAtPath, writeAtPath } from "../upsert-property.js";
-import type { WordingAliases, StructuralAliases, RecipeProfile } from "../../types.js";
+import type { WordingAliases, StructuralAliases, RecipeProfile, LcNodeTemplate } from "../../types.js";
 
 // Well-known LOGICAL structural/wording key names the recipes reference. The
 // adapter's alias maps resolve these to concrete storage paths; the recipe code
@@ -124,6 +124,102 @@ export function buildProps(sets: PropSet[], flags: Array<{ path: string; value: 
   return props;
 }
 
+// ── LC identity stamping (faithful re-export) ────────────────────────────────
+// A created node must carry the raw LC identity fields — else it is a "half"
+// node the LC parser would drop on a re-parse. The adapter declares them per
+// kind as an `LcNodeTemplate`; kg-store stays subject-blind by reading that
+// template (never naming "domaine"/"subtopic" itself).
+
+// The node's display title — a Standard Grouping (chapter/domaine/week) keeps
+// its name in normalized `title`, mirrored in `raw.description`. Read either.
+const titleOf = (n: MutationNode): string | null => {
+  const t = readAtPath(n.properties, "title");
+  if (typeof t === "string" && t) return t;
+  const d = readAtPath(n.properties, "raw.description");
+  return typeof d === "string" && d ? d : null;
+};
+
+// The container-parents (hasChild sources) pointing AT a node — a node may have
+// several axes (a lesson has a chapter AND a week parent), so return all.
+function containerParents(g: MutationGraph, childId: string, containerEdge: string): MutationNode[] {
+  const out: MutationNode[] = [];
+  for (const e of g.edges) {
+    if (e.type !== containerEdge || e.to !== childId) continue;
+    const p = nodeById(g, e.from);
+    if (p) out.push(p);
+  }
+  return out;
+}
+
+// Resolve the `statement_type` to stamp on a node of `kind` being placed under
+// `containerParentId`. A constant declaration returns as-is; an inherit
+// declaration climbs container-ancestors for a node of the named kind and takes
+// its title (a maths lesson's strand = its domaine's name), then falls back to
+// copying an existing sibling's raw.statement_type, then to null (leave blank).
+export function resolveStatementType(
+  g: MutationGraph,
+  containerParentId: string | null,
+  kind: string,
+  template: LcNodeTemplate | undefined,
+  containerEdge: string,
+): string | null {
+  const decl = template?.[kind]?.statementType;
+  if (decl == null) return null;
+  if (typeof decl === "string") return decl;
+
+  // Inherit: breadth-first climb of container-ancestors from the placement
+  // parent, looking for a node of the target kind; take its title.
+  if (containerParentId) {
+    const target = decl.inheritTitleFromAncestorKind;
+    const seen = new Set<string>();
+    let frontier = [containerParentId];
+    while (frontier.length > 0) {
+      const next: string[] = [];
+      for (const id of frontier) {
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const node = nodeById(g, id);
+        if (!node) continue;
+        if (node.type === target) { const t = titleOf(node); if (t) return t; }
+        for (const p of containerParents(g, id, containerEdge)) next.push(p.id);
+      }
+      frontier = next;
+    }
+    // Fallback: copy from an existing sibling of the same kind under the parent.
+    for (const e of g.edges) {
+      if (e.type !== containerEdge || e.from !== containerParentId) continue;
+      const sib = nodeById(g, e.to);
+      if (sib && sib.type === kind) {
+        const st = readAtPath(sib.properties, "raw.statement_type");
+        if (typeof st === "string" && st) return st;
+      }
+    }
+  }
+  return null;
+}
+
+// Stamp the LC identity fields (role / normalized_statement_type / statement_type)
+// into a fresh node's `properties`. `statementType` is pre-resolved by the
+// caller (via resolveStatementType) so this stays a pure write. A null/blank
+// statement_type is skipped, leaving the field unset for the reviewer to fill.
+export function stampLcProps(
+  props: Record<string, unknown>,
+  kind: string,
+  template: LcNodeTemplate | undefined,
+  statementType: string | null,
+): Record<string, unknown> {
+  const t = template?.[kind];
+  if (!t) return props;
+  let out = props;
+  if (t.role !== undefined) out = writeAtPath(out, "raw.metadata.role", t.role);
+  if (t.normalizedStatementType !== undefined) out = writeAtPath(out, "raw.normalized_statement_type", t.normalizedStatementType);
+  if (statementType != null && statementType !== "") out = writeAtPath(out, "raw.statement_type", statementType);
+  return out;
+}
+
+// The labels to stamp on a created node of `kind` (or undefined if none).
+export const lcLabels = (kind: string, template: LcNodeTemplate | undefined): string[] | undefined => template?.[kind]?.labels;
+
 // ── Shared arg shape ─────────────────────────────────────────────────────────
 // Every recipe carries the subject vocabulary its server tool read off the
 // active adapter, plus the namespace. Recipe-specific fields extend this.
@@ -132,4 +228,5 @@ export type RecipeCommon = {
   profile: RecipeProfile;
   structuralAliases: StructuralAliases;
   wordingAliases: WordingAliases;
+  lcNodeTemplate?: LcNodeTemplate;   // LC identity fields to stamp on created nodes; absent = pre-#labels behavior
 };

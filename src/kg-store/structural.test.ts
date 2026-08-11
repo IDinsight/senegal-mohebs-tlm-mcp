@@ -393,6 +393,7 @@ describe("Rule 1 — disguised rename across delete_node + create_node", () => {
       args: {
         kind: chapter.type,
         properties: { ...(chapter.properties as Record<string, unknown>) },  // identical content
+        labels: chapter.labels,   // labels are content too — reproduce them so Rule 1 sees an exact twin
         namespace: ns, aliases: aliases(), newNodeId,
       },
     });

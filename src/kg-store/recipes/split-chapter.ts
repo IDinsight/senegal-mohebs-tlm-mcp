@@ -14,6 +14,7 @@ import {
   K_CHAPTER_NUMBER, W_TITLE, W_TITLE_EN,
   asNum, readLogical, buildProps,
   nodeById, childLessons, positionOf, usedChapterNumbers, nextChapterNumber,
+  resolveStatementType, stampLcProps, lcLabels,
 } from "./shared.js";
 
 export type SplitChapterArgs = RecipeCommon & {
@@ -58,7 +59,7 @@ export const splitChapter: GraphMutation<SplitChapterArgs> = {
     const effNum = splitNumber(base, a);
     const sourceTitle = readLogical(source, a.profile.chapterKind, W_TITLE, a.wordingAliases);
     const newTitle = a.newTitle ?? (typeof sourceTitle === "string" ? `${sourceTitle} (suite)` : "");
-    const chapterProps = buildProps(
+    let chapterProps = buildProps(
       [
         { aliases: a.wordingAliases, kind: a.profile.chapterKind, key: W_TITLE, value: newTitle },
         { aliases: a.wordingAliases, kind: a.profile.chapterKind, key: W_TITLE_EN, value: a.newTitle_en },
@@ -66,7 +67,10 @@ export const splitChapter: GraphMutation<SplitChapterArgs> = {
       ],
       [],
     );
-    let g = createNode.apply(base, { kind: a.profile.chapterKind, properties: chapterProps, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.newChapterId });
+    // Chapter statement_type is the constant ("Chapitre"); moved lessons below
+    // keep their own already-stamped LC fields.
+    chapterProps = stampLcProps(chapterProps, a.profile.chapterKind, a.lcNodeTemplate, resolveStatementType(base, null, a.profile.chapterKind, a.lcNodeTemplate, a.profile.containerEdge));
+    let g = createNode.apply(base, { kind: a.profile.chapterKind, properties: chapterProps, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.newChapterId, labels: lcLabels(a.profile.chapterKind, a.lcNodeTemplate) });
 
     const lessons = childLessons(base, a.chapterId, a.profile).sort((x, y) => positionOf(x, a.profile, a.structuralAliases) - positionOf(y, a.profile, a.structuralAliases));
     const at = lessons.findIndex((l) => l.id === a.atLessonId);

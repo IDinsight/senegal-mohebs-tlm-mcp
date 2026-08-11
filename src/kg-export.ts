@@ -12,13 +12,14 @@
 // the explorer needs the WHOLE spine graph (every node + edge), not a
 // per-unit slice. It reads the same normalized store those adapters hydrate from.
 //
-// Data-scope note (see docs/kg-explorer-findings.md): the store holds the
-// curriculum SPINE only — for CI maths `chapter → lesson → component → task`
-// (hasChild) + `chapter → chapter` (buildsTowards); for CE1 reading
-// `week → standard → component` (hasChild). The RECE framework and the six
-// derived-source family branches from the old inline-DATA explorer are NOT in
-// the store; their per-leaf `sourceKey` tag survives inside `properties.raw`,
-// so the source-filter chips still work, but those branches don't render.
+// Data-scope note (see docs/kg-explorer-findings.md): the store now holds the
+// FULL Learning-Commons graph — the curriculum spine (for CI maths
+// `domaine → chapter → lesson → component → task` via hasChild, plus
+// `chapter → chapter` buildsTowards; for CE1 reading `week → standard →
+// component`) AND the framework/derived nodes + supports/relatesTo cross-links
+// that used to be dropped at ingest. The explorer surfaces all of it: spine
+// nodes keep their category, non-spine nodes fall into the neutral `framework`
+// legend bucket, and every edge type renders.
 import { getKgStore, kgNamespace } from "./kg-store/index.js";
 import type { StoredNode, StoredEdge } from "./kg-store/index.js";
 import { listAvailableContexts } from "./context/index.js";
@@ -67,19 +68,21 @@ const CATEGORY_DEFS: TaxonomyEntry[] = [
   { key: "component",   label: { fr: "Composant d'apprentissage", en: "Learning component" }, color: "#d4537e" },
   { key: "task",        label: { fr: "Tâche illustrative",        en: "Illustrative task" },  color: "#c98a1a" },
   { key: "week",        label: { fr: "Semaine",                   en: "Week" },               color: "#888780" },
+  { key: "framework",   label: { fr: "Cadre / dérivé",            en: "Framework / derived" }, color: "#9aa0a6" },
 ];
 
 // Node → category. Role (converged LC scheme) wins for the container spine; the
-// two leaf kinds (component/task) carry no role, so they resolve by kind. Any
-// node that fits neither stays untagged and simply gets a neutral colour.
-function categoryOf(kind: string, role: string): string {
+// two leaf kinds (component/task) carry no role, so they resolve by kind.
+// Non-spine nodes (framework/derived — kept only for faithful re-export) fall
+// into the neutral "framework" bucket so the explorer can surface them.
+function categoryOf(kind: string, role: string, spine: boolean | undefined): string {
   if (kind === "task") return "task";
   if (kind === "component") return "component";
   if (kind === "week" || role === "week") return "week";
   if (role === "strand") return "strand";
   if (role === "subtopic") return "subtopic";
   if (role === "expectation" || role === "intégration du palier") return "expectation";
-  return "";
+  return spine === false ? "framework" : "";
 }
 
 export type DisplayEdge = { s: string; t: string; r: string; o: number };
@@ -170,9 +173,9 @@ function toDisplayNode(n: StoredNode): DisplayNode {
   const domIdx = n.type === "domaine" ? DOMAINE_ORDER.indexOf(str(p.title ?? r("description"))) : -1;
   return {
     id: n.id,
-    label: LABEL_BY_KIND[n.type] ?? n.type,
+    label: (n.labels && n.labels[0]) || LABEL_BY_KIND[n.type] || n.type,
     kind: n.type,
-    cat: categoryOf(n.type, str(m.role)),
+    cat: categoryOf(n.type, str(m.role), n.spine),
     nt: str(r("normalized_statement_type") ?? r("content_type")),
     st: str(r("statement_type")),
     st_en: str(en("statement_type")),
@@ -209,13 +212,25 @@ function toDisplayNode(n: StoredNode): DisplayNode {
   };
 }
 
-function toDisplayEdge(e: StoredEdge): DisplayEdge {
+function edgeOrder(e: StoredEdge): number {
   const p = e.properties ?? {};
-  const o =
-    typeof p.orderInParent === "number" ? (p.orderInParent as number)
+  return typeof p.orderInParent === "number" ? (p.orderInParent as number)
     : typeof p.sequenceInFrom === "number" ? (p.sequenceInFrom as number)
+    : typeof e.seq === "number" ? e.seq             // supports/relatesTo carry no order prop → fall back to raw sequence
     : 0;
-  return { s: e.from, t: e.to, r: e.type, o };
+}
+
+// One stored edge → its DISPLAY edge(s). `supports` is CONTAINMENT in the LC
+// ontology (a component/task is part-of the standard it supports), and the
+// parser folds it into the hasChild child tree with the direction REVERSED
+// (parent = the supported end, child = the supporting start). The explorer page
+// renders a hasChild tree, so we mirror that fold here — otherwise the tree
+// stops at lessons and never reaches the learning components/tasks. The store
+// keeps the real `supports` edge untouched (this is display-only). hasChild /
+// buildsTowards / relatesTo pass through with their own type.
+function toDisplayEdges(e: StoredEdge): DisplayEdge[] {
+  if (e.type === "supports") return [{ s: e.to, t: e.from, r: "hasChild", o: edgeOrder(e) }];
+  return [{ s: e.from, t: e.to, r: e.type, o: edgeOrder(e) }];
 }
 
 // ── viewConfig (data-driven, from the fields actually present) ────────────────
@@ -282,7 +297,7 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
   ]);
 
   let nodes = storedNodes.map(toDisplayNode);
-  let edges = storedEdges.map(toDisplayEdge);
+  let edges = storedEdges.flatMap(toDisplayEdges);
 
   // ── Explorer post-processing (display only; never touches the store) ─────────
   {
@@ -319,20 +334,14 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
       }
     }
 
-    // (3) Navigable-spine filter — keep only nodes reachable from a ROOT
-    //     (week / domaine) via hasChild. Drops disconnected leftovers that would
-    //     otherwise show as unnavigable roots: reading expectations whose
-    //     sous-domaine/subtopic parents aren't seeded (spine-only seeding), and
-    //     maths's borrowed-framework components. Store is untouched; this is the
-    //     explorer's navigable view only.
-    const keep = new Set<string>();
-    const stack: string[] = [];
-    for (const n of nodes) if (n.kind === "week" || n.kind === "domaine") { keep.add(n.id); stack.push(n.id); }
-    while (stack.length) {
-      for (const c of outHasChild.get(stack.pop()!) ?? []) if (!keep.has(c)) { keep.add(c); stack.push(c); }
-    }
-    nodes = nodes.filter((n) => keep.has(n.id));
-    edges = edges.filter((e) => keep.has(e.s) && keep.has(e.t));
+    // (3) Surface EVERYTHING. The store now holds the full Learning-Commons
+    //     graph (spine + framework/derived nodes + supports/relatesTo cross-
+    //     links), so the explorer renders all of it — the grouped-spine views
+    //     stay clean because they anchor on week/domaine/standard and walk
+    //     hasChild, while the generic view and the `framework` legend category
+    //     expose the non-spine nodes and the cross-link edges. (Previously this
+    //     step dropped everything not reachable from a week/domaine root; with
+    //     faithful full-graph seeding there are no dangling leftovers to hide.)
   }
 
   const byKind: Record<string, number> = {};
@@ -358,7 +367,7 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
       taxonomy,
       viewConfig: buildViewConfig(nodes),
       generatedAt: new Date().toISOString(),
-      note: "Read-only, published slot only (no draft). Curriculum spine transformed from raw Learning-Commons nodes/edges.",
+      note: "Read-only, published slot only (no draft). Full Learning-Commons graph — the curriculum spine plus framework/derived nodes and supports/relatesTo cross-links.",
     },
   };
 }

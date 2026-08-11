@@ -376,19 +376,29 @@ data has the CI maths-shaped fields it gets the rich views; otherwise it renders
 `node-type` view — no frontend change. To give a differently-shaped KG its own rich views, extend
 `buildViewConfig` in `src/kg-export.ts` with a new detection + a new view `shape` in the frontend.
 
-### Data-scope finding (what's in the graph vs. was only in the old HTML)
+### Data-scope finding (what's in the graph)
 
-**Verified against live Firestore, both namespaces are SPINE-ONLY.** The seed pipeline runs each
-adapter's `parse()` → normalized model → store, which keeps only the curriculum spine
-(`ci/maths`: chapter→lesson→component→task via `hasChild` + chapter→chapter `buildsTowards`;
-`ce1/reading`: week→standard→component). The RECE framework and the six derived-source family
-branches from the old inline-`DATA` explorer are **not** stored as nodes, and the raw graph's
-`supports`/`relatesTo` edges are dropped. But every raw field survives in `properties.raw` —
-including `sourceKey` (all seven tags present on CI maths components/tasks), so the source-filter
-chips still work, and Domaine/Palier/Semaine are re-synthesized from properties. What does NOT
-render: the RECE/derived branches as separate roots, and the modal's `supports`/`relatesTo`
-cross-link blocks. See `docs/kg-explorer-findings.md` §1 for the full table and the (a) ship-spine
-/ (b) ingest-more decision (shipped: **a**).
+**The store now holds the FULL Learning-Commons graph** (superseding the earlier spine-only
+design). The seed pipeline still runs each adapter's `parse()`, but `parseGraph` echoes the raw
+graph onto the model (`CurriculumModel.rawGraph`), and `serializeModel` persists EVERY raw node and
+EVERY raw edge verbatim (`ci/maths`: 397 nodes / 773 edges; `ce1/reading`: 1401 / 1362):
+
+- **Spine nodes** (the ones `parse()` keeps — `ci/maths` domaine→chapter→lesson→component→task,
+  `ce1/reading` week→standard→component) carry `spine: true` plus their normalized fields.
+- **Non-spine nodes** (the RECE framework, the six derived-source family branches, grouping
+  wrappers) carry `spine: false` and only `properties.raw` — kept purely for faithful re-export.
+- **Edges** keep their real LC type — `hasChild`, `supports`, `relatesTo`, `buildsTowards` — with a
+  `seq` recording raw order. `supports` is no longer folded into `hasChild`.
+
+**Reads are unchanged.** Hydration rebuilds the raw envelope (`toRawEnvelope`) and re-runs the same
+`adapter.parse`, so the read model is the identical spine — guarded byte-for-byte by
+`parity:kg-store`. Non-spine nodes are dropped by `parse` at read time exactly as in a bundle read.
+
+**Re-export.** Because the store IS the raw graph, `toRawEnvelope(storedNodes, storedEdges)`
+reproduces the source `knowledge_graph.json` (guarded by `src/curriculum/faithful-reexport.test.ts`)
+— the store can replace the bundle. The explorer surfaces the whole graph: spine categories plus a
+neutral `framework` legend bucket for non-spine nodes and the `supports`/`relatesTo` cross-links.
+See `docs/kg-explorer-findings.md` §1 for the original spine-only analysis (superseded).
 
 ### Deploy the explorer
 

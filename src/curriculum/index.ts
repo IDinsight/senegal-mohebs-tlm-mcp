@@ -6,5 +6,5 @@
 export { buildModel, unit } from "./model.js";
 export { parseGraph, type GraphParseDescriptor } from "./parse-graph.js";
 export { searchTerminology, terminologySections } from "./terminology.js";
-export { serializeModel, deserializeToModel, edgeId, PRELOADED_MODEL_KEY } from "./store-bridge.js";
+export { serializeModel, deserializeToModel, toRawEnvelope, edgeId, PRELOADED_MODEL_KEY } from "./store-bridge.js";
 export { emptyContainerWarnings, multiParentWarnings } from "./coverage.js";
