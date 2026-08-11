@@ -10,16 +10,17 @@ import type { CurriculumModel, CurriculumUnit } from "../types.js";
 
 const load = (rel: string) => JSON.parse(readFileSync(resolve(rel), "utf8"));
 
-// Descriptors mirror what the adapters will declare in the next step.
+// Descriptors mirror what the adapters declare. Maths is the post-split
+// (graph-native-authoring) shape: chapters are content LessonGroupings, lessons
+// are content Lesson nodes that `supports` a spine `expectation` (the OS).
 const MATHS: GraphParseDescriptor = {
   roleToKind: {
     week: "week",
-    subtopic: "chapter",
     strand: "domaine",
-    expectation: "lesson",
-    "intégration du palier": "lesson",
+    expectation: "expectation",
+    "intégration du palier": "expectation",
   },
-  labelToKind: { LearningComponent: "component", Curriculum: "task" },
+  labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Curriculum: "task" },
   numberFrom: "order",
   progressionEdge: "buildsTowards",
 };
@@ -37,8 +38,8 @@ describe("generic parseGraph — maths (new shape)", () => {
   const m = parseGraph(load("sources/ci/maths/knowledge_graph.json"), MATHS);
 
   it("classifies the maths spine by metadata.role + label", () => {
-    expect(kindCounts(m, ["week", "chapter", "domaine", "lesson"])).toEqual({
-      week: 23, chapter: 25, domaine: 4, lesson: 112,
+    expect(kindCounts(m, ["week", "chapter", "domaine", "lesson", "expectation"])).toEqual({
+      week: 23, chapter: 25, domaine: 4, lesson: 112, expectation: 112,
     });
     // components/tasks exist (incl. out-of-spine ones, matching legacy parse)
     expect(m.unitsOfKind("component").length).toBeGreaterThan(0);
@@ -63,12 +64,18 @@ describe("generic parseGraph — maths (new shape)", () => {
     expect(scheduled.size).toBe(112);
   });
 
-  it("carries the objective in text, category in statement_type, number in order", () => {
-    const lesson = m.unitsOfKind("lesson").find((l) => l.code === "Leçon 15")!;
-    expect(lesson.text).toContain("trouver ce qui manque");
-    expect(lesson.properties.statement_type).toBe("Résolution de problème");
+  it("aligns each lesson to its expectation, which carries the OS text/category/number", () => {
+    // The OS (objectif spécifique) is now the spine `expectation`; the Lesson
+    // `supports` it (⇒ expectation.childIds ∋ the Lesson).
+    const exp = m.unitsOfKind("expectation").find((e) => e.code === "Leçon 15")!;
+    expect(exp.text).toContain("trouver ce qui manque");
+    expect(exp.properties.statement_type).toBe("Résolution de problème");
+    expect(exp.order).toBe(15);
+    expect((exp.properties.metadata as any).en.description).toContain("find what is missing");
+    // its aligned Lesson is a content node that carries the same lesson number
+    const lesson = m.childrenOf(exp.id).find((u) => u.kind === "lesson")!;
+    expect(lesson).toBeTruthy();
     expect(lesson.order).toBe(15);
-    expect((lesson.properties.metadata as any).en.description).toContain("find what is missing");
   });
 
   it("keeps chapter progression from buildsTowards edges", () => {

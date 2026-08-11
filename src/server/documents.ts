@@ -1,7 +1,7 @@
 // ── Module: server · tool group: documents & history (bucket) ────────────────
 // Reconcile, list, signed upload/download URLs, text extraction, and recording
 // what was generated or ingested. "unit"/"deliverable" are the tool-facing names;
-// they map to the internal history schema's chapter/type at the boundary below.
+// they map to the internal history schema's unit/type at the boundary below.
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded, badDeliverable, requireConfirmation } from "./shared.js";
@@ -10,15 +10,15 @@ import { getStorageAdapter, extractDocxText, listEntries, recordContent, reconci
 import type { HistoryEntry } from "../types.js";
 
 // ── list_documents pagination + filters ──────────────────────────────────────
-// listEntries() is sorted (chapter asc, type asc) and stable, so we page with an
-// opaque cursor pinned to the last entry's (chapter, type) — the same limit +
+// listEntries() is sorted (unit asc, type asc) and stable, so we page with an
+// opaque cursor pinned to the last entry's (unit, type) — the same limit +
 // cursor contract as read_audit. The cursor carries both keys (not the raw id
-// string) because the id `${chapter}:${type}` sorts lexically, which would break
-// the numeric chapter order (e.g. "10:manual" < "2:manual").
+// string) because the id `${unit}:${type}` sorts lexically, which would break
+// the numeric unit order (e.g. "10:manual" < "2:manual").
 //
 // SINGLE SOURCE OF TRUTH: `listDocumentsShape` below is the ONE Zod shape used
 // both as the tool's advertised `inputSchema` (so clients see limit/cursor/
-// chapter/type and their types) AND as the runtime validator (the MCP SDK parses
+// unit/type and their types) AND as the runtime validator (the MCP SDK parses
 // arguments against it before the handler runs). There is no second, divergent
 // hand-rolled validator — the "schema says nothing / handler enforces a number"
 // split that surfaced in live testing cannot recur.
@@ -32,18 +32,18 @@ const MAX_PAGE = 100;
 export const listDocumentsShape = {
   cursor: z.string().optional().describe("Opaque cursor from a prior page's nextCursor. Omit to start at the first document."),
   limit: z.number().int().min(1).max(MAX_PAGE).optional().describe(`Page size, 1..${MAX_PAGE} (default ${DEFAULT_PAGE}).`),
-  chapter: z.number().int().optional().describe("Filter to one unit (CI maths: chapter number)."),
+  unit: z.number().int().optional().describe("Filter to one unit (CI maths: chapter number)."),
   type: z.string().optional().describe("Filter to one deliverable key (CI maths: 'manual' or 'lessons')."),
 };
 
-type DocCursor = { chapter: number; type: string };
+type DocCursor = { unit: number; type: string };
 
 const encodeCursor = (c: DocCursor): string => Buffer.from(JSON.stringify(c), "utf8").toString("base64");
 
 function decodeCursor(s: string): DocCursor | null {
   try {
     const p = JSON.parse(Buffer.from(s, "base64").toString("utf8")) as unknown;
-    if (p && typeof p === "object" && typeof (p as DocCursor).chapter === "number" && typeof (p as DocCursor).type === "string") {
+    if (p && typeof p === "object" && typeof (p as DocCursor).unit === "number" && typeof (p as DocCursor).type === "string") {
       return p as DocCursor;
     }
     return null;
@@ -52,20 +52,20 @@ function decodeCursor(s: string): DocCursor | null {
   }
 }
 
-// Strictly-after test in the (chapter asc, type asc) ordering: an entry is on the
-// "next page" iff its chapter is larger, or the chapter ties and its type sorts
+// Strictly-after test in the (unit asc, type asc) ordering: an entry is on the
+// "next page" iff its unit is larger, or the unit ties and its type sorts
 // later — mirroring the sort in storage/history.ts::listEntries.
 const isAfterCursor = (e: HistoryEntry, c: DocCursor): boolean =>
-  e.chapter > c.chapter || (e.chapter === c.chapter && e.type.localeCompare(c.type) > 0);
+  e.unit > c.unit || (e.unit === c.unit && e.type.localeCompare(c.type) > 0);
 
-// Pure paging (+ optional chapter/type filtering) over the already-sorted
+// Pure paging (+ optional unit/type filtering) over the already-sorted
 // history. Exported so the paging contract can be unit-tested without standing
 // up the storage/adapter stack. `total` reflects the FILTERED set being paged
 // (the meaningful denominator for the cursor walk); `totalUnfiltered` reports
 // the whole history size so a caller can see a filter narrowed the result.
 export function pageDocuments(
   all: HistoryEntry[],
-  args: { cursor?: string; limit?: number; chapter?: number; type?: string }
+  args: { cursor?: string; limit?: number; unit?: number; type?: string }
 ): { entries: HistoryEntry[]; count: number; total: number; totalUnfiltered: number; nextCursor: string | null } | { error: string } {
   const cursor = args.cursor != null ? decodeCursor(args.cursor) : null;
   if (args.cursor != null && cursor == null) {
@@ -74,12 +74,12 @@ export function pageDocuments(
   const limit = Math.min(Math.max(1, Math.floor(args.limit ?? DEFAULT_PAGE)), MAX_PAGE);
   // Filters first (they define the set being paged), then the cursor slice.
   const filtered = all.filter(
-    (e) => (args.chapter == null || e.chapter === args.chapter) && (args.type == null || e.type === args.type),
+    (e) => (args.unit == null || e.unit === args.unit) && (args.type == null || e.type === args.type),
   );
   const rows = cursor ? filtered.filter((e) => isAfterCursor(e, cursor)) : filtered;
   const page = rows.slice(0, limit);
   const last = page[page.length - 1];
-  const nextCursor = rows.length > limit && last ? encodeCursor({ chapter: last.chapter, type: last.type }) : null;
+  const nextCursor = rows.length > limit && last ? encodeCursor({ unit: last.unit, type: last.type }) : null;
   return { entries: page, count: page.length, total: filtered.length, totalUnfiltered: all.length, nextCursor };
 }
 
@@ -108,8 +108,8 @@ export function registerDocumentTools(server: McpServer) {
   server.registerTool("reconcile", { title: "Reconcile bucket with history", description: "List the documents in Firebase Storage and diff against history: tracked docs, UNTRACKED docs needing ingestion, entries dropped because their object is gone, and duplicate resolutions.", inputSchema: {} },
     guarded(async () => asJson(await reconcile(getActiveAdapter().deliverables))));
 
-  server.registerTool("list_documents", { title: "List tracked documents", description: "Current history: one canonical entry per document, with its known content, ordered by unit then deliverable. Paginated: pass limit (default 25, max 100) and an opaque cursor. Optional filters: chapter (a unit number) and type (a deliverable key — CI maths: 'manual' or 'lessons'). Returns { entries, count, total, totalUnfiltered, nextCursor }; nextCursor is null on the last page — pass it back to fetch the next page.", inputSchema: listDocumentsShape },
-    guarded(async (a: { cursor?: string; limit?: number; chapter?: number; type?: string }) => {
+  server.registerTool("list_documents", { title: "List tracked documents", description: "Current history: one canonical entry per document, with its known content, ordered by unit then deliverable. Paginated: pass limit (default 25, max 100) and an opaque cursor. Optional filters: unit (a unit number) and type (a deliverable key — CI maths: 'manual' or 'lessons'). Returns { entries, count, total, totalUnfiltered, nextCursor }; nextCursor is null on the last page — pass it back to fetch the next page.", inputSchema: listDocumentsShape },
+    guarded(async (a: { cursor?: string; limit?: number; unit?: number; type?: string }) => {
       // `type` is validated at runtime (not in the schema) because the valid
       // deliverable keys are subject-specific and known only from the active
       // adapter — same reason record_document_content/log_generation use badDeliverable.
@@ -133,13 +133,13 @@ export function registerDocumentTools(server: McpServer) {
     guarded(async (a: { unit: number; deliverable: string; relPath: string; content: any; confirm?: boolean }) => {
       const bad = badDeliverable(a.deliverable); if (bad) return bad;
       const needConfirm = await requireConfirmation(server, a.confirm, `record content into history for unit ${a.unit} (${a.deliverable}) — this writes NOW to the live history (no draft, no undo)`);
-      return needConfirm ?? asJson(await recordContent("parsed", { chapter: a.unit, type: a.deliverable, relPath: a.relPath, content: a.content }));
+      return needConfirm ?? asJson(await recordContent("parsed", { unit: a.unit, type: a.deliverable, relPath: a.relPath, content: a.content }));
     }));
 
   server.registerTool("log_generation", { title: "Log a generated document", description: "Call after uploading a generated .docx to the bucket (via create_upload_url). Reads the object's hash from storage and records what you produced so it feeds future consistency + variety. Log each character with details like {name, type} (e.g. {name:'Awa', type:'child'}), not just the name. No local file needed. 'unit' is the scope value (CI maths: chapter number); 'deliverable' is a deliverable key (CI maths: 'manual' or 'lessons'). REQUIRES CONFIRMATION: called without confirm:true it only returns a needsConfirmation notice — ask the user to approve writing to history, then call again with confirm:true.", inputSchema: { unit: z.number().int(), deliverable: z.string(), relPath: z.string(), content: z.object(contentSchema), confirm: z.boolean().optional() } },
     guarded(async (a: { unit: number; deliverable: string; relPath: string; content: any; confirm?: boolean }) => {
       const bad = badDeliverable(a.deliverable); if (bad) return bad;
       const needConfirm = await requireConfirmation(server, a.confirm, `log the generated document for unit ${a.unit} (${a.deliverable}) into history — this writes NOW to the live history (no draft, no undo)`);
-      return needConfirm ?? asJson(await recordContent("pipeline", { chapter: a.unit, type: a.deliverable, relPath: a.relPath, content: a.content }));
+      return needConfirm ?? asJson(await recordContent("pipeline", { unit: a.unit, type: a.deliverable, relPath: a.relPath, content: a.content }));
     }));
 }

@@ -200,7 +200,9 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
     // Chapter title is aliased to BOTH title AND raw.description — both should be updated.
     expect((publishedChapter.properties as any).raw.description).toBe(newChapterTitle);
     expect((publishedLesson.properties as any).text).toBe(newLessonText);
-    expect((publishedLesson.properties as any).raw.os_texte).toBe(newLessonText);
+    // Post-split, a content lesson's text is aliased to text + raw.description
+    // (the OS mirror raw.os_texte lives on the expectation, edited separately).
+    expect((publishedLesson.properties as any).raw.description).toBe(newLessonText);
 
     // ── Audit chain reflects the whole loop ────────────────────────────────
     const audits = await store.listAudit({ namespace: ns });

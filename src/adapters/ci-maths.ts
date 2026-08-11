@@ -43,26 +43,45 @@ const rawStr = (u: CurriculumUnit, k: string): string | null => (u.properties[k]
 // Delegated to the generic parser; the descriptor is all that is subject-specific.
 // The bilan (end-of-chapter assessment) is the one raw quirk that needs a hook:
 // per chapter, the last lesson whose text mentions "bilan", else the last lesson.
+// After the graph-native-authoring split (docs/design-notes/graph-native-authoring.md):
+//   - a `chapter` is a content LessonGrouping (label-keyed), not a spine subtopic;
+//   - a `lesson` is a content Lesson node (label-keyed) that `supports` its
+//     `expectation` — the spine standard (objectif spécifique), now its own kind,
+//     which still carries the OS text and the components/tasks beneath it.
+// So the read of a lesson gathers leconNum/week from the Lesson node and
+// osTexte/components/statementType from the aligned expectation (see buildSlice).
 const MATHS_PARSE: GraphParseDescriptor = {
   roleToKind: {
     week: "week",
-    subtopic: "chapter",
     strand: "domaine",
-    expectation: "lesson",
-    "intégration du palier": "lesson",
+    expectation: "expectation",
+    "intégration du palier": "expectation",
   },
-  labelToKind: { LearningComponent: "component", Curriculum: "task" },
+  labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Curriculum: "task" },
   numberFrom: "order",
   progressionEdge: "buildsTowards",
+  // Bilan (end-of-chapter assessment): per chapter, the last lesson whose ALIGNED
+  // EXPECTATION text mentions "bilan", else the last lesson. Detection reads the
+  // expectation's OS text (the Lesson node holds no OS prose), reached via the
+  // Lesson→expectation `supports` edge (⇒ expectation.childIds ∋ the Lesson).
   postParse: (units) => {
     const byId = new Map(units.map((u) => [u.id, u]));
+    const expForLesson = new Map<string, CurriculumUnit>();
+    for (const ex of units) {
+      if (ex.kind !== "expectation") continue;
+      for (const cid of ex.childIds) {
+        const c = byId.get(cid);
+        if (c?.kind === "lesson") expForLesson.set(c.id, ex);
+      }
+    }
+    const bilanText = (l: CurriculumUnit) => String(expForLesson.get(l.id)?.text ?? l.text ?? "");
     for (const c of units) {
       if (c.kind !== "chapter") continue;
       const lessons = c.childIds
         .map((id) => byId.get(id))
         .filter((u): u is CurriculumUnit => !!u && u.kind === "lesson")
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      const bilan = [...lessons].reverse().find((l) => /bilan/i.test(String(l.text ?? ""))) ?? lessons[lessons.length - 1];
+      const bilan = [...lessons].reverse().find((l) => /bilan/i.test(bilanText(l))) ?? lessons[lessons.length - 1];
       if (bilan) bilan.isAssessment = true;
     }
   },
@@ -156,15 +175,35 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       .map((c) => ({ chapitreNum: c.order, chapitreTitre: c.title, domaine: domaineOf(m, c) }))
       .sort((a, b) => (a.chapitreNum ?? 0) - (b.chapitreNum ?? 0));
 
+  // A content Lesson `supports` exactly one expectation (the spine standard it
+  // aligns to). The parser records that support edge as expectation.childIds ∋
+  // Lesson, so we index it by scanning expectations once.
+  const expectationOfLesson = (m: CurriculumModel) => {
+    const map = new Map<string, CurriculumUnit>();
+    for (const ex of m.unitsOfKind("expectation"))
+      for (const child of m.childrenOf(ex.id)) if (child.kind === "lesson") map.set(child.id, ex);
+    return map;
+  };
+
   const buildSlice = (chapNum: number, m: CurriculumModel = ensure()) => {
     const chapter = chapterOf(m, chapNum);
     if (!chapter) return null;
     const lessonUnits = lessonsOf(m, chapter);
     const weekOf = weekMap(m);
-    const bilanId = lessonUnits.find((l) => l.isAssessment)?.id ?? null;
+    const expOf = expectationOfLesson(m);
+    // The lesson's stable identifier is its aligned expectation's id (the OS): the
+    // Lesson node is an authoring wrapper, but downstream references key on the OS.
+    const identityOf = (ln: CurriculumUnit) => expOf.get(ln.id)?.id ?? ln.id;
+    const bilanId = (() => {
+      const b = lessonUnits.find((l) => l.isAssessment);
+      return b ? identityOf(b) : null;
+    })();
 
     const lessons = lessonUnits.map((ln) => {
-      const components = m.childrenOf(ln.id).filter((c) => c.kind === "component").map((cn) => ({
+      // Teaching facts (number, week) come from the Lesson; standard facts (OS
+      // text, components/tasks, statement type/code, palier) from the expectation.
+      const ex = expOf.get(ln.id) ?? ln;
+      const components = m.childrenOf(ex.id).filter((c) => c.kind === "component").map((cn) => ({
         identifier: cn.id,
         description: cn.text ?? null,
         description_en: meta(cn).en?.description ?? null,
@@ -176,9 +215,9 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
         })),
       }));
       return {
-        identifier: ln.id, leconNum: ln.order ?? null, osTexte: ln.text ?? null,
-        statementType: meta(ln).role ?? null, statementCode: rawStr(ln, "statement_code"),
-        semaine: weekOf.get(ln.id) ?? null, palier: (ln.properties.palier as number) ?? null,
+        identifier: identityOf(ln), leconNum: ln.order ?? null, osTexte: ex.text ?? null,
+        statementType: meta(ex).role ?? null, statementCode: rawStr(ex, "statement_code"),
+        semaine: weekOf.get(ln.id) ?? null, palier: (ex.properties.palier as number) ?? null,
         isBilan: ln.isAssessment, components,
       };
     });
@@ -210,12 +249,20 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     // node's normalized field (title/text) and its raw source (raw.description)
     // hold the same wording; declare both so one call keeps them in sync. English
     // wording now lives under raw.metadata.en.*.
+    // Post-split, wording lives on two kinds: the OS text is on the `expectation`
+    // (the spine standard); the content `lesson` carries only its own title. A
+    // Lesson node has no `raw.os_texte` mirror, so its alias must not list one
+    // (the upsert existing-key rule would block the edit).
     wordingAliases: {
       chapter: {
         title:    ["title", "raw.description"],
         title_en: ["raw.metadata.en.description"],
       },
       lesson: {
+        text:    ["text", "raw.description"],
+        text_en: ["raw.metadata.en.description"],
+      },
+      expectation: {
         text:    ["text", "raw.description", "raw.os_texte"],
         text_en: ["raw.metadata.en.description", "raw.metadata.en.os_texte"],
       },
@@ -247,26 +294,28 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       lessonKind: "lesson",
       containerEdge: "hasChild",
       assessmentProperty: "isAssessment",
+      expectationKind: "expectation",
+      alignmentEdge: "supports",
     },
 
     // LC identity stamped onto recipe-created nodes so they are faithful LC
     // nodes (survive a re-parse / re-export) — the inverse of MATHS_PARSE's
-    // roleToKind. A chapter's statement_type is the constant "Chapitre"; a
-    // lesson's is its strand, a denormalized copy of its domaine's name, so it
-    // is inherited from the domaine container-ancestor. `labels` matches the
-    // seeded spine nodes ("StandardsFrameworkItem").
+    // label/role → kind mapping. Post-split, both are content-layer nodes:
+    // a chapter is a `LessonGrouping` (kept as a "Standard Grouping" so the parser
+    // reads its title, with statement_type "Chapitre" and role "subtopic" so it is
+    // byte-identical to the migrated chapters); a lesson is a `Lesson` node — no
+    // objective/strand of its own, since it ALIGNS to a spine expectation.
     lcNodeTemplate: {
       chapter: {
-        labels: ["StandardsFrameworkItem"],
+        labels: ["LessonGrouping"],
         role: "subtopic",
+        normalizedType: "Lesson Grouping",
         normalizedStatementType: "Standard Grouping",
         statementType: "Chapitre",
       },
       lesson: {
-        labels: ["StandardsFrameworkItem"],
-        role: "expectation",
-        normalizedStatementType: "Standard",
-        statementType: { inheritTitleFromAncestorKind: "domaine" },
+        labels: ["Lesson"],
+        normalizedType: "Lesson",
       },
     },
 
@@ -297,9 +346,9 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
           const c: CharacterRef = typeof raw === "string" ? { name: raw } : raw;
           if (!c?.name) continue;
           const existing = charMap.get(c.name);
-          if (!existing) charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstChapter: e.chapter });
+          if (!existing) charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstChapter: e.unit });
           else {
-            existing.firstChapter = Math.min(existing.firstChapter, e.chapter);
+            existing.firstChapter = Math.min(existing.firstChapter, e.unit);
             existing.type ??= c.type; existing.role ??= c.role; existing.description ??= c.description;
           }
         }
@@ -308,8 +357,8 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
 
       const coverage = listUnitsIn(m).map((c) => ({
         chapter: c.chapitreNum,
-        hasManual: entries.some((e) => e.chapter === c.chapitreNum && e.type === "manual"),
-        hasLessons: entries.some((e) => e.chapter === c.chapitreNum && e.type === "lessons"),
+        hasManual: entries.some((e) => e.unit === c.chapitreNum && e.type === "manual"),
+        hasLessons: entries.some((e) => e.unit === c.chapitreNum && e.type === "lessons"),
       }));
 
       const manualForThisChapter = entries.find((e) => e.id === `${chapter}:manual`) ?? null;

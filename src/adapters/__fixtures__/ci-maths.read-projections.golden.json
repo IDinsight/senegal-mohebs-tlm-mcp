@@ -1,0 +1,4290 @@
+{
+  "scopeValues": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    29
+  ],
+  "listUnits": [
+    {
+      "chapitreNum": 1,
+      "chapitreTitre": "Les ensembles",
+      "domaine": "Arithmétique"
+    },
+    {
+      "chapitreNum": 2,
+      "chapitreTitre": "Je me repère avec mon corps",
+      "domaine": "Géométrie"
+    },
+    {
+      "chapitreNum": 3,
+      "chapitreTitre": "J'estime et je compare des longueurs et des tailles",
+      "domaine": "Mesure"
+    },
+    {
+      "chapitreNum": 4,
+      "chapitreTitre": "Je lis les images",
+      "domaine": "Résolution de problème"
+    },
+    {
+      "chapitreNum": 5,
+      "chapitreTitre": "Je compare des ensembles et des sous-ensembles",
+      "domaine": "Arithmétique"
+    },
+    {
+      "chapitreNum": 6,
+      "chapitreTitre": "Se situer et situer des objets dans un espace réel ou représenté",
+      "domaine": "Géométrie"
+    },
+    {
+      "chapitreNum": 7,
+      "chapitreTitre": "Estimer et comparer des distances",
+      "domaine": "Mesure"
+    },
+    {
+      "chapitreNum": 8,
+      "chapitreTitre": "J'applique les règles logiques",
+      "domaine": "Résolution de problème"
+    },
+    {
+      "chapitreNum": 9,
+      "chapitreTitre": "Les nombres de 0 à 9",
+      "domaine": "Arithmétique"
+    },
+    {
+      "chapitreNum": 10,
+      "chapitreTitre": "Les solides familiers",
+      "domaine": "Géométrie"
+    },
+    {
+      "chapitreNum": 11,
+      "chapitreTitre": "Estimer et comparer des masses et des capacités",
+      "domaine": "Mesure"
+    },
+    {
+      "chapitreNum": 12,
+      "chapitreTitre": "Reconnaître un problème mathématique",
+      "domaine": "Résolution de problème"
+    },
+    {
+      "chapitreNum": 13,
+      "chapitreTitre": "Le nombre 10 et la dizaine",
+      "domaine": "Arithmétique"
+    },
+    {
+      "chapitreNum": 15,
+      "chapitreTitre": "Estimer et comparer des durées",
+      "domaine": "Mesure"
+    },
+    {
+      "chapitreNum": 16,
+      "chapitreTitre": "Identifier les données et les questions d'un problème",
+      "domaine": "Résolution de problème"
+    },
+    {
+      "chapitreNum": 17,
+      "chapitreTitre": "La soustraction, le double et la moitié",
+      "domaine": "Arithmétique"
+    },
+    {
+      "chapitreNum": 18,
+      "chapitreTitre": "Les figures planes",
+      "domaine": "Géométrie"
+    },
+    {
+      "chapitreNum": 19,
+      "chapitreTitre": "Estimer et comparer des durées (approfondissement)",
+      "domaine": "Mesure"
+    },
+    {
+      "chapitreNum": 20,
+      "chapitreTitre": "Trouver les données utiles et inutiles",
+      "domaine": "Résolution de problème"
+    },
+    {
+      "chapitreNum": 21,
+      "chapitreTitre": "Les nombres de 11 à 20",
+      "domaine": "Arithmétique"
+    },
+    {
+      "chapitreNum": 22,
+      "chapitreTitre": "Les lignes et le quadrillage",
+      "domaine": "Géométrie"
+    },
+    {
+      "chapitreNum": 23,
+      "chapitreTitre": "Se repérer dans le temps",
+      "domaine": "Mesure"
+    },
+    {
+      "chapitreNum": 24,
+      "chapitreTitre": "Les questions d'un énoncé mathématique",
+      "domaine": "Résolution de problème"
+    },
+    {
+      "chapitreNum": 25,
+      "chapitreTitre": "Les nombres de 21 à 39",
+      "domaine": "Arithmétique"
+    },
+    {
+      "chapitreNum": 29,
+      "chapitreTitre": "Les nombres de 40 à 50",
+      "domaine": "Arithmétique"
+    }
+  ],
+  "chapters": [
+    {
+      "num": 1,
+      "slice": {
+        "chapitreNum": 1,
+        "chapitreTitre": "Les ensembles",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "1f9bb548-3401-5cdc-b4ad-fb8324cc827e",
+            "leconNum": 1,
+            "osTexte": "former et représenter un ensemble d'objets",
+            "statementType": "expectation",
+            "statementCode": "Leçon 1",
+            "semaine": 1,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "2be48868-d780-59ce-8879-39712a3c5e25",
+                "description": "Former et représenter un ensemble (appartenance, non-appartenance)",
+                "description_en": "Form and represent a set (belonging, not belonging)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Étudier les ensembles »",
+                "tasks": [
+                  {
+                    "identifier": "c90652b7-3b74-562a-ae50-5c93ef70c7b7",
+                    "description": "Entoure les objets qui appartiennent à l'ensemble des fruits ; barre ceux qui n'y appartiennent pas.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "ce21521f-0d70-5b86-9c88-ec09f16fc196",
+            "leconNum": 2,
+            "osTexte": "appartenance et non-appartenance à un ensemble",
+            "statementType": "expectation",
+            "statementCode": "Leçon 2",
+            "semaine": 1,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "2be48868-d780-59ce-8879-39712a3c5e25",
+                "description": "Former et représenter un ensemble (appartenance, non-appartenance)",
+                "description_en": "Form and represent a set (belonging, not belonging)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Étudier les ensembles »",
+                "tasks": [
+                  {
+                    "identifier": "c90652b7-3b74-562a-ae50-5c93ef70c7b7",
+                    "description": "Entoure les objets qui appartiennent à l'ensemble des fruits ; barre ceux qui n'y appartiennent pas.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "600db254-c64d-5b82-a079-f8e4c26784bf",
+            "leconNum": 6,
+            "osTexte": "reconnaître et représenter un sous-ensemble à l'intérieur d'un ensemble donné",
+            "statementType": "expectation",
+            "statementCode": "Leçon 6",
+            "semaine": 2,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "fab537d5-2474-5d33-80e0-0ab15992c7d8",
+                "description": "Former et représenter des sous-ensembles",
+                "description_en": "Form and represent subsets",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Étudier les ensembles » (sous-ensembles)",
+                "tasks": [
+                  {
+                    "identifier": "011aa2a2-b072-55a2-8ade-8a9d83436b9d",
+                    "description": "Dans l'ensemble des animaux, trace un cercle autour de ceux qui vivent dans l'eau pour former un sous-ensemble.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "e295a262-8302-56ab-81e5-dfe43368a209",
+            "leconNum": 7,
+            "osTexte": "classer un ensemble selon qu'il contient rien, peu ou beaucoup d'éléments",
+            "statementType": "expectation",
+            "statementCode": "Leçon 7",
+            "semaine": 2,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "97012578-6086-5bdc-b36f-28ad26a4e1b3",
+                "description": "Classifier des ensembles selon un critère de quantité (peu, beaucoup, rien)",
+                "description_en": "Classify sets by a quantity criterion (few, many, none)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Classifier des ensembles » (quantité)",
+                "tasks": [
+                  {
+                    "identifier": "de5ea181-1332-5681-afb1-a46d3df6b9d8",
+                    "description": "Regarde les trois boîtes : montre celle qui contient beaucoup de billes, celle qui en contient peu, et celle qui n'en contient rien.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "3b35ecf5-8c9e-5984-8fff-e28d8db61222",
+            "leconNum": 11,
+            "osTexte": "classer les éléments d'un ensemble selon une caractéristique commune (forme ou couleur)",
+            "statementType": "expectation",
+            "statementCode": "Leçon 11",
+            "semaine": 3,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "7ab282ba-23ef-55e4-b195-862933528b99",
+                "description": "Classer des objets selon une caractéristique commune (avec ou sans, nombre de trous)",
+                "description_en": "Sort objects by a common characteristic (with or without, number of holes)",
+                "reference": "Bridges G1 — p6 Sort & Graph the Bugs ; p10 Sort & Graph the Buttons",
+                "tasks": [
+                  {
+                    "identifier": "e141c29b-61dc-51b7-adbc-98fd9868e9c1",
+                    "description": "Trie les objets en deux groupes selon une caractéristique (ex : avec taches / sans taches ; 2 trous / 4 trous), puis colorie un graphique pour montrer combien il y en a dans chaque groupe.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              },
+              {
+                "identifier": "3a6351bf-9933-5fbc-be5e-05c9c4766b20",
+                "description": "Classifier des ensembles selon un critère de qualité (forme, couleur)",
+                "description_en": "Classify sets by a quality criterion (shape, colour)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Classifier des ensembles » (qualité)",
+                "tasks": [
+                  {
+                    "identifier": "038f2578-2794-555c-85e3-6b6d2ac62658",
+                    "description": "Trie les objets en deux groupes : ceux qui ont la même forme ensemble, puis ceux qui ont la même couleur ensemble.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "ba44d6cc-893d-5d30-a37a-c2a1a80c334d",
+            "leconNum": 12,
+            "osTexte": "Bilan du chapitre 1 : Les ensembles",
+            "statementType": "expectation",
+            "statementCode": "Leçon 12",
+            "semaine": 3,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "ba44d6cc-893d-5d30-a37a-c2a1a80c334d"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "former et représenter un ensemble d'objets"
+        },
+        {
+          "leconNum": 2,
+          "osTexte": "appartenance et non-appartenance à un ensemble"
+        },
+        {
+          "leconNum": 6,
+          "osTexte": "reconnaître et représenter un sous-ensemble à l'intérieur d'un ensemble donné"
+        },
+        {
+          "leconNum": 7,
+          "osTexte": "classer un ensemble selon qu'il contient rien, peu ou beaucoup d'éléments"
+        },
+        {
+          "leconNum": 11,
+          "osTexte": "classer les éléments d'un ensemble selon une caractéristique commune (forme ou couleur)"
+        }
+      ]
+    },
+    {
+      "num": 2,
+      "slice": {
+        "chapitreNum": 2,
+        "chapitreTitre": "Je me repère avec mon corps",
+        "domaine": "Géométrie",
+        "lessons": [
+          {
+            "identifier": "8a14aca6-5ec4-55cf-ac60-ac4d8169408a",
+            "leconNum": 3,
+            "osTexte": "identifier la droite et la gauche sur mon corps",
+            "statementType": "expectation",
+            "statementCode": "Leçon 3",
+            "semaine": 1,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "63068074-96af-5582-a196-358f59d334ee",
+                "description": "Situer un objet avec à gauche/à droite",
+                "description_en": "Locate an object using left / right",
+                "reference": "Rwanda 13.1–13.2",
+                "tasks": [
+                  {
+                    "identifier": "e98fbd58-f359-5f49-82ff-d05a7becaf89",
+                    "description": "Regarde les enfants Muneza, Giraneza, Kaneza : qui est à gauche ? à droite ? entre les deux ? Complète.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "0a7d5fea-4d0c-512d-9b54-54b24c885d90",
+            "leconNum": 8,
+            "osTexte": "identifier une partie du corps ou une position en utilisant devant/derrière, sur/sous et au même niveau",
+            "statementType": "expectation",
+            "statementCode": "Leçon 8",
+            "semaine": 2,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5d1f67f7-8e87-5dca-8b15-5e6ad1725cda",
+                "description": "Situer un objet avec devant/derrière et entre",
+                "description_en": "Locate an object using in front / behind and between",
+                "reference": "Rwanda 13.1",
+                "tasks": [
+                  {
+                    "identifier": "39101565-c83b-53cd-bb26-44b91e575bea",
+                    "description": "Regarde l'image : où est le chat ? (devant / derrière / entre le mouton et le coq). Complète chaque phrase.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "6ab5ea28-1e24-5678-896b-c6c94138b45f",
+                "description": "Situer un objet avec sur/au-dessus/sous",
+                "description_en": "Locate an object using on / above / under",
+                "reference": "Rwanda 13.2",
+                "tasks": [
+                  {
+                    "identifier": "d7d12563-8c95-5968-957d-b12c75e18104",
+                    "description": "Regarde l'image : où est Kabarisa ? où sont les oiseaux ? (sur / au-dessus / sous). Complète.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "f47e6dd3-b012-50ba-b997-2d4ef27b4710",
+            "leconNum": 13,
+            "osTexte": "décrire une position en utilisant en haut/en bas, près de/loin de, avant/après et au même niveau",
+            "statementType": "expectation",
+            "statementCode": "Leçon 13",
+            "semaine": 3,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "fafe150f-271f-5c03-8014-b3aeffc1fc92",
+                "description": "Situer un objet avec près de/loin de/à côté de",
+                "description_en": "Locate an object using near / far / next to",
+                "reference": "Rwanda 13.3",
+                "tasks": [
+                  {
+                    "identifier": "e24a2085-8f9d-582d-853b-b96baba40f76",
+                    "description": "Regarde l'image : la poule et ses poussins sont … de Mutesi ; Ganza est … de l'église (près de / loin de / à côté de).",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "c40a0eb6-fd63-5267-856a-e2406e5f3468",
+            "leconNum": 18,
+            "osTexte": "Bilan du chapitre 2 — Je me repère avec mon corps",
+            "statementType": "expectation",
+            "statementCode": "Leçon 18",
+            "semaine": 4,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "c40a0eb6-fd63-5267-856a-e2406e5f3468"
+      },
+      "progression": {
+        "buildsTowards": [
+          6
+        ],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 3,
+          "osTexte": "identifier la droite et la gauche sur mon corps"
+        },
+        {
+          "leconNum": 8,
+          "osTexte": "identifier une partie du corps ou une position en utilisant devant/derrière, sur/sous et au même niveau"
+        },
+        {
+          "leconNum": 13,
+          "osTexte": "décrire une position en utilisant en haut/en bas, près de/loin de, avant/après et au même niveau"
+        }
+      ]
+    },
+    {
+      "num": 3,
+      "slice": {
+        "chapitreNum": 3,
+        "chapitreTitre": "J'estime et je compare des longueurs et des tailles",
+        "domaine": "Mesure",
+        "lessons": [
+          {
+            "identifier": "859998ac-d17f-5939-9bfc-a2b666df8b38",
+            "leconNum": 4,
+            "osTexte": "estimer des longueurs (long/court)",
+            "statementType": "expectation",
+            "statementCode": "Leçon 4",
+            "semaine": 1,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "18e892a8-a737-556a-b4fd-359d8946fe15",
+                "description": "Comparer des longueurs et des tailles (long/court, grand/petit)",
+                "description_en": "Compare lengths and sizes (long / short, big / small)",
+                "reference": "Rwanda 10.1",
+                "tasks": [
+                  {
+                    "identifier": "6af85673-1f69-5ea1-8b3a-3612e0ddc9a6",
+                    "description": "Regarde les images : qu'est-ce qui est long ? court ? grand ? petit ? (l'arbre est …, le crayon est …, le stylo est …).",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "35629970-0318-59fd-bafd-0e7a91a22974",
+            "leconNum": 9,
+            "osTexte": "comparer des longueurs (plus long/plus court)",
+            "statementType": "expectation",
+            "statementCode": "Leçon 9",
+            "semaine": 2,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "18e892a8-a737-556a-b4fd-359d8946fe15",
+                "description": "Comparer des longueurs et des tailles (long/court, grand/petit)",
+                "description_en": "Compare lengths and sizes (long / short, big / small)",
+                "reference": "Rwanda 10.1",
+                "tasks": [
+                  {
+                    "identifier": "6af85673-1f69-5ea1-8b3a-3612e0ddc9a6",
+                    "description": "Regarde les images : qu'est-ce qui est long ? court ? grand ? petit ? (l'arbre est …, le crayon est …, le stylo est …).",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "21fd679b-c958-50c4-b728-b75ba5046234",
+            "leconNum": 14,
+            "osTexte": "estimer et comparer des tailles (grand/petit ; plus grand/plus petit)",
+            "statementType": "expectation",
+            "statementCode": "Leçon 14",
+            "semaine": 3,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "18e892a8-a737-556a-b4fd-359d8946fe15",
+                "description": "Comparer des longueurs et des tailles (long/court, grand/petit)",
+                "description_en": "Compare lengths and sizes (long / short, big / small)",
+                "reference": "Rwanda 10.1",
+                "tasks": [
+                  {
+                    "identifier": "6af85673-1f69-5ea1-8b3a-3612e0ddc9a6",
+                    "description": "Regarde les images : qu'est-ce qui est long ? court ? grand ? petit ? (l'arbre est …, le crayon est …, le stylo est …).",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "93c0d99a-3f77-53d3-9b82-26e39031ae27",
+            "leconNum": 19,
+            "osTexte": "Bilan du chapitre 3 — J'estime et je compare des longueurs et des tailles",
+            "statementType": "expectation",
+            "statementCode": "Leçon 19",
+            "semaine": 4,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "93c0d99a-3f77-53d3-9b82-26e39031ae27"
+      },
+      "progression": {
+        "buildsTowards": [
+          7
+        ],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 4,
+          "osTexte": "estimer des longueurs (long/court)"
+        },
+        {
+          "leconNum": 9,
+          "osTexte": "comparer des longueurs (plus long/plus court)"
+        },
+        {
+          "leconNum": 14,
+          "osTexte": "estimer et comparer des tailles (grand/petit ; plus grand/plus petit)"
+        }
+      ]
+    },
+    {
+      "num": 4,
+      "slice": {
+        "chapitreNum": 4,
+        "chapitreTitre": "Je lis les images",
+        "domaine": "Résolution de problème",
+        "lessons": [
+          {
+            "identifier": "dcbb7dda-5213-5cdf-a013-658aa4c3f983",
+            "leconNum": 5,
+            "osTexte": "chercher des indices : informations utiles",
+            "statementType": "expectation",
+            "statementCode": "Leçon 5",
+            "semaine": 1,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "338c0836-2961-5cf2-8d28-05ad88382339",
+                "description": "Chercher des indices : identifier les informations utiles sur une image",
+                "description_en": "Look for clues: identify useful information on a picture",
+                "reference": "MOHEBS CI — §8.1, Palier 1 : Objectif « Chercher des indices »",
+                "tasks": [
+                  {
+                    "identifier": "7c90b068-aa30-51c7-afd2-401fba0ad087",
+                    "description": "Regarde l'image : quels indices te permettent de savoir qu'Abdou va à l'école ? Montre-les.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "9339cdf4-d24b-5fac-9cdd-26b094eabd07",
+            "leconNum": 10,
+            "osTexte": "reconnaître l'intrus sur une image : informations inutiles",
+            "statementType": "expectation",
+            "statementCode": "Leçon 10",
+            "semaine": 2,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "8ccbe391-8306-5555-bdd4-f369e0993769",
+                "description": "Reconnaître l'intrus sur une image : identifier les informations inutiles",
+                "description_en": "Spot the odd one out on a picture: identify irrelevant information",
+                "reference": "MOHEBS CI — §8.1, Palier 1 : Objectif « Reconnaître l'intrus »",
+                "tasks": [
+                  {
+                    "identifier": "f2368d44-28a1-5b36-be23-d18025a805e8",
+                    "description": "Regarde l'image : quel objet n'a rien à voir avec les autres ? Barre l'intrus.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "4269594a-b219-5f10-955d-90d794c4b85c",
+            "leconNum": 15,
+            "osTexte": "trouver ce qui manque sur une image : informations manquantes",
+            "statementType": "expectation",
+            "statementCode": "Leçon 15",
+            "semaine": 3,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "89dcbbac-a0c1-5519-b545-ec45316fde17",
+                "description": "Trouver ce qui manque sur une image : identifier les informations manquantes",
+                "description_en": "Find what is missing on a picture: identify missing information",
+                "reference": "MOHEBS CI — §8.1, Palier 1 : Objectif « Trouver ce qui manque »",
+                "tasks": [
+                  {
+                    "identifier": "99eecd12-396b-59eb-b2a4-03b58bc7e8fa",
+                    "description": "Regarde l'image : qu'est-ce qui manque pour que le dessin soit complet ? Dessine-le.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "7d59ce36-e8f0-58f3-b108-01012be57ff8",
+            "leconNum": 20,
+            "osTexte": "remettre de l'ordre dans une série d'images : règles logiques",
+            "statementType": "expectation",
+            "statementCode": "Leçon 20",
+            "semaine": 4,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "664176d0-2e7d-50b5-abc4-2f10273abf95",
+                "description": "Remettre de l'ordre dans une série d'images (règles logiques)",
+                "description_en": "Put a series of pictures back in order (logical rules)",
+                "reference": "MOHEBS CI — §8.1, Palier 1 : Objectif « Remettre de l'ordre »",
+                "tasks": [
+                  {
+                    "identifier": "d052410b-de35-5a1d-a01e-d6aaa310f626",
+                    "description": "Les images racontent une histoire mais elles sont mélangées. Numérote-les dans le bon ordre.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "e8f87ced-408e-5b56-929e-2506fbf3fb6a",
+            "leconNum": 25,
+            "osTexte": "Bilan du chapitre 4 — Je lis les images",
+            "statementType": "expectation",
+            "statementCode": "Leçon 25",
+            "semaine": 5,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "e8f87ced-408e-5b56-929e-2506fbf3fb6a"
+      },
+      "progression": {
+        "buildsTowards": [
+          8
+        ],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 5,
+          "osTexte": "chercher des indices : informations utiles"
+        },
+        {
+          "leconNum": 10,
+          "osTexte": "reconnaître l'intrus sur une image : informations inutiles"
+        },
+        {
+          "leconNum": 15,
+          "osTexte": "trouver ce qui manque sur une image : informations manquantes"
+        },
+        {
+          "leconNum": 20,
+          "osTexte": "remettre de l'ordre dans une série d'images : règles logiques"
+        }
+      ]
+    },
+    {
+      "num": 5,
+      "slice": {
+        "chapitreNum": 5,
+        "chapitreTitre": "Je compare des ensembles et des sous-ensembles",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "c646249a-92f3-5dfe-8394-988dda4f3e6d",
+            "leconNum": 16,
+            "osTexte": "je compare des ensembles et des sous-ensembles : inclusion de sous-ensembles",
+            "statementType": "expectation",
+            "statementCode": "Leçon 16",
+            "semaine": 4,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "0b50b798-2c82-570d-984b-334c2717d9f8",
+                "description": "Comparer des ensembles et sous-ensembles (inclusion, partition, réunion)",
+                "description_en": "Compare sets and subsets (inclusion, partitioning, union)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Comparer des ensembles » (inclusion, partition, réunion)",
+                "tasks": [
+                  {
+                    "identifier": "65d65daa-7875-5717-a2b2-d8f62a01813b",
+                    "description": "L'ensemble A contient des billes rouges et bleues ; l'ensemble B ne contient que des billes rouges. B est-il inclus dans A ? Partage A en deux sous-ensembles par couleur ; puis réunis-les.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "23835fcd-a6e6-5037-9304-934e6cd560ce",
+            "leconNum": 17,
+            "osTexte": "je compare des ensembles et des sous-ensembles : partition d'ensemble",
+            "statementType": "expectation",
+            "statementCode": "Leçon 17",
+            "semaine": 4,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "0b50b798-2c82-570d-984b-334c2717d9f8",
+                "description": "Comparer des ensembles et sous-ensembles (inclusion, partition, réunion)",
+                "description_en": "Compare sets and subsets (inclusion, partitioning, union)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Comparer des ensembles » (inclusion, partition, réunion)",
+                "tasks": [
+                  {
+                    "identifier": "65d65daa-7875-5717-a2b2-d8f62a01813b",
+                    "description": "L'ensemble A contient des billes rouges et bleues ; l'ensemble B ne contient que des billes rouges. B est-il inclus dans A ? Partage A en deux sous-ensembles par couleur ; puis réunis-les.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "81ce49cc-d637-5e98-ba8f-a9b26ebd1b93",
+            "leconNum": 21,
+            "osTexte": "réunion d'ensembles",
+            "statementType": "expectation",
+            "statementCode": "Leçon 21",
+            "semaine": 5,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "0b50b798-2c82-570d-984b-334c2717d9f8",
+                "description": "Comparer des ensembles et sous-ensembles (inclusion, partition, réunion)",
+                "description_en": "Compare sets and subsets (inclusion, partitioning, union)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Comparer des ensembles » (inclusion, partition, réunion)",
+                "tasks": [
+                  {
+                    "identifier": "65d65daa-7875-5717-a2b2-d8f62a01813b",
+                    "description": "L'ensemble A contient des billes rouges et bleues ; l'ensemble B ne contient que des billes rouges. B est-il inclus dans A ? Partage A en deux sous-ensembles par couleur ; puis réunis-les.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "882eb80a-9657-5d22-a9b4-92108491c61a",
+            "leconNum": 22,
+            "osTexte": "je compare des ensembles : plus que/moins que/autant que",
+            "statementType": "expectation",
+            "statementCode": "Leçon 22",
+            "semaine": 5,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5d8a3341-d2fa-5995-927f-ad3ebe28d1d3",
+                "description": "Comparer des ensembles (plus que / moins que / autant que)",
+                "description_en": "Compare sets (more than / less than / as many as)",
+                "reference": "MOHEBS CI — §5.1, Palier 1 : Objectif « Comparer des ensembles » (plus que / autant que)",
+                "tasks": [
+                  {
+                    "identifier": "f56dfa68-61b1-5a1f-9780-cd2d71456263",
+                    "description": "Relie chaque crayon d'un ensemble à un crayon de l'autre ensemble. Qui en a plus ? Qui en a moins ? Sont-ils autant ?",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "b2d4db8e-75b7-51d2-8333-9188fc7446e7",
+            "leconNum": 26,
+            "osTexte": "Bilan du chapitre 5 — Je compare des ensembles et des sous-ensembles",
+            "statementType": "expectation",
+            "statementCode": "Leçon 26",
+            "semaine": 6,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "b2d4db8e-75b7-51d2-8333-9188fc7446e7"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 16,
+          "osTexte": "je compare des ensembles et des sous-ensembles : inclusion de sous-ensembles"
+        },
+        {
+          "leconNum": 17,
+          "osTexte": "je compare des ensembles et des sous-ensembles : partition d'ensemble"
+        },
+        {
+          "leconNum": 21,
+          "osTexte": "réunion d'ensembles"
+        },
+        {
+          "leconNum": 22,
+          "osTexte": "je compare des ensembles : plus que/moins que/autant que"
+        }
+      ]
+    },
+    {
+      "num": 6,
+      "slice": {
+        "chapitreNum": 6,
+        "chapitreTitre": "Se situer et situer des objets dans un espace réel ou représenté",
+        "domaine": "Géométrie",
+        "lessons": [
+          {
+            "identifier": "4e4bcca0-9c76-586e-9225-2b56e2d06608",
+            "leconNum": 23,
+            "osTexte": "je me situe dans un espace réel ou représenté : à gauche de, à droite, devant, derrière, en haut de, en bas de",
+            "statementType": "expectation",
+            "statementCode": "Leçon 23",
+            "semaine": 5,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5d1f67f7-8e87-5dca-8b15-5e6ad1725cda",
+                "description": "Situer un objet avec devant/derrière et entre",
+                "description_en": "Locate an object using in front / behind and between",
+                "reference": "Rwanda 13.1",
+                "tasks": [
+                  {
+                    "identifier": "39101565-c83b-53cd-bb26-44b91e575bea",
+                    "description": "Regarde l'image : où est le chat ? (devant / derrière / entre le mouton et le coq). Complète chaque phrase.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "63068074-96af-5582-a196-358f59d334ee",
+                "description": "Situer un objet avec à gauche/à droite",
+                "description_en": "Locate an object using left / right",
+                "reference": "Rwanda 13.1–13.2",
+                "tasks": [
+                  {
+                    "identifier": "e98fbd58-f359-5f49-82ff-d05a7becaf89",
+                    "description": "Regarde les enfants Muneza, Giraneza, Kaneza : qui est à gauche ? à droite ? entre les deux ? Complète.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "5b1f5937-4405-54ac-a8c9-5e2b1288bede",
+            "leconNum": 28,
+            "osTexte": "je me situe dans un espace réel ou représenté : sous, sur, loin de, près de, au même niveau",
+            "statementType": "expectation",
+            "statementCode": "Leçon 28",
+            "semaine": 6,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "6ab5ea28-1e24-5678-896b-c6c94138b45f",
+                "description": "Situer un objet avec sur/au-dessus/sous",
+                "description_en": "Locate an object using on / above / under",
+                "reference": "Rwanda 13.2",
+                "tasks": [
+                  {
+                    "identifier": "d7d12563-8c95-5968-957d-b12c75e18104",
+                    "description": "Regarde l'image : où est Kabarisa ? où sont les oiseaux ? (sur / au-dessus / sous). Complète.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "fafe150f-271f-5c03-8014-b3aeffc1fc92",
+                "description": "Situer un objet avec près de/loin de/à côté de",
+                "description_en": "Locate an object using near / far / next to",
+                "reference": "Rwanda 13.3",
+                "tasks": [
+                  {
+                    "identifier": "e24a2085-8f9d-582d-853b-b96baba40f76",
+                    "description": "Regarde l'image : la poule et ses poussins sont … de Mutesi ; Ganza est … de l'église (près de / loin de / à côté de).",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "5b54e86a-cffa-5d3e-bb7b-91a311aacde5",
+            "leconNum": 33,
+            "osTexte": "je situe des objets dans un espace réel ou représenté : gauche/droite, en haut/en bas, devant/derrière, sous/sur, près de/loin de, plus près de/plus loin de",
+            "statementType": "expectation",
+            "statementCode": "Leçon 33",
+            "semaine": 7,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5d1f67f7-8e87-5dca-8b15-5e6ad1725cda",
+                "description": "Situer un objet avec devant/derrière et entre",
+                "description_en": "Locate an object using in front / behind and between",
+                "reference": "Rwanda 13.1",
+                "tasks": [
+                  {
+                    "identifier": "39101565-c83b-53cd-bb26-44b91e575bea",
+                    "description": "Regarde l'image : où est le chat ? (devant / derrière / entre le mouton et le coq). Complète chaque phrase.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "6ab5ea28-1e24-5678-896b-c6c94138b45f",
+                "description": "Situer un objet avec sur/au-dessus/sous",
+                "description_en": "Locate an object using on / above / under",
+                "reference": "Rwanda 13.2",
+                "tasks": [
+                  {
+                    "identifier": "d7d12563-8c95-5968-957d-b12c75e18104",
+                    "description": "Regarde l'image : où est Kabarisa ? où sont les oiseaux ? (sur / au-dessus / sous). Complète.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "63068074-96af-5582-a196-358f59d334ee",
+                "description": "Situer un objet avec à gauche/à droite",
+                "description_en": "Locate an object using left / right",
+                "reference": "Rwanda 13.1–13.2",
+                "tasks": [
+                  {
+                    "identifier": "e98fbd58-f359-5f49-82ff-d05a7becaf89",
+                    "description": "Regarde les enfants Muneza, Giraneza, Kaneza : qui est à gauche ? à droite ? entre les deux ? Complète.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "fafe150f-271f-5c03-8014-b3aeffc1fc92",
+                "description": "Situer un objet avec près de/loin de/à côté de",
+                "description_en": "Locate an object using near / far / next to",
+                "reference": "Rwanda 13.3",
+                "tasks": [
+                  {
+                    "identifier": "e24a2085-8f9d-582d-853b-b96baba40f76",
+                    "description": "Regarde l'image : la poule et ses poussins sont … de Mutesi ; Ganza est … de l'église (près de / loin de / à côté de).",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "2db8c8b6-f9cb-56ac-a078-95415af5ab98",
+            "leconNum": 38,
+            "osTexte": "Bilan du chapitre 6 — se situer et situer des objets dans un espace réel ou représenté",
+            "statementType": "expectation",
+            "statementCode": "Leçon 38",
+            "semaine": 8,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "2db8c8b6-f9cb-56ac-a078-95415af5ab98"
+      },
+      "progression": {
+        "buildsTowards": [
+          22
+        ],
+        "buildsFrom": [
+          2
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 23,
+          "osTexte": "je me situe dans un espace réel ou représenté : à gauche de, à droite, devant, derrière, en haut de, en bas de"
+        },
+        {
+          "leconNum": 28,
+          "osTexte": "je me situe dans un espace réel ou représenté : sous, sur, loin de, près de, au même niveau"
+        },
+        {
+          "leconNum": 33,
+          "osTexte": "je situe des objets dans un espace réel ou représenté : gauche/droite, en haut/en bas, devant/derrière, sous/sur, près de/loin de, plus près de/plus loin de"
+        }
+      ]
+    },
+    {
+      "num": 7,
+      "slice": {
+        "chapitreNum": 7,
+        "chapitreTitre": "Estimer et comparer des distances",
+        "domaine": "Mesure",
+        "lessons": [
+          {
+            "identifier": "d0426a4c-77b9-5e8c-a1ab-12cd49e521d8",
+            "leconNum": 24,
+            "osTexte": "estimer des distances : près de/loin de",
+            "statementType": "expectation",
+            "statementCode": "Leçon 24",
+            "semaine": 5,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "f0594562-e7b0-59a5-b1f6-b39e14ef6673",
+                "description": "Estimer des distances (près de / loin de)",
+                "description_en": "Estimate distances (near / far)",
+                "reference": "MOHEBS CI — §7.1, Palier 1 : Objectif « Estimer des distances »",
+                "tasks": [
+                  {
+                    "identifier": "76669401-2fc2-5b15-89b4-9784c696933e",
+                    "description": "Regarde les deux maisons : laquelle est près de l'école ? laquelle est loin de l'école ?",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "bf13d33d-8c8f-5a8f-90ce-50263ca171cf",
+            "leconNum": 29,
+            "osTexte": "comparer des distances : plus près/plus loin",
+            "statementType": "expectation",
+            "statementCode": "Leçon 29",
+            "semaine": 6,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "efa46e54-687e-5134-8b18-1efa4b5523b5",
+                "description": "Comparer des distances (plus près / plus loin)",
+                "description_en": "Compare distances (nearer / farther)",
+                "reference": "MOHEBS CI — §7.1, Palier 1 : Objectif « Comparer des distances »",
+                "tasks": [
+                  {
+                    "identifier": "4c7031bd-b76d-5c0f-98de-642b8585b306",
+                    "description": "Qui habite plus près de l'école : Awa ou Moussa ? Qui habite plus loin ?",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "589c3940-a3dc-5b56-a3a6-53fedc8e323f",
+            "leconNum": 34,
+            "osTexte": "Bilan du chapitre 7",
+            "statementType": "expectation",
+            "statementCode": "Leçon 34",
+            "semaine": 7,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "589c3940-a3dc-5b56-a3a6-53fedc8e323f"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": [
+          3
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 24,
+          "osTexte": "estimer des distances : près de/loin de"
+        },
+        {
+          "leconNum": 29,
+          "osTexte": "comparer des distances : plus près/plus loin"
+        }
+      ]
+    },
+    {
+      "num": 8,
+      "slice": {
+        "chapitreNum": 8,
+        "chapitreTitre": "J'applique les règles logiques",
+        "domaine": "Résolution de problème",
+        "lessons": [
+          {
+            "identifier": "8fcceadc-df33-594c-b117-61c8b3b64b49",
+            "leconNum": 30,
+            "osTexte": "lier un indice à une image",
+            "statementType": "expectation",
+            "statementCode": "Leçon 30",
+            "semaine": 6,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "fe0a8f72-0ca8-5258-90a8-23c1cf186398",
+                "description": "Lier un indice à une image (règles logiques)",
+                "description_en": "Link a clue to a picture (logical rules)",
+                "reference": "MOHEBS CI — §8.1, Palier 1 : Objectif « Lier un indice à une image »",
+                "tasks": [
+                  {
+                    "identifier": "49275369-730f-5bbb-b56e-ba6e5b8413bc",
+                    "description": "On te donne un indice (ex : « il porte un chapeau »). Relie-le à la bonne image parmi les trois proposées.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "fbbc44ab-5d1d-53b2-be1d-1e10bbddf41a",
+            "leconNum": 35,
+            "osTexte": "reproduire un modèle",
+            "statementType": "expectation",
+            "statementCode": "Leçon 35",
+            "semaine": 7,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "a8aefe53-971c-5f4a-aee4-9e36b5c9d27e",
+                "description": "Reconnaître, prolonger et compléter une régularité qui se répète",
+                "description_en": "Recognise, extend, and complete a repeating pattern",
+                "reference": "Bridges G1 — p49 What's Missing?",
+                "tasks": [
+                  {
+                    "identifier": "5506eed2-e1dd-53cc-af45-dcaf7af81ba7",
+                    "description": "L'ordre des formes se répète sur la grille : dessine la forme et écris le nombre qui manque dans chaque case vide.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              },
+              {
+                "identifier": "2e2d9adb-8552-5e86-acc9-12a72fea2972",
+                "description": "Reproduire un modèle (règles logiques)",
+                "description_en": "Reproduce a model (logical rules)",
+                "reference": "MOHEBS CI — §8.1, Palier 1 : Objectif « Reproduire un modèle »",
+                "tasks": [
+                  {
+                    "identifier": "b9e10109-86ef-5006-8855-26b2a1b1852a",
+                    "description": "Regarde le modèle puis reproduis-le à l'identique en dessinant ou en collant les formes.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "b33903d9-ba42-5442-a74a-62f339a98809",
+            "leconNum": 40,
+            "osTexte": "reconnaître et appliquer un algorithme",
+            "statementType": "expectation",
+            "statementCode": "Leçon 40",
+            "semaine": 8,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "c54fcfe4-2731-5e7a-9275-09461fbbbfad",
+                "description": "Reconnaître et appliquer un algorithme (récursif, répétitif)",
+                "description_en": "Recognise and apply an algorithm (recursive, repeating)",
+                "reference": "MOHEBS CI — §8.1, Palier 1 : Objectif « Reconnaître et appliquer un algorithme »",
+                "tasks": [
+                  {
+                    "identifier": "90e5dd1b-424d-5b99-b018-9620dca2ae22",
+                    "description": "Observe la suite de formes qui se répète : rond, carré, rond, carré … Dessine les trois formes suivantes. Maintenant observe : chaque forme a un côté de plus (3, 4, 5 …). Dessine la suivante.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "aac8774b-0574-57be-aaca-8e010655405e",
+            "leconNum": 45,
+            "osTexte": "Bilan du chapitre 8 — J'applique les règles logiques",
+            "statementType": "expectation",
+            "statementCode": "Leçon 45",
+            "semaine": 9,
+            "palier": 1,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "aac8774b-0574-57be-aaca-8e010655405e"
+      },
+      "progression": {
+        "buildsTowards": [
+          12
+        ],
+        "buildsFrom": [
+          4
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 30,
+          "osTexte": "lier un indice à une image"
+        },
+        {
+          "leconNum": 35,
+          "osTexte": "reproduire un modèle"
+        },
+        {
+          "leconNum": 40,
+          "osTexte": "reconnaître et appliquer un algorithme"
+        }
+      ]
+    },
+    {
+      "num": 9,
+      "slice": {
+        "chapitreNum": 9,
+        "chapitreTitre": "Les nombres de 0 à 9",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "9f960a30-3fe3-558c-9fc4-5bf0d41d0bce",
+            "leconNum": 31,
+            "osTexte": "découvrir les nombres de 1 à 5",
+            "statementType": "expectation",
+            "statementCode": "Leçon 31",
+            "semaine": 7,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "1dbc8020-561d-5d6b-bd44-2af560ae6aa3",
+                "description": "Subitiser les nombres",
+                "description_en": "Subitise numbers",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "35307cff-3c49-5843-935a-36100008f372",
+                    "description": "Combien de ronds ? (cadre de dix rempli)",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "6597cfc5-1007-5675-9eeb-a34759c3b9d0",
+                    "description": "Montre-moi trois doigts ; cinq doigts avec deux mains ; combien de doigts vois-tu ? (subitisation)",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "fe252279-feac-576c-bc58-26373eccfc8c",
+                "description": "Passer du « tout compter » au « compter à partir de » puis aux faits rappelés (fluidité)",
+                "description_en": "Progress from 'counting all' to 'counting on' then to recalled facts (fluency)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3748f22f-41ad-52c3-bb80-282ad6541507",
+                    "description": "Additionne 6 + 3 : d'abord en comptant tout (1…9), puis en comptant à partir de 6 (7, 8, 9), puis de mémoire.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "b2349d02-0b9b-5e9c-9c06-a57e226e5ce9",
+            "leconNum": 32,
+            "osTexte": "découvrir le nombre 0",
+            "statementType": "expectation",
+            "statementCode": "Leçon 32",
+            "semaine": 7,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "1dbc8020-561d-5d6b-bd44-2af560ae6aa3",
+                "description": "Subitiser les nombres",
+                "description_en": "Subitise numbers",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "35307cff-3c49-5843-935a-36100008f372",
+                    "description": "Combien de ronds ? (cadre de dix rempli)",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "6597cfc5-1007-5675-9eeb-a34759c3b9d0",
+                    "description": "Montre-moi trois doigts ; cinq doigts avec deux mains ; combien de doigts vois-tu ? (subitisation)",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "39e37d25-78f3-5eee-8b45-76fd98a33302",
+            "leconNum": 36,
+            "osTexte": "découvrir les nombres 6 et 7",
+            "statementType": "expectation",
+            "statementCode": "Leçon 36",
+            "semaine": 8,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "1dbc8020-561d-5d6b-bd44-2af560ae6aa3",
+                "description": "Subitiser les nombres",
+                "description_en": "Subitise numbers",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "35307cff-3c49-5843-935a-36100008f372",
+                    "description": "Combien de ronds ? (cadre de dix rempli)",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "6597cfc5-1007-5675-9eeb-a34759c3b9d0",
+                    "description": "Montre-moi trois doigts ; cinq doigts avec deux mains ; combien de doigts vois-tu ? (subitisation)",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "d904c23e-542f-5470-88b7-16f456150bd5",
+            "leconNum": 37,
+            "osTexte": "composer et décomposer les nombres 6 et 7",
+            "statementType": "expectation",
+            "statementCode": "Leçon 37",
+            "semaine": 8,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "3776b8fb-3e34-57b5-83fd-b7144c341766",
+                "description": "Utiliser un cadre de dix pour voir les quantités par rapport à 5 et 10 et écrire les phrases numériques correspondantes",
+                "description_en": "Use a ten frame to see quantities relative to 5 and 10 and write the corresponding number sentences",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3fae91fc-dd99-5b76-bac5-ea011ab3d71a",
+                    "description": "Sur un cadre de dix, place 6 jetons puis écris « 5 et 1 font 6 » ; recommence pour 7, 8, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "dc79902c-4098-5e7b-bc6e-f934b7a267b9",
+                "description": "Décomposer 6, 7, 8, 9 en « 5 et le reste » à l'aide d'un cadre de dix",
+                "description_en": "Decompose 6, 7, 8, 9 into '5 and the rest' using a ten frame",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "714ccdc1-ca56-5c3d-889a-86f31b85e69a",
+                    "description": "Montre 8 comme « 5 et 3 » puis comme « 5 et le reste » ; fais de même pour 6, 7, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "24023e86-b515-5dcd-856f-5e60ca0d650a",
+            "leconNum": 41,
+            "osTexte": "découvrir le sens de l'addition",
+            "statementType": "expectation",
+            "statementCode": "Leçon 41",
+            "semaine": 9,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "e7bb525d-5da4-5404-8999-b1230938b50f",
+                "description": "Ajouter/soustraire 1 à/de nombres jusqu'à 20",
+                "description_en": "Add / subtract 1 to / from numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "24ea1593-6515-5a75-960a-cd17a392a1cb",
+                    "description": "Calcule : 10+1 ; 15-1 ; 6+1 ; 18-1",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "10343191-7b6e-57b0-9d42-e34c4766040d",
+                    "description": "Un de moins que 6 ? un de plus que 19 ? un saut en arrière à partir de 11 ?",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "335a6ed3-a97a-5367-b393-750f0102f6f2",
+                    "description": "Additionne dans 20 : 13 + 6 = ? ; 18 + 1 = ? ; 12 + 7 = ? ; puis trouve l'inconnue : 17 + _ = 20 ; _ + 6 = 10.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "5bcc1379-ff8b-541f-83d2-2ec9623973c1",
+                "description": "Se rappeler rapidement des additions et soustractions dans l'intervalle 1 à 5 et les combinaisons de 10",
+                "description_en": "Quickly recall addition and subtraction facts in the range 1 to 5 and combinations of 10",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "460e8f59-eaa0-500f-b84b-b0e0e8c1fb9b",
+                    "description": "Récite vite : 2+3, 4+1, 5−2, 3+2, combien pour faire 10 avec 6 ? (faits dans 1–5 et compléments à 10)",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "817ff551-5bdd-5a71-89c8-5f912b6f47a5",
+                "description": "Résoudre des problèmes lorsque le résultat est inconnu (ex : 3 + 4 = _), dans l'intervalle 1 à 10",
+                "description_en": "Solve problems when the result is unknown (e.g. 3 + 4 = _), in the range 1 to 10",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "2229745e-c2f4-5ba5-9de5-4a21f80b9f8f",
+                    "description": "Complète la partie manquante : 5 = 1 + _ ; 4 = 3 + _ ; 5 = 2 + _ ; 3 = 2 + _ (compte les objets).",
+                    "contentType": "Tâche de résolution de problèmes"
+                  },
+                  {
+                    "identifier": "91b1aed0-efc1-585c-9c4c-3b74b3cc6d33",
+                    "description": "Yasmin construit une tour avec 3 briques rouges et 4 briques jaunes. Combien de briques ? Fais un dessin.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  },
+                  {
+                    "identifier": "89786131-6765-5e6f-bf57-e940d9821f78",
+                    "description": "Rakhi mange 3 de ses 5 biscuits. Combien reste-t-il ? Fais un dessin.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  },
+                  {
+                    "identifier": "e2f16499-c0c3-559c-a011-a75778f2bfde",
+                    "description": "Raconte une histoire pour 8 − 5.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "8518d095-0816-5973-b5be-c25aeda6d872",
+                "description": "Créer/dessiner/utiliser des représentations de l'addition/soustraction (pistes numériques et cadres de dix)",
+                "description_en": "Create / draw / use addition / subtraction representations (number tracks and ten frames)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "056a48f7-ef54-5051-a2d0-f2d2e088f1bc",
+                    "description": "Fais ces sauts sur une piste numérique graduée (1..10) : où atterris-tu ?",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "74bae8e8-d407-5401-a8ba-2c737032b6c4",
+                "description": "Résoudre des problèmes d'addition/soustraction en comptant les unités",
+                "description_en": "Solve addition / subtraction problems by counting units",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "03f0648f-d6d8-5775-9c88-982844481742",
+                    "description": "Compte les objets et additionne : 1 canard + 2 canards = ? ; 3 tomates + 2 = ? ; 2 + 2 = ? (avec images à compter).",
+                    "contentType": "Tâche de résolution de problèmes"
+                  },
+                  {
+                    "identifier": "53a4782a-da51-56c0-9c6f-31af0f378e3c",
+                    "description": "On laisse tomber des jetons dans un gobelet (1,2,3) puis on en ajoute 2. Combien en tout ?",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "fe252279-feac-576c-bc58-26373eccfc8c",
+                "description": "Passer du « tout compter » au « compter à partir de » puis aux faits rappelés (fluidité)",
+                "description_en": "Progress from 'counting all' to 'counting on' then to recalled facts (fluency)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3748f22f-41ad-52c3-bb80-282ad6541507",
+                    "description": "Additionne 6 + 3 : d'abord en comptant tout (1…9), puis en comptant à partir de 6 (7, 8, 9), puis de mémoire.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "a4f9574f-f08d-50d4-a599-1473f37282bb",
+                "description": "Relier des représentations concrètes, picturales et abstraites (CPA) du même nombre/opération",
+                "description_en": "Link concrete, pictorial, and abstract (CPA) representations of the same number / operation",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "f1b9a446-ea31-5551-b956-ceb503b4164f",
+                    "description": "Prends 3 cubes, dessine-les, puis écris 3 : relie l'objet, l'image et le nombre pour 3, 5, 8.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  },
+                  {
+                    "identifier": "401c33b8-6faa-5058-b2a6-65541fa8e85f",
+                    "description": "Relie chaque objet à son écriture : dessine 3 cubes puis écris 3 ; fais-le pour 1..5 (objet → image → nombre).",
+                    "contentType": "Tâche de résolution de problèmes"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "213aac1c-a4ea-509a-abaf-5365bc5ff66d",
+            "leconNum": 42,
+            "osTexte": "découvrir les nombres 8 et 9",
+            "statementType": "expectation",
+            "statementCode": "Leçon 42",
+            "semaine": 9,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "1dbc8020-561d-5d6b-bd44-2af560ae6aa3",
+                "description": "Subitiser les nombres",
+                "description_en": "Subitise numbers",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "35307cff-3c49-5843-935a-36100008f372",
+                    "description": "Combien de ronds ? (cadre de dix rempli)",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "6597cfc5-1007-5675-9eeb-a34759c3b9d0",
+                    "description": "Montre-moi trois doigts ; cinq doigts avec deux mains ; combien de doigts vois-tu ? (subitisation)",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "aaa7eab4-722f-5ea8-a54c-db73e9a59729",
+            "leconNum": 46,
+            "osTexte": "composer et décomposer les nombres 8 et 9",
+            "statementType": "expectation",
+            "statementCode": "Leçon 46",
+            "semaine": 11,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "e8820249-9728-5cfc-b49a-ff65556830ca",
+                "description": "Résoudre à l'aide de faits connus et dérivés (ex : 4 + 3 comme 2 de plus que 5)",
+                "description_en": "Solve using known and derived facts (e.g. 4 + 3 as 2 more than 5)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "d422b31c-2e23-5537-b063-bbb28377da9e",
+                    "description": "Tu sais que 5 + 5 = 10. Trouve 5 + 6 en disant « un de plus que 10 ». Puis 5 + 4 comme « un de moins que 10 ».",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  },
+                  {
+                    "identifier": "06a7525b-9947-5566-b47d-2f64212844f4",
+                    "description": "Utilise le double de 4 (= 8) pour trouver 4 + 5 (« le double de 4 plus 1 »).",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              },
+              {
+                "identifier": "dc79902c-4098-5e7b-bc6e-f934b7a267b9",
+                "description": "Décomposer 6, 7, 8, 9 en « 5 et le reste » à l'aide d'un cadre de dix",
+                "description_en": "Decompose 6, 7, 8, 9 into '5 and the rest' using a ten frame",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "714ccdc1-ca56-5c3d-889a-86f31b85e69a",
+                    "description": "Montre 8 comme « 5 et 3 » puis comme « 5 et le reste » ; fais de même pour 6, 7, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "86265bde-2d9d-5c3b-a500-2651ed7db759",
+            "leconNum": 47,
+            "osTexte": "Bilan du chapitre 9",
+            "statementType": "expectation",
+            "statementCode": "Leçon 47",
+            "semaine": 11,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "86265bde-2d9d-5c3b-a500-2651ed7db759"
+      },
+      "progression": {
+        "buildsTowards": [
+          13
+        ],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 31,
+          "osTexte": "découvrir les nombres de 1 à 5"
+        },
+        {
+          "leconNum": 32,
+          "osTexte": "découvrir le nombre 0"
+        },
+        {
+          "leconNum": 36,
+          "osTexte": "découvrir les nombres 6 et 7"
+        },
+        {
+          "leconNum": 37,
+          "osTexte": "composer et décomposer les nombres 6 et 7"
+        },
+        {
+          "leconNum": 41,
+          "osTexte": "découvrir le sens de l'addition"
+        },
+        {
+          "leconNum": 42,
+          "osTexte": "découvrir les nombres 8 et 9"
+        },
+        {
+          "leconNum": 46,
+          "osTexte": "composer et décomposer les nombres 8 et 9"
+        }
+      ]
+    },
+    {
+      "num": 10,
+      "slice": {
+        "chapitreNum": 10,
+        "chapitreTitre": "Les solides familiers",
+        "domaine": "Géométrie",
+        "lessons": [
+          {
+            "identifier": "b7d37d85-c4ae-5195-8998-e69d666e4634",
+            "leconNum": 48,
+            "osTexte": "je classifie des solides familiers : cube, cylindre, parallélépipède",
+            "statementType": "expectation",
+            "statementCode": "Leçon 48",
+            "semaine": 11,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "6919cae3-65a9-5baf-98d9-c1611ca8e4bf",
+                "description": "Reconnaître et classer des solides familiers (boîtes/balles : cube, cylindre, boule)",
+                "description_en": "Recognise and classify familiar solids (boxes / balls: cube, cylinder, sphere)",
+                "reference": "DBE Book 1 — Balls and boxes / Building objects",
+                "tasks": [
+                  {
+                    "identifier": "cc328600-2d15-5fdf-af97-d858a5c6033e",
+                    "description": "Parmi les objets, lesquels ressemblent à des boîtes ? lesquels ressemblent à des balles ? Range les petites/grandes boîtes et balles ; nomme cube, cylindre, boule.",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "8bc74688-6ee9-58b0-ab26-c160a7d4ad51",
+            "leconNum": 53,
+            "osTexte": "je dessine des solides familiers",
+            "statementType": "expectation",
+            "statementCode": "Leçon 53",
+            "semaine": 12,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "40c885a2-0429-5d96-aa48-12fe94cb3b69",
+                "description": "Dessiner des solides familiers",
+                "description_en": "Draw familiar solids",
+                "reference": "MOHEBS CI — §6.1, Palier 2 : Objectif « Dessiner des solides familiers »",
+                "tasks": [
+                  {
+                    "identifier": "08ddb3a4-06cd-5f3f-9038-ee287e7b20e9",
+                    "description": "Observe le cube et le cylindre posés sur la table. Essaie de les dessiner sur ton ardoise en montrant les faces visibles.",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "bf893a11-951c-53f8-8a35-a8bd54cba665",
+            "leconNum": 58,
+            "osTexte": "je dessine des solides familiers",
+            "statementType": "expectation",
+            "statementCode": "Leçon 58",
+            "semaine": 13,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "40c885a2-0429-5d96-aa48-12fe94cb3b69",
+                "description": "Dessiner des solides familiers",
+                "description_en": "Draw familiar solids",
+                "reference": "MOHEBS CI — §6.1, Palier 2 : Objectif « Dessiner des solides familiers »",
+                "tasks": [
+                  {
+                    "identifier": "08ddb3a4-06cd-5f3f-9038-ee287e7b20e9",
+                    "description": "Observe le cube et le cylindre posés sur la table. Essaie de les dessiner sur ton ardoise en montrant les faces visibles.",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "4bb3b4e0-632f-5391-91b9-5a0624645595",
+            "leconNum": 63,
+            "osTexte": "Bilan du chapitre 10",
+            "statementType": "expectation",
+            "statementCode": "Leçon 63",
+            "semaine": 14,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "4bb3b4e0-632f-5391-91b9-5a0624645595"
+      },
+      "progression": {
+        "buildsTowards": [
+          18
+        ],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 48,
+          "osTexte": "je classifie des solides familiers : cube, cylindre, parallélépipède"
+        },
+        {
+          "leconNum": 53,
+          "osTexte": "je dessine des solides familiers"
+        },
+        {
+          "leconNum": 58,
+          "osTexte": "je dessine des solides familiers"
+        }
+      ]
+    },
+    {
+      "num": 11,
+      "slice": {
+        "chapitreNum": 11,
+        "chapitreTitre": "Estimer et comparer des masses et des capacités",
+        "domaine": "Mesure",
+        "lessons": [
+          {
+            "identifier": "bc667763-288c-524e-9f35-6e3c58484848",
+            "leconNum": 39,
+            "osTexte": "estimer des capacités : beaucoup/peu",
+            "statementType": "expectation",
+            "statementCode": "Leçon 39",
+            "semaine": 8,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "f6a8f011-c2bd-5ab2-9ec1-2dc0e35d6037",
+                "description": "Estimer la capacité d'un récipient (beaucoup/peu)",
+                "description_en": "Estimate the capacity of a container (a lot / a little)",
+                "reference": "KICD Measurement — Capacity",
+                "tasks": [
+                  {
+                    "identifier": "e7b41bc5-9279-5f51-98c5-b774b3d2977d",
+                    "description": "Regarde les récipients : lequel contient beaucoup ? lequel contient peu ?",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "bc236b49-d552-5ff2-9317-9288b7810672",
+            "leconNum": 44,
+            "osTexte": "comparer des capacités : plus…que/moins…que/autant…que",
+            "statementType": "expectation",
+            "statementCode": "Leçon 44",
+            "semaine": 9,
+            "palier": 1,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5ec17fc2-bfc6-5149-8c69-5fda47a85cd0",
+                "description": "Comparer des capacités (contient plus que / moins que / autant que)",
+                "description_en": "Compare capacities (holds more than / less than / as much as)",
+                "reference": "KICD Measurement — Capacity",
+                "tasks": [
+                  {
+                    "identifier": "ed398d4a-a332-5299-a512-cbbbef1b3c55",
+                    "description": "Compare : la tasse contient ______ le broc ; le broc contient ______ la tasse (plus que / moins que / autant que). Remplis, puis verse pour vérifier.",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "5d68f55b-2297-522a-873d-c2904e5cb185",
+            "leconNum": 49,
+            "osTexte": "estimer des masses : lourd/léger",
+            "statementType": "expectation",
+            "statementCode": "Leçon 49",
+            "semaine": 11,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "62dfd510-9144-5925-b463-0ccb1c89eb99",
+                "description": "Estimer la masse d'un objet (lourd/léger)",
+                "description_en": "Estimate the mass of an object (heavy / light)",
+                "reference": "KICD Measurement — Mass",
+                "tasks": [
+                  {
+                    "identifier": "04c6225f-c9ed-542d-93d7-903dd07c624b",
+                    "description": "On te donne deux objets : lequel est lourd ? lequel est léger ? (ex : le livre est lourd, le crayon est léger).",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "bad8f408-ec9f-5f57-85cc-830bb7c6dcb6",
+            "leconNum": 54,
+            "osTexte": "comparer des masses : plus lourd/léger que, moins lourd/léger que, aussi lourd/léger que",
+            "statementType": "expectation",
+            "statementCode": "Leçon 54",
+            "semaine": 12,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4a943453-0719-5eeb-9401-e993584bfe15",
+                "description": "Comparer des masses (plus lourd que / plus léger que / aussi lourd que)",
+                "description_en": "Compare masses (heavier than / lighter than / as heavy as)",
+                "reference": "KICD Measurement — Mass",
+                "tasks": [
+                  {
+                    "identifier": "dfe75fb9-7fad-5a15-b028-d1b5240d94f8",
+                    "description": "Compare : le livre est ______ le crayon ; les bâtonnets sont ______ le livre (plus lourd que / plus léger que / aussi lourd que).",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "fa3d3bca-1414-5e7b-a6f6-902f91163091",
+            "leconNum": 59,
+            "osTexte": "Bilan du chapitre 11",
+            "statementType": "expectation",
+            "statementCode": "Leçon 59",
+            "semaine": 13,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "fa3d3bca-1414-5e7b-a6f6-902f91163091"
+      },
+      "progression": {
+        "buildsTowards": [
+          15
+        ],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 39,
+          "osTexte": "estimer des capacités : beaucoup/peu"
+        },
+        {
+          "leconNum": 44,
+          "osTexte": "comparer des capacités : plus…que/moins…que/autant…que"
+        },
+        {
+          "leconNum": 49,
+          "osTexte": "estimer des masses : lourd/léger"
+        },
+        {
+          "leconNum": 54,
+          "osTexte": "comparer des masses : plus lourd/léger que, moins lourd/léger que, aussi lourd/léger que"
+        }
+      ]
+    },
+    {
+      "num": 12,
+      "slice": {
+        "chapitreNum": 12,
+        "chapitreTitre": "Reconnaître un problème mathématique",
+        "domaine": "Résolution de problème",
+        "lessons": [
+          {
+            "identifier": "fe50a6b4-0bab-5e12-bab5-9ce45e0f27d8",
+            "leconNum": 50,
+            "osTexte": "reconnaître un problème mathématique parmi plusieurs situations (énoncés oraux mathématiques et non mathématiques)",
+            "statementType": "expectation",
+            "statementCode": "Leçon 50",
+            "semaine": 11,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "2def851a-b698-5fd9-bac5-1095e753e763",
+                "description": "Reconnaître un problème mathématique parmi plusieurs situations (énoncés oraux)",
+                "description_en": "Recognise a maths problem among several situations (oral statements)",
+                "reference": "MOHEBS CI — §8.1, Palier 2 : Objectif « S'approprier un énoncé mathématique »",
+                "tasks": [
+                  {
+                    "identifier": "a64dbb5f-3320-583a-8e72-3b78d6d2d243",
+                    "description": "L'enseignant lit plusieurs phrases : « Awa a 3 mangues, son frère lui en donne 2 » et « Le ciel est bleu aujourd'hui ». Dis laquelle est un problème de maths.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "eaed6262-67b1-578a-93c3-c8aed63b0e73",
+            "leconNum": 55,
+            "osTexte": "dramatiser un problème mathématique",
+            "statementType": "expectation",
+            "statementCode": "Leçon 55",
+            "semaine": 12,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "b3304d42-b608-59d8-8dd4-6b32afbc84b1",
+                "description": "Dramatiser un problème mathématique",
+                "description_en": "Act out a maths problem",
+                "reference": "MOHEBS CI — §8.1, Palier 2 : Objectif « Dramatiser un problème mathématique »",
+                "tasks": [
+                  {
+                    "identifier": "bc75d97a-e6b1-5d17-8146-137d3dde1b0d",
+                    "description": "Joue la scène avec tes camarades : Awa a 5 bonbons, elle en donne 2 à Moussa. Dis combien il lui en reste, puis écris l'opération.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "c7ec78ee-2943-55a2-a846-ebce50689997",
+            "leconNum": 60,
+            "osTexte": "Bilan du chapitre 12",
+            "statementType": "expectation",
+            "statementCode": "Leçon 60",
+            "semaine": 13,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "c7ec78ee-2943-55a2-a846-ebce50689997"
+      },
+      "progression": {
+        "buildsTowards": [
+          16
+        ],
+        "buildsFrom": [
+          8
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 50,
+          "osTexte": "reconnaître un problème mathématique parmi plusieurs situations (énoncés oraux mathématiques et non mathématiques)"
+        },
+        {
+          "leconNum": 55,
+          "osTexte": "dramatiser un problème mathématique"
+        }
+      ]
+    },
+    {
+      "num": 13,
+      "slice": {
+        "chapitreNum": 13,
+        "chapitreTitre": "Le nombre 10 et la dizaine",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "752bcbda-97e4-5bb9-ac6f-ba70d131031f",
+            "leconNum": 51,
+            "osTexte": "découvrir le nombre 10 et la dizaine",
+            "statementType": "expectation",
+            "statementCode": "Leçon 51",
+            "semaine": 12,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5bcc1379-ff8b-541f-83d2-2ec9623973c1",
+                "description": "Se rappeler rapidement des additions et soustractions dans l'intervalle 1 à 5 et les combinaisons de 10",
+                "description_en": "Quickly recall addition and subtraction facts in the range 1 to 5 and combinations of 10",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "460e8f59-eaa0-500f-b84b-b0e0e8c1fb9b",
+                    "description": "Récite vite : 2+3, 4+1, 5−2, 3+2, combien pour faire 10 avec 6 ? (faits dans 1–5 et compléments à 10)",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "8518d095-0816-5973-b5be-c25aeda6d872",
+                "description": "Créer/dessiner/utiliser des représentations de l'addition/soustraction (pistes numériques et cadres de dix)",
+                "description_en": "Create / draw / use addition / subtraction representations (number tracks and ten frames)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "056a48f7-ef54-5051-a2d0-f2d2e088f1bc",
+                    "description": "Fais ces sauts sur une piste numérique graduée (1..10) : où atterris-tu ?",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "3776b8fb-3e34-57b5-83fd-b7144c341766",
+                "description": "Utiliser un cadre de dix pour voir les quantités par rapport à 5 et 10 et écrire les phrases numériques correspondantes",
+                "description_en": "Use a ten frame to see quantities relative to 5 and 10 and write the corresponding number sentences",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3fae91fc-dd99-5b76-bac5-ea011ab3d71a",
+                    "description": "Sur un cadre de dix, place 6 jetons puis écris « 5 et 1 font 6 » ; recommence pour 7, 8, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "188eacb6-c398-53a7-aa95-046d5eb35c2e",
+                "description": "Connaître les paires dont la somme est 10 (9+1, 8+2, 7+3, 6+4, 5+5) et leurs inverses",
+                "description_en": "Know the pairs that make 10 (9+1, 8+2, 7+3, 6+4, 5+5) and their inverses",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "c5c62e3b-6ca3-539f-aec4-b8d58ab9401e",
+                    "description": "Combien pour aller de 6 à 10 sur le cadre de dix ? et de 7 ? de 8 ? Écris chaque paire qui fait 10.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "a4f9574f-f08d-50d4-a599-1473f37282bb",
+                "description": "Relier des représentations concrètes, picturales et abstraites (CPA) du même nombre/opération",
+                "description_en": "Link concrete, pictorial, and abstract (CPA) representations of the same number / operation",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "f1b9a446-ea31-5551-b956-ceb503b4164f",
+                    "description": "Prends 3 cubes, dessine-les, puis écris 3 : relie l'objet, l'image et le nombre pour 3, 5, 8.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  },
+                  {
+                    "identifier": "401c33b8-6faa-5058-b2a6-65541fa8e85f",
+                    "description": "Relie chaque objet à son écriture : dessine 3 cubes puis écris 3 ; fais-le pour 1..5 (objet → image → nombre).",
+                    "contentType": "Tâche de résolution de problèmes"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "3a44c1dd-f2d6-5211-9189-b31492d145a6",
+            "leconNum": 52,
+            "osTexte": "composer et décomposer le nombre 10",
+            "statementType": "expectation",
+            "statementCode": "Leçon 52",
+            "semaine": 12,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5bcc1379-ff8b-541f-83d2-2ec9623973c1",
+                "description": "Se rappeler rapidement des additions et soustractions dans l'intervalle 1 à 5 et les combinaisons de 10",
+                "description_en": "Quickly recall addition and subtraction facts in the range 1 to 5 and combinations of 10",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "460e8f59-eaa0-500f-b84b-b0e0e8c1fb9b",
+                    "description": "Récite vite : 2+3, 4+1, 5−2, 3+2, combien pour faire 10 avec 6 ? (faits dans 1–5 et compléments à 10)",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "8518d095-0816-5973-b5be-c25aeda6d872",
+                "description": "Créer/dessiner/utiliser des représentations de l'addition/soustraction (pistes numériques et cadres de dix)",
+                "description_en": "Create / draw / use addition / subtraction representations (number tracks and ten frames)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "056a48f7-ef54-5051-a2d0-f2d2e088f1bc",
+                    "description": "Fais ces sauts sur une piste numérique graduée (1..10) : où atterris-tu ?",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "3776b8fb-3e34-57b5-83fd-b7144c341766",
+                "description": "Utiliser un cadre de dix pour voir les quantités par rapport à 5 et 10 et écrire les phrases numériques correspondantes",
+                "description_en": "Use a ten frame to see quantities relative to 5 and 10 and write the corresponding number sentences",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3fae91fc-dd99-5b76-bac5-ea011ab3d71a",
+                    "description": "Sur un cadre de dix, place 6 jetons puis écris « 5 et 1 font 6 » ; recommence pour 7, 8, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "188eacb6-c398-53a7-aa95-046d5eb35c2e",
+                "description": "Connaître les paires dont la somme est 10 (9+1, 8+2, 7+3, 6+4, 5+5) et leurs inverses",
+                "description_en": "Know the pairs that make 10 (9+1, 8+2, 7+3, 6+4, 5+5) and their inverses",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "c5c62e3b-6ca3-539f-aec4-b8d58ab9401e",
+                    "description": "Combien pour aller de 6 à 10 sur le cadre de dix ? et de 7 ? de 8 ? Écris chaque paire qui fait 10.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "cac696f6-7369-52da-b470-49b5d57e8e51",
+            "leconNum": 56,
+            "osTexte": "découvrir le nombre 10 et la dizaine",
+            "statementType": "expectation",
+            "statementCode": "Leçon 56",
+            "semaine": 13,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "3776b8fb-3e34-57b5-83fd-b7144c341766",
+                "description": "Utiliser un cadre de dix pour voir les quantités par rapport à 5 et 10 et écrire les phrases numériques correspondantes",
+                "description_en": "Use a ten frame to see quantities relative to 5 and 10 and write the corresponding number sentences",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3fae91fc-dd99-5b76-bac5-ea011ab3d71a",
+                    "description": "Sur un cadre de dix, place 6 jetons puis écris « 5 et 1 font 6 » ; recommence pour 7, 8, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "188eacb6-c398-53a7-aa95-046d5eb35c2e",
+                "description": "Connaître les paires dont la somme est 10 (9+1, 8+2, 7+3, 6+4, 5+5) et leurs inverses",
+                "description_en": "Know the pairs that make 10 (9+1, 8+2, 7+3, 6+4, 5+5) and their inverses",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "c5c62e3b-6ca3-539f-aec4-b8d58ab9401e",
+                    "description": "Combien pour aller de 6 à 10 sur le cadre de dix ? et de 7 ? de 8 ? Écris chaque paire qui fait 10.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "6ba9dcb2-829b-59c4-99c4-e3dc5b0192bb",
+            "leconNum": 57,
+            "osTexte": "découvrir le nombre 10 et la dizaine",
+            "statementType": "expectation",
+            "statementCode": "Leçon 57",
+            "semaine": 13,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "3776b8fb-3e34-57b5-83fd-b7144c341766",
+                "description": "Utiliser un cadre de dix pour voir les quantités par rapport à 5 et 10 et écrire les phrases numériques correspondantes",
+                "description_en": "Use a ten frame to see quantities relative to 5 and 10 and write the corresponding number sentences",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3fae91fc-dd99-5b76-bac5-ea011ab3d71a",
+                    "description": "Sur un cadre de dix, place 6 jetons puis écris « 5 et 1 font 6 » ; recommence pour 7, 8, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "188eacb6-c398-53a7-aa95-046d5eb35c2e",
+                "description": "Connaître les paires dont la somme est 10 (9+1, 8+2, 7+3, 6+4, 5+5) et leurs inverses",
+                "description_en": "Know the pairs that make 10 (9+1, 8+2, 7+3, 6+4, 5+5) and their inverses",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "c5c62e3b-6ca3-539f-aec4-b8d58ab9401e",
+                    "description": "Combien pour aller de 6 à 10 sur le cadre de dix ? et de 7 ? de 8 ? Écris chaque paire qui fait 10.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "fd4a795e-5aca-54d9-8723-72a4057cfddf",
+            "leconNum": 61,
+            "osTexte": "Bilan du chapitre 13",
+            "statementType": "expectation",
+            "statementCode": "Leçon 61",
+            "semaine": 14,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "fd4a795e-5aca-54d9-8723-72a4057cfddf"
+      },
+      "progression": {
+        "buildsTowards": [
+          21
+        ],
+        "buildsFrom": [
+          9
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 51,
+          "osTexte": "découvrir le nombre 10 et la dizaine"
+        },
+        {
+          "leconNum": 52,
+          "osTexte": "composer et décomposer le nombre 10"
+        },
+        {
+          "leconNum": 56,
+          "osTexte": "découvrir le nombre 10 et la dizaine"
+        },
+        {
+          "leconNum": 57,
+          "osTexte": "découvrir le nombre 10 et la dizaine"
+        }
+      ]
+    },
+    {
+      "num": 15,
+      "slice": {
+        "chapitreNum": 15,
+        "chapitreTitre": "Estimer et comparer des durées",
+        "domaine": "Mesure",
+        "lessons": [
+          {
+            "identifier": "05135c03-35fb-532b-b546-0e025c5dac29",
+            "leconNum": 64,
+            "osTexte": "estimer des durées : long/court",
+            "statementType": "expectation",
+            "statementCode": "Leçon 64",
+            "semaine": 14,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "ceb0577f-a1dd-58fb-978c-a4469599b47e",
+                "description": "Estimer et comparer des durées (temps long / temps court)",
+                "description_en": "Estimate and compare durations (long time / short time)",
+                "reference": "DBE Book 1 — Time (Revision)",
+                "tasks": [
+                  {
+                    "identifier": "c9e9fc7b-6be5-533b-8ad6-401b3586bf84",
+                    "description": "Regarde les images : qu'est-ce qui prend plus de temps (long) ? qu'est-ce qui prend moins de temps (court) ? Coche le plus long.",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "dccd6018-764f-5052-a69d-74f0a451815a",
+            "leconNum": 69,
+            "osTexte": "estimer des durées : lent/rapide",
+            "statementType": "expectation",
+            "statementCode": "Leçon 69",
+            "semaine": 15,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "eb532a55-5c99-54fe-88bd-1073e311680b",
+                "description": "Estimer des durées (lent/rapide)",
+                "description_en": "Estimate durations (slow / fast)",
+                "reference": "MOHEBS CI — §7.1, Palier 3 : Objectif « Estimer une durée » (lent/rapide)",
+                "tasks": [
+                  {
+                    "identifier": "ac24be76-d572-5ea1-9e47-ae8fde3e3ff8",
+                    "description": "Regarde les images : qu'est-ce qui va vite (rapide) ? qu'est-ce qui va doucement (lent) ?",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "610ee03e-0e07-5410-8806-d8f784e58cf7",
+            "leconNum": 74,
+            "osTexte": "comparer des durées : plus (long/court/rapide) que, aussi (long/court/rapide) que",
+            "statementType": "expectation",
+            "statementCode": "Leçon 74",
+            "semaine": 16,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "ed962e2c-9c71-5772-b640-459e8cb2e910",
+                "description": "Comparer des durées (plus long/court/rapide que ; aussi long/court/rapide que)",
+                "description_en": "Compare durations (longer / shorter / faster than; as long / short / fast as)",
+                "reference": "MOHEBS CI — §7.1, Palier 3 : Objectif « Comparer des durées »",
+                "tasks": [
+                  {
+                    "identifier": "7933335d-90f5-5a57-935c-287ae78536bf",
+                    "description": "Frapper des mains 5 fois, c'est plus long ou plus court que frapper 2 fois ? Le cheval court-il plus vite ou aussi vite que la tortue ?",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "63a1a0ee-cf35-5584-9a78-3d96d3cc7c36",
+            "leconNum": 79,
+            "osTexte": "Bilan du chapitre 15",
+            "statementType": "expectation",
+            "statementCode": "Leçon 79",
+            "semaine": 17,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "63a1a0ee-cf35-5584-9a78-3d96d3cc7c36"
+      },
+      "progression": {
+        "buildsTowards": [
+          19
+        ],
+        "buildsFrom": [
+          11
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 64,
+          "osTexte": "estimer des durées : long/court"
+        },
+        {
+          "leconNum": 69,
+          "osTexte": "estimer des durées : lent/rapide"
+        },
+        {
+          "leconNum": 74,
+          "osTexte": "comparer des durées : plus (long/court/rapide) que, aussi (long/court/rapide) que"
+        }
+      ]
+    },
+    {
+      "num": 16,
+      "slice": {
+        "chapitreNum": 16,
+        "chapitreTitre": "Identifier les données et les questions d'un problème",
+        "domaine": "Résolution de problème",
+        "lessons": [
+          {
+            "identifier": "9b30163c-10ec-5b04-9686-61af577d8671",
+            "leconNum": 65,
+            "osTexte": "identifier les données d'un problème mathématique (information numérique et non numérique)",
+            "statementType": "expectation",
+            "statementCode": "Leçon 65",
+            "semaine": 14,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "148a7b04-45f3-53b7-a8a7-3c62aca03b08",
+                "description": "Interpréter quand additionner/soustraire à partir d'énoncés simples",
+                "description_en": "Interpret when to add / subtract from simple word problems",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "c00e03f9-7e2c-51cd-8ff3-6945cfb9fab3",
+                    "description": "Problème : Giramata a 15 colombes ; 10 ont pondu. Combien n'ont pas pondu ? Fais un dessin.",
+                    "contentType": "Tâche de résolution de problèmes"
+                  },
+                  {
+                    "identifier": "e1a2f658-1a68-53b2-a739-351129db8aa3",
+                    "description": "Ajoute 4 et 3 ; soustrais 2 de 6 ; 2 de moins que 7 ; 4 de plus que 5.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "b28eab52-3810-57ae-b3ba-4b39ac797623",
+                "description": "Identifier les données d'un énoncé mathématique",
+                "description_en": "Identify the data in a maths statement",
+                "reference": "MOHEBS CI — §8.1, Palier 2 : Objectif « Relever les données d'un énoncé »",
+                "tasks": [
+                  {
+                    "identifier": "d2aeb01d-86cd-5766-b086-4ec31f7cc49b",
+                    "description": "Écoute le problème : « Ibou a 8 billes, il en perd 3. » Quels sont les nombres (données) du problème ? Quelle est la question ?",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "ac0c323d-2542-569c-b1c2-ce934f9005f5",
+            "leconNum": 70,
+            "osTexte": "identifier les questions/consignes dans un énoncé",
+            "statementType": "expectation",
+            "statementCode": "Leçon 70",
+            "semaine": 15,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4d3c7e44-0a2d-55f2-9a91-d943a8e7605d",
+                "description": "Interpréter un langage plus formel/complexe (ex : de combien 7 est-il supérieur à 4 ?)",
+                "description_en": "Interpret more formal / complex language (e.g. how much more is 7 than 4?)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "350e0bdb-a4c7-50ed-a9d9-a1ec0dd297a6",
+                    "description": "Sur une carte cachée : si je soustrais 2 du nombre, j'obtiens 5 — quel est le nombre ? ; 7 est __ de plus que 4.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              },
+              {
+                "identifier": "e89bea0c-cfac-5e35-8f8d-cd1dc2883ba3",
+                "description": "Identifier les questions et consignes d'un énoncé",
+                "description_en": "Identify the questions and instructions in a statement",
+                "reference": "MOHEBS CI — §8.1, Palier 2 : Objectif « Reconnaître les questions/consignes »",
+                "tasks": [
+                  {
+                    "identifier": "34dada01-f15a-565d-b08e-ae77c6106ea4",
+                    "description": "Écoute l'énoncé : souligne en rouge les questions et en bleu les consignes.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "51462d55-e746-5b24-b8cf-db82fb5f3311",
+            "leconNum": 75,
+            "osTexte": "Bilan du chapitre 16",
+            "statementType": "expectation",
+            "statementCode": "Leçon 75",
+            "semaine": 16,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "51462d55-e746-5b24-b8cf-db82fb5f3311"
+      },
+      "progression": {
+        "buildsTowards": [
+          20
+        ],
+        "buildsFrom": [
+          12
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 65,
+          "osTexte": "identifier les données d'un problème mathématique (information numérique et non numérique)"
+        },
+        {
+          "leconNum": 70,
+          "osTexte": "identifier les questions/consignes dans un énoncé"
+        }
+      ]
+    },
+    {
+      "num": 17,
+      "slice": {
+        "chapitreNum": 17,
+        "chapitreTitre": "La soustraction, le double et la moitié",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "69695867-b8aa-5a6e-970a-f618dc0fb37d",
+            "leconNum": 62,
+            "osTexte": "découvrir le sens de la soustraction",
+            "statementType": "expectation",
+            "statementCode": "Leçon 62",
+            "semaine": 14,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "e7bb525d-5da4-5404-8999-b1230938b50f",
+                "description": "Ajouter/soustraire 1 à/de nombres jusqu'à 20",
+                "description_en": "Add / subtract 1 to / from numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "24ea1593-6515-5a75-960a-cd17a392a1cb",
+                    "description": "Calcule : 10+1 ; 15-1 ; 6+1 ; 18-1",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "10343191-7b6e-57b0-9d42-e34c4766040d",
+                    "description": "Un de moins que 6 ? un de plus que 19 ? un saut en arrière à partir de 11 ?",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "335a6ed3-a97a-5367-b393-750f0102f6f2",
+                    "description": "Additionne dans 20 : 13 + 6 = ? ; 18 + 1 = ? ; 12 + 7 = ? ; puis trouve l'inconnue : 17 + _ = 20 ; _ + 6 = 10.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "74bae8e8-d407-5401-a8ba-2c737032b6c4",
+                "description": "Résoudre des problèmes d'addition/soustraction en comptant les unités",
+                "description_en": "Solve addition / subtraction problems by counting units",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "03f0648f-d6d8-5775-9c88-982844481742",
+                    "description": "Compte les objets et additionne : 1 canard + 2 canards = ? ; 3 tomates + 2 = ? ; 2 + 2 = ? (avec images à compter).",
+                    "contentType": "Tâche de résolution de problèmes"
+                  },
+                  {
+                    "identifier": "53a4782a-da51-56c0-9c6f-31af0f378e3c",
+                    "description": "On laisse tomber des jetons dans un gobelet (1,2,3) puis on en ajoute 2. Combien en tout ?",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "148a7b04-45f3-53b7-a8a7-3c62aca03b08",
+                "description": "Interpréter quand additionner/soustraire à partir d'énoncés simples",
+                "description_en": "Interpret when to add / subtract from simple word problems",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "c00e03f9-7e2c-51cd-8ff3-6945cfb9fab3",
+                    "description": "Problème : Giramata a 15 colombes ; 10 ont pondu. Combien n'ont pas pondu ? Fais un dessin.",
+                    "contentType": "Tâche de résolution de problèmes"
+                  },
+                  {
+                    "identifier": "e1a2f658-1a68-53b2-a739-351129db8aa3",
+                    "description": "Ajoute 4 et 3 ; soustrais 2 de 6 ; 2 de moins que 7 ; 4 de plus que 5.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 1"
+                  }
+                ]
+              },
+              {
+                "identifier": "e83a08ad-8c07-5a37-9d50-ef75197e8f24",
+                "description": "Résoudre des problèmes lorsque le changement/début est inconnu (ex : 3 + _ = 7)",
+                "description_en": "Solve problems when the change / start is unknown (e.g. 3 + _ = 7)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "781665e2-54aa-59fe-b5b8-f7271d72bfaa",
+                    "description": "Soustrais dans 20 : 17 − 12 = ? ; 18 − 4 = ? ; puis l'inconnue : 18 − _ = 7 ; 17 − _ = 14.",
+                    "contentType": "Tâche de résolution de problèmes"
+                  },
+                  {
+                    "identifier": "bee2497c-af0e-5b22-adcf-967efccba2d0",
+                    "description": "Yasmin a une tour de 9 briques ; 4 sont rouges, les autres jaunes. Combien de jaunes ? Fais un dessin.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  },
+                  {
+                    "identifier": "92d30ac6-b177-5089-bf3a-be5a1c331573",
+                    "description": "Rakhi mange certains de ses 7 biscuits ; il en reste 4. Combien a-t-elle mangés ? Fais un dessin.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  },
+                  {
+                    "identifier": "b2c24af1-bcfe-51db-80e9-5d4c94e3266b",
+                    "description": "Il y a 6 jetons dans le gobelet ; on en retire 2. Combien reste-t-il ?",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  },
+                  {
+                    "identifier": "6f6d6156-b1f4-5662-8ced-a592c0c3d0f1",
+                    "description": "Raconte une histoire pour 7 − _ = 5.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "3d905c03-25a0-577c-acdd-a9c5c146426a",
+            "leconNum": 66,
+            "osTexte": "découvrir les notions de double et de moitié d'un nombre",
+            "statementType": "expectation",
+            "statementCode": "Leçon 66",
+            "semaine": 15,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "81357b7a-8c88-5d73-bc50-294fc6777160",
+                "description": "Énoncer les doubles de 1 à 5",
+                "description_en": "State the doubles from 1 to 5",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "8a116ed3-d6ec-5299-a025-64d89af93f10",
+                    "description": "Le double de 4 = ? ; le double de ? = 6",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "e8820249-9728-5cfc-b49a-ff65556830ca",
+                "description": "Résoudre à l'aide de faits connus et dérivés (ex : 4 + 3 comme 2 de plus que 5)",
+                "description_en": "Solve using known and derived facts (e.g. 4 + 3 as 2 more than 5)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "d422b31c-2e23-5537-b063-bbb28377da9e",
+                    "description": "Tu sais que 5 + 5 = 10. Trouve 5 + 6 en disant « un de plus que 10 ». Puis 5 + 4 comme « un de moins que 10 ».",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  },
+                  {
+                    "identifier": "06a7525b-9947-5566-b47d-2f64212844f4",
+                    "description": "Utilise le double de 4 (= 8) pour trouver 4 + 5 (« le double de 4 plus 1 »).",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "61d2a40e-13fb-5735-9ea6-5bead5d4452f",
+            "leconNum": 67,
+            "osTexte": "Bilan du chapitre 17 — je découvre le sens de la soustraction, la notion de double et de moitié",
+            "statementType": "expectation",
+            "statementCode": "Leçon 67",
+            "semaine": 15,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "61d2a40e-13fb-5735-9ea6-5bead5d4452f"
+      },
+      "progression": {
+        "buildsTowards": [
+          29
+        ],
+        "buildsFrom": []
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 62,
+          "osTexte": "découvrir le sens de la soustraction"
+        },
+        {
+          "leconNum": 66,
+          "osTexte": "découvrir les notions de double et de moitié d'un nombre"
+        }
+      ]
+    },
+    {
+      "num": 18,
+      "slice": {
+        "chapitreNum": 18,
+        "chapitreTitre": "Les figures planes",
+        "domaine": "Géométrie",
+        "lessons": [
+          {
+            "identifier": "eeb8147d-036e-5349-848a-b3ab953b15ea",
+            "leconNum": 68,
+            "osTexte": "classifier des figures planes (selon la forme) : carré, rectangle, triangle, rond",
+            "statementType": "expectation",
+            "statementCode": "Leçon 68",
+            "semaine": 15,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "a1fea849-17e6-5a98-9da1-e333a790d87b",
+                "description": "Reconnaître et décrire le carré et le rectangle",
+                "description_en": "Recognise and describe the square and the rectangle",
+                "reference": "Rwanda 14.3",
+                "tasks": [
+                  {
+                    "identifier": "89186b20-41eb-5b13-946b-c95ca9e5b699",
+                    "description": "Parmi les formes, choisis toutes celles qui ont 4 côtés ; distingue le carré (4 côtés égaux) du rectangle.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "a262f7dd-c41d-5ed2-8046-c63b5d30851b",
+                "description": "Nommer correctement une forme (triangle, rond, carré, rectangle) quelle que soit sa taille ou son orientation",
+                "description_en": "Correctly name a shape (triangle, circle, square, rectangle) regardless of its size or orientation",
+                "reference": "Learning Commons — CCSS-M K.G.A.2 : « correctly name shapes regardless of their orientations or overall size »",
+                "tasks": [
+                  {
+                    "identifier": "a3069e58-5a93-594a-9273-72300c1815d1",
+                    "description": "Regarde les formes : elles ont des tailles et des orientations différentes. Montre toutes celles qui sont des triangles.",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              },
+              {
+                "identifier": "7a15fde9-c204-5c21-b7a8-9821dcb5ebb5",
+                "description": "Analyser et comparer des formes en décrivant leurs parties (nombre de côtés, coins/sommets)",
+                "description_en": "Analyse and compare shapes by describing their parts (number of sides, corners/vertices)",
+                "reference": "Learning Commons — CCSS-M K.G.B.4 : « analyze and compare two- and three-dimensional shapes … number of sides and vertices/corners »",
+                "tasks": [
+                  {
+                    "identifier": "d06bae6c-a6cc-5c0c-a442-d5e34fc5f1ef",
+                    "description": "Combien de côtés a le triangle ? Combien de coins ? Compare le carré et le triangle : lequel a plus de côtés ?",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "daed8ec7-45fa-58e2-a76e-a9cf0fcf3097",
+            "leconNum": 73,
+            "osTexte": "dessiner puis décrire des figures planes simples : carré, rectangle, triangle, rond",
+            "statementType": "expectation",
+            "statementCode": "Leçon 73",
+            "semaine": 16,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "a1fea849-17e6-5a98-9da1-e333a790d87b",
+                "description": "Reconnaître et décrire le carré et le rectangle",
+                "description_en": "Recognise and describe the square and the rectangle",
+                "reference": "Rwanda 14.3",
+                "tasks": [
+                  {
+                    "identifier": "89186b20-41eb-5b13-946b-c95ca9e5b699",
+                    "description": "Parmi les formes, choisis toutes celles qui ont 4 côtés ; distingue le carré (4 côtés égaux) du rectangle.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "a262f7dd-c41d-5ed2-8046-c63b5d30851b",
+                "description": "Nommer correctement une forme (triangle, rond, carré, rectangle) quelle que soit sa taille ou son orientation",
+                "description_en": "Correctly name a shape (triangle, circle, square, rectangle) regardless of its size or orientation",
+                "reference": "Learning Commons — CCSS-M K.G.A.2 : « correctly name shapes regardless of their orientations or overall size »",
+                "tasks": [
+                  {
+                    "identifier": "a3069e58-5a93-594a-9273-72300c1815d1",
+                    "description": "Regarde les formes : elles ont des tailles et des orientations différentes. Montre toutes celles qui sont des triangles.",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              },
+              {
+                "identifier": "7a15fde9-c204-5c21-b7a8-9821dcb5ebb5",
+                "description": "Analyser et comparer des formes en décrivant leurs parties (nombre de côtés, coins/sommets)",
+                "description_en": "Analyse and compare shapes by describing their parts (number of sides, corners/vertices)",
+                "reference": "Learning Commons — CCSS-M K.G.B.4 : « analyze and compare two- and three-dimensional shapes … number of sides and vertices/corners »",
+                "tasks": [
+                  {
+                    "identifier": "d06bae6c-a6cc-5c0c-a442-d5e34fc5f1ef",
+                    "description": "Combien de côtés a le triangle ? Combien de coins ? Compare le carré et le triangle : lequel a plus de côtés ?",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "140da3c9-75c4-58cc-b2c2-544e37661bbc",
+            "leconNum": 78,
+            "osTexte": "Bilan du chapitre 18",
+            "statementType": "expectation",
+            "statementCode": "Leçon 78",
+            "semaine": 17,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "140da3c9-75c4-58cc-b2c2-544e37661bbc"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": [
+          10
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 68,
+          "osTexte": "classifier des figures planes (selon la forme) : carré, rectangle, triangle, rond"
+        },
+        {
+          "leconNum": 73,
+          "osTexte": "dessiner puis décrire des figures planes simples : carré, rectangle, triangle, rond"
+        }
+      ]
+    },
+    {
+      "num": 19,
+      "slice": {
+        "chapitreNum": 19,
+        "chapitreTitre": "Estimer et comparer des durées (approfondissement)",
+        "domaine": "Mesure",
+        "lessons": [
+          {
+            "identifier": "4d8cf7e0-810e-5d30-b27c-6fb40fafbf7f",
+            "leconNum": 84,
+            "osTexte": "estimer des durées : long/court ; lent/rapide",
+            "statementType": "expectation",
+            "statementCode": "Leçon 84",
+            "semaine": 19,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "ceb0577f-a1dd-58fb-978c-a4469599b47e",
+                "description": "Estimer et comparer des durées (temps long / temps court)",
+                "description_en": "Estimate and compare durations (long time / short time)",
+                "reference": "DBE Book 1 — Time (Revision)",
+                "tasks": [
+                  {
+                    "identifier": "c9e9fc7b-6be5-533b-8ad6-401b3586bf84",
+                    "description": "Regarde les images : qu'est-ce qui prend plus de temps (long) ? qu'est-ce qui prend moins de temps (court) ? Coche le plus long.",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              },
+              {
+                "identifier": "d2abcc51-3a07-567b-b54d-43ad335f5e61",
+                "description": "Estimer des durées : long/court et lent/rapide (palier 3 approfondissement)",
+                "description_en": "Estimate durations: long / short and slow / fast (tier 3 deepening)",
+                "reference": "MOHEBS CI — §7.1, Palier 3 : Objectif « Estimer des durées » (approfondissement)",
+                "tasks": [
+                  {
+                    "identifier": "69c3933d-dcea-5612-b297-c28d7c6e07d2",
+                    "description": "Dis si chaque activité prend longtemps (long) ou peu de temps (court) : dormir la nuit ? se brosser les dents ? Dis si l'action est lente ou rapide.",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "54dd192c-58ad-5c7d-979a-f15a38b46d1a",
+            "leconNum": 89,
+            "osTexte": "comparer des durées : plus long/court ; plus (lent/rapide) ; aussi (long/court/rapide)",
+            "statementType": "expectation",
+            "statementCode": "Leçon 89",
+            "semaine": 20,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "ed962e2c-9c71-5772-b640-459e8cb2e910",
+                "description": "Comparer des durées (plus long/court/rapide que ; aussi long/court/rapide que)",
+                "description_en": "Compare durations (longer / shorter / faster than; as long / short / fast as)",
+                "reference": "MOHEBS CI — §7.1, Palier 3 : Objectif « Comparer des durées »",
+                "tasks": [
+                  {
+                    "identifier": "7933335d-90f5-5a57-935c-287ae78536bf",
+                    "description": "Frapper des mains 5 fois, c'est plus long ou plus court que frapper 2 fois ? Le cheval court-il plus vite ou aussi vite que la tortue ?",
+                    "contentType": "Tâche illustrative (Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "8110a324-2e23-5af5-8b41-7efeba5ae790",
+            "leconNum": 94,
+            "osTexte": "Bilan du chapitre 19",
+            "statementType": "expectation",
+            "statementCode": "Leçon 94",
+            "semaine": 21,
+            "palier": 3,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "8110a324-2e23-5af5-8b41-7efeba5ae790"
+      },
+      "progression": {
+        "buildsTowards": [
+          23
+        ],
+        "buildsFrom": [
+          15
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 84,
+          "osTexte": "estimer des durées : long/court ; lent/rapide"
+        },
+        {
+          "leconNum": 89,
+          "osTexte": "comparer des durées : plus long/court ; plus (lent/rapide) ; aussi (long/court/rapide)"
+        }
+      ]
+    },
+    {
+      "num": 20,
+      "slice": {
+        "chapitreNum": 20,
+        "chapitreTitre": "Trouver les données utiles et inutiles",
+        "domaine": "Résolution de problème",
+        "lessons": [
+          {
+            "identifier": "206dfd0c-ac47-5c9b-9e9f-17031fd5acce",
+            "leconNum": 85,
+            "osTexte": "trouver les données utiles d'un problème",
+            "statementType": "expectation",
+            "statementCode": "Leçon 85",
+            "semaine": 19,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "2219a035-df1b-57b3-a1e4-bc9e4440a9aa",
+                "description": "Distinguer les données utiles et inutiles d'un énoncé mathématique",
+                "description_en": "Distinguish useful and irrelevant data in a maths statement",
+                "reference": "MOHEBS CI — §8.1, Palier 3 : Objectif « Distinguer données utiles/inutiles »",
+                "tasks": [
+                  {
+                    "identifier": "1a4b21f6-4845-5c30-b70e-75c33434437a",
+                    "description": "Écoute : « Samba a 12 billes, il porte un pantalon bleu, il donne 4 billes à son ami. Combien lui en reste-t-il ? » Barre la donnée inutile, puis résous.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "062dd043-e243-5c5a-8156-bff644c495cb",
+            "leconNum": 90,
+            "osTexte": "trouver les données inutiles d'un problème",
+            "statementType": "expectation",
+            "statementCode": "Leçon 90",
+            "semaine": 20,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "2219a035-df1b-57b3-a1e4-bc9e4440a9aa",
+                "description": "Distinguer les données utiles et inutiles d'un énoncé mathématique",
+                "description_en": "Distinguish useful and irrelevant data in a maths statement",
+                "reference": "MOHEBS CI — §8.1, Palier 3 : Objectif « Distinguer données utiles/inutiles »",
+                "tasks": [
+                  {
+                    "identifier": "1a4b21f6-4845-5c30-b70e-75c33434437a",
+                    "description": "Écoute : « Samba a 12 billes, il porte un pantalon bleu, il donne 4 billes à son ami. Combien lui en reste-t-il ? » Barre la donnée inutile, puis résous.",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "5d23bd91-df4f-5204-a620-27f6cca8751b",
+            "leconNum": 95,
+            "osTexte": "Bilan du chapitre 20",
+            "statementType": "expectation",
+            "statementCode": "Leçon 95",
+            "semaine": 21,
+            "palier": 3,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "5d23bd91-df4f-5204-a620-27f6cca8751b"
+      },
+      "progression": {
+        "buildsTowards": [
+          24
+        ],
+        "buildsFrom": [
+          16
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 85,
+          "osTexte": "trouver les données utiles d'un problème"
+        },
+        {
+          "leconNum": 90,
+          "osTexte": "trouver les données inutiles d'un problème"
+        }
+      ]
+    },
+    {
+      "num": 21,
+      "slice": {
+        "chapitreNum": 21,
+        "chapitreTitre": "Les nombres de 11 à 20",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "8e298a95-5ce5-52d5-a6dd-761b4e890515",
+            "leconNum": 71,
+            "osTexte": "découvrir les nombres de 11 à 19",
+            "statementType": "expectation",
+            "statementCode": "Leçon 71",
+            "semaine": 16,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "084dbb9d-250b-5f11-83c1-3123227f0e40",
+                "description": "Créer/utiliser des représentations plus abstraites (droites numériques, diagrammes à barres)",
+                "description_en": "Create / use more abstract representations (number lines, bar diagrams)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "087f4522-15eb-5819-8997-e5b71edcb24e",
+                    "description": "De combien la bande 8 dépasse-t-elle la bande 3 ? (barres)",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "a1565a53-10c1-56d3-b77f-101614478fb9",
+            "leconNum": 72,
+            "osTexte": "composer et décomposer les nombres de 11 à 19",
+            "statementType": "expectation",
+            "statementCode": "Leçon 72",
+            "semaine": 16,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "3776b8fb-3e34-57b5-83fd-b7144c341766",
+                "description": "Utiliser un cadre de dix pour voir les quantités par rapport à 5 et 10 et écrire les phrases numériques correspondantes",
+                "description_en": "Use a ten frame to see quantities relative to 5 and 10 and write the corresponding number sentences",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "3fae91fc-dd99-5b76-bac5-ea011ab3d71a",
+                    "description": "Sur un cadre de dix, place 6 jetons puis écris « 5 et 1 font 6 » ; recommence pour 7, 8, 9.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "f7a58ee4-da18-502a-95fe-3e25e61e06e5",
+            "leconNum": 76,
+            "osTexte": "découvrir, composer et décomposer le nombre 20",
+            "statementType": "expectation",
+            "statementCode": "Leçon 76",
+            "semaine": 17,
+            "palier": 2,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4f05faa7-1a54-5a6a-a933-4fa565548bb0",
+                "description": "Lire, écrire, compter, comparer et ordonner les nombres jusqu'à 20",
+                "description_en": "Read, write, count, compare, and order numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
+                    "description": "Compte en avant par unité à partir de 13 ; compte à rebours à partir de 14",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
+                    "description": "Complète les nombres manquants : 9, 10, _, _, _, _, _, _, 17, 18",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "15bee579-6e0b-5535-9925-755f613e33af",
+                    "description": "Entoure le plus grand nombre de chaque paire : 18/12 ; 11/17",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
+                    "description": "Écris 8 et 12 en toutes lettres ; écris en chiffres : cinq, seize, onze",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
+                    "description": "Plus que / moins que / égal à ? 7 __ 10 ; 9 __ 4 et 4 ; 1 et 4 __ 4 et 1",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              },
+              {
+                "identifier": "084dbb9d-250b-5f11-83c1-3123227f0e40",
+                "description": "Créer/utiliser des représentations plus abstraites (droites numériques, diagrammes à barres)",
+                "description_en": "Create / use more abstract representations (number lines, bar diagrams)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "087f4522-15eb-5819-8997-e5b71edcb24e",
+                    "description": "De combien la bande 8 dépasse-t-elle la bande 3 ? (barres)",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "22487c11-1b9d-5b5a-a965-3701fe74e08c",
+            "leconNum": 77,
+            "osTexte": "Bilan du chapitre 21",
+            "statementType": "expectation",
+            "statementCode": "Leçon 77",
+            "semaine": 17,
+            "palier": 2,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "22487c11-1b9d-5b5a-a965-3701fe74e08c"
+      },
+      "progression": {
+        "buildsTowards": [
+          25
+        ],
+        "buildsFrom": [
+          13
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 71,
+          "osTexte": "découvrir les nombres de 11 à 19"
+        },
+        {
+          "leconNum": 72,
+          "osTexte": "composer et décomposer les nombres de 11 à 19"
+        },
+        {
+          "leconNum": 76,
+          "osTexte": "découvrir, composer et décomposer le nombre 20"
+        }
+      ]
+    },
+    {
+      "num": 22,
+      "slice": {
+        "chapitreNum": 22,
+        "chapitreTitre": "Les lignes et le quadrillage",
+        "domaine": "Géométrie",
+        "lessons": [
+          {
+            "identifier": "b411f44e-94cb-5953-9340-074e86ba91a8",
+            "leconNum": 83,
+            "osTexte": "notion de ligne ouverte et de ligne fermée",
+            "statementType": "expectation",
+            "statementCode": "Leçon 83",
+            "semaine": 19,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "a195f4da-a22d-5d10-817d-680f8870e184",
+                "description": "Reconnaître et tracer des lignes ouvertes et fermées",
+                "description_en": "Recognise and draw open and closed lines",
+                "reference": "Rwanda 13.4",
+                "tasks": [
+                  {
+                    "identifier": "9f66fa4f-a98d-526a-b6b0-6866c4493881",
+                    "description": "Observe puis trace : une ligne droite, une ligne courbe, une ligne brisée (zigzag), une ligne ouverte, une ligne fermée.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "ddee993a-97f9-5ce7-ae22-4931bf0f0fdb",
+            "leconNum": 88,
+            "osTexte": "tracer des lignes ouvertes/fermées : rythme graphique",
+            "statementType": "expectation",
+            "statementCode": "Leçon 88",
+            "semaine": 20,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "a195f4da-a22d-5d10-817d-680f8870e184",
+                "description": "Reconnaître et tracer des lignes ouvertes et fermées",
+                "description_en": "Recognise and draw open and closed lines",
+                "reference": "Rwanda 13.4",
+                "tasks": [
+                  {
+                    "identifier": "9f66fa4f-a98d-526a-b6b0-6866c4493881",
+                    "description": "Observe puis trace : une ligne droite, une ligne courbe, une ligne brisée (zigzag), une ligne ouverte, une ligne fermée.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "960a8d82-de74-5768-92b3-514e4a0ebf4e",
+            "leconNum": 93,
+            "osTexte": "intérieur/extérieur/frontière",
+            "statementType": "expectation",
+            "statementCode": "Leçon 93",
+            "semaine": 21,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "eca59d48-879b-5286-985d-27f977b8ea83",
+                "description": "Situer des points sur / à l'intérieur / à l'extérieur d'une ligne fermée",
+                "description_en": "Locate points on / inside / outside a closed line",
+                "reference": "Rwanda 13.5",
+                "tasks": [
+                  {
+                    "identifier": "621f5b68-7004-5e2d-b703-57af9f16d996",
+                    "description": "Trace une ligne fermée. Place 2 points sur la ligne, 3 points à l'extérieur, 1 point à l'intérieur. Dis où est chaque point.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "39354e4c-1783-5272-a34c-70bea8ba06cd",
+            "leconNum": 98,
+            "osTexte": "utiliser en situation le vocabulaire adéquat : quadrillage/case/nœud",
+            "statementType": "expectation",
+            "statementCode": "Leçon 98",
+            "semaine": 22,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "0b69c018-0854-5f5c-b720-2bc0f132617c",
+                "description": "Utiliser le vocabulaire du quadrillage (quadrillage, case, nœud)",
+                "description_en": "Use grid vocabulary (grid, cell, node)",
+                "reference": "MOHEBS CI — §6.1, Palier 3 : Objectif « Utiliser en situation le vocabulaire du quadrillage »",
+                "tasks": [
+                  {
+                    "identifier": "2447fbab-e288-51b2-8227-98e298fd7065",
+                    "description": "Montre un quadrillage, une case et un nœud sur le quadrillage. Place un jeton sur la case demandée ; place un point sur le nœud demandé.",
+                    "contentType": "Tâche illustrative (Géométrie)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "dca27714-217b-5bc4-ad10-325e23d21675",
+            "leconNum": 103,
+            "osTexte": "Bilan du chapitre 22",
+            "statementType": "expectation",
+            "statementCode": "Leçon 103",
+            "semaine": 23,
+            "palier": 3,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "dca27714-217b-5bc4-ad10-325e23d21675"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": [
+          6
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 83,
+          "osTexte": "notion de ligne ouverte et de ligne fermée"
+        },
+        {
+          "leconNum": 88,
+          "osTexte": "tracer des lignes ouvertes/fermées : rythme graphique"
+        },
+        {
+          "leconNum": 93,
+          "osTexte": "intérieur/extérieur/frontière"
+        },
+        {
+          "leconNum": 98,
+          "osTexte": "utiliser en situation le vocabulaire adéquat : quadrillage/case/nœud"
+        }
+      ]
+    },
+    {
+      "num": 23,
+      "slice": {
+        "chapitreNum": 23,
+        "chapitreTitre": "Se repérer dans le temps",
+        "domaine": "Mesure",
+        "lessons": [
+          {
+            "identifier": "9db1746b-b14e-56f3-8550-b30727c275db",
+            "leconNum": 99,
+            "osTexte": "repérer des moments dans la journée : matin, midi, soir, rythmes scolaires",
+            "statementType": "expectation",
+            "statementCode": "Leçon 99",
+            "semaine": 22,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "5d618d52-8330-5b20-b345-d74cea63299e",
+                "description": "Reconnaître les moments de la journée (matin/midi/soir)",
+                "description_en": "Recognise times of the day (morning / noon / evening)",
+                "reference": "Rwanda 11.1",
+                "tasks": [
+                  {
+                    "identifier": "79ca7c8f-0859-5c2c-873a-50f5ed3965e2",
+                    "description": "Observe les images et raconte : le matin (Mary va à l'école), à midi, le soir, la nuit. Relie chaque image au bon moment.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "f65483c1-40d3-5b1a-b32b-144e3802182b",
+            "leconNum": 104,
+            "osTexte": "se repérer dans la semaine : les jours de la semaine",
+            "statementType": "expectation",
+            "statementCode": "Leçon 104",
+            "semaine": 23,
+            "palier": 3,
+            "isBilan": true,
+            "components": [
+              {
+                "identifier": "274117e9-e353-5815-bcef-dca6bd05dc73",
+                "description": "Nommer et ordonner les jours de la semaine",
+                "description_en": "Name and order the days of the week",
+                "reference": "Rwanda 11.2",
+                "tasks": [
+                  {
+                    "identifier": "fd708776-4743-5b08-aabe-84732876a3cd",
+                    "description": "Nomme les jours de la semaine dans l'ordre ; dis quel jour vient avant/après un jour donné.",
+                    "contentType": "Tâche illustrative (Géométrie/Mesure)"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "bilanLessonId": "f65483c1-40d3-5b1a-b32b-144e3802182b"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": [
+          19
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 99,
+          "osTexte": "repérer des moments dans la journée : matin, midi, soir, rythmes scolaires"
+        }
+      ]
+    },
+    {
+      "num": 24,
+      "slice": {
+        "chapitreNum": 24,
+        "chapitreTitre": "Les questions d'un énoncé mathématique",
+        "domaine": "Résolution de problème",
+        "lessons": [
+          {
+            "identifier": "5f08e5b7-21ec-5d8d-888a-98815dca7023",
+            "leconNum": 100,
+            "osTexte": "reconnaître la question finale d'un énoncé mathématique",
+            "statementType": "expectation",
+            "statementCode": "Leçon 100",
+            "semaine": 22,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4d3c7e44-0a2d-55f2-9a91-d943a8e7605d",
+                "description": "Interpréter un langage plus formel/complexe (ex : de combien 7 est-il supérieur à 4 ?)",
+                "description_en": "Interpret more formal / complex language (e.g. how much more is 7 than 4?)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "350e0bdb-a4c7-50ed-a9d9-a1ec0dd297a6",
+                    "description": "Sur une carte cachée : si je soustrais 2 du nombre, j'obtiens 5 — quel est le nombre ? ; 7 est __ de plus que 4.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              },
+              {
+                "identifier": "9d977179-cc9d-57d0-83cb-4d82364949b7",
+                "description": "Reconnaître la question finale d'un énoncé mathématique",
+                "description_en": "Recognise the final question of a maths statement",
+                "reference": "MOHEBS CI — §8.1, Palier 3 : Objectif « Reconnaître la question finale »",
+                "tasks": [
+                  {
+                    "identifier": "eaa35b25-5cc7-544a-b647-7273ef12c26b",
+                    "description": "Écoute l'énoncé qui a deux questions. Laquelle est la question finale que tu dois résoudre en dernier ?",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "f9ef3849-afd7-5f84-8b71-3dd8c47bb7ea",
+            "leconNum": 105,
+            "osTexte": "reconnaître les questions intermédiaires d'un énoncé mathématique",
+            "statementType": "expectation",
+            "statementCode": "Leçon 105",
+            "semaine": 23,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "4d3c7e44-0a2d-55f2-9a91-d943a8e7605d",
+                "description": "Interpréter un langage plus formel/complexe (ex : de combien 7 est-il supérieur à 4 ?)",
+                "description_en": "Interpret more formal / complex language (e.g. how much more is 7 than 4?)",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "350e0bdb-a4c7-50ed-a9d9-a1ec0dd297a6",
+                    "description": "Sur une carte cachée : si je soustrais 2 du nombre, j'obtiens 5 — quel est le nombre ? ; 7 est __ de plus que 4.",
+                    "contentType": "Tâche de résolution de problèmes — Niveau 2"
+                  }
+                ]
+              },
+              {
+                "identifier": "49eddfbc-e503-5676-933f-fa164255e82e",
+                "description": "Reconnaître les questions intermédiaires d'un énoncé mathématique",
+                "description_en": "Recognise the intermediate questions of a maths statement",
+                "reference": "MOHEBS CI — §8.1, Palier 3 : Objectif « Reconnaître les questions intermédiaires »",
+                "tasks": [
+                  {
+                    "identifier": "0197b473-1625-5a08-9f3c-033ec7fad0bc",
+                    "description": "L'énoncé demande « combien d'élèves en tout ? ». Pour y répondre, quelle question dois-tu résoudre d'abord ?",
+                    "contentType": "Tâche illustrative (Résolution de problème)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "516fac7d-0487-5733-9c01-4fc7881759ed",
+            "leconNum": 110,
+            "osTexte": "Bilan du chapitre 24",
+            "statementType": "expectation",
+            "statementCode": "Leçon 110",
+            "semaine": 24,
+            "palier": 3,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "516fac7d-0487-5733-9c01-4fc7881759ed"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": [
+          20
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 100,
+          "osTexte": "reconnaître la question finale d'un énoncé mathématique"
+        },
+        {
+          "leconNum": 105,
+          "osTexte": "reconnaître les questions intermédiaires d'un énoncé mathématique"
+        }
+      ]
+    },
+    {
+      "num": 25,
+      "slice": {
+        "chapitreNum": 25,
+        "chapitreTitre": "Les nombres de 21 à 39",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "21822486-a5e7-5f1c-822e-dc086071d44e",
+            "leconNum": 81,
+            "osTexte": "découvrir les nombres de 21 à 29",
+            "statementType": "expectation",
+            "statementCode": "Leçon 81",
+            "semaine": 19,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "0452bd12-67d2-53b0-b8ec-6ebab4bef02b",
+                "description": "Lire, écrire et dénombrer les nombres à deux chiffres jusqu'à 50",
+                "description_en": "Read, write, and count two-digit numbers up to 50",
+                "reference": "Bridges G1 — p11 Number Lines & Counting Patterns ; p30 Cubes on a Line",
+                "tasks": [
+                  {
+                    "identifier": "b80a4ecc-34c1-5095-b2f7-678f069bd844",
+                    "description": "Complète la suite des nombres sur la droite numérique (ex : 21, 22, __, __, 25) ; écris chaque nombre en chiffres puis dénombre les cubes correspondants.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "984420d0-5c2e-54ab-9df4-8f49985575d0",
+            "leconNum": 82,
+            "osTexte": "composer et décomposer les nombres de 21 à 29",
+            "statementType": "expectation",
+            "statementCode": "Leçon 82",
+            "semaine": 19,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "64a0ce29-f249-56bd-aeee-d7bce6f7557e",
+                "description": "Décomposer un nombre à deux chiffres en dizaines et unités (jusqu'à 50)",
+                "description_en": "Decompose a two-digit number into tens and ones (up to 50)",
+                "reference": "Bridges G1 — p30 Cubes on a Line ; p36 Adding & Subtracting Tens on the Hundreds Grid",
+                "tasks": [
+                  {
+                    "identifier": "62efc7de-bc4e-52da-96e4-5df5c0abf29b",
+                    "description": "Compte les cubes : combien de barres de dix et combien de cubes seuls ? Écris le nombre (ex : 3 dizaines et 5 unités = 35). Fais-le pour 25, 35, 40.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "37efe211-3a07-57f9-8c39-e8d8146388a0",
+            "leconNum": 86,
+            "osTexte": "découvrir le nombre 30, composer et décomposer le nombre 30",
+            "statementType": "expectation",
+            "statementCode": "Leçon 86",
+            "semaine": 20,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "8c41fb1f-9e96-5677-9d83-4817bbe79e39",
+                "description": "Reconnaître qu'un nombre-décennie (10, 20, 30, 40, 50) désigne un nombre de dizaines et zéro unité",
+                "description_en": "Recognise that a decade number (10, 20, 30, 40, 50) refers to a number of tens and zero ones",
+                "reference": "Learning Commons — CCSS-M 1.NBT.B.2.c : « the numbers 10, 20, 30 … refer to one, two, three … tens (and 0 ones) »",
+                "tasks": [
+                  {
+                    "identifier": "8c4a873e-9443-51c5-8913-9c463088b636",
+                    "description": "Regarde les barres de dix : 3 barres de dix et 0 unité, c'est le nombre 30. Montre le nombre qui a 5 dizaines et 0 unité.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "1e002c98-cec5-5b04-b6ce-ca0a2fa34621",
+            "leconNum": 87,
+            "osTexte": "Bilan du chapitre 25",
+            "statementType": "expectation",
+            "statementCode": "Leçon 87",
+            "semaine": 20,
+            "palier": 3,
+            "isBilan": false,
+            "components": []
+          },
+          {
+            "identifier": "098554fa-0742-5976-9c55-d77d46017812",
+            "leconNum": 91,
+            "osTexte": "découvrir les nombres de 31 à 39",
+            "statementType": "expectation",
+            "statementCode": "Leçon 91",
+            "semaine": 21,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "0452bd12-67d2-53b0-b8ec-6ebab4bef02b",
+                "description": "Lire, écrire et dénombrer les nombres à deux chiffres jusqu'à 50",
+                "description_en": "Read, write, and count two-digit numbers up to 50",
+                "reference": "Bridges G1 — p11 Number Lines & Counting Patterns ; p30 Cubes on a Line",
+                "tasks": [
+                  {
+                    "identifier": "b80a4ecc-34c1-5095-b2f7-678f069bd844",
+                    "description": "Complète la suite des nombres sur la droite numérique (ex : 21, 22, __, __, 25) ; écris chaque nombre en chiffres puis dénombre les cubes correspondants.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "f3fc6007-e2f7-5397-950a-b0fd1d859aec",
+            "leconNum": 92,
+            "osTexte": "composer et décomposer les nombres de 31 à 39",
+            "statementType": "expectation",
+            "statementCode": "Leçon 92",
+            "semaine": 21,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "64a0ce29-f249-56bd-aeee-d7bce6f7557e",
+                "description": "Décomposer un nombre à deux chiffres en dizaines et unités (jusqu'à 50)",
+                "description_en": "Decompose a two-digit number into tens and ones (up to 50)",
+                "reference": "Bridges G1 — p30 Cubes on a Line ; p36 Adding & Subtracting Tens on the Hundreds Grid",
+                "tasks": [
+                  {
+                    "identifier": "62efc7de-bc4e-52da-96e4-5df5c0abf29b",
+                    "description": "Compte les cubes : combien de barres de dix et combien de cubes seuls ? Écris le nombre (ex : 3 dizaines et 5 unités = 35). Fais-le pour 25, 35, 40.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "7bd8adf3-87df-5f9f-96fa-0f5b1e81c343",
+            "leconNum": 96,
+            "osTexte": "découvrir les nombres de 31 à 39",
+            "statementType": "expectation",
+            "statementCode": "Leçon 96",
+            "semaine": 22,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "87ed1204-4293-5bf5-abde-cbf761e143a3",
+                "description": "Décomposer un nombre à deux chiffres (31 à 39) en dizaines et unités, et le composer à partir des dizaines et unités",
+                "description_en": "Decompose a two-digit number (31 to 39) into tens and ones, and compose it from tens and ones",
+                "reference": "Learning Commons — CCSS-M 1.NBT.B.2 : « decompose a two-digit number into its tens and ones ; write a two-digit number from tens and ones »",
+                "tasks": [
+                  {
+                    "identifier": "5c1fc681-e79a-5bd0-b0e3-9dfc8bf28c33",
+                    "description": "Le nombre 34, c'est 3 dizaines et 4 unités. Montre la bonne décomposition. Puis : 3 dizaines et 6 unités, quel nombre est-ce ?",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "bb142edc-430a-58a6-8d37-5bcb3638cc6f",
+            "leconNum": 97,
+            "osTexte": "composer et décomposer les nombres de 31 à 39",
+            "statementType": "expectation",
+            "statementCode": "Leçon 97",
+            "semaine": 22,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "87ed1204-4293-5bf5-abde-cbf761e143a3",
+                "description": "Décomposer un nombre à deux chiffres (31 à 39) en dizaines et unités, et le composer à partir des dizaines et unités",
+                "description_en": "Decompose a two-digit number (31 to 39) into tens and ones, and compose it from tens and ones",
+                "reference": "Learning Commons — CCSS-M 1.NBT.B.2 : « decompose a two-digit number into its tens and ones ; write a two-digit number from tens and ones »",
+                "tasks": [
+                  {
+                    "identifier": "5c1fc681-e79a-5bd0-b0e3-9dfc8bf28c33",
+                    "description": "Le nombre 34, c'est 3 dizaines et 4 unités. Montre la bonne décomposition. Puis : 3 dizaines et 6 unités, quel nombre est-ce ?",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "85d50a6f-39a9-5c83-b611-3652827d0ca3",
+            "leconNum": 101,
+            "osTexte": "Bilan du chapitre 25",
+            "statementType": "expectation",
+            "statementCode": "Leçon 101",
+            "semaine": 23,
+            "palier": 3,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "85d50a6f-39a9-5c83-b611-3652827d0ca3"
+      },
+      "progression": {
+        "buildsTowards": [
+          29
+        ],
+        "buildsFrom": [
+          21
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 81,
+          "osTexte": "découvrir les nombres de 21 à 29"
+        },
+        {
+          "leconNum": 82,
+          "osTexte": "composer et décomposer les nombres de 21 à 29"
+        },
+        {
+          "leconNum": 86,
+          "osTexte": "découvrir le nombre 30, composer et décomposer le nombre 30"
+        },
+        {
+          "leconNum": 87,
+          "osTexte": "Bilan du chapitre 25"
+        },
+        {
+          "leconNum": 91,
+          "osTexte": "découvrir les nombres de 31 à 39"
+        },
+        {
+          "leconNum": 92,
+          "osTexte": "composer et décomposer les nombres de 31 à 39"
+        },
+        {
+          "leconNum": 96,
+          "osTexte": "découvrir les nombres de 31 à 39"
+        },
+        {
+          "leconNum": 97,
+          "osTexte": "composer et décomposer les nombres de 31 à 39"
+        }
+      ]
+    },
+    {
+      "num": 29,
+      "slice": {
+        "chapitreNum": 29,
+        "chapitreTitre": "Les nombres de 40 à 50",
+        "domaine": "Arithmétique",
+        "lessons": [
+          {
+            "identifier": "c3a16b09-a19d-5d36-8648-d656ab6d67df",
+            "leconNum": 102,
+            "osTexte": "découvrir les nombres de 40 à 49",
+            "statementType": "expectation",
+            "statementCode": "Leçon 102",
+            "semaine": 23,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "0452bd12-67d2-53b0-b8ec-6ebab4bef02b",
+                "description": "Lire, écrire et dénombrer les nombres à deux chiffres jusqu'à 50",
+                "description_en": "Read, write, and count two-digit numbers up to 50",
+                "reference": "Bridges G1 — p11 Number Lines & Counting Patterns ; p30 Cubes on a Line",
+                "tasks": [
+                  {
+                    "identifier": "b80a4ecc-34c1-5095-b2f7-678f069bd844",
+                    "description": "Complète la suite des nombres sur la droite numérique (ex : 21, 22, __, __, 25) ; écris chaque nombre en chiffres puis dénombre les cubes correspondants.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "d149c26d-1c57-5a46-9cb1-194af81228d4",
+            "leconNum": 106,
+            "osTexte": "composer et décomposer les nombres de 40 à 49",
+            "statementType": "expectation",
+            "statementCode": "Leçon 106",
+            "semaine": 24,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "64a0ce29-f249-56bd-aeee-d7bce6f7557e",
+                "description": "Décomposer un nombre à deux chiffres en dizaines et unités (jusqu'à 50)",
+                "description_en": "Decompose a two-digit number into tens and ones (up to 50)",
+                "reference": "Bridges G1 — p30 Cubes on a Line ; p36 Adding & Subtracting Tens on the Hundreds Grid",
+                "tasks": [
+                  {
+                    "identifier": "62efc7de-bc4e-52da-96e4-5df5c0abf29b",
+                    "description": "Compte les cubes : combien de barres de dix et combien de cubes seuls ? Écris le nombre (ex : 3 dizaines et 5 unités = 35). Fais-le pour 25, 35, 40.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "75ffdb19-24a6-52dd-b0e8-1897403c87b3",
+            "leconNum": 107,
+            "osTexte": "effectuer des opérations (soustraction sans emprunt) portant sur les nombres de 0 à 49",
+            "statementType": "expectation",
+            "statementCode": "Leçon 107",
+            "semaine": 24,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "084a31bb-d305-5970-9fa5-baa1bcd14d7d",
+                "description": "Soustraire des dizaines entières d'un nombre (sans emprunt, plage 0 à 49)",
+                "description_en": "Subtract whole tens from a number (without borrowing, range 0 to 49)",
+                "reference": "Learning Commons — CCSS-M 1.NBT.C.6 : « subtract multiples of 10 … using concrete models or drawings and strategies based on place value »",
+                "tasks": [
+                  {
+                    "identifier": "0d2ed11b-05df-5e12-a573-392ed19d97fe",
+                    "description": "Tu as 4 barres de dix (40). Enlève 1 barre de dix. Combien reste-t-il ? Montre le résultat avec les barres, puis écris 40 − 10 = __.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "57971661-1f79-501a-b58c-748b658eef4c",
+            "leconNum": 108,
+            "osTexte": "découvrir le nombre 50, composer et décomposer le nombre 50",
+            "statementType": "expectation",
+            "statementCode": "Leçon 108",
+            "semaine": 24,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "8c41fb1f-9e96-5677-9d83-4817bbe79e39",
+                "description": "Reconnaître qu'un nombre-décennie (10, 20, 30, 40, 50) désigne un nombre de dizaines et zéro unité",
+                "description_en": "Recognise that a decade number (10, 20, 30, 40, 50) refers to a number of tens and zero ones",
+                "reference": "Learning Commons — CCSS-M 1.NBT.B.2.c : « the numbers 10, 20, 30 … refer to one, two, three … tens (and 0 ones) »",
+                "tasks": [
+                  {
+                    "identifier": "8c4a873e-9443-51c5-8913-9c463088b636",
+                    "description": "Regarde les barres de dix : 3 barres de dix et 0 unité, c'est le nombre 30. Montre le nombre qui a 5 dizaines et 0 unité.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "ef086c3b-dd80-53e2-85e4-a2c501820d7a",
+            "leconNum": 109,
+            "osTexte": "découvrir le nombre 50, composer et décomposer le nombre 50",
+            "statementType": "expectation",
+            "statementCode": "Leçon 109",
+            "semaine": 24,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "8c41fb1f-9e96-5677-9d83-4817bbe79e39",
+                "description": "Reconnaître qu'un nombre-décennie (10, 20, 30, 40, 50) désigne un nombre de dizaines et zéro unité",
+                "description_en": "Recognise that a decade number (10, 20, 30, 40, 50) refers to a number of tens and zero ones",
+                "reference": "Learning Commons — CCSS-M 1.NBT.B.2.c : « the numbers 10, 20, 30 … refer to one, two, three … tens (and 0 ones) »",
+                "tasks": [
+                  {
+                    "identifier": "8c4a873e-9443-51c5-8913-9c463088b636",
+                    "description": "Regarde les barres de dix : 3 barres de dix et 0 unité, c'est le nombre 30. Montre le nombre qui a 5 dizaines et 0 unité.",
+                    "contentType": "Tâche illustrative (Arithmétique)"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "6dcfc35f-4f51-58dc-aa27-c7ab07ffbf80",
+            "leconNum": 111,
+            "osTexte": "effectuer des opérations (addition sans retenue) portant sur les nombres de 0 à 50",
+            "statementType": "expectation",
+            "statementCode": "Leçon 111",
+            "semaine": 25,
+            "palier": 3,
+            "isBilan": false,
+            "components": [
+              {
+                "identifier": "e7bb525d-5da4-5404-8999-b1230938b50f",
+                "description": "Ajouter/soustraire 1 à/de nombres jusqu'à 20",
+                "description_en": "Add / subtract 1 to / from numbers up to 20",
+                "reference": null,
+                "tasks": [
+                  {
+                    "identifier": "24ea1593-6515-5a75-960a-cd17a392a1cb",
+                    "description": "Calcule : 10+1 ; 15-1 ; 6+1 ; 18-1",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "10343191-7b6e-57b0-9d42-e34c4766040d",
+                    "description": "Un de moins que 6 ? un de plus que 19 ? un saut en arrière à partir de 11 ?",
+                    "contentType": "Tâche de fluidité"
+                  },
+                  {
+                    "identifier": "335a6ed3-a97a-5367-b393-750f0102f6f2",
+                    "description": "Additionne dans 20 : 13 + 6 = ? ; 18 + 1 = ? ; 12 + 7 = ? ; puis trouve l'inconnue : 17 + _ = 20 ; _ + 6 = 10.",
+                    "contentType": "Tâche de fluidité"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "identifier": "91f3b408-c50a-5a69-9eed-9df19e272a9b",
+            "leconNum": 112,
+            "osTexte": "Bilan du chapitre 29",
+            "statementType": "expectation",
+            "statementCode": "Leçon 112",
+            "semaine": 25,
+            "palier": 3,
+            "isBilan": true,
+            "components": []
+          }
+        ],
+        "bilanLessonId": "91f3b408-c50a-5a69-9eed-9df19e272a9b"
+      },
+      "progression": {
+        "buildsTowards": [],
+        "buildsFrom": [
+          25,
+          17
+        ]
+      },
+      "requiredCoverage": [
+        {
+          "leconNum": 102,
+          "osTexte": "découvrir les nombres de 40 à 49"
+        },
+        {
+          "leconNum": 106,
+          "osTexte": "composer et décomposer les nombres de 40 à 49"
+        },
+        {
+          "leconNum": 107,
+          "osTexte": "effectuer des opérations (soustraction sans emprunt) portant sur les nombres de 0 à 49"
+        },
+        {
+          "leconNum": 108,
+          "osTexte": "découvrir le nombre 50, composer et décomposer le nombre 50"
+        },
+        {
+          "leconNum": 109,
+          "osTexte": "découvrir le nombre 50, composer et décomposer le nombre 50"
+        },
+        {
+          "leconNum": 111,
+          "osTexte": "effectuer des opérations (addition sans retenue) portant sur les nombres de 0 à 50"
+        }
+      ]
+    }
+  ]
+}

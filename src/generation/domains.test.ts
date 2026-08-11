@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { HistoryEntry } from "../types.js";
 
-function makeEntry(chapter: number, domains: string[]): HistoryEntry {
+function makeEntry(unit: number, domains: string[]): HistoryEntry {
   return {
-    id: `${chapter}:manual`, chapter, type: "manual", relPath: `ch${chapter}.docx`,
+    id: `${unit}:manual`, unit, type: "manual", relPath: `ch${unit}.docx`,
     md5: "abc", updated: "2025-01-01", source: "pipeline", recordedAt: "2025-01-01",
     content: { exampleDomains: domains },
   };
@@ -48,7 +48,7 @@ describe("neighborhoodDomains", () => {
     expect(result[15]).toBeUndefined();
   });
 
-  it("uses chapter NUMBER distance, not array position", async () => {
+  it("uses unit NUMBER distance, not array position", async () => {
     const result = await neighborhoodDomains(15, 2);
     expect(Object.keys(result).map(Number).sort((a, b) => a - b)).toEqual([13]);
     expect(result[12]).toBeUndefined();
@@ -75,7 +75,7 @@ describe("neighborhoodDomains", () => {
     expect(Object.keys(result).map(Number).sort((a, b) => a - b)).toEqual([11, 13]);
   });
 
-  it("merges domains from multiple entries for the same chapter", async () => {
+  it("merges domains from multiple entries for the same unit", async () => {
     mockListEntries.mockResolvedValue([
       ...entries,
       makeEntry(11, ["ballons"]),
@@ -120,7 +120,7 @@ describe("suggestFreshDomain with avoidNearby", () => {
 });
 
 describe("payload boundedness", () => {
-  it("avoidNearby size is bounded by K, not total chapter count", async () => {
+  it("avoidNearby size is bounded by K, not total unit count", async () => {
     const manyEntries = Array.from({ length: 50 }, (_, i) =>
       makeEntry(i + 1, [`domain-${i + 1}`])
     );

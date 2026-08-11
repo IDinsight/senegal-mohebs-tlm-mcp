@@ -32,13 +32,13 @@ function seedGraph(): MutationGraph {
 
 // A (chapter, its domaine title) pair — the content axis a lesson inherits its
 // strand from. Every seeded chapter sits under exactly one domaine.
-function chapterUnderDomaine(g: MutationGraph): { chapterId: string; domaineTitle: string } {
+function chapterUnderDomaine(g: MutationGraph): { groupingId: string; domaineTitle: string } {
   for (const e of g.edges) {
     if (e.type !== "hasChild") continue;
     const from = g.nodes.find((n) => n.id === e.from);
     const to = g.nodes.find((n) => n.id === e.to);
     if (from?.type === "domaine" && to?.type === "chapter") {
-      return { chapterId: to.id, domaineTitle: String((from.properties as { title?: unknown }).title) };
+      return { groupingId: to.id, domaineTitle: String((from.properties as { title?: unknown }).title) };
     }
   }
   throw new Error("no domaine→chapter edge in the seed");
@@ -50,44 +50,51 @@ const at = (obj: unknown, path: string): unknown =>
 describe("LC fidelity — labels round-trip", () => {
   it("preserves top-level labels through parse → serialize → deserialize", () => {
     const g = seedGraph();
-    // The seed's spine nodes are StandardsFrameworkItem — parse+serialize kept it.
+    // Post-split, a chapter is a content LessonGrouping; the point of this test is
+    // that whatever labels a node carries survive parse+serialize unchanged.
     const chapter = g.nodes.find((n) => n.type === "chapter")!;
-    expect(chapter.labels).toEqual(["StandardsFrameworkItem"]);
+    expect(chapter.labels).toEqual(["LessonGrouping"]);
 
     // And the round-trip back out of the store shape keeps it byte-stable.
     const reserialized = serializeModel(deserializeToModel(g), ns);
     const same = reserialized.nodes.find((n) => n.id === chapter.id)!;
-    expect(same.labels).toEqual(["StandardsFrameworkItem"]);
+    expect(same.labels).toEqual(["LessonGrouping"]);
   });
 });
 
+// Any spine expectation a new lesson can align to.
+const someExpectation = (g: MutationGraph): string => g.nodes.find((n) => n.type === "expectation")!.id;
+
 describe("LC fidelity — recipe-created nodes are faithful LC nodes", () => {
-  it("stamps role / normalized_statement_type / labels and inherits the domaine strand", () => {
+  it("stamps the content-Lesson identity (labels / normalized_type) and aligns it to the expectation", () => {
     const g = seedGraph();
-    const { chapterId, domaineTitle } = chapterUnderDomaine(g);
+    const { groupingId } = chapterUnderDomaine(g);
+    const expectationId = someExpectation(g);
 
     const after = addLesson.apply(g, {
       namespace: ns, profile: adapter.recipeProfile!, structuralAliases: adapter.structuralAliases!,
       wordingAliases: adapter.wordingAliases, lcNodeTemplate: adapter.lcNodeTemplate,
-      chapterId, lessonId: "lc-fidelity-new-lesson", text: "objectif de test",
+      groupingId, expectationId, lessonId: "lc-fidelity-new-lesson", text: "Titre de la leçon",
     });
 
     const lesson = after.nodes.find((n) => n.id === "lc-fidelity-new-lesson")!;
     expect(lesson).toBeDefined();
-    expect(lesson.labels).toEqual(["StandardsFrameworkItem"]);
-    expect(at(lesson.properties, "raw.metadata.role")).toBe("expectation");
-    expect(at(lesson.properties, "raw.normalized_statement_type")).toBe("Standard");
-    // The strand is a denormalized copy of the domaine the chapter sits under.
-    expect(at(lesson.properties, "raw.statement_type")).toBe(domaineTitle);
+    // A content Lesson: real LC label + normalized_type, no objective/strand of
+    // its own (those live on the aligned expectation).
+    expect(lesson.labels).toEqual(["Lesson"]);
+    expect(at(lesson.properties, "raw.normalized_type")).toBe("Lesson");
+    expect(at(lesson.properties, "raw.metadata.role")).toBeUndefined();
+    // It aligns to the standard via a supports edge (coverage).
+    expect(after.edges.some((e) => e.type === "supports" && e.from === "lc-fidelity-new-lesson" && e.to === expectationId)).toBe(true);
   });
 
   it("survives a re-parse through the LC parser as a lesson (does not get dropped)", () => {
     const g = seedGraph();
-    const { chapterId } = chapterUnderDomaine(g);
+    const { groupingId } = chapterUnderDomaine(g);
     const after = addLesson.apply(g, {
       namespace: ns, profile: adapter.recipeProfile!, structuralAliases: adapter.structuralAliases!,
       wordingAliases: adapter.wordingAliases, lcNodeTemplate: adapter.lcNodeTemplate,
-      chapterId, lessonId: "lc-fidelity-reparse", text: "objectif de test",
+      groupingId, expectationId: someExpectation(g), lessonId: "lc-fidelity-reparse", text: "Titre de la leçon",
     });
     const lesson = after.nodes.find((n) => n.id === "lc-fidelity-reparse")!;
 
@@ -95,8 +102,8 @@ describe("LC fidelity — recipe-created nodes are faithful LC nodes", () => {
     const rawLcNode = { id: lesson.id, labels: lesson.labels, properties: at(lesson.properties, "raw") };
     const reparsed = adapter.parse({ nodes: [rawLcNode], relationships: [] });
 
-    // kindOf reads metadata.role → "expectation" → "lesson". Before Part 2 the
-    // node had no role and this returned nothing (node silently dropped).
+    // kindOf reads the [Lesson] label → kind "lesson". Before the split this node
+    // carried role "expectation"; now the content Lesson is label-classified.
     expect(reparsed.byId.get("lc-fidelity-reparse")?.kind).toBe("lesson");
   });
 });

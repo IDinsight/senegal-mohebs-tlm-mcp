@@ -1,6 +1,6 @@
 // ── Module: generation · internal ────────────────────────────────────────────
 // Example-domain rotation, a CI maths capability: track which object families
-// (fruits, pirogues, …) each chapter used, and suggest a fresh one so chapters
+// (fruits, pirogues, …) each unit used, and suggest a fresh one so chapters
 // don't repeat — while also avoiding domains used by nearby chapters. Composed
 // into the CI maths generation context; adapters without the capability ignore it.
 import { readFileSync, existsSync } from "node:fs";
@@ -20,23 +20,23 @@ function domainPool(): string[] {
 
 export async function domainUsage() {
   const usage = new Map<string, Set<number>>();
-  for (const e of await listEntries()) for (const d of e.content.exampleDomains ?? []) { const k = d.toLowerCase(); (usage.get(k) ?? usage.set(k, new Set()).get(k)!).add(e.chapter); }
+  for (const e of await listEntries()) for (const d of e.content.exampleDomains ?? []) { const k = d.toLowerCase(); (usage.get(k) ?? usage.set(k, new Set()).get(k)!).add(e.unit); }
   return [...usage.entries()].map(([domain, ch]) => ({ domain, chapters: [...ch].sort((a, b) => a - b) }));
 }
 
-export async function neighborhoodDomains(chapter: number, k: number = DOMAIN_NEIGHBORHOOD_K): Promise<Record<number, string[]>> {
+export async function neighborhoodDomains(unit: number, k: number = DOMAIN_NEIGHBORHOOD_K): Promise<Record<number, string[]>> {
   const result: Record<number, string[]> = {};
   for (const e of await listEntries()) {
-    if (e.chapter === chapter) continue;
+    if (e.unit === unit) continue;
     const domains = e.content.exampleDomains ?? [];
     if (domains.length === 0) continue;
-    if (Math.abs(e.chapter - chapter) <= k) {
-      const existing = result[e.chapter];
+    if (Math.abs(e.unit - unit) <= k) {
+      const existing = result[e.unit];
       if (existing) {
         const set = new Set(existing);
         for (const d of domains) if (!set.has(d)) existing.push(d);
       } else {
-        result[e.chapter] = [...domains];
+        result[e.unit] = [...domains];
       }
     }
   }

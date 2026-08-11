@@ -1,5 +1,5 @@
 // ── #14 curriculum recipes — tests ───────────────────────────────────────────
-// Drives add_lesson / add_chapter / move_lesson / split_chapter / renumber
+// Drives add_lesson / add_lesson_grouping / move_lesson / split_lesson_grouping / renumber
 // through the #5 framework end to end, on the real CI-maths seed. Acceptance
 // criteria mirror the task spec:
 //
@@ -7,10 +7,10 @@
 //     confirm applies the WHOLE composite ATOMICALLY to the draft; #7 audits it
 //     as ONE event; curator-gated.
 //   • add_lesson: composite (lesson + hasChild); nonexistent chapter BLOCKED.
-//   • add_chapter: append/gap-fill works; colliding number rejected.
+//   • add_lesson_grouping: append/gap-fill works; colliding number rejected.
 //   • move_lesson: rehomed atomically; chapitreNum rewritten (no drift);
 //     nonexistent target blocked; coverage warns (bilan moved out).
-//   • split_chapter: new chapter + tail moved atomically; integrity-clean;
+//   • split_lesson_grouping: new chapter + tail moved atomically; integrity-clean;
 //     a split leaving a chapter without a bilan WARNS (not blocks).
 //   • renumber: chapter number + every child lesson's chapitreNum rewritten
 //     atomically (Regime-B), no drift warning; collision BLOCKED.
@@ -27,7 +27,7 @@ import { serializeModel, deserializeToModel } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
   runGraphMutation, publishDraftWithConfirm, diffDraft, mintNodeId,
-  addLesson, addChapter, moveLesson, splitChapter, renumber, edgeId as makeEdgeId,
+  addLesson, addLessonGrouping, moveLesson, splitLessonGrouping, renumber, edgeId as makeEdgeId,
   __resetMutationsForTest, __resetDraftTokensForTest,
 } from "../index.js";
 import { __setStorageForTest } from "../../storage/index.js";
@@ -96,10 +96,10 @@ const HAS_CHILD = "hasChild";
 // raw.metadata.order). Chapter→lesson membership is the hasChild edge, not a number.
 const chapterNum = (n: { properties: Record<string, unknown> }): number | undefined => n.properties.order as number | undefined;
 const findChapter = (g: MutationGraph, num: number) => g.nodes.find((n) => n.type === "chapter" && chapterNum(n) === num)!;
-const lessonIdsOf = (g: MutationGraph, chapterId: string) =>
-  g.edges.filter((e) => e.type === HAS_CHILD && e.from === chapterId).map((e) => e.to).filter((id) => g.nodes.find((n) => n.id === id)?.type === "lesson");
-const bilanOf = (g: MutationGraph, chapterId: string) =>
-  lessonIdsOf(g, chapterId).map((id) => g.nodes.find((n) => n.id === id)!).find((n) => n.properties.isAssessment === true);
+const lessonIdsOf = (g: MutationGraph, groupingId: string) =>
+  g.edges.filter((e) => e.type === HAS_CHILD && e.from === groupingId).map((e) => e.to).filter((id) => g.nodes.find((n) => n.id === id)?.type === "lesson");
+const bilanOf = (g: MutationGraph, groupingId: string) =>
+  lessonIdsOf(g, groupingId).map((id) => g.nodes.find((n) => n.id === id)!).find((n) => n.properties.isAssessment === true);
 const nodeRawNum = (g: MutationGraph, id: string): number | undefined => chapterNum(g.nodes.find((n) => n.id === id)!);
 // The seed numbers chapters 1..13,15..25,29 — so the next append number is
 // max+1 and 26/27/28 are free gaps. Computed, never hardcoded, so the tests
@@ -107,8 +107,14 @@ const nodeRawNum = (g: MutationGraph, id: string): number | undefined => chapter
 const maxChapterNum = (g: MutationGraph): number => Math.max(...g.nodes.filter((n) => n.type === "chapter").map((n) => chapterNum(n) ?? 0));
 const freeGapNumber = (g: MutationGraph): number => { const used = new Set(g.nodes.filter((n) => n.type === "chapter").map((n) => chapterNum(n))); let k = 1; while (used.has(k)) k++; return k; };
 
-// Common recipe-arg bag (the subject vocabulary the server tool would supply).
-const bag = () => ({ namespace: ns, profile: profile(), structuralAliases: sAliases(), wordingAliases: wAliases() });
+// Post-split, add_lesson aligns a new content lesson to an EXISTING spine
+// expectation. Any expectation serves for these structural tests.
+const someExpectation = (g: MutationGraph): string => g.nodes.find((n) => n.type === "expectation")!.id;
+const SUPPORTS = "supports";
+
+// Common recipe-arg bag (the subject vocabulary the server tool would supply) —
+// includes lcNodeTemplate so created nodes get their LC labels, as in production.
+const bag = () => ({ namespace: ns, profile: profile(), structuralAliases: sAliases(), wordingAliases: wAliases(), lcNodeTemplate: adapter().lcNodeTemplate });
 
 // Preview → confirm a recipe with a stable args object (so the confirm-time
 // args-hash matches the preview's). Returns both phases.
@@ -135,17 +141,21 @@ afterAll(() => {
 
 // ── add_lesson ────────────────────────────────────────────────────────────────
 describe("add_lesson", () => {
-  it("is ONE composite (lesson node + hasChild edge); dry-run changes no state; confirm applies atomically", async () => {
+  it("is ONE composite (lesson node + hasChild + supports edges); dry-run changes no state; confirm applies atomically", async () => {
     const published = await readPublished();
     const chapter = findChapter(published, 1);
+    const expectationId = someExpectation(published);
     const lessonId = mintNodeId();
-    const args = { ...bag(), chapterId: chapter.id, lessonId, text: "Nouvelle leçon", isBilan: false };
+    const args = { ...bag(), groupingId: chapter.id, expectationId, lessonId, text: "Nouvelle leçon", isBilan: false };
 
     // Dry-run: one whole-composite diff + token, NO state change.
     const preview = await runGraphMutation({ namespace: ns, mutation: addLesson, args, coverage });
     if (preview.phase !== "preview") throw new Error("expected preview");
     expect(preview.diff.nodes.added.map((e) => e.id)).toEqual([lessonId]);
-    expect(preview.diff.edges.added.map((e) => e.id)).toEqual([makeEdgeId(HAS_CHILD, chapter.id, lessonId)]);
+    // Two edges: chapter membership (hasChild) AND expectation alignment (supports).
+    const addedEdges = preview.diff.edges.added.map((e) => e.id);
+    expect(addedEdges).toContain(makeEdgeId(HAS_CHILD, chapter.id, lessonId));
+    expect(addedEdges).toContain(makeEdgeId(SUPPORTS, lessonId, expectationId));
     expect(preview.diff.nodes.removed).toHaveLength(0);
     expect(await readDraft()).toBeNull();
 
@@ -155,17 +165,29 @@ describe("add_lesson", () => {
     const draft = await readDraft();
     expect(draft).not.toBeNull();
     const newLesson = draft!.nodes.find((n) => n.id === lessonId)!;
-    // Chapter membership is the hasChild edge (asserted above); the converged
-    // edge-based model gives a lesson no chapter-membership number to drift.
+    // Chapter membership + alignment are the edges (asserted above); the lesson
+    // node carries its own title, no chapter-membership number to drift.
     expect(newLesson.properties.text).toBe("Nouvelle leçon");
+    expect(newLesson.labels).toEqual(["Lesson"]);
   });
 
   it("BLOCKS linking to a nonexistent chapter (no token)", async () => {
+    const published = await readPublished();
     const lessonId = mintNodeId();
-    const preview = await runGraphMutation({ namespace: ns, mutation: addLesson, args: { ...bag(), chapterId: "does-not-exist", lessonId, text: "x" }, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addLesson, args: { ...bag(), groupingId: "does-not-exist", expectationId: someExpectation(published), lessonId, text: "x" }, coverage });
     expect(preview.phase).toBe("blocked");
     if (preview.phase !== "blocked") throw new Error("expected blocked");
     expect(preview.errors.join(" ")).toMatch(/does not exist/);
+    expect(await readDraft()).toBeNull();
+  });
+
+  it("BLOCKS aligning to a nonexistent expectation (no token)", async () => {
+    const published = await readPublished();
+    const chapter = findChapter(published, 1);
+    const preview = await runGraphMutation({ namespace: ns, mutation: addLesson, args: { ...bag(), groupingId: chapter.id, expectationId: "no-such-standard", lessonId: mintNodeId(), text: "x" }, coverage });
+    expect(preview.phase).toBe("blocked");
+    if (preview.phase !== "blocked") throw new Error("expected blocked");
+    expect(preview.errors.join(" ")).toMatch(/expectation .* does not exist/);
     expect(await readDraft()).toBeNull();
   });
 
@@ -173,7 +195,7 @@ describe("add_lesson", () => {
     __setActorForTest(NO_ROLE);
     const published = await readPublished();
     const chapter = findChapter(published, 1);
-    const res = await runGraphMutation({ namespace: ns, mutation: addLesson, args: { ...bag(), chapterId: chapter.id, lessonId: mintNodeId(), text: "x" }, coverage });
+    const res = await runGraphMutation({ namespace: ns, mutation: addLesson, args: { ...bag(), groupingId: chapter.id, expectationId: someExpectation(published), lessonId: mintNodeId(), text: "x" }, coverage });
     expect(res.phase).toBe("unauthorized");
     expect(await readDraft()).toBeNull();
     __setActorForTest(CURATOR);
@@ -182,42 +204,37 @@ describe("add_lesson", () => {
   });
 });
 
-// ── add_chapter ─────────────────────────────────────────────────────────────
-describe("add_chapter", () => {
-  it("appends at a FREE number with seed lessons as one composite; audits as ONE apply event", async () => {
-    const chapterId = mintNodeId();
-    const lessonIds = [mintNodeId(), mintNodeId()];
-    const { preview, confirm } = await runRecipe(addChapter, {
-      ...bag(), chapterId, number: 26, title: "Chapitre 26", lessonIds,
-      lessons: [{ text: "Leçon A" }, { text: "Bilan", isBilan: true }],
-    });
+// ── add_lesson_grouping ─────────────────────────────────────────────────────────────
+describe("add_lesson_grouping", () => {
+  it("appends an EMPTY chapter at a FREE number as one composite; audits as ONE apply event", async () => {
+    const groupingId = mintNodeId();
+    const { preview, confirm } = await runRecipe(addLessonGrouping, { ...bag(), groupingId, number: 26, title: "Chapitre 26" });
     if (preview.phase !== "preview") throw new Error("expected preview");
-    // One composite: 3 nodes (chapter + 2 lessons) + 2 hasChild edges.
-    expect(preview.diff.nodes.added.map((e) => e.id).sort()).toEqual([chapterId, ...lessonIds].sort());
-    expect(preview.diff.edges.added).toHaveLength(2);
+    // One node (the chapter), no edges — lessons are added later via add_lesson.
+    expect(preview.diff.nodes.added.map((e) => e.id)).toEqual([groupingId]);
+    expect(preview.diff.edges.added).toHaveLength(0);
     expect(confirm?.phase).toBe("apply");
 
     const draft = await readDraft();
-    expect(findChapter(draft!, 26).id).toBe(chapterId);
-    expect(lessonIdsOf(draft!, chapterId).sort()).toEqual([...lessonIds].sort());
-    // A seed lesson marked isBilan → no missing-bilan warning for this chapter.
-    expect(coverage(draft!).some((w) => /Chapitre 26.*no bilan/.test(w))).toBe(false);
+    expect(findChapter(draft!, 26).id).toBe(groupingId);
+    expect(findChapter(draft!, 26).labels).toEqual(["LessonGrouping"]);
+    expect(lessonIdsOf(draft!, groupingId)).toEqual([]);
 
     // Exactly one apply audit record for the whole composite.
     const applies = await store.listAudit({ namespace: ns, eventType: "apply" });
-    expect(applies.filter((a) => a.mutation === "addChapter")).toHaveLength(1);
+    expect(applies.filter((a) => a.mutation === "addLessonGrouping")).toHaveLength(1);
   });
 
   it("REJECTS a colliding chapter number in the additive path (nothing lands)", async () => {
-    const preview = await runGraphMutation({ namespace: ns, mutation: addChapter, args: { ...bag(), chapterId: mintNodeId(), number: 1, title: "dup", lessonIds: [] }, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addLessonGrouping, args: { ...bag(), groupingId: mintNodeId(), number: 1, title: "dup" }, coverage });
     expect(preview.phase).toBe("blocked");
     if (preview.phase !== "blocked") throw new Error("expected blocked");
     expect(preview.errors.join(" ")).toMatch(/already used/);
     expect(await readDraft()).toBeNull();
   });
 
-  it("warns (not blocks) when a chapter is created with no lessons at all", async () => {
-    const { preview } = await runRecipe(addChapter, { ...bag(), chapterId: mintNodeId(), number: 27, title: "Vide", lessonIds: [] });
+  it("warns that the new chapter is born empty (add lessons via add_lesson)", async () => {
+    const { preview } = await runRecipe(addLessonGrouping, { ...bag(), groupingId: mintNodeId(), number: 27, title: "Vide" });
     if (preview.phase !== "preview") throw new Error("expected preview");
     expect(preview.warnings.some((w) => /no child lessons/.test(w))).toBe(true);
   });
@@ -232,7 +249,7 @@ describe("move_lesson", () => {
     // Pick a non-bilan lesson so neither chapter loses its bilan.
     const movable = lessonIdsOf(published, src.id).find((id) => published.nodes.find((n) => n.id === id)!.properties.isAssessment !== true)!;
 
-    const { preview, confirm } = await runRecipe(moveLesson, { ...bag(), lessonId: movable, toChapterId: dst.id });
+    const { preview, confirm } = await runRecipe(moveLesson, { ...bag(), lessonId: movable, toGroupingId: dst.id });
     if (preview.phase !== "preview") throw new Error("expected preview");
     // Old edge removed, new edge added — the whole rewire in one diff.
     expect(preview.diff.edges.removed.map((e) => e.id)).toContain(makeEdgeId(HAS_CHILD, src.id, movable));
@@ -249,7 +266,7 @@ describe("move_lesson", () => {
     const published = await readPublished();
     const src = findChapter(published, 1);
     const lesson = lessonIdsOf(published, src.id)[0];
-    const res = await runGraphMutation({ namespace: ns, mutation: moveLesson, args: { ...bag(), lessonId: lesson, toChapterId: "nope" }, coverage });
+    const res = await runGraphMutation({ namespace: ns, mutation: moveLesson, args: { ...bag(), lessonId: lesson, toGroupingId: "nope" }, coverage });
     expect(res.phase).toBe("blocked");
     expect(await readDraft()).toBeNull();
   });
@@ -259,33 +276,33 @@ describe("move_lesson", () => {
     const src = findChapter(published, 1);
     const dst = findChapter(published, 2);
     const bilan = bilanOf(published, src.id)!;
-    const { preview, confirm } = await runRecipe(moveLesson, { ...bag(), lessonId: bilan.id, toChapterId: dst.id });
+    const { preview, confirm } = await runRecipe(moveLesson, { ...bag(), lessonId: bilan.id, toGroupingId: dst.id });
     if (preview.phase !== "preview") throw new Error("expected preview");
     expect(preview.warnings.some((w) => /no bilan/.test(w))).toBe(true); // informs, but…
     expect(confirm?.phase).toBe("apply");                                 // …never blocks.
   });
 });
 
-// ── split_chapter ─────────────────────────────────────────────────────────────
-describe("split_chapter", () => {
+// ── split_lesson_grouping ─────────────────────────────────────────────────────────────
+describe("split_lesson_grouping", () => {
   it("creates a new chapter and moves the tail lessons atomically; result stays integrity-clean", async () => {
     const published = await readPublished();
     const src = findChapter(published, 1);
     const lessons = lessonIdsOf(published, src.id);
     expect(lessons.length).toBeGreaterThanOrEqual(2);
     const atLesson = lessons[Math.floor(lessons.length / 2)];
-    const newChapterId = mintNodeId();
+    const newGroupingId = mintNodeId();
 
-    const { preview, confirm } = await runRecipe(splitChapter, { ...bag(), chapterId: src.id, atLessonId: atLesson, newChapterId, newTitle: "Chapitre 1 (suite)" });
+    const { preview, confirm } = await runRecipe(splitLessonGrouping, { ...bag(), groupingId: src.id, atLessonId: atLesson, newGroupingId, newTitle: "Chapitre 1 (suite)" });
     if (preview.phase !== "preview") throw new Error("expected preview");
-    expect(preview.diff.nodes.added.map((e) => e.id)).toEqual([newChapterId]);
+    expect(preview.diff.nodes.added.map((e) => e.id)).toEqual([newGroupingId]);
     expect(confirm?.phase).toBe("apply");
 
     const draft = await readDraft();
     // The tail (atLesson onward) is now under the new chapter, appended at max+1.
     const appendedNum = maxChapterNum(published) + 1;
-    expect(nodeRawNum(draft!, newChapterId)).toBe(appendedNum);
-    const moved = lessonIdsOf(draft!, newChapterId);
+    expect(nodeRawNum(draft!, newGroupingId)).toBe(appendedNum);
+    const moved = lessonIdsOf(draft!, newGroupingId);
     expect(moved).toContain(atLesson);
     expect(lessonIdsOf(draft!, src.id)).not.toContain(atLesson);
     // The moved lessons keep their own numbers — membership followed the edge.
@@ -298,7 +315,7 @@ describe("split_chapter", () => {
     const published = await readPublished();
     const src = findChapter(published, 1);
     const foreign = lessonIdsOf(published, findChapter(published, 2).id)[0];
-    const res = await runGraphMutation({ namespace: ns, mutation: splitChapter, args: { ...bag(), chapterId: src.id, atLessonId: foreign, newChapterId: mintNodeId() }, coverage });
+    const res = await runGraphMutation({ namespace: ns, mutation: splitLessonGrouping, args: { ...bag(), groupingId: src.id, atLessonId: foreign, newGroupingId: mintNodeId() }, coverage });
     expect(res.phase).toBe("blocked");
     expect(await readDraft()).toBeNull();
   });
@@ -311,7 +328,7 @@ describe("renumber", () => {
     const chapter = findChapter(published, 3);
     const lessons = lessonIdsOf(published, chapter.id);
 
-    const { preview, confirm } = await runRecipe(renumber, { ...bag(), chapterId: chapter.id, newNumber: 26 });
+    const { preview, confirm } = await runRecipe(renumber, { ...bag(), groupingId: chapter.id, newNumber: 26 });
     if (preview.phase !== "preview") throw new Error("expected preview");
     // ONLY the chapter is a CHANGED node — lessons are untouched, since membership
     // is the hasChild edge, not a denormalized number.
@@ -330,7 +347,7 @@ describe("renumber", () => {
   it("BLOCKS a renumber into an already-used number", async () => {
     const published = await readPublished();
     const chapter = findChapter(published, 3);
-    const res = await runGraphMutation({ namespace: ns, mutation: renumber, args: { ...bag(), chapterId: chapter.id, newNumber: 4 }, coverage });
+    const res = await runGraphMutation({ namespace: ns, mutation: renumber, args: { ...bag(), groupingId: chapter.id, newNumber: 4 }, coverage });
     expect(res.phase).toBe("blocked");
     if (res.phase !== "blocked") throw new Error("expected blocked");
     expect(res.errors.join(" ")).toMatch(/already used/);
@@ -340,27 +357,33 @@ describe("renumber", () => {
 
 // ── end-to-end: build in draft → publish → published read shows new structure ──
 describe("recipes end-to-end", () => {
-  it("add_chapter → split_chapter → move_lesson accumulate on one draft, publish ships the whole atomically, and a published read shows the new structure", async () => {
+  it("add_lesson_grouping → add_lesson → split_lesson_grouping → move_lesson accumulate on one draft, publish ships the whole atomically, and a published read shows the new structure", async () => {
     const published0 = await readPublished();
     const untouched = findChapter(published0, 10);
     const untouchedLessons = lessonIdsOf(published0, untouched.id).sort();
 
-    // 1) add a chapter into a free gap (14) with two lessons.
+    // 1) add an EMPTY chapter into a free gap.
     const gap = freeGapNumber(published0);
-    const chapId = mintNodeId(); const lIds = [mintNodeId(), mintNodeId()];
-    let r = await runRecipe(addChapter, { ...bag(), chapterId: chapId, number: gap, title: "Nouveau", lessonIds: lIds, lessons: [{ text: "L1" }, { text: "Bilan", isBilan: true }] });
+    const chapId = mintNodeId();
+    let r = await runRecipe(addLessonGrouping, { ...bag(), groupingId: chapId, number: gap, title: "Nouveau" });
     expect(r.confirm?.phase).toBe("apply");
 
-    // 2) split chapter 1 at its midpoint (new chapter appends at max+1).
+    // 2) add a lesson to it, aligned to an existing expectation.
+    const expectationId = someExpectation(published0);
+    const newLesson = mintNodeId();
+    r = await runRecipe(addLesson, { ...bag(), groupingId: chapId, expectationId, lessonId: newLesson, text: "Leçon nouvelle" });
+    expect(r.confirm?.phase).toBe("apply");
+
+    // 3) split chapter 1 at its midpoint (new chapter appends at max+1).
     const src = findChapter(published0, 1);
     const appendedNum = maxChapterNum(published0) + 1;
     const mid = lessonIdsOf(published0, src.id)[Math.floor(lessonIdsOf(published0, src.id).length / 2)];
     const newChap = mintNodeId();
-    r = await runRecipe(splitChapter, { ...bag(), chapterId: src.id, atLessonId: mid, newChapterId: newChap, newTitle: "Ch1 suite" });
+    r = await runRecipe(splitLessonGrouping, { ...bag(), groupingId: src.id, atLessonId: mid, newGroupingId: newChap, newTitle: "Ch1 suite" });
     expect(r.confirm?.phase).toBe("apply");
 
-    // 3) move one of the gap-chapter's lessons into the split-off chapter.
-    r = await runRecipe(moveLesson, { ...bag(), lessonId: lIds[0], toChapterId: newChap });
+    // 4) move the freshly-added lesson into the split-off chapter.
+    r = await runRecipe(moveLesson, { ...bag(), lessonId: newLesson, toGroupingId: newChap });
     expect(r.confirm?.phase).toBe("apply");
 
     // Publish the whole draft atomically — as the APPROVER (publish is
@@ -378,7 +401,7 @@ describe("recipes end-to-end", () => {
     expect(model.byId.get(chapId)!.order).toBe(gap);
     expect(model.byId.get(newChap)!.order).toBe(appendedNum);
     // The moved lesson now belongs to the split-off chapter via the hasChild edge.
-    expect(lessonIdsOf(pub, newChap).includes(lIds[0])).toBe(true);
+    expect(lessonIdsOf(pub, newChap).includes(newLesson)).toBe(true);
     // #2 parity: an untouched chapter's lessons are unchanged.
     expect(lessonIdsOf(pub, findChapter(pub, 10).id).sort()).toEqual(untouchedLessons);
   });

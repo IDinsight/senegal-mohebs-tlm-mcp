@@ -1,5 +1,5 @@
 // ── list_documents pagination — pageDocuments() paging contract ──────────────
-// pageDocuments is the pure paging over the already-(chapter asc, type asc)-sorted
+// pageDocuments is the pure paging over the already-(unit asc, type asc)-sorted
 // history. These tests pin the limit + opaque-cursor contract without standing up
 // storage: default/clamped limits, walking pages via nextCursor with no overlap or
 // gaps, a null nextCursor on the final page, and a rejected bad cursor.
@@ -7,14 +7,14 @@ import { describe, it, expect } from "vitest";
 import { pageDocuments } from "./documents.js";
 import type { HistoryEntry } from "../types.js";
 
-// Minimal entries in listEntries() order: (chapter asc, then type asc). Two
-// deliverables per chapter exercise the tie-break on `type`.
-function entry(chapter: number, type: string): HistoryEntry {
+// Minimal entries in listEntries() order: (unit asc, then type asc). Two
+// deliverables per unit exercise the tie-break on `type`.
+function entry(unit: number, type: string): HistoryEntry {
   return {
-    id: `${chapter}:${type}`,
-    chapter,
+    id: `${unit}:${type}`,
+    unit,
     type: type as HistoryEntry["type"],
-    relPath: `chapitre_${chapter}/${type}.docx`,
+    relPath: `chapitre_${unit}/${type}.docx`,
     md5: "x", updated: "", source: "pipeline", recordedAt: "", content: {},
   };
 }
@@ -74,9 +74,9 @@ describe("pageDocuments", () => {
     expect(last.entries.map((e) => e.id)).toEqual(["10:lessons", "10:manual"]);
   });
 
-  it("orders the tie-break on type after the numeric chapter (10 after 2)", () => {
-    // The cursor carries {chapter,type}, not the lexical id — so paging past
-    // chapter 2 must still surface chapter 10 later, never before it.
+  it("orders the tie-break on type after the numeric unit (10 after 2)", () => {
+    // The cursor carries {unit,type}, not the lexical id — so paging past
+    // unit 2 must still surface unit 10 later, never before it.
     const idx10 = ALL.findIndex((e) => e.id === "10:lessons");
     const idx2 = ALL.findIndex((e) => e.id === "2:lessons");
     expect(idx2).toBeLessThan(idx10);
@@ -93,8 +93,8 @@ describe("pageDocuments", () => {
     expect(r.count).toBe(3);
   });
 
-  it("filters by chapter, narrowing total but keeping totalUnfiltered", () => {
-    const r = ok(pageDocuments(ALL, { chapter: 3 }));
+  it("filters by unit, narrowing total but keeping totalUnfiltered", () => {
+    const r = ok(pageDocuments(ALL, { unit: 3 }));
     expect(r.entries.map((e) => e.id)).toEqual(["3:lessons", "3:manual"]);
     expect(r.total).toBe(2);              // the filtered set
     expect(r.totalUnfiltered).toBe(20);   // the whole history
@@ -108,8 +108,8 @@ describe("pageDocuments", () => {
     expect(r.total).toBe(10);
   });
 
-  it("combines chapter + type to a single entry", () => {
-    const r = ok(pageDocuments(ALL, { chapter: 7, type: "lessons" }));
+  it("combines unit + type to a single entry", () => {
+    const r = ok(pageDocuments(ALL, { unit: 7, type: "lessons" }));
     expect(r.entries.map((e) => e.id)).toEqual(["7:lessons"]);
     expect(r.total).toBe(1);
   });
@@ -129,7 +129,7 @@ describe("pageDocuments", () => {
   });
 
   it("returns an empty page (not an error) when a filter matches nothing", () => {
-    const r = ok(pageDocuments(ALL, { chapter: 999 }));
+    const r = ok(pageDocuments(ALL, { unit: 999 }));
     expect(r.count).toBe(0);
     expect(r.total).toBe(0);
     expect(r.nextCursor).toBeNull();

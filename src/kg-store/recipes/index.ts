@@ -24,15 +24,15 @@
 // layer reads them off the active adapter. A subject with no `recipeProfile`
 // simply has no recipes.
 //
-// Layout: one file per recipe (add-lesson / add-chapter / move-lesson /
-// split-chapter / renumber), the shared toolkit they compose from (shared.ts),
+// Layout: one file per recipe (add-lesson / add-lesson-grouping / move-lesson /
+// split-lesson-grouping / renumber), the shared toolkit they compose from (shared.ts),
 // the structural-property edit path move/split/renumber share (structural-edit.ts),
 // and the get_capabilities mirror (registry.ts).
 
 export { addLesson, type AddLessonArgs } from "./add-lesson.js";
-export { addChapter, type AddChapterArgs } from "./add-chapter.js";
+export { addLessonGrouping, type AddLessonGroupingArgs } from "./add-lesson-grouping.js";
 export { moveLesson, type MoveLessonArgs } from "./move-lesson.js";
-export { splitChapter, type SplitChapterArgs } from "./split-chapter.js";
+export { splitLessonGrouping, type SplitLessonGroupingArgs } from "./split-lesson-grouping.js";
 export { renumber, type RenumberArgs } from "./renumber.js";
 
 export { STRUCTURAL_EDIT_SAFE_PATHS, structuralEditErrors, editStructural } from "./structural-edit.js";

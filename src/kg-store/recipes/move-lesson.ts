@@ -17,41 +17,41 @@ import { editStructural } from "./structural-edit.js";
 
 export type MoveLessonArgs = RecipeCommon & {
   lessonId: string;
-  toChapterId: string;
+  toGroupingId: string;
   position?: number;
 };
 
 export const moveLesson: GraphMutation<MoveLessonArgs> = {
   name: "moveLesson",
-  describe: (a) => `move lesson '${a.lessonId}' to chapter '${a.toChapterId}'`,
+  describe: (a) => `move lesson '${a.lessonId}' to chapter '${a.toGroupingId}'`,
   validate: (base, _after, a) => {
     const errors: string[] = [];
     const lesson = nodeById(base, a.lessonId);
-    const toChapter = nodeById(base, a.toChapterId);
+    const toChapter = nodeById(base, a.toGroupingId);
     if (!lesson) errors.push(`move_lesson: lesson '${a.lessonId}' does not exist in the draft.`);
     else if (lesson.type !== a.profile.lessonKind) errors.push(`move_lesson: node '${a.lessonId}' is a '${lesson.type}', not a ${a.profile.lessonKind}.`);
-    if (!toChapter) errors.push(`move_lesson: target chapter '${a.toChapterId}' does not exist in the draft.`);
-    else if (toChapter.type !== a.profile.chapterKind) errors.push(`move_lesson: target '${a.toChapterId}' is a '${toChapter.type}', not a ${a.profile.chapterKind}.`);
-    else if (chapterNumberOf(toChapter, a.profile, a.structuralAliases) == null) errors.push(`move_lesson: target chapter '${a.toChapterId}' has no numeric ${K_CHAPTER_NUMBER}.`);
+    if (!toChapter) errors.push(`move_lesson: target chapter '${a.toGroupingId}' does not exist in the draft.`);
+    else if (toChapter.type !== a.profile.chapterKind) errors.push(`move_lesson: target '${a.toGroupingId}' is a '${toChapter.type}', not a ${a.profile.chapterKind}.`);
+    else if (chapterNumberOf(toChapter, a.profile, a.structuralAliases) == null) errors.push(`move_lesson: target chapter '${a.toGroupingId}' has no numeric ${K_CHAPTER_NUMBER}.`);
     if (lesson && toChapter) {
       const parents = chapterParentEdgeIds(base, a.lessonId, a.profile);
       if (parents.length === 0) errors.push(`move_lesson: lesson '${a.lessonId}' is not linked to any chapter — nothing to move.`);
-      if (parents.includes(edgeId(a.profile.containerEdge, a.toChapterId, a.lessonId))) errors.push(`move_lesson: lesson '${a.lessonId}' is already in chapter '${a.toChapterId}'.`);
+      if (parents.includes(edgeId(a.profile.containerEdge, a.toGroupingId, a.lessonId))) errors.push(`move_lesson: lesson '${a.lessonId}' is already in chapter '${a.toGroupingId}'.`);
     }
     return { errors, warnings: [] };
   },
   apply: (base, a) => {
     // apply precedes validate; a missing lesson/target must not throw here.
     const lesson = nodeById(base, a.lessonId);
-    const toChapter = nodeById(base, a.toChapterId);
+    const toChapter = nodeById(base, a.toGroupingId);
     if (!lesson || !toChapter) return base;
     let g: MutationGraph = base;
     // Detach from every current chapter parent (normally one; more than one is
     // the multi-parent state #13 warns on — moving cleans it up as a side effect).
     for (const id of chapterParentEdgeIds(g, a.lessonId, a.profile)) g = unlinkNodes.apply(g, { edgeId: id });
-    const siblings = childLessons(g, a.toChapterId, a.profile);
+    const siblings = childLessons(g, a.toGroupingId, a.profile);
     const position = a.position ?? (siblings.reduce((m, l) => Math.max(m, positionOf(l, a.profile, a.structuralAliases)), 0) + 1);
-    g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.toChapterId, toId: a.lessonId, properties: { orderInParent: position }, namespace: a.namespace });
+    g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.toGroupingId, toId: a.lessonId, properties: { orderInParent: position }, namespace: a.namespace });
     // Record the lesson's within-chapter position — its chapter membership is the edge above.
     g = { nodes: editStructural(g.nodes, a.lessonId, K_LESSON_POSITION, position, a.structuralAliases), edges: g.edges };
     return g;

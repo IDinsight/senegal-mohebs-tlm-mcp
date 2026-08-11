@@ -17,7 +17,8 @@ type RawNode = { id: string; labels?: string[]; properties?: Record<string, unkn
 type RawRel = { id: string; type: string; start: string; end: string; properties?: Record<string, unknown> };
 
 const CASES = [
-  { grade: "ci", subject: "maths", nodes: 397, edges: 773 },
+  // maths: post-split — +112 Lesson nodes, +112 Lesson→expectation supports edges.
+  { grade: "ci", subject: "maths", nodes: 509, edges: 885 },
   { grade: "ce1", subject: "reading", nodes: 1401, edges: 1362 },
 ];
 
