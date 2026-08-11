@@ -106,4 +106,23 @@ describe("LC fidelity — recipe-created nodes are faithful LC nodes", () => {
     // carried role "expectation"; now the content Lesson is label-classified.
     expect(reparsed.byId.get("lc-fidelity-reparse")?.kind).toBe("lesson");
   });
+
+  it("carries the bilan (assessment) flag as DATA through a re-parse", () => {
+    // Regression guard for bilan-as-data: add_lesson's isBilan is stamped as
+    // LC educational_use in raw and read back by the parser — before this the
+    // parse-time regex ignored the authored flag entirely.
+    const g = seedGraph();
+    const { groupingId } = chapterUnderDomaine(g);
+    const after = addLesson.apply(g, {
+      namespace: ns, profile: adapter.recipeProfile!, structuralAliases: adapter.structuralAliases!,
+      wordingAliases: adapter.wordingAliases, lcNodeTemplate: adapter.lcNodeTemplate,
+      groupingId, expectationId: someExpectation(g), lessonId: "lc-fidelity-bilan", text: "Bilan", isBilan: true,
+    });
+    const lesson = after.nodes.find((n) => n.id === "lc-fidelity-bilan")!;
+    expect(at(lesson.properties, "raw.educational_use")).toBe("Assessment");
+
+    const rawLcNode = { id: lesson.id, labels: lesson.labels, properties: at(lesson.properties, "raw") };
+    const reparsed = adapter.parse({ nodes: [rawLcNode], relationships: [] });
+    expect(reparsed.byId.get("lc-fidelity-bilan")?.isAssessment).toBe(true);
+  });
 });

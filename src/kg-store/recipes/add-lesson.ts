@@ -10,6 +10,7 @@
 
 import type { GraphMutation } from "../mutations.js";
 import { createNode, linkNodes } from "../structural.js";
+import { writeAtPath } from "../upsert-property.js";
 import {
   type RecipeCommon,
   K_LESSON_POSITION, W_TEXT, W_TEXT_EN,
@@ -65,6 +66,10 @@ export const addLesson: GraphMutation<AddLessonArgs> = {
     // Stamp LC identity (labels/normalized_type) — a content Lesson carries no
     // objective/strand of its own; those live on the aligned expectation.
     properties = stampLcProps(properties, a.profile.lessonKind, a.lcNodeTemplate, null);
+    // Bilan as data: the explicit `raw.educational_use` is what the parser reads
+    // on re-hydration (the top-level assessment flag above is for draft-time
+    // coverage, before the graph is re-parsed).
+    properties = writeAtPath(properties, "raw.educational_use", a.isBilan ? "Assessment" : "Instruction");
     let g = createNode.apply(base, { kind: a.profile.lessonKind, properties, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.lessonId, labels: lcLabels(a.profile.lessonKind, a.lcNodeTemplate) });
     g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.groupingId, toId: a.lessonId, properties: { orderInParent: position }, namespace: a.namespace });
     // Align the lesson to the standard it teaches (coverage edge).

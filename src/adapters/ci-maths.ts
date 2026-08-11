@@ -60,29 +60,13 @@ const MATHS_PARSE: GraphParseDescriptor = {
   labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Curriculum: "task" },
   numberFrom: "order",
   progressionEdge: "buildsTowards",
-  // Bilan (end-of-chapter assessment): per chapter, the last lesson whose ALIGNED
-  // EXPECTATION text mentions "bilan", else the last lesson. Detection reads the
-  // expectation's OS text (the Lesson node holds no OS prose), reached via the
-  // Lesson→expectation `supports` edge (⇒ expectation.childIds ∋ the Lesson).
+  // Bilan (end-of-chapter assessment) is now explicit graph DATA, not a parse-time
+  // heuristic: a Lesson node carries LC `educational_use = "Assessment"`. Read it
+  // straight through (materialized once by scripts/migrate-maths-graph.mjs; set by
+  // add_lesson's `isBilan` thereafter).
   postParse: (units) => {
-    const byId = new Map(units.map((u) => [u.id, u]));
-    const expForLesson = new Map<string, CurriculumUnit>();
-    for (const ex of units) {
-      if (ex.kind !== "expectation") continue;
-      for (const cid of ex.childIds) {
-        const c = byId.get(cid);
-        if (c?.kind === "lesson") expForLesson.set(c.id, ex);
-      }
-    }
-    const bilanText = (l: CurriculumUnit) => String(expForLesson.get(l.id)?.text ?? l.text ?? "");
-    for (const c of units) {
-      if (c.kind !== "chapter") continue;
-      const lessons = c.childIds
-        .map((id) => byId.get(id))
-        .filter((u): u is CurriculumUnit => !!u && u.kind === "lesson")
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      const bilan = [...lessons].reverse().find((l) => /bilan/i.test(bilanText(l))) ?? lessons[lessons.length - 1];
-      if (bilan) bilan.isAssessment = true;
+    for (const u of units) {
+      if (u.kind === "lesson" && u.properties.educational_use === "Assessment") u.isAssessment = true;
     }
   },
 };
