@@ -1,10 +1,14 @@
 # Graph-native authoring — target model & migration plan
 
-> **Status: Proposed — awaiting sign-off.** No code yet. This note captures the
-> design agreed in discussion so the node/edge model and the migration can be
-> reviewed before implementation. LC type/edge vocabulary confirmed against the
-> [LC Curriculum reference](https://docs.learningcommons.org/knowledge-graph/graph-reference/curriculum)
-> (Activity, Material, Lesson, LessonGrouping).
+> **Status: Current — implemented and live.** Landed for CI maths via PR #28
+> (split + authoring/edit surface) and PR #29 (bilan as data), both merged; the
+> Firestore store has been re-seeded (ci/maths: 509 nodes / 885 edges). The
+> migration is reproducible via `scripts/migrate-maths-graph.mjs`. CE1 reading is
+> NOT yet migrated (no content layer). LC type/edge vocabulary confirmed against
+> the [LC Curriculum reference](https://docs.learningcommons.org/knowledge-graph/graph-reference/curriculum)
+> (Activity, Material, Lesson, LessonGrouping); this project uses the graph's
+> existing serialization (snake_case, `hasChild`/`supports`), not canonical LC —
+> see *Representation convention* below.
 
 ## Why
 

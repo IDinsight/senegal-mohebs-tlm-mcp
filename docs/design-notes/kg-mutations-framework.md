@@ -1,6 +1,6 @@
 # KG mutations — the two-phase confirm framework
 
-> **Status: Current.** The two-phase confirm framework described here is live. The Regime-B / `chapitreNum` drift material is HISTORICAL (see the update note below).
+> **Status: Current.** The two-phase confirm framework described here is live. The Regime-B / `chapitreNum` drift material is HISTORICAL (see the update note below). Also POST-SPLIT: the curriculum recipes were renamed/reshaped by graph-native authoring — `add_chapter`→`add_lesson_grouping` (empty, with a `groupName` type), `split_chapter`→`split_lesson_grouping`, and `add_lesson` now aligns a content lesson to an existing `expectation`. The framework mechanics below are unchanged; for the current recipe surface see [`graph-native-authoring.md`](graph-native-authoring.md) and [`../technical-reference.md`](../technical-reference.md).
 
 > **Update (maths↔reading convergence):** the "Regime-B" / `chapitreNum` drift discussion below is HISTORICAL. Chapter↔lesson membership is now the `hasChild` edge (the denormalized number-join is gone), so move/split rewire the edge and renumber changes only the chapter's own number — no cross-lesson cascade, no drift warning. The `regimeGated` recipe flag was removed. See CLAUDE.md.
 
