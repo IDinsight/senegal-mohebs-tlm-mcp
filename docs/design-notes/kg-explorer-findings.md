@@ -1,5 +1,7 @@
 # Live KG explorer — findings & decisions (Step 0)
 
+> **Status: Historical / partly superseded.** The central decision here — ship a **spine-only** store — was later reversed: the store now holds the FULL Learning-Commons graph (framework/derived nodes + `supports`/`relatesTo` edges included), and the explorer surfaces it. See [`../technical-reference.md`](../technical-reference.md) "Data-scope finding" and CLAUDE.md "Full-graph store" for the current design. This note is kept for the original rationale and the feature-by-feature analysis.
+
 > **Update:** the raw field names below are pre-convergence (camelCase `chapitreNum`/`osTexte`). The KG is now snake_case with an LC metadata scheme (`metadata.role`/`metadata.order`/`metadata.en`); `src/kg-export.ts` reads the current names. Kept as a historical record.
 
 **Status:** report before build · **Date:** 2026-07-31 · **Author:** (curator tooling)

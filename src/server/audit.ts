@@ -5,7 +5,7 @@
 // the supported way to review the trail — replacing the manual Firestore-console
 // check — and it CLOSES the audit-readback verification.
 //
-// Design guardrails (see docs/read-audit-findings.md):
+// Design guardrails (see docs/design-notes/read-audit-findings.md):
 //   • READER, NOT ANALYTICS. query → page of records. No dashboards, no
 //     anomaly detection, no aggregations/exports.
 //   • STRICTLY READ-ONLY. It reuses ONLY the store's read/append surface

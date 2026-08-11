@@ -12,7 +12,7 @@
 // the explorer needs the WHOLE spine graph (every node + edge), not a
 // per-unit slice. It reads the same normalized store those adapters hydrate from.
 //
-// Data-scope note (see docs/kg-explorer-findings.md): the store now holds the
+// Data-scope note (see docs/design-notes/kg-explorer-findings.md): the store now holds the
 // FULL Learning-Commons graph — the curriculum spine (for CI maths
 // `domaine → chapter → lesson → component → task` via hasChild, plus
 // `chapter → chapter` buildsTowards; for CE1 reading `week → standard →

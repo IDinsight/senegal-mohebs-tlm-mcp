@@ -54,7 +54,7 @@ Sits on top of the draft/published split. A **graph mutation** is a pure functio
 - **preview** (no `confirm`) → runs `validate` (empty seam today; #6 fills it), computes a per-mutation `diff` keyed by stable id, and returns the shared confirmation envelope extended with `diff`, `warnings`, and a `confirmationToken`. Changes NO state.
 - **confirm** (with the `confirmationToken`) → verifies the token matches the mutation + args + base-version + is unused, lazily creates a draft if none exists (byte-for-byte from published), then applies the mutation to the **draft slot only** via `writeSlot`. Published is unaffected — publish is a separate step (#10).
 
-The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(type, from, to)` for edges) — friendly properties like `chapitreNum` live in `properties.raw` and are NEVER used as identity. A stale token (base moved between preview and confirm) or a replayed token is rejected cleanly with no partial apply. See [`docs/kg-mutations-framework.md`](docs/kg-mutations-framework.md) for the full design note, decisions, and the mutation interface.
+The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(type, from, to)` for edges) — friendly properties like `chapitreNum` live in `properties.raw` and are NEVER used as identity. A stale token (base moved between preview and confirm) or a replayed token is rejected cleanly with no partial apply. See [`docs/design-notes/kg-mutations-framework.md`](design-notes/kg-mutations-framework.md) for the full design note, decisions, and the mutation interface.
 
 **No user-facing graph edit tool ships in this step.** The framework has exactly one test-only mutation, wired inside `mutations.test.ts` — real edit tools (`upsert_property` / `create_node` / `delete_node` / `link_nodes`) land in #11/#12.
 
@@ -270,7 +270,7 @@ Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering
 A hosted static page that lets a CI maths/CE1 reading expert pick a knowledge graph and explore it
 **live** — sourced from Firestore's PUBLISHED slot, not a baked snapshot. It is **read-only**:
 it never writes, never sees drafts, and does not touch the MCP tools or their auth. Editing
-stays in the MCP curator tools. See `docs/kg-explorer-findings.md` for the design rationale and
+stays in the MCP curator tools. See `docs/design-notes/kg-explorer-findings.md` for the design rationale and
 the data-scope finding.
 
 Two pieces: a read-only **export endpoint** (companion routes on the same Cloud Run service,
@@ -398,7 +398,7 @@ EVERY raw edge verbatim (`ci/maths`: 397 nodes / 773 edges; `ce1/reading`: 1401 
 reproduces the source `knowledge_graph.json` (guarded by `src/curriculum/faithful-reexport.test.ts`)
 — the store can replace the bundle. The explorer surfaces the whole graph: spine categories plus a
 neutral `framework` legend bucket for non-spine nodes and the `supports`/`relatesTo` cross-links.
-See `docs/kg-explorer-findings.md` §1 for the original spine-only analysis (superseded).
+See `docs/design-notes/kg-explorer-findings.md` §1 for the original spine-only analysis (superseded).
 
 ### Deploy the explorer
 
@@ -579,7 +579,7 @@ services  storage/* · curriculum/* · generation/* · kg-store/*   — never im
 core      config.ts · types.ts · context/{state,shared} · utils/*   — leaves
 ```
 
-Cross-module imports go through each module's `index.ts` (barrel); files **inside** a module import their siblings directly. `activate.ts` (resolve the adapter → run the schema guard → bind the context) is app-layer glue that wires `context/` to `adapters/`, so it lives at the root next to `index.ts` rather than inside the leaf `context/` module. The full design rationale is in [`docs/multi-subject-architecture.md`](docs/multi-subject-architecture.md).
+Cross-module imports go through each module's `index.ts` (barrel); files **inside** a module import their siblings directly. `activate.ts` (resolve the adapter → run the schema guard → bind the context) is app-layer glue that wires `context/` to `adapters/`, so it lives at the root next to `index.ts` rather than inside the leaf `context/` module. The full design rationale is in [`docs/design-notes/multi-subject-architecture.md`](design-notes/multi-subject-architecture.md).
 
 ## Adding a new grade/subject
 
@@ -599,7 +599,7 @@ Adding a subject takes its **sources** (data) and an **adapter** (code). If the 
 
 **Rules the build enforces:** imports point *down* the layers above; **service modules (`storage`/`curriculum`/`generation`/`kg-store`) must not import `adapters`** — pass what they need in as arguments (as `reconcile(deliverables)` and `discoverDocuments(deliverables)` do); cross-module imports go through the module's `index.ts`. `npm run check:cycles` fails the build on any import cycle.
 
-> **CE1 reading** is wired as a worked second subject (scope: one teacher guide **per week**), registered as `ce1/reading` — its adapter parses a `nodes`/`relationships` + `hasChild` graph. See `docs/multi-subject-architecture.md` §11 phase 4 for what its KG needed and the open follow-ups (no `terminology.json` yet; evaluation grids pending).
+> **CE1 reading** is wired as a worked second subject (scope: one teacher guide **per week**), registered as `ce1/reading` — its adapter parses a `nodes`/`relationships` + `hasChild` graph. See `docs/design-notes/multi-subject-architecture.md` §11 phase 4 for what its KG needed and the open follow-ups (no `terminology.json` yet; evaluation grids pending).
 
 ## Testing note
 

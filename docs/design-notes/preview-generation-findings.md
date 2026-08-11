@@ -1,5 +1,7 @@
 # Preview generation (draft-resolved) — findings & decisions
 
+> **Status: Current.**
+
 Phase 3, step 1. Let an expert who has staged a draft edit generate a **preview**
 of the teaching material that edit would produce — reading the **draft** instead
 of published — without touching published, the canonical documents bucket, or the

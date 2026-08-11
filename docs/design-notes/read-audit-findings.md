@@ -1,5 +1,7 @@
 # read_audit — findings & design note
 
+> **Status: Current.**
+
 Phase-1 hardening. `read_audit` is a filtered, paginated, **read-only** view of the
 append-only audit log (#7), gated to **approvers** via the existing authorize()
 chokepoint (#8), scoped to the caller's current `set_context` namespace (#3), and

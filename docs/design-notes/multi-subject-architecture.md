@@ -1,5 +1,7 @@
 # Multi-subject architecture — design doc
 
+> **Status: Current.** The adapter architecture described here is live. Some pre-convergence details are flagged HISTORICAL inline (see the update note below).
+
 > **Update (maths↔reading convergence):** both subjects now share the `{ nodes, relationships }` envelope + LC metadata scheme and parse through one generic `curriculum/parse-graph.ts::parseGraph` (a thin per-subject descriptor). References below to CI maths's `graph[]` envelope and the denormalized `chapitreNum` chapter↔lesson join are HISTORICAL — chapter↔lesson is now the `hasChild` edge. See CLAUDE.md for the current shape.
 
 **Status:** proposal · **Scope:** how the server supports more than one grade/subject

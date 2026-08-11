@@ -3,7 +3,7 @@
 // over stdio. Also the package's public export surface (for tests/embedding).
 //
 // Module layout (imports only ever point DOWN this list — enforced by
-// scripts/check-cycles.mjs; see docs/multi-subject-architecture.md):
+// scripts/check-cycles.mjs; see docs/design-notes/multi-subject-architecture.md):
 //
 //   app       server/* · index.ts · activate.ts
 //   adapters  adapters/*            — one per-subject behavior module
