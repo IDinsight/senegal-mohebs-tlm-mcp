@@ -12,7 +12,7 @@
 //     Rule 2 blocks a delete_node that would leave dangling edges, so the
 //     caller's flow for a connected node is "unlink first, then delete."
 //     No cascade — that's #14.
-//   • Composite / recipe operations (add-chapter, split-chapter) are #13.
+//   • Composite / recipe operations (add-lesson-grouping, split-lesson-grouping) are #13.
 //   • Editing STRUCTURAL properties of existing nodes (renumber, code
 //     change) is a separate future step. create_node sets properties at
 //     birth; upsert_property stays wording-only.

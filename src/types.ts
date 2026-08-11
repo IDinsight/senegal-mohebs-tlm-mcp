@@ -27,8 +27,8 @@ export type DocumentContent = {
 };
 
 export type HistoryEntry = {
-  id: string;                 // `${scope}:${deliverableKey}` (CI maths: `${chapter}:manual`)
-  chapter: number;            // scope value; numeric for every subject shipped so far
+  id: string;                 // `${scope}:${deliverableKey}` (CI maths: `${unit}:manual`)
+  unit: number;               // scope value (CI maths: chapter number; CE1 reading: week); numeric for every subject shipped so far
   type: DeliverableKey;
   relPath: string;
   md5: string;
@@ -48,7 +48,7 @@ export type StoredObject = {
 
 export type DiscoveredDoc = {
   id: string;
-  chapter: number;
+  unit: number;
   type: DeliverableKey;
   relPath: string;
   md5: string | null;
@@ -208,6 +208,12 @@ export type RecipeProfile = {
   lessonKind: string;           // e.g. "lesson"  — the child a chapter holds
   containerEdge: string;        // e.g. "hasChild" — the id-based backbone edge chapter→lesson
   assessmentProperty: string;   // e.g. "isAssessment" — node property flagging the bilan
+  // Post-split (graph-native-authoring): a lesson is a content node that ALIGNS
+  // to an existing spine standard. add_lesson links `lessonKind --alignmentEdge-->
+  // expectationKind`. Omitted by subjects whose lessons carry the objective
+  // inline (no separate standard to align to).
+  expectationKind?: string;     // e.g. "expectation" — the spine standard (OS) a lesson aligns to
+  alignmentEdge?: string;       // e.g. "supports" — the lesson→expectation coverage edge
 };
 
 /**
@@ -226,9 +232,10 @@ export type RecipeProfile = {
  * existing sibling's value, then to leaving it blank with a warning.
  */
 export type LcStamp = {
-  labels?: string[];                    // → StoredNode.labels (top-level, e.g. ["StandardsFrameworkItem"])
+  labels?: string[];                    // → StoredNode.labels (top-level, e.g. ["Lesson"], ["LessonGrouping"])
   role?: string;                        // → raw.metadata.role
-  normalizedStatementType?: string;     // → raw.normalized_statement_type
+  normalizedType?: string;              // → raw.normalized_type (content nodes, e.g. "Lesson")
+  normalizedStatementType?: string;     // → raw.normalized_statement_type (spine nodes, e.g. "Standard Grouping")
   statementType?: string | { inheritTitleFromAncestorKind: string };  // → raw.statement_type
 };
 export type LcNodeTemplate = Record<string, LcStamp>;   // keyed by CurriculumUnit.kind
@@ -270,8 +277,8 @@ export interface SubjectAdapter {
 
   /**
    * The curriculum vocabulary the recipes (#14) bind to. Optional — declaring
-   * it is what makes the composite recipes (add_lesson / add_chapter /
-   * move_lesson / split_chapter / renumber) AVAILABLE for this subject. A
+   * it is what makes the composite recipes (add_lesson / add_lesson_grouping /
+   * move_lesson / split_lesson_grouping / renumber) AVAILABLE for this subject. A
    * subject that omits it has wording + raw structural verbs but no recipes.
    * See `RecipeProfile`.
    */

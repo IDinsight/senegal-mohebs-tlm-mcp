@@ -170,9 +170,9 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
           const c: CharacterRef = typeof raw === "string" ? { name: raw } : raw;
           if (!c?.name) continue;
           const existing = charMap.get(c.name);
-          if (!existing) charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstWeek: e.chapter });
+          if (!existing) charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstWeek: e.unit });
           else {
-            existing.firstWeek = Math.min(existing.firstWeek, e.chapter);
+            existing.firstWeek = Math.min(existing.firstWeek, e.unit);
             existing.type ??= c.type; existing.role ??= c.role; existing.description ??= c.description;
           }
         }
@@ -180,13 +180,13 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
       const establishedCharacters = [...charMap.values()].sort((a, b) => a.firstWeek - b.firstWeek || a.name.localeCompare(b.name));
 
       const recentThemes = [...entries]
-        .filter((e) => e.chapter !== week)
-        .sort((a, b) => b.chapter - a.chapter)
-        .flatMap((e) => (e.content.exampleDomains ?? []).map((t) => ({ theme: t, week: e.chapter })));
+        .filter((e) => e.unit !== week)
+        .sort((a, b) => b.unit - a.unit)
+        .flatMap((e) => (e.content.exampleDomains ?? []).map((t) => ({ theme: t, week: e.unit })));
 
       const coverage = listUnitsIn(m).map((w) => ({
         week: w.semaine,
-        hasGuide: entries.some((e) => e.chapter === w.semaine && e.type === "teacher_guide"),
+        hasGuide: entries.some((e) => e.unit === w.semaine && e.type === "teacher_guide"),
       }));
 
       const curriculumSlice = buildSlice(week, m);

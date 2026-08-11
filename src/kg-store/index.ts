@@ -11,11 +11,11 @@ export { upsertProperty, UPSERT_PROPERTY_SAFE_PATHS } from "./upsert-property.js
 export { createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId } from "./structural.js";
 export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } from "./structural.js";
 export {
-  addLesson, addChapter, moveLesson, splitChapter, renumber,
+  addLesson, addLessonGrouping, moveLesson, splitLessonGrouping, renumber,
   STRUCTURAL_EDIT_SAFE_PATHS, structuralEditErrors, RECIPES,
 } from "./recipes/index.js";
 export type {
-  AddLessonArgs, AddChapterArgs, MoveLessonArgs, SplitChapterArgs, RenumberArgs,
+  AddLessonArgs, AddLessonGroupingArgs, MoveLessonArgs, SplitLessonGroupingArgs, RenumberArgs,
   RecipeDescriptor, RecipeParam,
 } from "./recipes/index.js";
 export type {

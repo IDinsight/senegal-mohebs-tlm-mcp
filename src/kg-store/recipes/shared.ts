@@ -86,7 +86,7 @@ export const chapterNumberOf = (chapter: MutationNode, profile: RecipeProfile, s
 export const positionOf = (lesson: MutationNode, profile: RecipeProfile, sAliases: StructuralAliases): number =>
   asNum(readLogical(lesson, profile.lessonKind, K_LESSON_POSITION, sAliases)) ?? 0;
 
-// The set of numbers already taken by chapters — so add_chapter / renumber can
+// The set of numbers already taken by chapters — so add_lesson_grouping / renumber can
 // reject a colliding number (the additive/free-number paths; #14 decisions (c)/(1)).
 export function usedChapterNumbers(g: MutationGraph, profile: RecipeProfile, sAliases: StructuralAliases, exceptId?: string): Map<number, string> {
   const m = new Map<number, string>();
@@ -212,6 +212,7 @@ export function stampLcProps(
   if (!t) return props;
   let out = props;
   if (t.role !== undefined) out = writeAtPath(out, "raw.metadata.role", t.role);
+  if (t.normalizedType !== undefined) out = writeAtPath(out, "raw.normalized_type", t.normalizedType);
   if (t.normalizedStatementType !== undefined) out = writeAtPath(out, "raw.normalized_statement_type", t.normalizedStatementType);
   if (statementType != null && statementType !== "") out = writeAtPath(out, "raw.statement_type", statementType);
   return out;

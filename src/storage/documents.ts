@@ -12,13 +12,13 @@ export async function discoverDocuments(deliverables: DeliverableSpec[]): Promis
   for (const o of objs) {
     const segments = o.relPath.split("/");
     if (segments.length < 2) continue;               // must live under a scope subfolder
-    const chapter = firstInt(segments[0]);
-    if (chapter == null) continue;
+    const unit = firstInt(segments[0]);
+    if (unit == null) continue;
     const filename = segments[segments.length - 1];
     if (!filename.toLowerCase().endsWith(".docx") || filename.startsWith("~$")) continue;
     const spec = deliverables.find((d) => d.classify(filename));
     if (!spec) continue;
-    out.push({ id: `${chapter}:${spec.key}`, chapter, type: spec.key, relPath: o.relPath, md5: o.md5, updated: o.updated });
+    out.push({ id: `${unit}:${spec.key}`, unit, type: spec.key, relPath: o.relPath, md5: o.md5, updated: o.updated });
   }
   return out;
 }

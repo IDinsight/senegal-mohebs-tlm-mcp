@@ -14,30 +14,30 @@ import {
 import { editStructural, structuralEditErrors } from "./structural-edit.js";
 
 export type RenumberArgs = RecipeCommon & {
-  chapterId: string;
+  groupingId: string;
   newNumber: number;
 };
 
 export const renumber: GraphMutation<RenumberArgs> = {
   name: "renumber",
-  describe: (a) => `renumber chapter '${a.chapterId}' to ${a.newNumber}`,
+  describe: (a) => `renumber chapter '${a.groupingId}' to ${a.newNumber}`,
   validate: (base, _after, a) => {
     const errors: string[] = [];
-    const chapter = nodeById(base, a.chapterId);
-    if (!chapter) { errors.push(`renumber: chapter '${a.chapterId}' does not exist in the draft.`); return { errors, warnings: [] }; }
-    if (chapter.type !== a.profile.chapterKind) { errors.push(`renumber: node '${a.chapterId}' is a '${chapter.type}', not a ${a.profile.chapterKind}.`); return { errors, warnings: [] }; }
+    const chapter = nodeById(base, a.groupingId);
+    if (!chapter) { errors.push(`renumber: chapter '${a.groupingId}' does not exist in the draft.`); return { errors, warnings: [] }; }
+    if (chapter.type !== a.profile.chapterKind) { errors.push(`renumber: node '${a.groupingId}' is a '${chapter.type}', not a ${a.profile.chapterKind}.`); return { errors, warnings: [] }; }
     if (asNum(a.newNumber) == null) { errors.push(`renumber: 'newNumber' must be a finite number.`); return { errors, warnings: [] }; }
     const current = chapterNumberOf(chapter, a.profile, a.structuralAliases);
-    if (current === a.newNumber) errors.push(`renumber: chapter '${a.chapterId}' already has number ${a.newNumber}.`);
-    const used = usedChapterNumbers(base, a.profile, a.structuralAliases, a.chapterId);
+    if (current === a.newNumber) errors.push(`renumber: chapter '${a.groupingId}' already has number ${a.newNumber}.`);
+    const used = usedChapterNumbers(base, a.profile, a.structuralAliases, a.groupingId);
     if (used.has(a.newNumber)) errors.push(`renumber: chapter number ${a.newNumber} is already used by '${used.get(a.newNumber)}'. renumber targets a FREE number; moving into an occupied slot (insert-with-shift / swap) is a separate, explicit operation.`);
     // Structural-edit preflight on the chapter itself (safe paths + existing key).
-    errors.push(...structuralEditErrors(chapter, a.chapterId, K_CHAPTER_NUMBER, a.structuralAliases));
+    errors.push(...structuralEditErrors(chapter, a.groupingId, K_CHAPTER_NUMBER, a.structuralAliases));
     return { errors, warnings: [] };
   },
   apply: (base, a) => {
     // Only the chapter's own number changes; lessons follow via the hasChild edge.
-    const nodes = editStructural(base.nodes, a.chapterId, K_CHAPTER_NUMBER, a.newNumber, a.structuralAliases);
+    const nodes = editStructural(base.nodes, a.groupingId, K_CHAPTER_NUMBER, a.newNumber, a.structuralAliases);
     return { nodes, edges: base.edges };
   },
 };

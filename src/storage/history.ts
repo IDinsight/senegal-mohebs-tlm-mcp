@@ -20,7 +20,7 @@ async function histLoad(): Promise<HistoryFile> {
 async function histSave() { await getStorageAdapter().writeHistory(await histLoad()); }
 
 export async function listEntries() {
-  return [...(await histLoad()).entries].sort((a, b) => a.chapter - b.chapter || a.type.localeCompare(b.type));
+  return [...(await histLoad()).entries].sort((a, b) => a.unit - b.unit || a.type.localeCompare(b.type));
 }
 
 export async function getEntry(id: string) {
@@ -34,13 +34,13 @@ async function histUpsert(entry: HistoryEntry) {
   await histSave();
 }
 
-export async function recordContent(source: "pipeline" | "parsed", input: { chapter: number; type: DocType; relPath: string; content: DocumentContent }) {
+export async function recordContent(source: "pipeline" | "parsed", input: { unit: number; type: DocType; relPath: string; content: DocumentContent }) {
   const md5 = await getStorageAdapter().getObjectMd5(input.relPath);
   if (md5 == null) {
     return { error: `Object not found in the bucket at documents/${input.relPath}. Upload it first via create_upload_url, then call this again.` };
   }
   const entry: HistoryEntry = {
-    id: `${input.chapter}:${input.type}`, chapter: input.chapter, type: input.type, relPath: input.relPath,
+    id: `${input.unit}:${input.type}`, unit: input.unit, type: input.type, relPath: input.relPath,
     md5, updated: new Date().toISOString(), source, recordedAt: new Date().toISOString(), content: input.content,
   };
   await histUpsert(entry);
@@ -55,7 +55,7 @@ export async function reconcile(deliverables: DeliverableSpec[]) {
 
   const result = {
     tracked: [] as { id: string; relPath: string }[],
-    untracked: [] as { id: string; chapter: number; type: DocType; relPath: string; reason: "new" | "changed" }[],
+    untracked: [] as { id: string; unit: number; type: DocType; relPath: string; reason: "new" | "changed" }[],
     dropped: [] as string[],
     duplicatesResolved: [] as { id: string; chosen: string; discarded: string[] }[],
   };
@@ -69,7 +69,7 @@ export async function reconcile(deliverables: DeliverableSpec[]) {
       result.duplicatesResolved.push({ id, chosen: chosen.relPath, discarded: docsList.filter((d) => d !== chosen).map((d) => d.relPath) });
     }
     if (known && chosen.md5 && known.md5 === chosen.md5) result.tracked.push({ id, relPath: chosen.relPath });
-    else result.untracked.push({ id, chapter: chosen.chapter, type: chosen.type, relPath: chosen.relPath, reason: known ? "changed" : "new" });
+    else result.untracked.push({ id, unit: chosen.unit, type: chosen.type, relPath: chosen.relPath, reason: known ? "changed" : "new" });
   }
 
   const presentIds = new Set(byId.keys());

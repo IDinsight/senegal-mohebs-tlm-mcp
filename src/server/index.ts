@@ -28,7 +28,7 @@ export function buildServer(): McpServer {
   registerDocumentTools(server);     // reconcile, upload/download, record/log
   registerLifecycleTools(server);    // diff_draft, upsert_property, publish_draft, discard_draft
   registerStructuralTools(server);   // create_node, link_nodes, unlink_nodes, delete_node (raw structural verbs)
-  registerRecipeTools(server);       // add_lesson, add_chapter, move_lesson, split_chapter, renumber (composite recipes)
+  registerRecipeTools(server);       // add_lesson, add_lesson_grouping, move_lesson, split_lesson_grouping, renumber (composite recipes)
   registerCapabilityTools(server);   // get_capabilities (read-only mirror of what the caller can do)
   registerAuditTools(server);        // read_audit (approver-only, read-only reader over the append-only audit log)
   return server;

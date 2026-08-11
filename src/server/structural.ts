@@ -14,7 +14,7 @@
 //   • delete_node REFUSES to remove a node with incident edges — cascade
 //     lives in #14. The caller's manual flow is unlink_nodes each incident
 //     edge, then delete_node.
-//   • No composite / recipe tools (add-chapter, split-chapter) — those live
+//   • No composite / recipe tools (add-lesson-grouping, split-lesson-grouping) — those live
 //     in #13. Multi-primitive sequences still accumulate atomically on the
 //     draft and publish together via the existing publish_draft flow.
 //   • No structural-property editing of EXISTING nodes (renumber, code

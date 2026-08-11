@@ -1,6 +1,12 @@
 // ── Recipe: add_lesson ────────────────────────────────────────────────────────
-// Create a lesson node + link it (hasChild) to an EXISTING chapter, as one
-// composite. Additive. Chapter membership IS the hasChild edge — no number to set.
+// Create a content lesson node, link it (hasChild) to an EXISTING chapter, AND
+// align it (alignmentEdge, e.g. supports) to an EXISTING spine expectation (the
+// objectif spécifique it teaches) — one atomic composite. Additive. Chapter
+// membership and expectation alignment are both edges; there is no number join.
+//
+// Post-split (graph-native-authoring): the objective lives on the expectation,
+// not the lesson, so a lesson MUST align to a standard that already exists — the
+// standard is authored separately, upstream of teaching material.
 
 import type { GraphMutation } from "../mutations.js";
 import { createNode, linkNodes } from "../structural.js";
@@ -8,13 +14,14 @@ import {
   type RecipeCommon,
   K_LESSON_POSITION, W_TEXT, W_TEXT_EN,
   nodeById, childLessons, positionOf, buildProps,
-  resolveStatementType, stampLcProps, lcLabels,
+  stampLcProps, lcLabels,
 } from "./shared.js";
 
 export type AddLessonArgs = RecipeCommon & {
-  chapterId: string;
+  groupingId: string;
+  expectationId: string;  // the existing spine standard (OS) this lesson aligns to
   lessonId: string;       // minted by the tool layer
-  text: string;
+  text: string;           // the lesson's own title/name (NOT the OS — that's on the expectation)
   text_en?: string;
   order?: number;
   isBilan?: boolean;
@@ -22,33 +29,30 @@ export type AddLessonArgs = RecipeCommon & {
 
 export const addLesson: GraphMutation<AddLessonArgs> = {
   name: "addLesson",
-  describe: (a) => `add a lesson to chapter '${a.chapterId}'`,
+  describe: (a) => `add a lesson to chapter '${a.groupingId}' (aligned to '${a.expectationId}')`,
   validate: (base, _after, a) => {
     const errors: string[] = [];
     const warnings: string[] = [];
-    const chapter = nodeById(base, a.chapterId);
-    if (!chapter) errors.push(`add_lesson: chapter '${a.chapterId}' does not exist in the draft.`);
-    else if (chapter.type !== a.profile.chapterKind) errors.push(`add_lesson: node '${a.chapterId}' is a '${chapter.type}', not a ${a.profile.chapterKind}.`);
-    if (typeof a.text !== "string" || a.text.length === 0) errors.push(`add_lesson: 'text' (the lesson objective) is required.`);
-    if (base.nodes.some((n) => n.id === a.lessonId)) errors.push(`add_lesson: minted lesson id '${a.lessonId}' already exists (retry).`);
-    // Faithful-LC warning: the lesson's strand (statement_type) is inherited
-    // from its domaine ancestor. If that can't be resolved (chapter not yet
-    // under a domaine, no sibling to copy), the node lands without a strand —
-    // surface it so the reviewer fills it before publish.
-    if (chapter && chapter.type === a.profile.chapterKind
-        && a.lcNodeTemplate?.[a.profile.lessonKind]?.statementType != null
-        && resolveStatementType(base, a.chapterId, a.profile.lessonKind, a.lcNodeTemplate, a.profile.containerEdge) == null) {
-      warnings.push(`add_lesson: could not derive the lesson's strand (statement_type) from a domaine ancestor — set it via upsert_property before publishing.`);
+    const chapter = nodeById(base, a.groupingId);
+    if (!chapter) errors.push(`add_lesson: chapter '${a.groupingId}' does not exist in the draft.`);
+    else if (chapter.type !== a.profile.chapterKind) errors.push(`add_lesson: node '${a.groupingId}' is a '${chapter.type}', not a ${a.profile.chapterKind}.`);
+    const expKind = a.profile.expectationKind;
+    if (expKind) {
+      const expectation = nodeById(base, a.expectationId);
+      if (!expectation) errors.push(`add_lesson: expectation '${a.expectationId}' does not exist in the draft — a lesson must align to a standard that already exists.`);
+      else if (expectation.type !== expKind) errors.push(`add_lesson: node '${a.expectationId}' is a '${expectation.type}', not a ${expKind}.`);
     }
+    if (typeof a.text !== "string" || a.text.length === 0) errors.push(`add_lesson: 'text' (the lesson title) is required.`);
+    if (base.nodes.some((n) => n.id === a.lessonId)) errors.push(`add_lesson: minted lesson id '${a.lessonId}' already exists (retry).`);
     return { errors, warnings };
   },
   apply: (base, a) => {
-    // apply runs BEFORE validate in the dry-run — guard the missing-chapter
-    // case so a bad chapterId yields a clean "blocked" (validate) rather than a
-    // throw. A no-op `after` diffs to nothing; validate blocks the token anyway.
-    const chapter = nodeById(base, a.chapterId);
-    if (!chapter) return base;
-    const siblings = childLessons(base, a.chapterId, a.profile);
+    // apply runs BEFORE validate in the dry-run — guard the missing-endpoint
+    // cases so a bad id yields a clean "blocked" (validate) rather than a throw.
+    const chapter = nodeById(base, a.groupingId);
+    const expKind = a.profile.expectationKind;
+    if (!chapter || (expKind && !nodeById(base, a.expectationId))) return base;
+    const siblings = childLessons(base, a.groupingId, a.profile);
     const position = a.order ?? (siblings.reduce((m, l) => Math.max(m, positionOf(l, a.profile, a.structuralAliases)), 0) + 1);
     let properties = buildProps(
       [
@@ -58,12 +62,15 @@ export const addLesson: GraphMutation<AddLessonArgs> = {
       ],
       [{ path: a.profile.assessmentProperty, value: a.isBilan ?? false }],
     );
-    // Stamp LC identity: role/normalized_statement_type from the template, and
-    // the strand (statement_type) inherited from the chapter's domaine ancestor.
-    const strand = resolveStatementType(base, a.chapterId, a.profile.lessonKind, a.lcNodeTemplate, a.profile.containerEdge);
-    properties = stampLcProps(properties, a.profile.lessonKind, a.lcNodeTemplate, strand);
+    // Stamp LC identity (labels/normalized_type) — a content Lesson carries no
+    // objective/strand of its own; those live on the aligned expectation.
+    properties = stampLcProps(properties, a.profile.lessonKind, a.lcNodeTemplate, null);
     let g = createNode.apply(base, { kind: a.profile.lessonKind, properties, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.lessonId, labels: lcLabels(a.profile.lessonKind, a.lcNodeTemplate) });
-    g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.chapterId, toId: a.lessonId, properties: { orderInParent: position }, namespace: a.namespace });
+    g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.groupingId, toId: a.lessonId, properties: { orderInParent: position }, namespace: a.namespace });
+    // Align the lesson to the standard it teaches (coverage edge).
+    if (expKind && a.profile.alignmentEdge) {
+      g = linkNodes.apply(g, { edgeType: a.profile.alignmentEdge, fromId: a.lessonId, toId: a.expectationId, properties: {}, namespace: a.namespace });
+    }
     return g;
   },
 };

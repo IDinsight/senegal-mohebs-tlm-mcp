@@ -266,7 +266,7 @@ describe("editable and rules come from the real sources (no hand-copied literals
     // renumber is the one renumber-bearing recipe; the rest are additive/edge-only.
     const byName = new Map<string, { renumberBearing: boolean }>(caps.editable.recipes.list.map((r: { name: string }) => [r.name, r]));
     expect(byName.get("renumber")!.renumberBearing).toBe(true);
-    expect(["add_lesson", "add_chapter", "move_lesson", "split_chapter"].every((n) => byName.get(n)!.renumberBearing === false)).toBe(true);
+    expect(["add_lesson", "add_lesson_grouping", "move_lesson", "split_lesson_grouping"].every((n) => byName.get(n)!.renumberBearing === false)).toBe(true);
   });
 
   it("editable.structuralKeys mirrors the adapter's structuralAliases + the central allowlist (#14)", async () => {

@@ -127,7 +127,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       keysByNodeKind: adapter.structuralAliases ?? {},
       safePaths: [...STRUCTURAL_EDIT_SAFE_PATHS].sort(),
       note:
-        "Editable only through the recipes (renumber changes a chapter's number and cascades to its lessons; move_lesson/split_chapter rewrite a moved lesson's chapter-membership number). Values are NUMERIC (order/number), not wording. There is deliberately no raw structural-property tool.",
+        "Editable only through the recipes (renumber changes a chapter's number and cascades to its lessons; move_lesson/split_lesson_grouping rewrite a moved lesson's chapter-membership number). Values are NUMERIC (order/number), not wording. There is deliberately no raw structural-property tool.",
     },
     structural: {
       verbs: ["create_node", "link_nodes", "unlink_nodes", "delete_node"],

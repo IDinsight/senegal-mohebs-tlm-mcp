@@ -4,7 +4,7 @@
 //   • ping is registered, returns ok, and touches NO datastore (proven by
 //     wiring a storage adapter that throws on every method — ping must still
 //     answer, distinguishing "transport up, store down" from "server down");
-//   • list_documents ADVERTISES its inputSchema (limit/cursor/chapter/type) —
+//   • list_documents ADVERTISES its inputSchema (limit/cursor/unit/type) —
 //     the schema/validator divergence from live testing cannot recur.
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -68,14 +68,15 @@ describe("ping (health) tool", () => {
 });
 
 describe("list_documents — advertised inputSchema (single source of truth)", () => {
-  it("exposes limit, cursor, chapter and type as declared params", async () => {
+  it("exposes limit, cursor, unit and type as declared params", async () => {
     const tools = await client.listTools();
     const listDocs = tools.tools.find((t) => t.name === "list_documents");
     expect(listDocs).toBeDefined();
     const props = (listDocs!.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
     // The exact divergence from live testing: schema advertised NO properties
     // while the handler enforced a typed limit. All four must be visible now.
-    expect(Object.keys(props).sort()).toEqual(["chapter", "cursor", "limit", "type"]);
+    // (The scope filter is `unit`, consistent with the other document tools.)
+    expect(Object.keys(props).sort()).toEqual(["cursor", "limit", "type", "unit"]);
   });
 
   it("rejects a wrongly-typed limit at the schema boundary (validator == advertised schema)", async () => {
