@@ -563,23 +563,7 @@ enforced yet. Flip this by editing the `unknown-actor policy` block in
 
 ## Architecture
 
-Both subjects now share the converged `{ nodes, relationships }` envelope + LC metadata scheme and parse through one generic `curriculum/parse-graph.ts::parseGraph` (a thin per-subject descriptor). They still differ in their read PROJECTIONS and deliverables (CI maths → chapters/lessons with a two-axis week/content structure; CE1 reading → weeks/strands), so behaviour is **pluggable per subject** — one **adapter module** per subject owns everything subject-specific in one place.
-
-- **Subject adapter** (`src/adapters/*.ts`) — one module per subject. Each module exposes a common behavior interface: raw-graph `detect`/`parse` (the schema knowledge each subject already owns), the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), `buildGenerationContext`, plus the subject's `deliverables` and `capabilities`. Capability-gated helpers (`suggestFreshDomain`/`domainUsage`, only CI maths today) are optional on the interface. Storage round-trip is handled generically on top of the parsed model by `curriculum/store-bridge.ts` (`serializeModel` / `deserializeToModel`), so no serialize/deserialize methods hang off the adapter.
-- **Adapter registry** (`src/adapters/index.ts`) — binds each `(grade, subject)` pair to an adapter builder. Resolution is many-to-one capable: several `${grade}/${subject}` keys may point at the same builder when their graphs share a shape, but different grades of the "same" subject stay independent by default — a graph with a different envelope registers its own adapter.
-
-Adapters are **behavior only**. There is no `schema` field, no LC property/edge/cardinality declaration, and no integrity rules on the adapter — that's deliberate. The write-safety rules that will land in the next phase live *in the write tools*, not on the adapter (and they'll key on the raw LC IRI — the stored `id` is the LC UUID verbatim, and friendly properties like `chapitreNum`/`semaine` live inside `properties.raw`).
-
-Modules are **layered, and imports only ever point down**. A build-time check (`npm run check:cycles`, run automatically by `npm run build`) fails on any import cycle:
-
-```
-app       server/* · index.ts · activate.ts
-adapters  adapters/*                                     — one behavior module per subject
-services  storage/* · curriculum/* · generation/* · kg-store/*   — never import adapters
-core      config.ts · types.ts · context/{state,shared} · utils/*   — leaves
-```
-
-Cross-module imports go through each module's `index.ts` (barrel); files **inside** a module import their siblings directly. `activate.ts` (resolve the adapter → run the schema guard → bind the context) is app-layer glue that wires `context/` to `adapters/`, so it lives at the root next to `index.ts` rather than inside the leaf `context/` module. The full design rationale is in [`docs/design-notes/multi-subject-architecture.md`](design-notes/multi-subject-architecture.md).
+The architecture summary lives in [CLAUDE.md](../CLAUDE.md) — the converged `{ nodes, relationships }` envelope + LC metadata scheme, the one-adapter-per-subject model (`detect`/`parse` + the LC→friendly projection + `buildGenerationContext`, behavior only — no schema on the adapter), and the enforced module layering (imports point **down**; service modules never import `adapters`; the generic `CurriculumModel ⇄ nodes/edges` round-trip lives in `curriculum/store-bridge.ts`). The full design rationale is in [`docs/design-notes/multi-subject-architecture.md`](design-notes/multi-subject-architecture.md). The operational how-to for wiring a new subject follows.
 
 ## Adding a new grade/subject
 
