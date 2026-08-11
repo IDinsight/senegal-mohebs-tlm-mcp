@@ -72,7 +72,7 @@ export async function activateContext(grade: string, subject: string): Promise<A
       return { ok: false, error: `Could not read the knowledge graph for '${match.grade}/${match.subject}': ${(e as Error).message}`, available };
     }
     if (!adapter.detect(raw)) {
-      return { ok: false, error: `The knowledge graph for '${match.grade}/${match.subject}' does not match the schema the '${match.subject}' adapter understands. Refusing to load it, since it would mis-parse. See docs/multi-subject-architecture.md.`, available };
+      return { ok: false, error: `The knowledge graph for '${match.grade}/${match.subject}' does not match the schema the '${match.subject}' adapter understands. Refusing to load it, since it would mis-parse. See docs/design-notes/multi-subject-architecture.md.`, available };
     }
   }
 

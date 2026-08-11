@@ -76,7 +76,7 @@ export interface StorageAdapter {
 // Normalized curriculum model — the shared shape every subject's graph is parsed
 // into, so the rest of the server never touches raw graph JSON. General enough
 // for a numbered chapter/lesson list AND for an edge-tree of paliers/skill-areas.
-// See docs/multi-subject-architecture.md §5.1.
+// See docs/design-notes/multi-subject-architecture.md §5.1.
 // ─────────────────────────────────────────────────────────────────────────────
 export type CurriculumUnit = {
   id: string;                          // stable id from the graph

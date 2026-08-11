@@ -62,13 +62,13 @@ Curriculum edits are exposed as **composite recipes** (`add_lesson`/`add_chapter
 
 ## Preview generation (isolated from published)
 
-`preview_generation(unit, deliverable)` closes the editing loop: `diff_draft` shows the graph **diff**; preview shows the resulting **material**. It resolves the curriculum from the **draft slot** and runs the *same* `buildGenerationContext` (which takes an optional pre-resolved `model`, keeping the published path byte-identical). Isolation is the invariant: output goes through `create_preview_upload_url` to a **segregated `previews/` prefix** (invisible to `reconcile`/`list_documents`) with short-lived, labelled URLs — never the canonical bucket, `log_generation`, or history. Role-gated like `diff_draft` (curator+approver); audited as a distinct `preview` event. See `docs/preview-generation-findings.md`.
+`preview_generation(unit, deliverable)` closes the editing loop: `diff_draft` shows the graph **diff**; preview shows the resulting **material**. It resolves the curriculum from the **draft slot** and runs the *same* `buildGenerationContext` (which takes an optional pre-resolved `model`, keeping the published path byte-identical). Isolation is the invariant: output goes through `create_preview_upload_url` to a **segregated `previews/` prefix** (invisible to `reconcile`/`list_documents`) with short-lived, labelled URLs — never the canonical bucket, `log_generation`, or history. Role-gated like `diff_draft` (curator+approver); audited as a distinct `preview` event. See `docs/design-notes/preview-generation-findings.md`.
 
 ## Conventions & gotchas
 
 - **Session model**: per-session in HTTP mode, process-wide in stdio. Context-derived caches (active adapter, preloaded model, history cache) live in the session **bag** and are cleared wholesale on `set_context`. Don't hold subject state across a context switch.
 - **Read state is threaded, not shared**: adapter projections take the `CurriculumModel` as an argument (`buildGenerationContext(…, model?)`) so a draft-resolved read can't collide with a concurrent published read. Don't reintroduce a mutable per-adapter "current model".
 - **Confirmation gates differ by lifecycle**: document tools (`create_upload_url`, `log_generation`, `record_document_content`) write **live** ("no draft, no undo"); graph mutations **stage a draft** ("nothing reaches generation until you publish"). Same envelope, deliberately different stakes.
-- **`docs/*.md`** are tracked design notes (architecture, KG explorer, mutations, preview) — read them for deep dives.
+- **Docs**: `docs/technical-reference.md` is the operational manual (config, add-a-subject, runbook); `docs/design-notes/*.md` hold the per-subsystem design rationale (architecture, mutations, explorer, preview, audit). Each design note carries a **Status** line — heed "Historical / superseded" ones.
 - **Git**: `main` is the default; land changes via a branch + PR. Commit only when asked.
 </content>
