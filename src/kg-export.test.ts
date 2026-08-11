@@ -46,6 +46,17 @@ describe("kg-export — maths (converged two-axis shape)", () => {
     expect(g.meta.counts.byKind).toMatchObject({ domaine: 4, chapter: 25, week: 23, lesson: 112 });
   });
 
+  it("learning components are reachable in the tree (supports folded into hasChild for display)", async () => {
+    const g = (await exportNamespace(mathsNs))!;
+    const components = g.nodes.filter((n) => n.kind === "component");
+    expect(components.length).toBeGreaterThan(0);
+    // A component attaches to its lesson via a `supports` edge, folded to a
+    // hasChild display edge — so every component appears as a tree child. If the
+    // fold regresses, the explorer stops at lessons and components vanish.
+    const hasChildTargets = new Set(g.edges.filter((e) => e.r === "hasChild").map((e) => e.t));
+    expect(components.every((c) => hasChildTargets.has(c.id))).toBe(true);
+  });
+
   it("walks the CONTENT axis via hasChild: domaine → chapter → lesson", async () => {
     const g = (await exportNamespace(mathsNs))!;
     const dom = g.nodes.find((n) => n.kind === "domaine")!;
@@ -76,7 +87,7 @@ describe("kg-export — maths (converged two-axis shape)", () => {
     expect(catCount("component")).toBeGreaterThan(0);
     expect(catCount("task")).toBeGreaterThan(0);
     // taxonomy lists present categories in canonical order, each with a colour
-    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["strand", "subtopic", "expectation", "component", "task", "week"]);
+    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["strand", "subtopic", "expectation", "component", "task", "week", "framework"]);
     expect(g.meta.taxonomy.every((x) => /^#[0-9a-f]{6}$/i.test(x.color) && x.label.fr && x.label.en)).toBe(true);
   });
 
@@ -94,7 +105,7 @@ describe("kg-export — maths (converged two-axis shape)", () => {
 });
 
 describe("kg-export — reading", () => {
-  it("thematic (by strand) + planification + generic; spine filter drops orphan standards", async () => {
+  it("thematic (by strand) + planification + generic; every spine standard is week-connected", async () => {
     const g = (await exportNamespace(readingNs))!;
     expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["thematique", "planification", "generic"]);
     const thematic = g.meta.viewConfig.views.find((v) => v.id === "thematique") as any;
@@ -108,12 +119,14 @@ describe("kg-export — reading", () => {
     expect(standards.every((s) => s.strand)).toBe(true);
   });
 
-  it("categorizes the reading spine (standards = expectation) and its taxonomy omits absent categories", async () => {
+  it("categorizes the reading spine (standards = expectation); taxonomy includes surfaced non-spine categories", async () => {
     const g = (await exportNamespace(readingNs))!;
     // reading spine is week → standard → component; standards carry role=expectation
     expect(g.nodes.filter((n) => n.kind === "standard").every((s) => s.cat === "expectation")).toBe(true);
-    // no strand/subtopic/task NODES in the reading spine → those legend entries drop out
+    // Spine categories (expectation/component/week) PLUS the now-surfaced
+    // non-spine ones: strand/subtopic grouping nodes and the neutral framework
+    // bucket. `task` stays absent (reading has no illustrative-task nodes).
     const keys = g.meta.taxonomy.map((x) => x.key);
-    expect(keys).toEqual(["expectation", "component", "week"]);
+    expect(keys).toEqual(["strand", "subtopic", "expectation", "component", "week", "framework"]);
   });
 });

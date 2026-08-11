@@ -17,7 +17,8 @@ import { slug } from "./utils/index.js";
 import { setActiveContext, listAvailableContexts, subjectDir, sessionState, type ActiveContext } from "./context/index.js";
 import { resolveAdapter, setActiveAdapter } from "./adapters/index.js";
 import { getKgStore, kgNamespace } from "./kg-store/index.js";
-import { deserializeToModel, PRELOADED_MODEL_KEY } from "./curriculum/index.js";
+import { toRawEnvelope, PRELOADED_MODEL_KEY } from "./curriculum/index.js";
+import type { CurriculumModel } from "./types.js";
 
 export type ActivateResult =
   | { ok: true; context: ActiveContext }
@@ -38,7 +39,7 @@ export async function activateContext(grade: string, subject: string): Promise<A
   // written LAST by scripts/seed-kg-store.mjs, so its presence proves the seed
   // finished). Falling through to bundle in Firestore mode would silently
   // paper over an unseeded namespace, so we refuse instead.
-  let preloadedModel: ReturnType<typeof deserializeToModel> | null = null;
+  let preloadedModel: CurriculumModel | null = null;
   if (kgSource() === "firestore") {
     const ns = kgNamespace(match.grade, match.subject);
     // Resolve the *published* slot first, then read from it. Generation MUST
@@ -58,7 +59,11 @@ export async function activateContext(grade: string, subject: string): Promise<A
       getKgStore().listEdges(ns, publishedSlot),
     ]);
     if (!meta) return { ok: false, error: `KG_SOURCE=firestore: pointer for '${ns}' says slot '${publishedSlot}' is published, but that slot has no meta. Re-run the seed.`, available };
-    preloadedModel = deserializeToModel({ nodes, edges });
+    // The store holds the full raw graph; reconstruct the LC envelope and run
+    // the SAME parser bundle-mode uses, so the spine model is identical
+    // (guarded by parity:kg-store). Non-spine nodes are dropped by parse here,
+    // exactly as for a bundle read.
+    preloadedModel = adapter.parse(toRawEnvelope({ nodes, edges }));
   } else {
     let raw: unknown;
     try {

@@ -43,13 +43,27 @@ export const STRUCTURAL_RULES: readonly string[] = [
   "Rule 2 (no-orphan): every edge's from/to must resolve to a node that exists in the graph after the edit. A removed node with surviving incident edges is rejected — the caller must unlink first, since delete_node does not cascade.",
 ];
 
+// Canonical (key-order-insensitive) JSON — so "same content" compares by value,
+// not by the order fields happen to be written. Without this, a node minted by
+// create_node (its own key order) would never match a seeded node of identical
+// content (a different key order), and Rule 1 would miss the disguised rename.
+function canonical(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(canonical);
+  if (v && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(v as Record<string, unknown>).sort()) out[k] = canonical((v as Record<string, unknown>)[k]);
+    return out;
+  }
+  return v;
+}
+
 // Two nodes/edges "look like the same thing" when everything except the id
 // matches. If that's true across a remove/add pair, the edit was a rename —
 // which is exactly what Rule 1 blocks.
 function sameContentIgnoringId(a: MutationNode | MutationEdge, b: MutationNode | MutationEdge): boolean {
   const { id: _idA, ...restA } = a;
   const { id: _idB, ...restB } = b;
-  return JSON.stringify(restA) === JSON.stringify(restB);
+  return JSON.stringify(canonical(restA)) === JSON.stringify(canonical(restB));
 }
 
 export function validateStructural(reference: MutationGraph, after: MutationGraph): ValidationResult {

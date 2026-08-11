@@ -20,16 +20,19 @@ export type StoredNode = {
   namespace: string;                       // "${basePrefix}<grade>/<subject>"
   slot: Slot;                              // which slot this doc belongs to
   properties: Record<string, unknown>;     // normalized fields + raw passthrough
+  labels?: string[];                       // raw LC top-level labels, preserved verbatim for faithful re-export
+  spine?: boolean;                         // true = part of the read spine (chapters/lessons/…); false = framework/derived node kept only for faithful re-export
 };
 
 export type StoredEdge = {
   id: string;                              // stable per (from,to,type,namespace)
-  type: string;                            // "hasChild" | "buildsTowards"
+  type: string;                            // "hasChild" | "supports" | "relatesTo" | "buildsTowards"
   from: string;                            // node id
   to: string;                              // node id
   namespace: string;
   slot: Slot;
-  properties: Record<string, unknown>;     // reserved for later steps
+  properties: Record<string, unknown>;     // raw LC edge properties (carries the original edge `identifier` for re-export)
+  seq?: number;                            // original position in the raw relationships array — the deterministic order hydration replays through the parser
 };
 
 // Per-namespace provenance stamp. One StoredMeta per (namespace, slot), so a

@@ -11,6 +11,7 @@ import {
   type RecipeCommon,
   K_CHAPTER_NUMBER, K_LESSON_POSITION, W_TITLE, W_TITLE_EN, W_TEXT, W_TEXT_EN,
   asNum, buildProps, usedChapterNumbers,
+  resolveStatementType, stampLcProps, lcLabels,
 } from "./shared.js";
 
 export type AddChapterArgs = RecipeCommon & {
@@ -41,7 +42,7 @@ export const addChapter: GraphMutation<AddChapterArgs> = {
     return { errors, warnings };
   },
   apply: (base, a) => {
-    const chapterProps = buildProps(
+    let chapterProps = buildProps(
       [
         { aliases: a.wordingAliases, kind: a.profile.chapterKind, key: W_TITLE, value: a.title },
         { aliases: a.wordingAliases, kind: a.profile.chapterKind, key: W_TITLE_EN, value: a.title_en },
@@ -49,11 +50,13 @@ export const addChapter: GraphMutation<AddChapterArgs> = {
       ],
       [],
     );
-    let g = createNode.apply(base, { kind: a.profile.chapterKind, properties: chapterProps, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.chapterId });
+    // A chapter's statement_type is a constant ("Chapitre") — no ancestor walk.
+    chapterProps = stampLcProps(chapterProps, a.profile.chapterKind, a.lcNodeTemplate, resolveStatementType(base, null, a.profile.chapterKind, a.lcNodeTemplate, a.profile.containerEdge));
+    let g = createNode.apply(base, { kind: a.profile.chapterKind, properties: chapterProps, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.chapterId, labels: lcLabels(a.profile.chapterKind, a.lcNodeTemplate) });
     (a.lessons ?? []).forEach((l, i) => {
       const lessonId = a.lessonIds[i];
       const position = i + 1;
-      const props = buildProps(
+      let props = buildProps(
         [
           { aliases: a.wordingAliases, kind: a.profile.lessonKind, key: W_TEXT, value: l.text },
           { aliases: a.wordingAliases, kind: a.profile.lessonKind, key: W_TEXT_EN, value: l.text_en },
@@ -61,7 +64,12 @@ export const addChapter: GraphMutation<AddChapterArgs> = {
         ],
         [{ path: a.profile.assessmentProperty, value: l.isBilan ?? false }],
       );
-      g = createNode.apply(g, { kind: a.profile.lessonKind, properties: props, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: lessonId });
+      // Seed lessons sit under a brand-new chapter not yet linked to a domaine,
+      // so the strand rarely resolves here — stampLcProps leaves it blank when
+      // resolveStatementType returns null, for the reviewer to fill post-publish.
+      const strand = resolveStatementType(g, a.chapterId, a.profile.lessonKind, a.lcNodeTemplate, a.profile.containerEdge);
+      props = stampLcProps(props, a.profile.lessonKind, a.lcNodeTemplate, strand);
+      g = createNode.apply(g, { kind: a.profile.lessonKind, properties: props, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: lessonId, labels: lcLabels(a.profile.lessonKind, a.lcNodeTemplate) });
       g = linkNodes.apply(g, { edgeType: a.profile.containerEdge, fromId: a.chapterId, toId: lessonId, properties: { orderInParent: position }, namespace: a.namespace });
     });
     return g;

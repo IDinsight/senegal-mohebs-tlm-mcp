@@ -27,7 +27,7 @@ import { randomUUID } from "node:crypto";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { getKgStore, kgNamespace, toAuditActor } from "../kg-store/index.js";
-import { deserializeToModel } from "../curriculum/index.js";
+import { toRawEnvelope } from "../curriculum/index.js";
 import { getStorageAdapter } from "../storage/index.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
@@ -56,7 +56,9 @@ async function resolveDraftModel(
     store.readMeta(ns, pointer.draftSlot),
   ]);
   return {
-    model: deserializeToModel({ nodes, edges }),
+    // Same full-graph hydration as activate.ts: rebuild the LC envelope from the
+    // draft slot and run the active adapter's parser to derive the spine model.
+    model: getActiveAdapter().parse(toRawEnvelope({ nodes, edges })),
     draftSlot: pointer.draftSlot,
     draftVersion: meta?.contentHash ?? null,
   };

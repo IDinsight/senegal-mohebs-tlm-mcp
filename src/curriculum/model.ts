@@ -29,7 +29,7 @@ export function buildModel(units: CurriculumUnit[]): CurriculumModel {
 export function unit(u: Partial<CurriculumUnit> & Pick<CurriculumUnit, "id" | "kind">): CurriculumUnit {
   return {
     code: null, title: null, text: null, order: null, parentId: null,
-    childIds: [], buildsTowards: [], buildsFrom: [], isAssessment: false, properties: {},
+    childIds: [], buildsTowards: [], buildsFrom: [], isAssessment: false, properties: {}, labels: [],
     ...u,
   };
 }

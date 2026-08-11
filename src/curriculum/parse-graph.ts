@@ -78,6 +78,7 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
       text: grouping ? null : ((p.description as string) ?? null),
       order: orderOf(n),
       properties: p,
+      labels: n.labels ?? [],
     }));
   }
   const byId = new Map(units.map((u) => [u.id, u]));
@@ -118,5 +119,12 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
   }
 
   const finalUnits = (d.postParse && d.postParse(units, { nodes, rels })) || units;
-  return buildModel(finalUnits);
+  const model = buildModel(finalUnits);
+  // Echo the raw graph so the store can persist EVERY node + edge (spine and
+  // non-spine) for a faithful, re-exportable copy — not just the parsed spine.
+  model.rawGraph = {
+    nodes: nodes.map((n) => ({ id: n.id, labels: n.labels, properties: n.properties })),
+    relationships: rels.map((r) => ({ id: r.id, type: r.type, start: r.start, end: r.end, properties: r.properties })),
+  };
+  return model;
 }

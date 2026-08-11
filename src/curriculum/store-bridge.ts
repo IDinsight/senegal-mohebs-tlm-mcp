@@ -5,7 +5,7 @@
 // agnostic — it doesn't know CurriculumModel at all — and so no import cycle
 // forms between curriculum and kg-store.
 import { buildModel, unit } from "./model.js";
-import type { CurriculumModel, CurriculumUnit } from "../types.js";
+import type { CurriculumModel, CurriculumUnit, RawGraphSnapshot } from "../types.js";
 import type { StoredNode, StoredEdge } from "../kg-store/index.js";
 import { edgeId } from "../kg-store/index.js";
 
@@ -30,11 +30,63 @@ const numeric = (v: unknown, fallback: number): number => (typeof v === "number"
 
 export type SerializedGraph = { nodes: LogicalNode[]; edges: LogicalEdge[] };
 
-// Encode a parsed CurriculumModel as generic nodes + edges. All CurriculumUnit
-// fields land in `properties`; parentId/childIds/buildsFrom/buildsTowards are
-// externalized as edges and NOT redundantly copied into properties (they are
-// re-derived from the edges on the way back).
+// Encode a parsed CurriculumModel as generic nodes + edges.
+//
+// FULL-GRAPH mode (when the model carries `rawGraph`, i.e. it came from
+// parseGraph): store EVERY raw node and EVERY raw edge verbatim, so the store is
+// a faithful, re-exportable Learning-Commons copy. Spine nodes (the ones parse
+// kept) also carry their normalized fields + `spine:true`; non-spine nodes carry
+// only `raw` + `spine:false`. Edges keep their real LC type (hasChild/supports/
+// relatesTo/buildsTowards) and a `seq` = original position, which hydration
+// replays through the parser to reproduce the spine exactly.
+//
+// LEGACY spine-only mode (no `rawGraph`, e.g. an in-memory model hand-built from
+// unit()): the previous behavior — spine nodes + hasChild/buildsTowards derived
+// from childIds/buildsTowards. Kept so callers that never had a raw graph still
+// round-trip.
 export function serializeModel(model: CurriculumModel, namespace: string): SerializedGraph {
+  return model.rawGraph
+    ? serializeFullGraph(model, model.rawGraph, namespace)
+    : serializeSpineOnly(model, namespace);
+}
+
+function serializeFullGraph(model: CurriculumModel, raw: RawGraphSnapshot, namespace: string): SerializedGraph {
+  const nodes: LogicalNode[] = raw.nodes.map((n) => {
+    const u = model.byId.get(n.id);
+    if (u) {
+      // Spine node — normalized fields alongside the raw passthrough.
+      return {
+        id: u.id, type: u.kind, namespace, labels: u.labels ?? n.labels ?? [], spine: true,
+        properties: { code: u.code, title: u.title, text: u.text, order: u.order, isAssessment: u.isAssessment, raw: u.properties ?? n.properties ?? {} },
+      };
+    }
+    // Non-spine node — kept only for faithful re-export; `type` is its raw first
+    // label so the explorer can categorise it, and there are no normalized fields.
+    return {
+      id: n.id, type: n.labels?.[0] ?? "lc-node", namespace, labels: n.labels ?? [], spine: false,
+      properties: { raw: n.properties ?? {} },
+    };
+  });
+
+  // Every raw edge, verbatim type. The stored id stays deterministic
+  // (edgeId(type,from,to)) so the structural mutations can find/dedup it; the
+  // original LC edge id survives inside `properties.identifier` for re-export.
+  // `seq` preserves raw order — hydration sorts by it before re-parsing.
+  const edges: LogicalEdge[] = [];
+  const seen = new Set<string>();
+  raw.relationships.forEach((r, i) => {
+    let id = edgeId(r.type, r.start, r.end);
+    if (seen.has(id)) id = `${id}#${i}`;   // guard the (rare) duplicate (type,from,to); keeps edge count faithful
+    seen.add(id);
+    edges.push({ id, type: r.type, from: r.start, to: r.end, namespace, properties: r.properties ?? {}, seq: i });
+  });
+
+  nodes.sort((a, b) => a.id.localeCompare(b.id));
+  edges.sort((a, b) => a.id.localeCompare(b.id));
+  return { nodes, edges };
+}
+
+function serializeSpineOnly(model: CurriculumModel, namespace: string): SerializedGraph {
   const nodes: LogicalNode[] = [];
   const edges: LogicalEdge[] = [];
   const seen = new Set<string>();
@@ -51,12 +103,11 @@ export function serializeModel(model: CurriculumModel, namespace: string): Seria
         isAssessment: u.isAssessment,
         raw: u.properties ?? {},
       },
+      labels: u.labels ?? [],
+      spine: true,
     });
   }
   for (const u of model.byId.values()) {
-    // The adapter's childIds order is meaningful — presenters render children in
-    // that order and the parity oracle compares those outputs — so we record
-    // it explicitly instead of relying on Firestore's non-guaranteed doc order.
     u.childIds.forEach((childId, i) => {
       if (!model.byId.has(childId)) return;
       const id = edgeId("hasChild", u.id, childId);
@@ -70,10 +121,6 @@ export function serializeModel(model: CurriculumModel, namespace: string): Seria
       const id = edgeId("buildsTowards", u.id, towardId);
       if (seen.has(id)) return;
       seen.add(id);
-      // Both ends carry order: the adapter observes buildsTowards[from] and
-      // buildsFrom[to] independently (they follow raw file order, which may
-      // differ from any per-node ordering). Recording both makes the inverse
-      // list (buildsFrom) as byte-stable as the direct list (buildsTowards).
       const sequenceInTo = target.buildsFrom.indexOf(u.id);
       edges.push({
         id, type: "buildsTowards", from: u.id, to: towardId, namespace,
@@ -86,10 +133,37 @@ export function serializeModel(model: CurriculumModel, namespace: string): Seria
   return { nodes, edges };
 }
 
+// Rebuild the raw Learning-Commons envelope ({ nodes, relationships }) from
+// stored nodes + edges. This is the inverse of serializeFullGraph: the store IS
+// the raw graph, so hydration hands this straight to `adapter.parse` (which
+// re-derives the spine exactly), and a re-export writes it back out as LC JSON.
+// Node raw props come from `properties.raw`; the original LC edge id is restored
+// from `properties.identifier`; edges are replayed in their stored `seq` order.
+export function toRawEnvelope(input: { nodes: LogicalNode[]; edges: LogicalEdge[] }): RawGraphSnapshot {
+  const nodes = input.nodes.map((n) => ({
+    id: n.id,
+    labels: n.labels ?? [],
+    properties: (n.properties.raw as Record<string, unknown>) ?? {},
+  }));
+  const relationships = [...input.edges]
+    .sort((a, b) => (a.seq ?? Number.MAX_SAFE_INTEGER) - (b.seq ?? Number.MAX_SAFE_INTEGER))
+    .map((e) => ({
+      id: (e.properties?.identifier as string) ?? e.id,
+      type: e.type,
+      start: e.from,
+      end: e.to,
+      properties: e.properties ?? {},
+    }));
+  return { nodes, relationships };
+}
+
 // Rebuild a CurriculumModel from stored nodes + edges. Fields in
 // StoredNode.properties round-trip exactly: `raw` restores the subject-specific
 // passthrough dict, and code/title/text/order/isAssessment restore the
 // normalized fields — so downstream presenters see a byte-identical model.
+// NOTE: reads now hydrate via `adapter.parse(toRawEnvelope(...))` (which honours
+// the full graph); this spine-only rebuild is retained for tests/tools that
+// round-trip a spine model directly.
 export function deserializeToModel(input: { nodes: LogicalNode[]; edges: LogicalEdge[] }): CurriculumModel {
   const nodeById = new Map(input.nodes.map((n) => [n.id, n]));
   const childBuckets = new Map<string, { order: number; to: string }[]>();
@@ -134,6 +208,7 @@ export function deserializeToModel(input: { nodes: LogicalNode[]; edges: Logical
       buildsFrom: buildsFromBy.get(n.id) ?? [],
       isAssessment: Boolean(n.properties.isAssessment),
       properties: (n.properties.raw as Record<string, unknown>) ?? {},
+      labels: n.labels ?? [],
     }),
   );
 

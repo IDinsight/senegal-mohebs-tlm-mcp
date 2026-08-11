@@ -91,6 +91,16 @@ export type CurriculumUnit = {
   buildsFrom: string[];
   isAssessment: boolean;               // generalizes the CI maths "bilan"
   properties: Record<string, unknown>; // subject-specific passthrough
+  labels?: string[];                   // raw LC node top-level labels, preserved verbatim for faithful re-export
+};
+
+// The raw graph a model was parsed from, echoed verbatim. Present when the
+// model came from `parseGraph` (bundle read or hydration); it is what lets the
+// store persist EVERY node + edge (not just the spine) for a faithful,
+// re-exportable Learning-Commons copy. Node/edge shape mirrors the raw envelope.
+export type RawGraphSnapshot = {
+  nodes: Array<{ id: string; labels?: string[]; properties?: Record<string, unknown> }>;
+  relationships: Array<{ id: string; type: string; start: string; end: string; properties?: Record<string, unknown> }>;
 };
 
 export interface CurriculumModel {
@@ -98,6 +108,7 @@ export interface CurriculumModel {
   byId: Map<string, CurriculumUnit>;
   unitsOfKind(kind: string): CurriculumUnit[];
   childrenOf(id: string): CurriculumUnit[];
+  rawGraph?: RawGraphSnapshot;                 // the source graph, echoed for faithful full-graph storage
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,6 +211,29 @@ export type RecipeProfile = {
 };
 
 /**
+ * The Learning-Commons identity fields a recipe stamps onto a node it CREATES,
+ * so an authored node is a faithful LC node (survives a re-parse / re-export)
+ * rather than a "half" node carrying only wording + number. Essentially the
+ * inverse of the parse descriptor's `roleToKind`: one entry per created
+ * `CurriculumUnit.kind`. Optional on the adapter — a subject with no recipes
+ * (hence no created nodes) omits it.
+ *
+ * `statementType` is either a constant (a maths chapter is always "Chapitre")
+ * or INHERITED: a maths lesson's strand is a denormalized copy of its domaine's
+ * name, so we take the title of the nearest container-ancestor of the named
+ * kind. When the ancestor can't be resolved (e.g. a lesson seeded under a
+ * brand-new chapter not yet linked to a domaine) the recipe falls back to an
+ * existing sibling's value, then to leaving it blank with a warning.
+ */
+export type LcStamp = {
+  labels?: string[];                    // → StoredNode.labels (top-level, e.g. ["StandardsFrameworkItem"])
+  role?: string;                        // → raw.metadata.role
+  normalizedStatementType?: string;     // → raw.normalized_statement_type
+  statementType?: string | { inheritTitleFromAncestorKind: string };  // → raw.statement_type
+};
+export type LcNodeTemplate = Record<string, LcStamp>;   // keyed by CurriculumUnit.kind
+
+/**
  * A read-only view of the raw graph (nodes + edges, no storage slot tag) that
  * the coverage hook inspects. Structurally identical to the kg-store's
  * `MutationGraph` / `Omit<StoredNode,"slot">`, but declared here so `types.ts`
@@ -242,6 +276,16 @@ export interface SubjectAdapter {
    * See `RecipeProfile`.
    */
   readonly recipeProfile?: RecipeProfile;
+
+  /**
+   * The LC identity fields to stamp onto recipe-created nodes so they are
+   * faithful LC nodes (see `LcNodeTemplate`). Optional and paired with
+   * `recipeProfile` — a subject with recipes declares one so its created
+   * chapters/lessons round-trip through the LC parser. A subject that omits it
+   * still creates nodes, but they carry only wording + number (the pre-#labels
+   * behavior).
+   */
+  readonly lcNodeTemplate?: LcNodeTemplate;
 
   /**
    * Coverage / consistency WARNINGS for a proposed graph state (#13). Optional

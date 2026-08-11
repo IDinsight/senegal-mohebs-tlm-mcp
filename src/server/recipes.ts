@@ -25,7 +25,7 @@ import {
   addLesson, addChapter, moveLesson, splitChapter, renumber,
 } from "../kg-store/index.js";
 import type { MutationGraph } from "../kg-store/index.js";
-import type { SubjectAdapter, RecipeProfile, StructuralAliases, WordingAliases } from "../types.js";
+import type { SubjectAdapter, RecipeProfile, StructuralAliases, WordingAliases, LcNodeTemplate } from "../types.js";
 
 // Resolve the subject vocabulary the recipes bind to, or an error payload if
 // the active subject has no recipes. Every recipe tool calls this first.
@@ -34,6 +34,7 @@ type RecipeBinding = {
   profile: RecipeProfile;
   structuralAliases: StructuralAliases;
   wordingAliases: WordingAliases;
+  lcNodeTemplate?: LcNodeTemplate;
   coverage: (g: MutationGraph) => string[];
 };
 function bindRecipes(adapter: SubjectAdapter): RecipeBinding | { unavailable: string } {
@@ -45,6 +46,7 @@ function bindRecipes(adapter: SubjectAdapter): RecipeBinding | { unavailable: st
     profile: adapter.recipeProfile,
     structuralAliases: adapter.structuralAliases,
     wordingAliases: adapter.wordingAliases,
+    lcNodeTemplate: adapter.lcNodeTemplate,
     coverage: (g) => adapter.coverageWarnings?.(g) ?? [],
   };
 }
@@ -84,7 +86,7 @@ export function registerRecipeTools(server: McpServer) {
       const result = await runGraphMutation({
         namespace: bind.namespace,
         mutation: addLesson,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, chapterId: a.chapterId, lessonId, text: a.text, text_en: a.text_en, order: a.order, isBilan: a.isBilan },
+        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, chapterId: a.chapterId, lessonId, text: a.text, text_en: a.text_en, order: a.order, isBilan: a.isBilan },
         confirm: a.confirm,
         token: a.confirmationToken,
         coverage: bind.coverage,
@@ -120,7 +122,7 @@ export function registerRecipeTools(server: McpServer) {
       const result = await runGraphMutation({
         namespace: bind.namespace,
         mutation: addChapter,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, chapterId, number: a.number, title: a.title, title_en: a.title_en, lessons: a.lessons, lessonIds },
+        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, chapterId, number: a.number, title: a.title, title_en: a.title_en, lessons: a.lessons, lessonIds },
         confirm: a.confirm,
         token: a.confirmationToken,
         coverage: bind.coverage,
@@ -184,7 +186,7 @@ export function registerRecipeTools(server: McpServer) {
       const result = await runGraphMutation({
         namespace: bind.namespace,
         mutation: splitChapter,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, chapterId: a.chapterId, atLessonId: a.atLessonId, newChapterId, newTitle: a.newTitle, newTitle_en: a.newTitle_en, newNumber: a.newNumber },
+        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, chapterId: a.chapterId, atLessonId: a.atLessonId, newChapterId, newTitle: a.newTitle, newTitle_en: a.newTitle_en, newNumber: a.newNumber },
         confirm: a.confirm,
         token: a.confirmationToken,
         coverage: bind.coverage,

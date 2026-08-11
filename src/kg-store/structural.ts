@@ -100,6 +100,7 @@ export type CreateNodeArgs = {
   namespace: string;
   aliases: WordingAliases;
   newNodeId: string;             // minted by the tool layer, never by the caller
+  labels?: string[];             // raw LC top-level labels (recipes stamp these; raw create_node omits them)
 };
 
 export const createNode: GraphMutation<CreateNodeArgs> = {
@@ -164,7 +165,15 @@ export const createNode: GraphMutation<CreateNodeArgs> = {
         id: args.newNodeId,
         type: args.kind,
         namespace: args.namespace,
+        // A created node is a spine node (a chapter/lesson the read model shows),
+        // so tag it like the seeded spine — otherwise Rule 1's content compare
+        // sees it as different from an identical seeded node.
+        spine: true,
         properties: { ...(args.properties ?? {}) },
+        // Only attach `labels` when the caller supplied a non-empty array — a
+        // recipe stamps them from its LC template; the raw create_node verb
+        // leaves them off (Firestore rejects an `undefined` field).
+        ...(args.labels && args.labels.length > 0 ? { labels: [...args.labels] } : {}),
       } as MutationNode,
     ],
     edges: base.edges,
