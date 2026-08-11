@@ -25,9 +25,12 @@ const MATHS: GraphParseDescriptor = {
   progressionEdge: "buildsTowards",
 };
 
+// Reading is post content-layer (Scope A): the week is a content LessonGrouping
+// (kept as kind `week`), each language-tool objective a content `Lesson` that
+// `supports` its spine `expectation`.
 const READING: GraphParseDescriptor = {
-  roleToKind: { week: "week", expectation: "standard" },
-  labelToKind: { LearningComponent: "component" },
+  roleToKind: { week: "week", expectation: "expectation" },
+  labelToKind: { Lesson: "lesson", LearningComponent: "component" },
   numberFrom: "description",
 };
 
@@ -87,9 +90,10 @@ describe("generic parseGraph — maths (new shape)", () => {
 describe("generic parseGraph — reading (unchanged shape)", () => {
   const m = parseGraph(load("sources/ce1/reading/knowledge_graph.json"), READING);
 
-  it("classifies weeks and standard leaves", () => {
+  it("classifies weeks, lessons, expectation leaves", () => {
     expect(m.unitsOfKind("week").length).toBeGreaterThan(0);
-    expect(m.unitsOfKind("standard").length).toBeGreaterThan(0);
+    expect(m.unitsOfKind("lesson").length).toBeGreaterThan(0);
+    expect(m.unitsOfKind("expectation").length).toBeGreaterThan(0);
     expect(m.unitsOfKind("component").length).toBeGreaterThan(0);
   });
 
@@ -99,11 +103,16 @@ describe("generic parseGraph — reading (unchanged shape)", () => {
     expect(w.title).toBe("3");
   });
 
-  it("attaches components to standards via supports, standards to weeks via hasChild", () => {
+  it("links week→lesson (hasChild), lesson→expectation (supports), expectation→components", () => {
     const week = m.unitsOfKind("week").find((u) => u.order === 3)!;
-    const standards = m.childrenOf(week.id).filter((u) => u.kind === "standard");
-    expect(standards.length).toBeGreaterThan(0);
-    const withComponents = standards.filter((s) => m.childrenOf(s.id).some((c) => c.kind === "component"));
+    const lessons = m.childrenOf(week.id).filter((u) => u.kind === "lesson");
+    expect(lessons.length).toBeGreaterThan(0);
+    // lesson supports its expectation ⇒ expectation.childIds ∋ the lesson.
+    const expForLesson = new Map<string, string>();
+    for (const ex of m.unitsOfKind("expectation")) for (const c of m.childrenOf(ex.id)) if (c.kind === "lesson") expForLesson.set(c.id, ex.id);
+    const aligned = lessons.filter((l) => expForLesson.has(l.id));
+    expect(aligned.length).toBe(lessons.length); // every lesson aligns to an expectation
+    const withComponents = aligned.filter((l) => m.childrenOf(expForLesson.get(l.id)!).some((c) => c.kind === "component"));
     expect(withComponents.length).toBeGreaterThan(0);
   });
 });

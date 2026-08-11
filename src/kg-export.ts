@@ -207,7 +207,7 @@ function toDisplayNode(n: StoredNode): DisplayNode {
     statut: str(r("statut")),
     statut_en: str(en("statut")),
     srcKey: str(r("source_key")),
-    strand: n.type === "standard" ? str(r("statement_type")) : "",   // reading strand only
+    strand: n.type === "expectation" && STRAND_ORDER.includes(str(r("statement_type"))) ? str(r("statement_type")) : "",   // reading language-tool strand only
     genre: str(m.genre),
   };
 }
@@ -258,14 +258,15 @@ function buildViewConfig(nodes: DisplayNode[]): ViewConfig {
       shape: "grouped-spine",
       params: { anchorKind: "domaine", groupBy: [], expandEdge: "hasChild" },
     });
-  } else if (has("standard")) {
-    // Reading: group standards by their language-tool strand (statement_type →
-    // the `strand` field), then walk hasChild to the components.
+  } else if (has("expectation")) {
+    // Reading: group the language-tool standards (kind `expectation`) by their
+    // strand (statement_type → the `strand` field), then walk hasChild to the
+    // components. (Maths is caught by the `domaine` branch above.)
     views.push({
       id: "thematique",
       label: { fr: "Vue thématique", en: "Thematic view" },
       shape: "grouped-spine",
-      params: { anchorKind: "standard", groupBy: [{ key: "strand" }], expandEdge: "hasChild", order: STRAND_ORDER },
+      params: { anchorKind: "expectation", groupBy: [{ key: "strand" }], expandEdge: "hasChild", order: STRAND_ORDER },
     });
   }
 

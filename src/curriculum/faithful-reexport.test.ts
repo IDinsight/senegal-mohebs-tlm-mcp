@@ -19,7 +19,8 @@ type RawRel = { id: string; type: string; start: string; end: string; properties
 const CASES = [
   // maths: post-split — +112 Lesson nodes, +112 Lesson→expectation supports edges.
   { grade: "ci", subject: "maths", nodes: 509, edges: 885 },
-  { grade: "ce1", subject: "reading", nodes: 1401, edges: 1362 },
+  // reading: post content-layer — +126 Lesson nodes, +126 Lesson→standard supports edges.
+  { grade: "ce1", subject: "reading", nodes: 1527, edges: 1488 },
 ];
 
 const edgeKey = (e: { type: string; start: string; end: string }) => `${e.type}|${e.start}|${e.end}`;

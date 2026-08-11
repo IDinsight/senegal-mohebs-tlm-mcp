@@ -39,24 +39,33 @@ const meta = (u: CurriculumUnit): Meta => (u.properties.metadata as Meta) ?? {};
 const strandOf = (u: CurriculumUnit): string | null => (u.properties.statement_type as string) ?? null;
 
 // ── Raw envelope → CurriculumModel ──────────────────────────────────────────
+// Post content-layer step (graph-native authoring, Scope A): the week is now a
+// content `LessonGrouping` (LABEL) but keeps kind `week` (its natural meaning —
+// role wins over label), and each language-tool objective is a content `Lesson`
+// that `supports` its spine `expectation`. Reading thus gains the same content
+// layer + LC labels as maths; its grouping stays a week rather than a chapter.
 const READING_PARSE: GraphParseDescriptor = {
-  roleToKind: { week: "week", expectation: "standard" },
-  labelToKind: { LearningComponent: "component" },
+  roleToKind: { week: "week", expectation: "expectation" },
+  labelToKind: { Lesson: "lesson", LearningComponent: "component" },
   numberFrom: "description", // week number is a bare-number description
-  // Spine-scope. The generic parser maps EVERY LC expectation to a "standard", but
-  // the reading spine is only the six language-tool strands hanging directly off a
-  // week. Keep weeks + those standards + their components; drop the rest (oral/
-  // reading standards, and expectations whose sous-domaine/subtopic parents aren't
-  // seeded → orphans). Matches the pre-convergence parse — reads are identical
-  // (buildSlice already filters to STRAND_TYPES), this just keeps the store lean.
+  // Spine-scope. Keep the weeks (groupings), their lessons, the expectations those
+  // lessons support (filtered to the six language-tool strands), and their
+  // components; drop the rest (oral/reading standards, orphans). Reads stay
+  // identical — this just keeps the store lean, exactly as before the content layer.
   postParse: (units) => {
     const byId = new Map(units.map((u) => [u.id, u]));
     const keep = new Set<string>();
-    for (const u of units) if (u.kind === "week") keep.add(u.id);
-    for (const u of units) {
-      if (u.kind !== "standard") continue;
-      const parent = byId.get(u.parentId ?? "");
-      if (parent?.kind === "week" && STRAND_TYPES.has(String(u.properties.statement_type ?? ""))) keep.add(u.id);
+    for (const g of units) {
+      if (g.kind !== "week") continue;
+      keep.add(g.id);
+      for (const cid of g.childIds) if (byId.get(cid)?.kind === "lesson") keep.add(cid);
+    }
+    // Expectations a kept lesson supports (lesson→supports→expectation ⇒
+    // expectation.childIds ∋ the lesson), filtered to the language-tool strands.
+    for (const ex of units) {
+      if (ex.kind !== "expectation") continue;
+      const supported = ex.childIds.some((cid) => byId.get(cid)?.kind === "lesson" && keep.has(cid));
+      if (supported && STRAND_TYPES.has(String(ex.properties.statement_type ?? ""))) keep.add(ex.id);
     }
     for (const u of units) if (u.kind === "component") { const p = byId.get(u.parentId ?? ""); if (p && keep.has(p.id)) keep.add(u.id); }
     return units.filter((u) => keep.has(u.id));
@@ -87,20 +96,34 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     return (model = parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
   };
 
-  // A week is addressed by its number (= normalized `order`, from the bare-number
-  // description). Standards, palier and genre are read through the edges + the
-  // week's baked metadata — no tree-walk.
-  const weeksIn = (m: CurriculumModel) => m.unitsOfKind("week").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const weeks = () => weeksIn(ensure());
-  const weekOf = (m: CurriculumModel, wk: number) => weeksIn(m).find((w) => w.order === wk) ?? null;
+  // A week is a content `LessonGrouping` (label) of kind `week`, addressed by its
+  // number (= normalized `order`, from the bare-number description). palier and
+  // genre are read from the grouping's baked metadata — no tree-walk.
+  const groupingsIn = (m: CurriculumModel) => m.unitsOfKind("week").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const weeks = () => groupingsIn(ensure());
+  const weekOf = (m: CurriculumModel, wk: number) => groupingsIn(m).find((w) => w.order === wk) ?? null;
   const listUnitsIn = (m: CurriculumModel) =>
-    weeksIn(m).map((w) => ({ semaine: w.order, palier: meta(w).palier ?? null, genre: meta(w).genre ?? null }));
+    groupingsIn(m).map((w) => ({ semaine: w.order, palier: meta(w).palier ?? null, genre: meta(w).genre ?? null }));
+
+  // A content Lesson supports one expectation (the language-tool standard it
+  // teaches); the parser records that as expectation.childIds ∋ the Lesson.
+  const expectationOfLesson = (m: CurriculumModel) => {
+    const map = new Map<string, CurriculumUnit>();
+    for (const ex of m.unitsOfKind("expectation"))
+      for (const child of m.childrenOf(ex.id)) if (child.kind === "lesson") map.set(child.id, ex);
+    return map;
+  };
 
   const buildSlice = (wk: number, m: CurriculumModel = ensure()) => {
     const week = weekOf(m, wk);
     if (!week) return null;
+    const expOf = expectationOfLesson(m);
+    // Walk grouping → Lesson → (supports) → language-tool standard, then emit the
+    // same languageToolStandards shape the generation prompt consumes.
     const standards = m.childrenOf(week.id)
-      .filter((c) => c.kind === "standard" && STRAND_TYPES.has(strandOf(c) ?? ""))
+      .filter((c) => c.kind === "lesson")
+      .map((ln) => expOf.get(ln.id))
+      .filter((std): std is CurriculumUnit => !!std && STRAND_TYPES.has(strandOf(std) ?? ""))
       .sort((a, b) => STRAND_ORDER.indexOf(strandOf(a) ?? "") - STRAND_ORDER.indexOf(strandOf(b) ?? ""))
       .map((std) => ({
         strand: strandOf(std),
@@ -119,7 +142,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
   // Progression by week ordering across the weeks the KG carries (it skips
   // integration/evaluation weeks, so neighbours may not be wk±1).
   const buildProgression = (wk: number, m: CurriculumModel = ensure()) => {
-    const nums = weeksIn(m).map((w) => w.order as number);
+    const nums = groupingsIn(m).map((w) => w.order as number);
     const i = nums.indexOf(wk);
     return {
       buildsFrom: i > 0 ? [nums[i - 1]] : [],
@@ -140,10 +163,11 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     },
 
     // Coverage warnings (#13) — reading uses the subject-neutral shapes only. A
-    // reading standard has exactly one parent (its week), so multi-parent applies.
+    // reading lesson/component has exactly one parent (unlike a maths lesson,
+    // which has a week axis too), so multi-parent applies.
     coverageWarnings: (graph: GraphView): string[] => [
       ...emptyContainerWarnings(graph, ["week"]),
-      ...multiParentWarnings(graph, ["standard", "component"]),
+      ...multiParentWarnings(graph, ["lesson", "component"]),
     ],
 
     detect, parse,
