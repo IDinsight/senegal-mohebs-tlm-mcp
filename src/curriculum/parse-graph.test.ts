@@ -42,11 +42,13 @@ describe("generic parseGraph — maths (new shape)", () => {
 
   it("classifies the maths spine by metadata.role + label", () => {
     // Canonical LC: all content groupings are `LessonGrouping` → kind "chapter".
-    // 31 = 25 authored chapters + 6 RECE task-groupings ("Regroupement de tâches").
+    // The RECE task-groupings were removed (RECE is now a derived-components
+    // frame with activities directly under its sub-SFIs), so all 25 groupings are
+    // authored chapters.
     expect(kindCounts(m, ["week", "chapter", "domaine", "lesson", "expectation"])).toEqual({
-      week: 23, chapter: 31, domaine: 4, lesson: 112, expectation: 112,
+      week: 23, chapter: 25, domaine: 4, lesson: 112, expectation: 112,
     });
-    // authored chapters carry statementType "Chapitre"; the task-groupings do not.
+    // authored chapters carry statementType "Chapitre".
     const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
     expect(authored.length).toBe(25);
     // components/tasks exist (incl. out-of-spine ones, matching legacy parse)
