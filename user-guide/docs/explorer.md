@@ -10,19 +10,20 @@ Ouvrez l'adresse fournie par votre administrateur, puis connectez-vous (mêmes i
 
 En haut, un sélecteur liste les curriculums disponibles (par exemple *Mathématiques — CI*, *Lecture — CE1*). Choisissez celui que vous voulez explorer. Un curriculum apparaît automatiquement dès qu'il a été publié.
 
-## Les trois vues
+## Les deux vues
+
+L'explorateur suit l'**ontologie Learning Commons** : il ne montre pas de vocabulaire propre à une matière, mais la structure du graphe telle qu'elle est.
 
 | Vue | Ce qu'elle montre |
 |---|---|
-| **Thématique** | Le curriculum par thème : domaine → chapitre → leçon → composants |
-| **Planification** | L'organisation dans le temps : palier → semaine → contenus |
-| **Graphe (brut)** | Tous les nœuds regroupés par type — la vue la plus complète |
+| **Hiérarchie (contenance)** | L'arborescence de contenance : du cadre de référence vers ses éléments, en suivant les liens de contenance |
+| **Par type (LC)** | Tous les nœuds regroupés par leur type Learning Commons, chacun avec ses liens — la vue la plus complète |
 
 Cliquez sur un nœud pour ouvrir son **panneau de détail** ; le petit triangle **déplie / replie** ses éléments.
 
 ## Couleurs et légende
 
-Chaque nœud a une **couleur** selon sa catégorie (domaine, chapitre, leçon, composant, tâche, semaine). La **légende** rappelle le code couleur. Les éléments de **cadre / dérivés** (structure d'arrière-plan, non essentiels à la lecture) apparaissent dans une couleur neutre à part.
+Chaque nœud a une **couleur** selon son **type Learning Commons** (cadre de référence, élément du cadre, regroupement, leçon, composant, curriculum…). La **légende** rappelle le code couleur.
 
 ## Rechercher
 

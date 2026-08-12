@@ -29,61 +29,35 @@ import { listAvailableContexts } from "./context/index.js";
 // renders them unchanged; edges use {s,t,r} + an order hint `o`.
 export type DisplayNode = {
   id: string;
-  label: string;                 // Learning-Commons ontology label (drives colour/stats)
-  kind: string;                  // the raw store `type` (chapter/lesson/component/task/week/standard…)
-  nt: string;                    // nodeType (e.g. "Activity") — used for the task stats chip
-  st: string; st_en: string;     // category (statement_type) FR/EN
-  code: string;                  // statementCode, e.g. "Leçon 64"
-  ord: number | null;            // the node's own number (metadata.order)
-  desc: string; desc_en: string; // display label text
-  ex: string[]; ex_en: string[]; // examples
-  grp: string; res: string; niv: string;
-  apt: string; apt_en: string;
-  comm: string; comm_en: string;
-  sem: number | string; pal: number | string;
-  chapN: number | string; chapT: string; chapT_en: string;
-  dom: string; dom_en: string;
-  os: string; os_en: string;
-  src: string; ref: string; statut: string; statut_en: string;
-  srcKey: string;                // source key → drives the source-filter chips
-  strand: string; genre: string; // CE1 CE1 reading extras (harmless/empty for CI maths)
-  cat: string;                   // graph-agnostic legend category (see categoryOf) — drives colour/legend/stats
+  label: string;                 // Learning-Commons ontology label — the node's identity
+  kind: string;                  // = label (the explorer speaks LC labels only)
+  cat: string;                   // = label (legend category → drives colour/legend/stats)
+  code: string;                  // identifier / statement_code
+  ord: number | null;            // metadata.order (stable sort within a parent)
+  desc: string; desc_en: string; // display text (bilingual)
+  nt: string;                    // LC sub-type hint (normalized_type / normalized_statement_type)
+  st: string; st_en: string;     // LC statement_type (category detail), bilingual
+  srcKey: string;                // provenance (source_key) → source-filter chips
+  props: Record<string, unknown>;// the node's raw LC properties, for the detail panel
 };
 
-// ── Graph-agnostic taxonomy (drives legend, node colour, and stats) ──────────
-// The explorer must speak ONE vocabulary across every subject, so it never
-// hardcodes subject words like "chapter"/"lesson". Each display node is tagged
-// with a `cat` drawn from the converged Learning-Commons `metadata.role` (for
-// containers) or the node kind (for the two leaf types). `meta.taxonomy` then
-// lists — in canonical order — only the categories actually present, each with a
-// bilingual label + colour, so the page renders whatever it is handed.
+// ── Legend taxonomy — by Learning-Commons LABEL ──────────────────────────────
+// The explorer follows the LC ontology ONLY: a node's legend category is its LC
+// top-level label (no subject roles like chapter/week/strand). `meta.taxonomy`
+// lists, in this canonical order, only the labels actually present, each with a
+// bilingual name + colour.
 export type TaxonomyEntry = { key: string; label: { fr: string; en: string }; color: string };
 
-// Colours reuse the page's existing palette (kept in sync with the CSS vars in
-// hosting/public/index.html). One colour per category — no per-domain rainbow.
-const CATEGORY_DEFS: TaxonomyEntry[] = [
-  { key: "strand",      label: { fr: "Composante",                en: "Strand" },             color: "#7f77dd" },
-  { key: "subtopic",    label: { fr: "Sous-thème",                en: "Subtopic" },           color: "#378add" },
-  { key: "expectation", label: { fr: "Objectif spécifique",       en: "Expectation" },        color: "#1d9e75" },
-  { key: "component",   label: { fr: "Composant d'apprentissage", en: "Learning component" }, color: "#d4537e" },
-  { key: "task",        label: { fr: "Tâche illustrative",        en: "Illustrative task" },  color: "#c98a1a" },
-  { key: "week",        label: { fr: "Semaine",                   en: "Week" },               color: "#888780" },
-  { key: "framework",   label: { fr: "Cadre / dérivé",            en: "Framework / derived" }, color: "#9aa0a6" },
+// One colour per LC label (palette kept in sync with hosting/public/index.html).
+const LABEL_DEFS: TaxonomyEntry[] = [
+  { key: "StandardsFramework",     label: { fr: "Cadre de référence", en: "Standards framework" }, color: "#5b8def" },
+  { key: "StandardsFrameworkItem", label: { fr: "Élément du cadre",   en: "Framework item" },      color: "#378add" },
+  { key: "LessonGrouping",         label: { fr: "Regroupement",       en: "Lesson grouping" },      color: "#7f77dd" },
+  { key: "Lesson",                 label: { fr: "Leçon",              en: "Lesson" },               color: "#1d9e75" },
+  { key: "LearningComponent",      label: { fr: "Composant",          en: "Learning component" },   color: "#d4537e" },
+  { key: "Curriculum",             label: { fr: "Curriculum",         en: "Curriculum" },           color: "#c98a1a" },
+  { key: "Material",               label: { fr: "Matériel",           en: "Material" },             color: "#888780" },
 ];
-
-// Node → category. Role (converged LC scheme) wins for the container spine; the
-// two leaf kinds (component/task) carry no role, so they resolve by kind.
-// Non-spine nodes (framework/derived — kept only for faithful re-export) fall
-// into the neutral "framework" bucket so the explorer can surface them.
-function categoryOf(kind: string, role: string, spine: boolean | undefined): string {
-  if (kind === "task") return "task";
-  if (kind === "component") return "component";
-  if (kind === "week" || role === "week") return "week";
-  if (role === "strand") return "strand";
-  if (role === "subtopic") return "subtopic";
-  if (role === "expectation" || role === "intégration du palier") return "expectation";
-  return spine === false ? "framework" : "";
-}
 
 export type DisplayEdge = { s: string; t: string; r: string; o: number };
 
@@ -165,51 +139,44 @@ function toDisplayNode(n: StoredNode): DisplayNode {
   const p = n.properties ?? {};
   const raw = (p.raw as Record<string, unknown>) ?? {};
   const r = (k: string) => raw[k];
-  // Converged LC scheme: role/order/genre/palier + English live under metadata.
   const m = (raw.metadata as Record<string, unknown>) ?? {};
   const en = (k: string) => ((m.en as Record<string, unknown>) ?? {})[k];
-  // Domaine nodes have no number; order them by the canonical domain sequence so
-  // the thematic view lists Arithmétique → Géométrie → Mesure → Résolution.
-  const domIdx = n.type === "domaine" ? DOMAINE_ORDER.indexOf(str(p.title ?? r("description"))) : -1;
+  const label = (n.labels && n.labels[0]) || LABEL_BY_KIND[n.type] || n.type;
   return {
     id: n.id,
-    label: (n.labels && n.labels[0]) || LABEL_BY_KIND[n.type] || n.type,
-    kind: n.type,
-    cat: categoryOf(n.type, str(m.role), n.spine),
-    nt: str(r("normalized_statement_type") ?? r("content_type")),
-    st: str(r("statement_type")),
-    st_en: str(en("statement_type")),
-    code: str(p.code ?? r("statement_code")),
-    ord: n.type === "domaine" ? (domIdx >= 0 ? domIdx : null)
-      : typeof p.order === "number" ? (p.order as number) : (typeof m.order === "number" ? (m.order as number) : null),
+    label,
+    kind: label,   // LC-only: the explorer keys on the label, not the subject kind
+    cat: label,
+    code: str(p.code ?? r("statement_code") ?? r("identifier")),
+    ord: typeof p.order === "number" ? (p.order as number) : (typeof m.order === "number" ? (m.order as number) : null),
     desc: str(p.text ?? p.title ?? r("description") ?? r("os_texte")),
     desc_en: str(en("description") ?? en("os_texte")),
-    ex: arr(r("examples")),
-    ex_en: arr(en("examples")),
-    grp: str(r("rece_groupe")),
-    res: str(r("rece_resultat")),
-    niv: str(r("rece_niveau") ?? r("rece_niveau_scolaire")),
-    apt: str(r("aptitude_ci")),
-    apt_en: str(en("aptitude_ci")),
-    comm: str(r("commentaire_progression")),
-    comm_en: str(en("commentaire_progression")),
-    sem: numOrStr(r("semaine")),
-    pal: numOrStr(r("palier") ?? m.palier),
-    chapN: numOrStr(typeof m.order === "number" ? (m.order as number) : ""),
-    chapT: "",
-    chapT_en: "",
-    dom: n.type === "domaine" ? str(p.title ?? r("description")) : str(r("domaine")),
-    dom_en: str(en("domaine")),
-    os: str(r("os_texte")),
-    os_en: str(en("os_texte")),
-    src: str(r("source")),
-    ref: str(r("reference")),
-    statut: str(r("statut")),
-    statut_en: str(en("statut")),
+    nt: str(r("normalized_type") ?? r("normalized_statement_type") ?? r("content_type")),
+    st: str(r("statement_type")),
+    st_en: str(en("statement_type")),
     srcKey: str(r("source_key")),
-    strand: n.type === "expectation" && STRAND_ORDER.includes(str(r("statement_type"))) ? str(r("statement_type")) : "",   // reading language-tool strand only
-    genre: str(m.genre),
+    // The whole raw LC property bag — the detail panel renders it generically, so
+    // no field is subject-specific here. `metadata` is flattened one level for
+    // readability (role/order/palier/genre/… become top-level keys).
+    props: flattenProps(raw),
   };
+}
+
+// Flatten `raw` for the detail panel: keep scalar/array props, lift `metadata.*`
+// (minus the bulky `en` translations) to the top level, and drop the `raw`-nested
+// `metadata`/`en` containers so the panel shows a clean key/value list.
+function flattenProps(raw: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (k === "metadata") continue;
+    out[k] = v;
+  }
+  const m = (raw.metadata as Record<string, unknown>) ?? {};
+  for (const [k, v] of Object.entries(m)) {
+    if (k === "en") continue;
+    out[k] = v;
+  }
+  return out;
 }
 
 function edgeOrder(e: StoredEdge): number {
@@ -233,55 +200,24 @@ function toDisplayEdges(e: StoredEdge): DisplayEdge[] {
   return [{ s: e.from, t: e.to, r: e.type, o: edgeOrder(e) }];
 }
 
-// ── viewConfig (data-driven, from the fields actually present) ────────────────
-// A namespace gets a rich "grouped-spine" view only when the fields that view
-// needs are present in its data — so views are declared by SHAPE, never by
-// hardcoding a namespace string. Every namespace also gets the generic
-// node-type view as the floor.
-const DOMAINE_ORDER = ["Arithmétique", "Géométrie", "Mesure", "Résolution de problème"];
-// The six language-tool strands, in canonical order (reading's thematic buckets).
-const STRAND_ORDER = ["Vocabulaire", "Grammaire", "Orthographe", "Conjugaison", "Production d'écrits", "Écriture / Copie"];
-
+// ── viewConfig — Learning-Commons ontology views ONLY ────────────────────────
+// No subject anchors (no domaine/week/strand/palier). Two views:
+//   1. HIERARCHY — the containment tree, anchored on the LC framework root and
+//      expanded via `hasChild` (the LC part-of relation; `supports` folds into it,
+//      see toDisplayEdges), so the whole spine + components render as one tree.
+//   2. BY-LABEL — the generic node-type floor: every node grouped by its LC label,
+//      each showing its outgoing relations. Works for any namespace.
 function buildViewConfig(nodes: DisplayNode[]): ViewConfig {
   const views: ViewSpec[] = [];
-  const has = (kind: string) => nodes.some((n) => n.kind === kind);
-
-  // Both subjects get the same two rich views + the generic floor.
-
-  // THEMATIC — organized by the subject's thematic categories.
-  if (has("domaine")) {
-    // Maths: the real hierarchy domaine (strand) → chapter (subtopic) → OS →
-    // composant → tâche, walked via hasChild (empty groupBy = domaines ARE roots).
+  if (nodes.some((n) => n.label === "StandardsFramework")) {
     views.push({
-      id: "thematique",
-      label: { fr: "Vue thématique", en: "Thematic view" },
+      id: "hierarchy",
+      label: { fr: "Hiérarchie (contenance)", en: "Hierarchy (containment)" },
       shape: "grouped-spine",
-      params: { anchorKind: "domaine", groupBy: [], expandEdge: "hasChild" },
-    });
-  } else if (has("expectation")) {
-    // Reading: group the language-tool standards (kind `expectation`) by their
-    // strand (statement_type → the `strand` field), then walk hasChild to the
-    // components. (Maths is caught by the `domaine` branch above.)
-    views.push({
-      id: "thematique",
-      label: { fr: "Vue thématique", en: "Thematic view" },
-      shape: "grouped-spine",
-      params: { anchorKind: "expectation", groupBy: [{ key: "strand" }], expandEdge: "hasChild", order: STRAND_ORDER },
+      params: { anchorKind: "StandardsFramework", groupBy: [], expandEdge: "hasChild" },
     });
   }
-
-  // PLANIFICATION — Palier → Semaine → contents (both subjects).
-  if (has("week")) {
-    views.push({
-      id: "planification",
-      label: { fr: "Vue planification", en: "Planning view" },
-      shape: "grouped-spine",
-      params: { anchorKind: "week", groupBy: [{ key: "pal", labelFr: "Palier", labelEn: "Tier" }], expandEdge: "hasChild" },
-    });
-  }
-
-  // The generic floor — node-type → outgoing relations. Works for ANY namespace.
-  views.push({ id: "generic", label: { fr: "Graphe (brut)", en: "Graph (raw)" }, shape: "node-type" });
+  views.push({ id: "generic", label: { fr: "Par type (LC)", en: "By type (LC)" }, shape: "node-type" });
   return { views };
 }
 
@@ -300,57 +236,22 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
   let nodes = storedNodes.map(toDisplayNode);
   let edges = storedEdges.flatMap(toDisplayEdges);
 
-  // ── Explorer post-processing (display only; never touches the store) ─────────
-  {
-    const byId = new Map(nodes.map((n) => [n.id, n]));
-    const outHasChild = new Map<string, string[]>();
-    for (const e of edges) if (e.r === "hasChild") (outHasChild.get(e.s) ?? outHasChild.set(e.s, []).get(e.s)!).push(e.t);
+  // The store holds the FULL Learning-Commons graph (spine + framework/derived
+  // nodes + supports/relatesTo cross-links); the explorer renders all of it as-is.
+  // No subject-specific post-processing — nodes are coloured by LC label, the
+  // hierarchy walks hasChild, and the generic view exposes every node + edge.
 
-    // (1) Colour propagation — tag every CONTENT-axis descendant of a domaine with
-    //     that domaine's name (domaine → chapter → OS → composant → tâche) so the
-    //     explorer can colour the whole subtree. A node's own domaine wins.
-    for (const dom of nodes.filter((n) => n.kind === "domaine")) {
-      const name = dom.dom;
-      if (!name) continue;
-      const stack = [dom.id], seen = new Set<string>();
-      while (stack.length) {
-        for (const c of outHasChild.get(stack.pop()!) ?? []) {
-          if (seen.has(c)) continue;
-          seen.add(c);
-          const cn = byId.get(c);
-          if (cn && cn.kind !== "domaine" && !cn.dom) cn.dom = name;
-          stack.push(c);
-        }
-      }
-    }
-
-    // (2) Week palier — a maths week has no palier of its own; borrow it from a
-    //     scheduled lesson (all a week's lessons share a palier) so the planning
-    //     view can bucket weeks by tier. Reading weeks already carry their palier.
-    for (const wk of nodes.filter((n) => n.kind === "week")) {
-      if (wk.pal !== "" && wk.pal != null) continue;
-      for (const c of outHasChild.get(wk.id) ?? []) {
-        const cn = byId.get(c);
-        if (cn && cn.pal !== "" && cn.pal != null) { wk.pal = cn.pal; break; }
-      }
-    }
-
-    // (3) Surface EVERYTHING. The store now holds the full Learning-Commons
-    //     graph (spine + framework/derived nodes + supports/relatesTo cross-
-    //     links), so the explorer renders all of it — the grouped-spine views
-    //     stay clean because they anchor on week/domaine/standard and walk
-    //     hasChild, while the generic view and the `framework` legend category
-    //     expose the non-spine nodes and the cross-link edges. (Previously this
-    //     step dropped everything not reachable from a week/domaine root; with
-    //     faithful full-graph seeding there are no dangling leftovers to hide.)
-  }
-
-  const byKind: Record<string, number> = {};
-  for (const n of nodes) byKind[n.kind] = (byKind[n.kind] ?? 0) + 1;
+  const byLabel: Record<string, number> = {};
+  for (const n of nodes) byLabel[n.label] = (byLabel[n.label] ?? 0) + 1;
   const sources = [...new Set(nodes.map((n) => n.srcKey).filter(Boolean))].sort();
-  // Legend/colour taxonomy — only the categories actually present, canonical order.
-  const presentCats = new Set(nodes.map((n) => n.cat).filter(Boolean));
-  const taxonomy = CATEGORY_DEFS.filter((d) => presentCats.has(d.key));
+  // Legend taxonomy — only the LC labels actually present, in canonical order,
+  // plus any unrecognised label appended (so nothing is ever silently uncoloured).
+  const presentLabels = new Set(nodes.map((n) => n.label).filter(Boolean));
+  const known = new Set(LABEL_DEFS.map((d) => d.key));
+  const taxonomy = [
+    ...LABEL_DEFS.filter((d) => presentLabels.has(d.key)),
+    ...[...presentLabels].filter((l) => !known.has(l)).sort().map((l) => ({ key: l, label: { fr: l, en: l }, color: "#9aa0a6" })),
+  ];
 
   // Label from the installed context list (so we get the pretty per-subject name).
   const ctx = listAvailableContexts().find((c) => kgNamespace(c.grade, c.subject) === ns);
@@ -363,7 +264,7 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
       ns,
       label,
       publishedSlot: slot,
-      counts: { nodes: nodes.length, edges: edges.length, byKind },
+      counts: { nodes: nodes.length, edges: edges.length, byKind: byLabel },
       sources,
       taxonomy,
       viewConfig: buildViewConfig(nodes),

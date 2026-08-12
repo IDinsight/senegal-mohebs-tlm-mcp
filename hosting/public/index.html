@@ -592,28 +592,21 @@ function openModal(id){
   if (n.srcKey) meta += '<span class="tag">'+esc(n.srcKey)+'</span>';
   el('m-meta').innerHTML = meta;
 
-  let h=''; const ctx=[];
-  if (n.dom) ctx.push([t('domaineLbl'), LANG==='en'?(n.dom_en||n.dom):n.dom]);
-  if (n.pal!=='' && n.pal!=null) ctx.push([t('palierLbl'), n.pal]);
-  if (n.sem!=='' && n.sem!=null) ctx.push([t('semaineLbl'), n.sem]);
-  if (n.chapN!=='' && n.chapN!=null) ctx.push([t('chapitreLbl'), n.chapN+(n.chapT?' — '+(LANG==='en'?(n.chapT_en||n.chapT):n.chapT):'')]);
-  if (n.strand) ctx.push([t('strandLbl'), n.strand]);
-  if (n.genre) ctx.push([t('genreLbl'), n.genre]);
-  if (ctx.length){
-    h+='<div class="sect"><h3>'+t('contexte')+'</h3><div class="ctxgrid">';
-    ctx.forEach(([k,v])=>h+='<div class="ctxk">'+esc(k)+'</div><div class="ctxv">'+esc(String(v))+'</div>');
+  let h='';
+  // Generic Learning-Commons properties — the node's raw property bag rendered
+  // key/value, so the panel follows the ontology and never hardcodes subject
+  // fields. Boilerplate provenance keys (shown as header tags or just noise) skip.
+  const SKIP = new Set(['identifier','license','attribution_statement','provider','source_key','normalized_type','normalized_statement_type','statement_type','description','statement_code']);
+  const props = n.props || {};
+  const rows = Object.keys(props)
+    .filter(k => !SKIP.has(k))
+    .map(k => [k, props[k]])
+    .filter(([,v]) => v!=null && v!=='' && !(Array.isArray(v) && v.length===0));
+  if (rows.length){
+    h+='<div class="sect"><h3>'+(LANG==='en'?'Properties':'Propriétés')+'</h3><div class="ctxgrid">';
+    rows.forEach(([k,v])=>{ const disp = Array.isArray(v)?v.join(', '):(typeof v==='object'?JSON.stringify(v):String(v)); h+='<div class="ctxk">'+esc(String(k))+'</div><div class="ctxv">'+esc(disp)+'</div>'; });
     h+='</div></div>';
   }
-  const osText = LANG==='en'?(n.os_en||n.os):n.os;
-  if (osText) h+='<div class="sect"><h3>'+t('os_label')+'</h3><div class="ex">'+esc(osText)+'</div></div>';
-  const exArr = LANG==='en'?(n.ex_en&&n.ex_en.length?n.ex_en:n.ex):n.ex;
-  if (exArr&&exArr.length){ h+='<div class="sect"><h3>'+t('exemples')+'</h3>'; exArr.forEach(x=>h+='<div class="ex">'+esc(x)+'</div>'); h+='</div>'; }
-  if (n.statut){ const s=LANG==='en'?(n.statut_en||n.statut):n.statut; h+='<div class="sect"><h3>'+t('statut_label')+'</h3><div class="ex">⚠ '+esc(s)+(n.src?' — '+esc(n.src):'')+(n.ref?' · '+esc(n.ref):'')+'</div></div>'; }
-  if (n.src && !n.statut) h+='<div class="sect"><h3>'+t('source_label')+'</h3><div class="ex">'+esc(n.src)+(n.ref?' · '+esc(n.ref):'')+'</div></div>';
-  const aptText = LANG==='en'?(n.apt_en||n.apt):n.apt;
-  if (aptText) h+='<div class="sect"><h3>'+t('adaptation')+'</h3><div class="ex">'+esc(aptText)+'</div></div>';
-  const commText = LANG==='en'?(n.comm_en||n.comm):n.comm;
-  if (commText) h+='<div class="sect"><h3>'+t('progression')+'</h3><div class="ex">'+esc(commText)+'</div></div>';
 
   // relationships from the stored spine (published only)
   if (inHasChild[id]) h+=relBlock(t('parent'), [inHasChild[id]], 'parent');
