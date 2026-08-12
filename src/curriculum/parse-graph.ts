@@ -27,9 +27,13 @@ export type GraphParseDescriptor = {
   // Where a unit's ordinal comes from: "order" = metadata.order (maths);
   // "description" = a bare-number description (reading weeks).
   numberFrom: "order" | "description";
-  // Edge types. Defaults match the converged envelope.
-  containerEdge?: string;   // parent→child hierarchy, default "hasChild"
-  supportEdge?: string;     // child→parent attachment (component→standard, task→component), default "supports"
+  // Edge types. Defaults match canonical LC. Each accepts one type or several:
+  // canonical LC splits containment across `hasChild` (standards hierarchy) and
+  // `hasPart` (content tree), and attachment across `supports` (component→SFI)
+  // and `hasEducationalAlignment` (lesson/activity→SFI) — the parser treats every
+  // listed type identically, so both halves fold into the same child links.
+  containerEdge?: string | string[];   // parent→child hierarchy, default ["hasChild","hasPart"]
+  supportEdge?: string | string[];     // child→parent attachment, default ["supports","hasEducationalAlignment"]
   progressionEdge?: string; // from→to progression, e.g. "buildsTowards"; omit if the subject has none
   // Subject hook run on the flat unit list (childIds/parents already linked)
   // just before buildModel — e.g. flag the bilan, dedup twin weeks. May mutate
@@ -43,8 +47,8 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
   const g = (raw ?? {}) as RawGraph;
   const nodes = g.nodes ?? [];
   const rels = g.relationships ?? [];
-  const containerEdge = d.containerEdge ?? "hasChild";
-  const supportEdge = d.supportEdge ?? "supports";
+  const containerEdges = new Set([d.containerEdge ?? ["hasChild", "hasPart"]].flat());
+  const supportEdges = new Set([d.supportEdge ?? ["supports", "hasEducationalAlignment"]].flat());
 
   const kindOf = (n: RawNode): string | null => {
     const role = n.properties?.metadata?.role;
@@ -69,11 +73,11 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
     const kind = kindOf(n);
     if (!kind) continue;
     const p = n.properties ?? {};
-    const grouping = p.normalized_statement_type === GROUPING;
+    const grouping = p.normalizedStatementType === GROUPING;
     units.push(unit({
       id: n.id,
       kind,
-      code: (p.statement_code as string) ?? null,
+      code: (p.statementCode as string) ?? null,
       title: grouping ? ((p.description as string) ?? null) : null,
       text: grouping ? null : ((p.description as string) ?? null),
       order: orderOf(n),
@@ -88,7 +92,7 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
   //    chapter) — childIds carries FULL membership; parentId is last-wins and is
   //    only used to derive roots, so the ambiguity is harmless.
   for (const r of rels) {
-    if (r.type !== containerEdge) continue;
+    if (!containerEdges.has(r.type)) continue;
     const parent = byId.get(r.start), child = byId.get(r.end);
     if (!parent || !child) continue;
     parent.childIds.push(child.id);
@@ -99,7 +103,7 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
   //    (standard/component). Only links between two in-scope units survive, so a
   //    component supporting an out-of-spine framework standard drops out naturally.
   for (const r of rels) {
-    if (r.type !== supportEdge) continue;
+    if (!supportEdges.has(r.type)) continue;
     const child = byId.get(r.start), parent = byId.get(r.end);
     if (!child || !parent) continue;
     parent.childIds.push(child.id);

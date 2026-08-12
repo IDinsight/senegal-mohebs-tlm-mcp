@@ -57,7 +57,11 @@ const MATHS_PARSE: GraphParseDescriptor = {
     expectation: "expectation",
     "intégration du palier": "expectation",
   },
-  labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Curriculum: "task" },
+  // Canonical LC labels: the RECE illustrative tasks are `Activity` (was the
+  // `Curriculum` catch-all). Both authored chapters and RECE task-groupings are
+  // `LessonGrouping` — the adapter's `chaptersIn` filters to authored chapters
+  // (statementType "Chapitre"); the task-groupings stay out of the chapter view.
+  labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Activity: "task" },
   numberFrom: "order",
   progressionEdge: "buildsTowards",
   // Bilan (end-of-chapter assessment) is now explicit graph DATA, not a parse-time
@@ -66,7 +70,7 @@ const MATHS_PARSE: GraphParseDescriptor = {
   // add_lesson's `isBilan` thereafter).
   postParse: (units) => {
     for (const u of units) {
-      if (u.kind === "lesson" && u.properties.educational_use === "Assessment") u.isAssessment = true;
+      if (u.kind === "lesson" && u.properties.educationalUse === "Assessment") u.isAssessment = true;
     }
   },
 };
@@ -75,7 +79,7 @@ function detect(raw: unknown): boolean {
   const g = raw as { nodes?: unknown[]; relationships?: unknown[] } | undefined;
   if (!Array.isArray(g?.nodes) || !Array.isArray(g?.relationships)) return false;
   // Maths-specific signal: a chapter grouping (a `Chapitre` with role "subtopic").
-  return g!.nodes.some((n: any) => n?.properties?.statement_type === "Chapitre" && n?.properties?.metadata?.role === "subtopic");
+  return g!.nodes.some((n: any) => n?.properties?.statementType === "Chapitre" && n?.properties?.metadata?.role === "subtopic");
 }
 
 function parse(raw: unknown): CurriculumModel {
@@ -88,7 +92,7 @@ function parse(raw: unknown): CurriculumModel {
 // no lessons (generic), and a chapter with 0 or >1 bilan. NOTE: multiParentWarnings
 // is deliberately NOT applied to lessons — a lesson legitimately has TWO parents
 // now (its week on the schedule axis, its chapter on the content axis).
-const HAS_CHILD = "hasChild";
+const CONTENT_CONTAINMENT = "hasPart"; // canonical LC: chapter→lesson is content containment
 function ciMathsCoverageWarnings(graph: GraphView): string[] {
   const warnings: string[] = [];
   warnings.push(...emptyContainerWarnings(graph, ["chapter"]));
@@ -102,7 +106,7 @@ function ciMathsCoverageWarnings(graph: GraphView): string[] {
   const childLessonsByChapter = new Map<string, GraphView["nodes"]>();
   const chapterParents = new Map<string, number>();
   for (const e of graph.edges) {
-    if (e.type !== HAS_CHILD) continue;
+    if (e.type !== CONTENT_CONTAINMENT) continue;
     const from = byId.get(e.from), to = byId.get(e.to);
     if (!from || from.type !== "chapter" || !to || to.type !== "lesson") continue;
     (childLessonsByChapter.get(e.from) ?? childLessonsByChapter.set(e.from, []).get(e.from)!).push(to);
@@ -141,7 +145,11 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
   // Read helpers, all parametrized by the CurriculumModel they read (published via
   // ensure(); a draft-resolved model for preview). Chapter→lesson and week→lesson
   // are followed through the EDGES (childrenOf), not any number.
-  const chaptersIn = (m: CurriculumModel) => m.unitsOfKind("chapter");
+  // Authored chapters only. Canonically the RECE task-groupings are also
+  // `LessonGrouping` (kind "chapter"), so filter to the ones stamped statementType
+  // "Chapitre" — task-groupings (contentType "Regroupement de tâches") stay out of
+  // the chapter projection, keeping listUnits/slice byte-identical.
+  const chaptersIn = (m: CurriculumModel) => m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
   const chapters = () => chaptersIn(ensure());
   const chapterOf = (m: CurriculumModel, chapNum: number) => chaptersIn(m).find((c) => c.order === chapNum) ?? null;
   const domaineOf = (m: CurriculumModel, chapter: CurriculumUnit) => m.byId.get(chapter.parentId ?? "")?.title ?? null;
@@ -195,12 +203,12 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
         tasks: m.childrenOf(cn.id).filter((t) => t.kind === "task").map((tn) => ({
           identifier: tn.id,
           description: tn.text ?? null,
-          contentType: rawStr(tn, "content_type"),
+          contentType: rawStr(tn, "contentType"),
         })),
       }));
       return {
         identifier: identityOf(ln), leconNum: ln.order ?? null, osTexte: ex.text ?? null,
-        statementType: meta(ex).role ?? null, statementCode: rawStr(ex, "statement_code"),
+        statementType: meta(ex).role ?? null, statementCode: rawStr(ex, "statementCode"),
         semaine: weekOf.get(ln.id) ?? null, palier: (ex.properties.palier as number) ?? null,
         isBilan: ln.isAssessment, components,
       };
@@ -247,7 +255,7 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
         text_en: ["raw.metadata.en.description"],
       },
       expectation: {
-        text:    ["text", "raw.description", "raw.os_texte"],
+        text:    ["text", "raw.description", "raw.osTexte"],
         text_en: ["raw.metadata.en.description", "raw.metadata.en.os_texte"],
       },
       component: {
@@ -276,10 +284,10 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     recipeProfile: {
       chapterKind: "chapter",
       lessonKind: "lesson",
-      containerEdge: "hasChild",
+      containerEdge: "hasPart",            // canonical LC content containment
       assessmentProperty: "isAssessment",
       expectationKind: "expectation",
-      alignmentEdge: "supports",
+      alignmentEdge: "hasEducationalAlignment", // canonical LC alignment (content → SFI)
     },
 
     // LC identity stamped onto recipe-created nodes so they are faithful LC

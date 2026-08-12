@@ -20,7 +20,7 @@ const MATHS: GraphParseDescriptor = {
     expectation: "expectation",
     "intégration du palier": "expectation",
   },
-  labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Curriculum: "task" },
+  labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Activity: "task" },
   numberFrom: "order",
   progressionEdge: "buildsTowards",
 };
@@ -41,22 +41,28 @@ describe("generic parseGraph — maths (new shape)", () => {
   const m = parseGraph(load("sources/ci/maths/knowledge_graph.json"), MATHS);
 
   it("classifies the maths spine by metadata.role + label", () => {
+    // Canonical LC: all content groupings are `LessonGrouping` → kind "chapter".
+    // 31 = 25 authored chapters + 6 RECE task-groupings ("Regroupement de tâches").
     expect(kindCounts(m, ["week", "chapter", "domaine", "lesson", "expectation"])).toEqual({
-      week: 23, chapter: 25, domaine: 4, lesson: 112, expectation: 112,
+      week: 23, chapter: 31, domaine: 4, lesson: 112, expectation: 112,
     });
+    // authored chapters carry statementType "Chapitre"; the task-groupings do not.
+    const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
+    expect(authored.length).toBe(25);
     // components/tasks exist (incl. out-of-spine ones, matching legacy parse)
     expect(m.unitsOfKind("component").length).toBeGreaterThan(0);
     expect(m.unitsOfKind("task").length).toBeGreaterThan(0);
   });
 
   it("links chapter→lesson via the content edge (not a number join)", () => {
-    const chapters = m.unitsOfKind("chapter");
-    for (const c of chapters) {
+    // Only authored chapters hold lessons (task-groupings hold Activities).
+    const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
+    for (const c of authored) {
       const lessons = m.childrenOf(c.id).filter((u) => u.kind === "lesson");
-      expect(lessons.length).toBeGreaterThan(0); // every chapter has lessons
+      expect(lessons.length).toBeGreaterThan(0); // every authored chapter has lessons
     }
     // total chapter→lesson content links = 109 (3 palier-integration lessons hang off a domaine)
-    const total = chapters.reduce((n, c) => n + m.childrenOf(c.id).filter((u) => u.kind === "lesson").length, 0);
+    const total = authored.reduce((n, c) => n + m.childrenOf(c.id).filter((u) => u.kind === "lesson").length, 0);
     expect(total).toBe(109);
   });
 
@@ -72,7 +78,7 @@ describe("generic parseGraph — maths (new shape)", () => {
     // `supports` it (⇒ expectation.childIds ∋ the Lesson).
     const exp = m.unitsOfKind("expectation").find((e) => e.code === "Leçon 15")!;
     expect(exp.text).toContain("trouver ce qui manque");
-    expect(exp.properties.statement_type).toBe("Résolution de problème");
+    expect(exp.properties.statementType).toBe("Résolution de problème");
     expect(exp.order).toBe(15);
     expect((exp.properties.metadata as any).en.description).toContain("find what is missing");
     // its aligned Lesson is a content node that carries the same lesson number

@@ -11,8 +11,9 @@
 //      hasChild there.
 //   3. Content-source alignment `supports → hasEducationalAlignment` (Lesson /
 //      Activity / … → SFI). `LearningComponent → SFI` stays `supports` (canonical).
-//   4. Label `Curriculum → Activity | Course` (from normalized_type); drop the
-//      now-redundant `normalized_type` on content nodes (the label carries it).
+//   4. Label `Curriculum → Activity | Course` (from normalized_type). We KEEP
+//      `normalizedType` (camelCased) — it is part of a content node's faithful LC
+//      identity (recipe-created nodes stamp it too; see recipes/lc-fidelity).
 //   5. Ordinal → canonical `position` on content nodes (from metadata.session_order
 //      / metadata.order / a bare-number description).
 // buildsTowards and relatesTo are left as-is (canonical / out-of-scope cross-links).
@@ -55,7 +56,7 @@ function positionOf(n) {
 function migrate(grade, subject) {
   const path = resolve(HERE, "..", "sources", grade, subject, "knowledge_graph.json");
   const graph = JSON.parse(readFileSync(path, "utf8"));
-  const stats = { relabeled: 0, hasPartEdges: 0, alignEdges: 0, positionsSet: 0, normalizedTypeDropped: 0, nodes: graph.nodes.length, edges: graph.relationships.length };
+  const stats = { relabeled: 0, hasPartEdges: 0, alignEdges: 0, positionsSet: 0, nodes: graph.nodes.length, edges: graph.relationships.length };
 
   if (graph.relationships.some((r) => r.type === "hasPart") || graph.nodes.some((n) => (n.labels ?? []).includes("Activity"))) {
     return { grade, subject, skipped: "already canonical (hasPart / Activity present)" };
@@ -75,13 +76,12 @@ function migrate(grade, subject) {
   const byId = new Map(graph.nodes.map((n) => [n.id, n]));
   const before = { node: JSON.parse(JSON.stringify(graph.nodes.find((n) => (n.labels ?? []).includes("Lesson")))) };
 
-  // 2. Nodes: camelCase props, set position on content nodes, drop redundant normalizedType.
+  // 2. Nodes: camelCase props (metadata sidecar verbatim), set canonical `position`
+  //    on content nodes. `normalizedType` is kept (camelCased) — LC identity.
   for (const n of graph.nodes) {
-    const content = isContent(n);
-    const pos = content ? positionOf(n) : null;
+    const pos = isContent(n) ? positionOf(n) : null;
     n.properties = camelProps(n.properties);
     if (pos != null) { n.properties.position = pos; stats.positionsSet++; }
-    if (content && "normalizedType" in n.properties) { delete n.properties.normalizedType; stats.normalizedTypeDropped++; }
   }
 
   // 3. Edges: content-containment → hasPart; content-source alignment → hasEducationalAlignment.

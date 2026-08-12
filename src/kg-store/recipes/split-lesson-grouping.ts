@@ -73,9 +73,9 @@ export const splitLessonGrouping: GraphMutation<SplitLessonGroupingArgs> = {
     chapterProps = stampLcProps(chapterProps, a.profile.chapterKind, a.lcNodeTemplate, resolveStatementType(base, null, a.profile.chapterKind, a.lcNodeTemplate, a.profile.containerEdge));
     // The split-off grouping is the same TYPE as its source — inherit group_name
     // (LC's authoritative grouping type) rather than hardcoding "Chapitre".
-    const srcGroupName = readAtPath(source.properties, "raw.group_name");
-    if (typeof srcGroupName === "string") chapterProps = writeAtPath(chapterProps, "raw.group_name", srcGroupName);
-    chapterProps = writeAtPath(chapterProps, "raw.group_level", effNum);
+    const srcGroupName = readAtPath(source.properties, "raw.groupName");
+    if (typeof srcGroupName === "string") chapterProps = writeAtPath(chapterProps, "raw.groupName", srcGroupName);
+    chapterProps = writeAtPath(chapterProps, "raw.groupLevel", effNum);
     let g = createNode.apply(base, { kind: a.profile.chapterKind, properties: chapterProps, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.newGroupingId, labels: lcLabels(a.profile.chapterKind, a.lcNodeTemplate) });
 
     const lessons = childLessons(base, a.groupingId, a.profile).sort((x, y) => positionOf(x, a.profile, a.structuralAliases) - positionOf(y, a.profile, a.structuralAliases));

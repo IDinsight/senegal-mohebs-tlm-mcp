@@ -312,20 +312,24 @@ export type DeleteNodeArgs = {
   force?: boolean;
 };
 
-const HAS_CHILD = "hasChild";
+// Canonical LC containment spans `hasChild` (standards hierarchy) and `hasPart`
+// (content tree). The cascade follows containment only — never attachment
+// (`supports` / `hasEducationalAlignment`), so deleting a lesson never deletes
+// the standard it aligns to.
+const CONTAINMENT = new Set(["hasChild", "hasPart"]);
 
 // Compute the full set of node ids removed by a force-cascade delete of
-// `rootId`: the root plus every hasChild-descendant all of whose hasChild
+// `rootId`: the root plus every containment-descendant all of whose containment
 // parents are themselves in the removed set. Iterates to a fixpoint so a
 // child whose last surviving parent gets removed later is still collected.
 // Pure over the graph; shared by validate (to report) and apply (to enact).
 function cascadeRemovedNodeIds(base: MutationGraph, rootId: string): Set<string> {
   const removed = new Set<string>([rootId]);
-  // Parents of each node via hasChild, precomputed.
+  // Parents of each node via containment, precomputed.
   const parentsByChild = new Map<string, string[]>();
   const childrenByParent = new Map<string, string[]>();
   for (const e of base.edges) {
-    if (e.type !== HAS_CHILD) continue;
+    if (!CONTAINMENT.has(e.type)) continue;
     (parentsByChild.get(e.to) ?? parentsByChild.set(e.to, []).get(e.to)!).push(e.from);
     (childrenByParent.get(e.from) ?? childrenByParent.set(e.from, []).get(e.from)!).push(e.to);
   }

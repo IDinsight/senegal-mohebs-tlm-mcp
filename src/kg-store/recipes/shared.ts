@@ -190,7 +190,7 @@ export function resolveStatementType(
       if (e.type !== containerEdge || e.from !== containerParentId) continue;
       const sib = nodeById(g, e.to);
       if (sib && sib.type === kind) {
-        const st = readAtPath(sib.properties, "raw.statement_type");
+        const st = readAtPath(sib.properties, "raw.statementType");
         if (typeof st === "string" && st) return st;
       }
     }
@@ -212,9 +212,9 @@ export function stampLcProps(
   if (!t) return props;
   let out = props;
   if (t.role !== undefined) out = writeAtPath(out, "raw.metadata.role", t.role);
-  if (t.normalizedType !== undefined) out = writeAtPath(out, "raw.normalized_type", t.normalizedType);
-  if (t.normalizedStatementType !== undefined) out = writeAtPath(out, "raw.normalized_statement_type", t.normalizedStatementType);
-  if (statementType != null && statementType !== "") out = writeAtPath(out, "raw.statement_type", statementType);
+  if (t.normalizedType !== undefined) out = writeAtPath(out, "raw.normalizedType", t.normalizedType);
+  if (t.normalizedStatementType !== undefined) out = writeAtPath(out, "raw.normalizedStatementType", t.normalizedStatementType);
+  if (statementType != null && statementType !== "") out = writeAtPath(out, "raw.statementType", statementType);
   return out;
 }
 
