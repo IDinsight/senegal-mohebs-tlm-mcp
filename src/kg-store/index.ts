@@ -7,19 +7,12 @@ export type { KgNodeStore, Slot, StoredNode, StoredEdge, StoredMeta, StoredPoint
 export { otherSlot, edgeId } from "./types.js";
 export { runGraphMutation, diffGraphs, __resetMutationsForTest } from "./mutations.js";
 export { publishDraft, discardDraft, diffDraft, publishDraftWithConfirm, discardDraftWithConfirm, __resetDraftTokensForTest } from "./publish-flow.js";
-export { upsertProperty, UPSERT_PROPERTY_SAFE_PATHS } from "./upsert-property.js";
+export { upsertProperty, UPSERT_PROPERTY_SAFE_PATHS, readAtPath, writeAtPath } from "./upsert-property.js";
 export { createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId } from "./structural.js";
 export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } from "./structural.js";
-export {
-  addLesson, addLessonGrouping, moveLesson, splitLessonGrouping, renumber,
-  addActivity, addMaterial, setMaterialContent,
-  STRUCTURAL_EDIT_SAFE_PATHS, structuralEditErrors, RECIPES,
-} from "./recipes/index.js";
-export type {
-  AddLessonArgs, AddLessonGroupingArgs, MoveLessonArgs, SplitLessonGroupingArgs, RenumberArgs,
-  AddActivityArgs, AddMaterialArgs, SetMaterialContentArgs,
-  RecipeDescriptor, RecipeParam,
-} from "./recipes/index.js";
+// The composite curriculum recipes moved OUT to the `kg-recipes` module (generic
+// verbs, no RecipeProfile). kg-store no longer knows them — it exposes only the
+// structural primitives + the two-phase framework that kg-recipes composes.
 export type {
   GraphMutation, MutationGraph, MutationNode, MutationEdge, ValidationResult,
   GraphDiff, DiffEntry, GraphPreviewResult, GraphBlockedResult, GraphApplyResult, GraphUnauthorizedResult,

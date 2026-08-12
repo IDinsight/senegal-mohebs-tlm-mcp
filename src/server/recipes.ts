@@ -1,66 +1,41 @@
-// ── Module: server · tool group: curriculum recipes (#14) ───────────────────
-// The five composite recipes — add_lesson, add_lesson_grouping, move_lesson,
-// split_lesson_grouping, renumber — each a SINGLE #5 mutation exposed as an MCP tool.
-// They share the exact envelope every graph edit uses (two-phase confirm,
-// #13's integrity floor on the whole result, #7 audit, #8 role gate); what
-// makes them "recipes" is that ONE confirm applies MANY create/link/unlink +
-// structural-property edits atomically to the draft.
+// ── Module: server · tool group: curriculum recipes ─────────────────────────
+// The four GENERIC curriculum verbs — add_node, move_node, reposition,
+// set_content — each a SINGLE two-phase mutation exposed as an MCP tool. They
+// share the exact envelope every graph edit uses (two-phase confirm, the #13
+// referential-integrity floor on the whole result, #7 audit, #8 role gate); what
+// makes them "recipes" is that ONE confirm applies a whole composite atomically
+// to the draft.
 //
-// Recipes are available only for a subject whose adapter declares a
-// `recipeProfile` + `structuralAliases` (CI CI maths does; CE1 CE1 reading does not) — the
-// tool returns a clear "not available" message otherwise, rather than guessing.
+// Unlike the old recipes there is NO RecipeProfile and NO per-subject
+// availability: the verbs are subject-agnostic (they speak pure canonical LC and
+// derive a created node's identity from the graph — see kg-recipes/lc.ts), so
+// they are available on EVERY subject. Validity is structural, enforced by each
+// verb's own `validate` + the shared integrity rules.
 //
-// id-minting mirrors create_node: recipes that CREATE nodes (add_lesson,
-// add_lesson_grouping, split_lesson_grouping) mint the id(s) server-side on the dry-run and
-// surface them at the response top level; the caller passes the SAME ids back
-// on confirm so the framework's args-hash matches. add_lesson_grouping mints one
-// chapter id + one id per seed lesson.
+// id-minting mirrors create_node: add_node mints the id server-side on the
+// dry-run and surfaces it at the response top level; the caller passes the SAME
+// id back on confirm so the framework's args-hash matches.
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
-import {
-  runGraphMutation, kgNamespace, mintNodeId,
-  addLesson, addLessonGrouping, moveLesson, splitLessonGrouping, renumber,
-  addActivity, addMaterial, setMaterialContent,
-} from "../kg-store/index.js";
-import type { MutationGraph } from "../kg-store/index.js";
-import type { SubjectAdapter, RecipeProfile, StructuralAliases, WordingAliases, LcNodeTemplate } from "../types.js";
+import { runGraphMutation, kgNamespace, mintNodeId, type MutationGraph } from "../kg-store/index.js";
+import { addNode, moveNode, reposition, setContent } from "../kg-recipes/index.js";
+import type { SubjectAdapter } from "../types.js";
 
-// Resolve the subject vocabulary the recipes bind to, or an error payload if
-// the active subject has no recipes. Every recipe tool calls this first.
-type RecipeBinding = {
-  namespace: string;
-  profile: RecipeProfile;
-  structuralAliases: StructuralAliases;
-  wordingAliases: WordingAliases;
-  lcNodeTemplate?: LcNodeTemplate;
-  coverage: (g: MutationGraph) => string[];
-};
-function bindRecipes(adapter: SubjectAdapter, recipeName: string): RecipeBinding | { unavailable: string } {
-  if (!adapter.recipeProfile || !adapter.structuralAliases) {
-    return { unavailable: `Curriculum recipes are not available for ${adapter.grade}/${adapter.subject} — this subject's adapter declares no recipeProfile. Use the raw structural verbs (create_node/link_nodes/…) instead.` };
-  }
-  // Per-recipe availability: a subject may opt into a subset (e.g. CE1 reading
-  // enables the content recipes but not week-level split/renumber). An absent
-  // allowlist means the whole family is available (CI maths).
-  if (adapter.availableRecipes && !adapter.availableRecipes.includes(recipeName)) {
-    return { unavailable: `The '${recipeName}' recipe is not available for ${adapter.grade}/${adapter.subject}. Available recipes: ${adapter.availableRecipes.join(", ") || "(none)"}.` };
-  }
+// The namespace + coverage hook the active subject binds to. Every recipe tool
+// calls this first. No profile to resolve — the verbs are generic.
+function bind(adapter: SubjectAdapter): { namespace: string; coverage: (g: MutationGraph) => string[] } {
   return {
     namespace: kgNamespace(adapter.grade, adapter.subject),
-    profile: adapter.recipeProfile,
-    structuralAliases: adapter.structuralAliases,
-    wordingAliases: adapter.wordingAliases,
-    lcNodeTemplate: adapter.lcNodeTemplate,
-    coverage: (g) => adapter.coverageWarnings?.(g) ?? [],
+    coverage: (g) => adapter.coverageWarnings?.(g as never) ?? [],
   };
 }
 
-// On a dry-run preview, surface the minted id(s) at the top level so Claude can
-// pass them back on confirm without fishing them out of the diff — mirrors
-// create_node's `mintedNodeId`. No-op on confirm and on blocked/unauthorized.
+// On a dry-run preview, surface the minted id at the top level so Claude can pass
+// it back on confirm without fishing it out of the diff. No-op on confirm and on
+// blocked/unauthorized results.
 function withMinted(result: unknown, minted: Record<string, unknown>): unknown {
   const r = result as { kind?: string; phase?: string };
   if (r && r.kind === "graphMutation" && r.phase === "preview") return { ...(result as object), ...minted };
@@ -68,262 +43,123 @@ function withMinted(result: unknown, minted: Record<string, unknown>): unknown {
 }
 
 export function registerRecipeTools(server: McpServer) {
-  // ── add_lesson ────────────────────────────────────────────────────────────
+  // ── add_node ────────────────────────────────────────────────────────────────
   server.registerTool(
-    "add_lesson",
+    "add_node",
     {
-      title: "Add a lesson to a chapter",
+      title: "Add a node to the curriculum graph",
       description:
-        "COMPOSITE recipe: create a new lesson node, link it (hasChild) to an existing chapter, AND align it (supports) to an existing spine expectation (the objectif spécifique it teaches) — in ONE atomic draft edit. `text` is the lesson's own title (the OS text lives on the expectation, edited separately). Additive — a nonexistent chapter OR expectation is BLOCKED by referential integrity; the standard must already exist (author it upstream). `order` sets the within-chapter position (defaults to appending); `isBilan:true` marks it as the end-of-chapter assessment. REQUIRES CONFIRMATION: dry-run returns one whole-composite diff + confirmationToken + mintedLessonId; ask the user, then call again with confirm:true, the token, AND the same mintedLessonId. DRAFT edit — publish_draft to make it live.",
-      inputSchema: {
-        groupingId: z.string(),
-        expectationId: z.string(),
-        text: z.string(),
-        text_en: z.string().optional(),
-        order: z.number().optional(),
-        isBilan: z.boolean().optional(),
-        mintedLessonId: z.string().optional(),   // required on confirm
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { groupingId: string; expectationId: string; text: string; text_en?: string; order?: number; isBilan?: boolean; mintedLessonId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "add_lesson");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
-      const lessonId = a.confirm ? (a.mintedLessonId ?? "") : mintNodeId();
-      const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: addLesson,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, groupingId: a.groupingId, expectationId: a.expectationId, lessonId, text: a.text, text_en: a.text_en, order: a.order, isBilan: a.isBilan },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: bind.coverage,
-      });
-      return asJson(a.confirm ? result : withMinted(result, { mintedLessonId: lessonId }));
-    }),
-  );
-
-  // ── add_lesson_grouping ─────────────────────────────────────────────────────
-  server.registerTool(
-    "add_lesson_grouping",
-    {
-      title: "Add a lesson grouping (chapter / unit / module)",
-      description:
-        "COMPOSITE recipe: create a new lesson grouping — an LC LessonGrouping, the generic container whose naming varies by publisher (Chapitre, Unité, Module…) — in ONE atomic draft edit. `groupName` is the grouping TYPE (defaults to \"Chapitre\"); `number` is its position in the series and must be FREE — append after the last grouping or fill a gap; a colliding number is REJECTED (inserting between groupings and shifting the rest is renumber's job). The grouping is created EMPTY; add lessons afterward with add_lesson (each aligned to an existing standard). REQUIRES CONFIRMATION: dry-run returns the whole-composite diff + confirmationToken + mintedGroupingId; call again with confirm:true, the token, and the SAME minted id. DRAFT edit — publish_draft to make it live.",
-      inputSchema: {
-        number: z.number(),
-        title: z.string(),
-        title_en: z.string().optional(),
-        groupName: z.string().optional(),
-        mintedGroupingId: z.string().optional(),
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { number: number; title: string; title_en?: string; groupName?: string; mintedGroupingId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "add_lesson_grouping");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
-      const groupingId = a.confirm ? (a.mintedGroupingId ?? "") : mintNodeId();
-      const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: addLessonGrouping,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, groupingId, number: a.number, title: a.title, title_en: a.title_en, groupName: a.groupName },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: bind.coverage,
-      });
-      return asJson(a.confirm ? result : withMinted(result, { mintedGroupingId: groupingId }));
-    }),
-  );
-
-  // ── move_lesson ───────────────────────────────────────────────────────────
-  server.registerTool(
-    "move_lesson",
-    {
-      title: "Move a lesson to another chapter",
-      description:
-        "COMPOSITE recipe: rehome a lesson from its current chapter to another — unlink the old hasChild edge, link the new one, AND rewrite the lesson's chapter-membership number so it renders under the new chapter — in ONE atomic draft edit. Referential integrity validates the whole result (no orphan, no dangling edge); coverage warnings surface if, say, the source chapter is left without a bilan. `position` sets the within-target order (defaults to appending). REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
-      inputSchema: {
-        lessonId: z.string(),
-        toGroupingId: z.string(),
-        position: z.number().optional(),
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { lessonId: string; toGroupingId: string; position?: number; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "move_lesson");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
-      const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: moveLesson,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lessonId: a.lessonId, toGroupingId: a.toGroupingId, position: a.position },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: bind.coverage,
-      });
-      return asJson(result);
-    }),
-  );
-
-  // ── split_lesson_grouping ─────────────────────────────────────────────────────────
-  server.registerTool(
-    "split_lesson_grouping",
-    {
-      title: "Split a lesson grouping into two",
-      description:
-        "COMPOSITE recipe: create a new lesson grouping (same type as the source — Chapitre/Unité/Module) and MOVE the tail lessons (from `atLessonId` onward, in order) into it — unlink each old hasChild edge, link the new one — in ONE atomic draft edit. The new grouping is APPENDED at the next free number by default (no existing grouping is shifted); pass a free `newNumber` to place it in a gap. The whole result is integrity-checked; a split that leaves either grouping without a bilan WARNS (never blocks). `groupingId` is the grouping being split. REQUIRES CONFIRMATION: dry-run returns the whole-composite diff + confirmationToken + mintedGroupingId; confirm with the same minted id. DRAFT edit — publish_draft to make it live.",
-      inputSchema: {
-        groupingId: z.string(),
-        atLessonId: z.string(),
-        newTitle: z.string().optional(),
-        newTitle_en: z.string().optional(),
-        newNumber: z.number().optional(),
-        mintedGroupingId: z.string().optional(),
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { groupingId: string; atLessonId: string; newTitle?: string; newTitle_en?: string; newNumber?: number; mintedGroupingId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "split_lesson_grouping");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
-      const newGroupingId = a.confirm ? (a.mintedGroupingId ?? "") : mintNodeId();
-      const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: splitLessonGrouping,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, groupingId: a.groupingId, atLessonId: a.atLessonId, newGroupingId, newTitle: a.newTitle, newTitle_en: a.newTitle_en, newNumber: a.newNumber },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: bind.coverage,
-      });
-      return asJson(a.confirm ? result : withMinted(result, { mintedGroupingId: newGroupingId }));
-    }),
-  );
-
-  // ── renumber ──────────────────────────────────────────────────────────────
-  server.registerTool(
-    "renumber",
-    {
-      title: "Renumber a chapter",
-      description:
-        "COMPOSITE recipe (the regime-gated one): change a chapter's number AND cascade-rewrite every child lesson's chapter-membership number in ONE atomic draft edit, so the whole family stays consistent and nothing drifts. The target number must be FREE — renumber MOVES a chapter to an unoccupied number; moving into an occupied slot (insert-with-shift or swap) is a separate, explicit operation and is rejected here. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live. (Under this codebase's reference regime, a CI maths chapter's number is a denormalized presentation join key, so leaving lessons un-rewritten would misfile them — this recipe rewrites the whole family to prevent exactly that.)",
-      inputSchema: {
-        groupingId: z.string(),
-        newNumber: z.number(),
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { groupingId: string; newNumber: number; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "renumber");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
-      const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: renumber,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, groupingId: a.groupingId, newNumber: a.newNumber },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: bind.coverage,
-      });
-      return asJson(result);
-    }),
-  );
-
-  // ── add_activity (Scope C) ──────────────────────────────────────────────────
-  server.registerTool(
-    "add_activity",
-    {
-      title: "Add an activity to a lesson",
-      description:
-        "COMPOSITE recipe (Scope C): create a content Activity — a task/phase (an 'Étape') — and link it (hasPart) to an existing lesson, in ONE atomic draft edit. Additive — a nonexistent lesson is BLOCKED. The activity carries NO alignment edge: it inherits the lesson's standard (phase-grained — put the phase's scripted teacher/pupil content in the activity's Material via add_material). `text` is the activity/phase title; `studentGroupingType` (individual/pairs/group), `timeRequired`, and `educationalUse` (Instruction/Assessment) are optional. `position` sets the within-lesson order (defaults to appending). REQUIRES CONFIRMATION: dry-run returns one whole-composite diff + confirmationToken + mintedActivityId; ask the user, then call again with confirm:true, the token, AND the same mintedActivityId. DRAFT edit — publish_draft to make it live.",
-      inputSchema: {
-        lessonId: z.string(),
-        text: z.string(),
-        text_en: z.string().optional(),
-        studentGroupingType: z.string().optional(),
-        timeRequired: z.string().optional(),
-        educationalUse: z.string().optional(),
-        position: z.number().optional(),
-        mintedActivityId: z.string().optional(),   // required on confirm
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { lessonId: string; text: string; text_en?: string; studentGroupingType?: string; timeRequired?: string; educationalUse?: string; position?: number; mintedActivityId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "add_activity");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
-      const activityId = a.confirm ? (a.mintedActivityId ?? "") : mintNodeId();
-      const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: addActivity,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, lessonId: a.lessonId, activityId, text: a.text, text_en: a.text_en, studentGroupingType: a.studentGroupingType, timeRequired: a.timeRequired, educationalUse: a.educationalUse, position: a.position },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: bind.coverage,
-      });
-      return asJson(a.confirm ? result : withMinted(result, { mintedActivityId: activityId }));
-    }),
-  );
-
-  // ── add_material (Scope C) ──────────────────────────────────────────────────
-  server.registerTool(
-    "add_material",
-    {
-      title: "Add a material to an activity, lesson, or grouping",
-      description:
-        "COMPOSITE recipe (Scope C): create a content Material — the reviewable, load-bearing payload (prose / steps / numbers / image-brief) — and link it (hasPart) to an existing container, in ONE atomic draft edit. The parent may be an Activity (an Étape's script), a Lesson (session-level material — the shared reading text, the metadata block), or a LessonGrouping (a week/chapter — e.g. an opening-scene image); a wrong-kind parent is BLOCKED. `content` is the payload; `materialType` is Core (default) / Supporting / Reference; `text` is an optional title. Content is edited ONLY through this recipe and set_material_content (never upsert_property). REQUIRES CONFIRMATION: dry-run returns the whole-composite diff + confirmationToken + mintedMaterialId; call again with confirm:true, the token, and the SAME minted id. DRAFT edit — publish_draft to make it live.",
+        "GENERIC composite recipe: create ONE node with an LC `label` and attach it under `parentId` via the canonical containment edge (hasPart for content — LessonGrouping/Lesson/Activity/Material; hasChild for standards), at a `position` (defaults to appending), in ONE atomic draft edit. Optionally `alignTo` a StandardsFrameworkItem (hasEducationalAlignment). The node's LC identity (labels, normalized type, role, ordinal path) is DERIVED FROM THE GRAPH — copied from an existing node of that label, or canonical LC defaults if none exists yet. `title` is its display name; `properties` is a free bag of extra canonical LC props written under raw.* (content, materialType, studentGroupingType, timeRequired, educationalUse, groupName…). Referential integrity BLOCKS a nonexistent parent or alignTo. REQUIRES CONFIRMATION: dry-run returns one whole-composite diff + confirmationToken + mintedNodeId; ask the user, then call again with confirm:true, the token, AND the same mintedNodeId. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
         parentId: z.string(),
-        content: z.string(),
-        materialType: z.string().optional(),
-        text: z.string().optional(),
-        text_en: z.string().optional(),
+        label: z.string(),
+        title: z.string().optional(),
+        title_en: z.string().optional(),
         position: z.number().optional(),
-        mintedMaterialId: z.string().optional(),   // required on confirm
+        via: z.string().optional(),
+        alignTo: z.string().optional(),
+        properties: z.record(z.string(), z.unknown()).optional(),
+        mintedNodeId: z.string().optional(),   // required on confirm
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { parentId: string; content: string; materialType?: string; text?: string; text_en?: string; position?: number; mintedMaterialId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "add_material");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
-      const materialId = a.confirm ? (a.mintedMaterialId ?? "") : mintNodeId();
+    guarded(async (a: { parentId: string; label: string; title?: string; title_en?: string; position?: number; via?: string; alignTo?: string; properties?: Record<string, unknown>; mintedNodeId?: string; confirm?: boolean; confirmationToken?: string }) => {
+      const { namespace, coverage } = bind(getActiveAdapter());
+      const newNodeId = a.confirm ? (a.mintedNodeId ?? "") : mintNodeId();
       const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: addMaterial,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, lcNodeTemplate: bind.lcNodeTemplate, parentId: a.parentId, materialId, content: a.content, materialType: a.materialType, text: a.text, text_en: a.text_en, position: a.position },
+        namespace,
+        mutation: addNode,
+        args: { namespace, parentId: a.parentId, label: a.label, newNodeId, title: a.title, title_en: a.title_en, position: a.position, via: a.via, alignTo: a.alignTo, properties: a.properties },
         confirm: a.confirm,
         token: a.confirmationToken,
-        coverage: bind.coverage,
+        coverage,
       });
-      return asJson(a.confirm ? result : withMinted(result, { mintedMaterialId: materialId }));
+      return asJson(a.confirm ? result : withMinted(result, { mintedNodeId: newNodeId }));
     }),
   );
 
-  // ── set_material_content (Scope C) ──────────────────────────────────────────
+  // ── move_node ─────────────────────────────────────────────────────────────
   server.registerTool(
-    "set_material_content",
+    "move_node",
     {
-      title: "Replace a material's content",
+      title: "Move a node to another parent",
       description:
-        "COMPOSITE recipe (Scope C): replace an existing Material's `content` (the load-bearing payload) in ONE atomic draft edit — the dedicated verb for editing content, since upsert_property is wording-only and cannot reach it. A nonexistent or wrong-kind `materialId` is BLOCKED; to remove a material entirely, delete the node instead. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
+        "GENERIC composite recipe: re-parent a node within the containment tree along one axis — detach its current parent edge, attach `toParentId`, and set its position — in ONE atomic draft edit. The axis is the node's canonical containment edge (override with `via`); a node's second axis (e.g. a lesson also scheduled under a week) is left untouched. Referential integrity validates the whole result. `position` sets the within-target order (defaults to appending). REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
-        materialId: z.string(),
+        nodeId: z.string(),
+        toParentId: z.string(),
+        via: z.string().optional(),
+        position: z.number().optional(),
+        confirm: z.boolean().optional(),
+        confirmationToken: z.string().optional(),
+      },
+    },
+    guarded(async (a: { nodeId: string; toParentId: string; via?: string; position?: number; confirm?: boolean; confirmationToken?: string }) => {
+      const { namespace, coverage } = bind(getActiveAdapter());
+      const result = await runGraphMutation({
+        namespace,
+        mutation: moveNode,
+        args: { namespace, nodeId: a.nodeId, toParentId: a.toParentId, via: a.via, position: a.position },
+        confirm: a.confirm,
+        token: a.confirmationToken,
+        coverage,
+      });
+      return asJson(result);
+    }),
+  );
+
+  // ── reposition ──────────────────────────────────────────────────────────────
+  server.registerTool(
+    "reposition",
+    {
+      title: "Set a node's position",
+      description:
+        "GENERIC composite recipe: set a node's `position` — its ordinal among its siblings — in ONE atomic draft edit. Membership is the containment edge, so this NEVER cascades; it is a single-node ordinal edit (the old renumber's chapter→lessons cascade is gone with the join key). REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
+      inputSchema: {
+        nodeId: z.string(),
+        position: z.number(),
+        confirm: z.boolean().optional(),
+        confirmationToken: z.string().optional(),
+      },
+    },
+    guarded(async (a: { nodeId: string; position: number; confirm?: boolean; confirmationToken?: string }) => {
+      const { namespace, coverage } = bind(getActiveAdapter());
+      const result = await runGraphMutation({
+        namespace,
+        mutation: reposition,
+        args: { namespace, nodeId: a.nodeId, position: a.position },
+        confirm: a.confirm,
+        token: a.confirmationToken,
+        coverage,
+      });
+      return asJson(result);
+    }),
+  );
+
+  // ── set_content ─────────────────────────────────────────────────────────────
+  server.registerTool(
+    "set_content",
+    {
+      title: "Replace a node's content",
+      description:
+        "GENERIC composite recipe: replace a node's load-bearing `content` (canonical LC Material.content) in ONE atomic draft edit — the dedicated verb for editing content, since upsert_property is wording-only and cannot reach it. A nonexistent `nodeId` is BLOCKED; to remove content entirely, delete the node instead. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
+      inputSchema: {
+        nodeId: z.string(),
         content: z.string(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { materialId: string; content: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter(), "set_material_content");
-      if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
+    guarded(async (a: { nodeId: string; content: string; confirm?: boolean; confirmationToken?: string }) => {
+      const { namespace, coverage } = bind(getActiveAdapter());
       const result = await runGraphMutation({
-        namespace: bind.namespace,
-        mutation: setMaterialContent,
-        args: { namespace: bind.namespace, profile: bind.profile, structuralAliases: bind.structuralAliases, wordingAliases: bind.wordingAliases, materialId: a.materialId, content: a.content },
+        namespace,
+        mutation: setContent,
+        args: { namespace, nodeId: a.nodeId, content: a.content },
         confirm: a.confirm,
         token: a.confirmationToken,
-        coverage: bind.coverage,
+        coverage,
       });
       return asJson(result);
     }),

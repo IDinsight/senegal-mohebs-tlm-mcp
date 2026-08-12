@@ -178,72 +178,12 @@ export type WordingAliases = {
   };
 };
 
-/**
- * STRUCTURAL aliases (#14) — the exact same shape as `WordingAliases`, but for
- * a curated set of STRUCTURAL properties (a chapter's number, a lesson's
- * within-chapter position, a lesson's chapter-membership number) rather than
- * wording. Kept a distinct type (not just `WordingAliases`) so the two never
- * blur: wording is edited by `upsert_property`, structural keys are edited only
- * by the composite recipes, and each has its OWN central safety allowlist in
- * kg-store. Values these keys carry are NUMERIC (order/number), unlike the
- * strings wording carries. Declare only the keys a subject's recipes need.
- */
-export type StructuralAliases = WordingAliases;
-
-/**
- * The subject vocabulary the curriculum recipes (#14) need to operate without
- * baking CI CI maths knowledge into the subject-agnostic kg-store. A recipe reads
- * this off the active adapter (like `upsert_property` reads `wordingAliases`)
- * and passes it through as an argument. A subject that declares NO
- * `recipeProfile` simply has no recipes (the CE1 CE1 reading adapter, today).
- *
- * The recipes reference well-known LOGICAL key names ("number" on a chapter;
- * "chapterNumber" / "position" on a lesson; "title" / "text" wording) and rely
- * on `structuralAliases` / `wordingAliases` to resolve them to storage paths —
- * so the only genuinely subject-specific vocabulary that lives here is the node
- * kinds, the container edge type, and where an "assessment" flag is stored.
- */
-export type RecipeProfile = {
-  chapterKind: string;          // e.g. "chapter" — the container a lesson belongs to
-  lessonKind: string;           // e.g. "lesson"  — the child a chapter holds
-  containerEdge: string;        // e.g. "hasChild" — the id-based backbone edge chapter→lesson
-  assessmentProperty: string;   // e.g. "isAssessment" — node property flagging the bilan
-  // Post-split (graph-native-authoring): a lesson is a content node that ALIGNS
-  // to an existing spine standard. add_lesson links `lessonKind --alignmentEdge-->
-  // expectationKind`. Omitted by subjects whose lessons carry the objective
-  // inline (no separate standard to align to).
-  expectationKind?: string;     // e.g. "expectation" — the spine standard (OS) a lesson aligns to
-  alignmentEdge?: string;       // e.g. "hasEducationalAlignment" — the lesson→expectation coverage edge
-  // Scope C content layer: the kinds `add_activity` creates — an `Activity` under
-  // a lesson (via containerEdge) and its `Material` (the scripted content).
-  // Omitted by subjects without an activity/material layer.
-  activityKind?: string;        // e.g. "activity"
-  materialKind?: string;        // e.g. "material"
-};
-
-/**
- * The Learning-Commons identity fields a recipe stamps onto a node it CREATES,
- * so an authored node is a faithful LC node (survives a re-parse / re-export)
- * rather than a "half" node carrying only wording + number. Essentially the
- * inverse of the parse descriptor's `roleToKind`: one entry per created
- * `CurriculumUnit.kind`. Optional on the adapter — a subject with no recipes
- * (hence no created nodes) omits it.
- *
- * `statementType` is either a constant (a maths chapter is always "Chapitre")
- * or INHERITED: a maths lesson's strand is a denormalized copy of its domaine's
- * name, so we take the title of the nearest container-ancestor of the named
- * kind. When the ancestor can't be resolved (e.g. a lesson seeded under a
- * brand-new chapter not yet linked to a domaine) the recipe falls back to an
- * existing sibling's value, then to leaving it blank with a warning.
- */
-export type LcStamp = {
-  labels?: string[];                    // → StoredNode.labels (top-level, e.g. ["Lesson"], ["LessonGrouping"])
-  role?: string;                        // → raw.metadata.role
-  normalizedType?: string;              // → raw.normalized_type (content nodes, e.g. "Lesson")
-  normalizedStatementType?: string;     // → raw.normalized_statement_type (spine nodes, e.g. "Standard Grouping")
-  statementType?: string | { inheritTitleFromAncestorKind: string };  // → raw.statement_type
-};
-export type LcNodeTemplate = Record<string, LcStamp>;   // keyed by CurriculumUnit.kind
+// The composite curriculum recipes are now GENERIC verbs (add_node / move_node /
+// reposition / set_content) that live in the `kg-recipes` module and derive a
+// created node's identity from the graph itself. There is no per-subject
+// `RecipeProfile` / `StructuralAliases` / `LcNodeTemplate` anymore — an adapter
+// declares only its `wordingAliases` (for `upsert_property`). See
+// docs/design-notes/graph-native-authoring.md and kg-recipes/lc.ts.
 
 /**
  * A read-only view of the raw graph (nodes + edges, no storage slot tag) that
@@ -270,43 +210,12 @@ export interface SubjectAdapter {
    */
   readonly wordingAliases: WordingAliases;
 
-  /**
-   * STRUCTURAL edit aliases (#14) — the curated structural keys a curator may
-   * change on EXISTING nodes through the composite recipes (a chapter's number,
-   * a lesson's position and chapter-membership number). Optional: a subject
-   * with no recipes omits it. Each logical key resolves to storage paths that
-   * are validated against kg-store's `STRUCTURAL_EDIT_SAFE_PATHS` allowlist, so
-   * a careless adapter cannot widen the editable surface. See `StructuralAliases`.
-   */
-  readonly structuralAliases?: StructuralAliases;
-
-  /**
-   * The curriculum vocabulary the recipes (#14) bind to. Optional — declaring
-   * it is what makes the composite recipes (add_lesson / add_lesson_grouping /
-   * move_lesson / split_lesson_grouping / renumber) AVAILABLE for this subject. A
-   * subject that omits it has wording + raw structural verbs but no recipes.
-   * See `RecipeProfile`.
-   */
-  readonly recipeProfile?: RecipeProfile;
-
-  /**
-   * Per-recipe availability allowlist (by recipe name, e.g. `["move_lesson",
-   * "add_activity"]`). Recipes are otherwise all-or-nothing per subject; this
-   * lets a subject whose structure doesn't fit every recipe opt into only the
-   * ones that make sense (e.g. CE1 reading enables the content recipes but not
-   * week-level split/renumber). Omit to expose the whole family (CI maths).
-   */
-  readonly availableRecipes?: readonly string[];
-
-  /**
-   * The LC identity fields to stamp onto recipe-created nodes so they are
-   * faithful LC nodes (see `LcNodeTemplate`). Optional and paired with
-   * `recipeProfile` — a subject with recipes declares one so its created
-   * chapters/lessons round-trip through the LC parser. A subject that omits it
-   * still creates nodes, but they carry only wording + number (the pre-#labels
-   * behavior).
-   */
-  readonly lcNodeTemplate?: LcNodeTemplate;
+  // The composite curriculum recipes are now GENERIC, graph-derived verbs in the
+  // `kg-recipes` module (add_node / move_node / reposition / set_content),
+  // available on every subject. An adapter no longer declares a `recipeProfile`,
+  // `structuralAliases`, `availableRecipes`, or `lcNodeTemplate` — the recipes
+  // read a created node's identity skeleton (labels, normalized type, ordinal
+  // path) from the graph itself. See kg-recipes/lc.ts.
 
   /**
    * Coverage / consistency WARNINGS for a proposed graph state (#13). Optional
