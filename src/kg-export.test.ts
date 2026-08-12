@@ -39,99 +39,58 @@ const readingNs = kgNamespace("ce1", "reading");
 const childrenOf = (g: NonNullable<Awaited<ReturnType<typeof exportNamespace>>>, id: string) =>
   g.edges.filter((e) => e.r === "hasChild" && e.s === id).map((e) => g.nodes.find((n) => n.id === e.t)!);
 
-describe("kg-export — maths (converged two-axis shape)", () => {
-  it("exposes domaine / chapter / week / lesson node kinds", async () => {
+// The explorer now follows the LC ontology ONLY: nodes are categorized/coloured
+// by their LC LABEL, and views are generic (containment hierarchy + by-label).
+describe("kg-export — LC ontology (maths)", () => {
+  it("categorizes nodes by LC label; taxonomy lists the present labels in order", async () => {
     const g = (await exportNamespace(mathsNs))!;
     expect(g).toBeTruthy();
-    expect(g.meta.counts.byKind).toMatchObject({ domaine: 4, chapter: 25, week: 23, lesson: 112 });
-  });
-
-  it("learning components are reachable in the tree (supports folded into hasChild for display)", async () => {
-    const g = (await exportNamespace(mathsNs))!;
-    const components = g.nodes.filter((n) => n.kind === "component");
-    expect(components.length).toBeGreaterThan(0);
-    // A component attaches to its lesson via a `supports` edge, folded to a
-    // hasChild display edge — so every component appears as a tree child. If the
-    // fold regresses, the explorer stops at lessons and components vanish.
-    const hasChildTargets = new Set(g.edges.filter((e) => e.r === "hasChild").map((e) => e.t));
-    expect(components.every((c) => hasChildTargets.has(c.id))).toBe(true);
-  });
-
-  it("walks the CONTENT axis via hasChild: domaine → chapter → lesson", async () => {
-    const g = (await exportNamespace(mathsNs))!;
-    const dom = g.nodes.find((n) => n.kind === "domaine")!;
-    const chapters = childrenOf(g, dom.id).filter((n) => n.kind === "chapter");
-    expect(chapters.length).toBeGreaterThan(0);
-    expect(childrenOf(g, chapters[0].id).some((n) => n.kind === "lesson")).toBe(true);
-    // domaines are ordered for the thematic view
-    expect(g.nodes.filter((n) => n.kind === "domaine").every((n) => typeof n.ord === "number")).toBe(true);
-    // colour propagation: the chapter (and its lessons) inherit the domaine name
-    expect(chapters[0].dom).toBe(dom.dom);
-    expect(childrenOf(g, chapters[0].id).filter((n) => n.kind === "lesson").every((l) => l.dom === dom.dom)).toBe(true);
-  });
-
-  it("walks the SCHEDULE axis via hasChild: week → lesson", async () => {
-    const g = (await exportNamespace(mathsNs))!;
-    const wk = g.nodes.find((n) => n.kind === "week")!;
-    expect(childrenOf(g, wk.id).some((n) => n.kind === "lesson")).toBe(true);
-  });
-
-  it("tags nodes with a graph-agnostic category and emits the taxonomy legend", async () => {
-    const g = (await exportNamespace(mathsNs))!;
-    // role/kind → category, independent of the subject's own vocabulary
-    const catCount = (c: string) => g.nodes.filter((n) => n.cat === c).length;
-    expect(catCount("strand")).toBe(4);       // domaine
-    expect(catCount("subtopic")).toBe(25);     // chapter
-    expect(catCount("expectation")).toBe(112); // lesson (OS)
-    expect(catCount("week")).toBe(23);
-    expect(catCount("component")).toBeGreaterThan(0);
-    expect(catCount("task")).toBeGreaterThan(0);
-    // taxonomy lists present categories in canonical order, each with a colour
-    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["strand", "subtopic", "expectation", "component", "task", "week", "framework"]);
+    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, LessonGrouping: 25, Lesson: 112, LearningComponent: 80, Curriculum: 111 });
+    expect(g.meta.counts.byKind.StandardsFrameworkItem).toBeGreaterThan(0);
+    // every node's legend category IS its LC label — no subject roles/kinds
+    expect(g.nodes.every((n) => n.cat === n.label && n.kind === n.label)).toBe(true);
+    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "LessonGrouping", "Lesson", "LearningComponent", "Curriculum"]);
     expect(g.meta.taxonomy.every((x) => /^#[0-9a-f]{6}$/i.test(x.color) && x.label.fr && x.label.en)).toBe(true);
   });
 
-  it("declares thematic (domaine) + planification (palier→week) + generic", async () => {
+  it("declares LC-ontology views only: hierarchy (containment) + by-label", async () => {
     const g = (await exportNamespace(mathsNs))!;
-    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["thematique", "planification", "generic"]);
-    const thematic = g.meta.viewConfig.views.find((v) => v.id === "thematique") as any;
-    expect(thematic.params).toMatchObject({ anchorKind: "domaine", expandEdge: "hasChild" });
-    const plan = g.meta.viewConfig.views.find((v) => v.id === "planification") as any;
-    expect(plan.params).toMatchObject({ anchorKind: "week", expandEdge: "hasChild" });
-    expect(plan.params.groupBy[0].key).toBe("pal");
-    // weeks carry a (derived) palier so the planning view can bucket them by tier
-    expect(g.nodes.filter((n) => n.kind === "week").every((w) => w.pal !== "" && w.pal != null)).toBe(true);
+    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["hierarchy", "generic"]);
+    const hier = g.meta.viewConfig.views.find((v) => v.id === "hierarchy") as any;
+    expect(hier.params).toMatchObject({ anchorKind: "StandardsFramework", expandEdge: "hasChild" });
+    expect(hier.params.groupBy).toEqual([]);
+  });
+
+  it("containment walks hasChild from the framework; components reachable via the supports fold", async () => {
+    const g = (await exportNamespace(mathsNs))!;
+    const fw = g.nodes.find((n) => n.label === "StandardsFramework")!;
+    expect(childrenOf(g, fw.id).length).toBeGreaterThan(0); // framework → items
+    // a component attaches via `supports`, folded to a hasChild display edge, so
+    // every component is a tree child — if the fold regresses, they vanish.
+    const hasChildTargets = new Set(g.edges.filter((e) => e.r === "hasChild").map((e) => e.t));
+    const components = g.nodes.filter((n) => n.label === "LearningComponent");
+    expect(components.length).toBeGreaterThan(0);
+    expect(components.every((c) => hasChildTargets.has(c.id))).toBe(true);
+  });
+
+  it("node detail carries the raw LC properties generically (no subject fields on the node)", async () => {
+    const g = (await exportNamespace(mathsNs))!;
+    const lesson = g.nodes.find((n) => n.label === "Lesson")!;
+    expect(lesson.props && typeof lesson.props === "object").toBe(true);
+    expect((lesson as Record<string, unknown>).dom).toBeUndefined();
+    expect((lesson as Record<string, unknown>).pal).toBeUndefined();
+    expect((lesson as Record<string, unknown>).strand).toBeUndefined();
   });
 });
 
-describe("kg-export — reading", () => {
-  it("thematic (by strand) + planification + generic; every spine standard is week-connected", async () => {
+describe("kg-export — LC ontology (reading)", () => {
+  it("same LC labels + views; reading carries no Curriculum tasks", async () => {
     const g = (await exportNamespace(readingNs))!;
-    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["thematique", "planification", "generic"]);
-    const thematic = g.meta.viewConfig.views.find((v) => v.id === "thematique") as any;
-    expect(thematic.params).toMatchObject({ anchorKind: "expectation", expandEdge: "hasChild" });
-    expect(thematic.params.groupBy[0].key).toBe("strand");
-    // each language-tool standard (kind expectation) anchors the thematic view:
-    // its Lesson + components fold into the display hasChild tree BELOW it, so it
-    // is a hasChild SOURCE (connected, not orphaned) and carries its strand.
-    const hasChildSource = new Set(g.edges.filter((e) => e.r === "hasChild").map((e) => e.s));
-    const standards = g.nodes.filter((n) => n.kind === "expectation" && n.strand);
-    expect(standards.length).toBeGreaterThan(0);
-    expect(standards.every((s) => hasChildSource.has(s.id))).toBe(true);
-    expect(standards.every((s) => s.strand)).toBe(true);
-  });
-
-  it("categorizes the reading spine (standards = expectation); taxonomy includes surfaced non-spine categories", async () => {
-    const g = (await exportNamespace(readingNs))!;
-    // reading spine is week → lesson → expectation → component; the language-tool
-    // standards are kind expectation and carry role=expectation.
-    const stds = g.nodes.filter((n) => n.kind === "expectation");
-    expect(stds.length).toBeGreaterThan(0);
-    expect(stds.every((s) => s.cat === "expectation")).toBe(true);
-    // Spine categories (expectation/component/week) PLUS the now-surfaced
-    // non-spine ones: strand/subtopic grouping nodes and the neutral framework
-    // bucket. `task` stays absent (reading has no illustrative-task nodes).
-    const keys = g.meta.taxonomy.map((x) => x.key);
-    expect(keys).toEqual(["strand", "subtopic", "expectation", "component", "week", "framework"]);
+    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, LessonGrouping: 22, Lesson: 126, LearningComponent: 1031 });
+    expect(g.meta.counts.byKind.StandardsFrameworkItem).toBeGreaterThan(0);
+    expect(g.meta.counts.byKind.Curriculum).toBeUndefined();
+    expect(g.nodes.every((n) => n.cat === n.label)).toBe(true);
+    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["hierarchy", "generic"]);
+    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "LessonGrouping", "Lesson", "LearningComponent"]);
   });
 });
