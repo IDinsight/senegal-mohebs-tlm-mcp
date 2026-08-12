@@ -31,7 +31,7 @@ You compose the week's reading texts yourself, grounded in the week's genre and 
 
 - **`set_context(grade="ce1", subject="reading")`** — call once, first.
 - **`get_generation_context(unit=N, deliverable="teacher_guide")`** — call first for the week: returns the week's curriculum, established characters, a fresh-theme suggestion, terminology guidance, and the coverage map.
-- **`get_curriculum(unit=N)`** — the week's days/sessions, each with OS/Standard, component(s), genre, and language-tool targets, plus cross-week progression.
+- **`get_curriculum(unit=N)`** — the week's `sessions` (the 22-session daily timetable: day, order, title, language, duration, category, and the `standard` each teaches with its components), the week's palier and genre, plus cross-week progression. This is the authoritative structure — see "Weekly session inventory" below.
 - **`get_terminology(query)`** — official Wolof/French wording for a term. This store is often sparse and may return `[]`. When it does, fall back to the wording used in weeks 1–8 (harvested via `get_document_text`); only if neither has it, use a visible placeholder (see below). Do not invent.
 - **`list_units`**, **`list_documents`**, **`get_document_text(relPath)`**, **`reconcile`** — for the exemplar and history.
 - **`create_upload_url` → `log_generation`** — after the `.docx` is finished (both require `confirm:true`; ask the user before writing).
@@ -91,36 +91,20 @@ If a section would be a single generic line, expand it to the exemplar's grain o
 
 ---
 
-## Weekly session inventory (timetable)
+## Weekly session inventory (timetable) — read it from the graph
 
-Unless `get_curriculum` diverges for the week, produce these **22 reading sessions** across five days, in order, with these languages and durations. Durations drift in later paliers (e.g. *Identification des mots fréquents* runs 60 mn from ~week 5); Poésie-Récitation and Écriture alternate **L1 odd weeks / L2 even weeks**; a week may drop a session. **Follow the curriculum tool when it diverges and state the divergence in the rationale.**
+The week's session timetable is **graph-native**: `get_curriculum(unit=N)` returns the week's `sessions` — the ordered daily reading sessions, each with its day, order-in-day, bilingual title, language, duration, session category, and the standard it teaches (`standard`, or `null` for Remédiation). **Produce exactly the sessions the tool returns, in `ordre`, with the language and duration it gives.** Do not add, drop, or reorder sessions, and do not fall back to a remembered timetable — the graph is the single source of truth for structure.
 
-| Jour | Séance | Session (L1 / L2 title) | Lang | Durée |
-|---|---:|---|---|---:|
-| Jour 1 | 1 | Waxinu Lammiñ / Expression Orale | L1 | 30 mn |
-| Jour 1 | 2 | Nàmm Déggin / Compréhension à l'Audition | L1 | 30 mn |
-| Jour 1 | 3 | Compréhension à l'Audition | L2 | 30 mn |
-| Jour 1 | 4 | Baataan / Vocabulaire | L1 | 30 mn |
-| Jour 1 | 5 | Dégginu Mbind / Compréhension Écrite | L1 | 30 mn |
-| Jour 2 | 1 | Tari-Taalif / Poésie-Récitation | L1/L2 (parité) | 30 mn |
-| Jour 2 | 2 | Róofoo gi Baat / Grammaire | L1 | 30 mn |
-| Jour 2 | 3 | Tëralinu Mbind / Orthographe | L1 | 30 mn |
-| Jour 2 | 4 | Nasum Mbind / Production d'Écrits | L1 | 30 mn |
-| Jour 2 | 5 | Compréhension Écrite | L2 | 30 mn |
-| Jour 2 | 6 | Production d'Écrits | L2 | 30 mn |
-| Jour 2 | 7 | Remédiation (CGP) | L1/L2 | 60 mn |
-| Jour 3 | 1 | Vocabulaire | L2 | 30 mn |
-| Jour 3 | 2 | Identification des Mots Fréquents | L2 | 30/60 mn |
-| Jour 3 | 3 | Demalin Waxe / Conjugaison | L1 | 30 mn |
-| Jour 3 | 4 | Orthographe | L2 | 30 mn |
-| Jour 4 | 1 | Mbind / Écriture | L1/L2 (parité) | 30 mn |
-| Jour 4 | 2 | Grammaire | L2 | 30 mn |
-| Jour 4 | 3 | Conjugaison | L2 | 30 mn |
-| Jour 5 | 1 | Expression Orale | L2 | 30 mn |
-| Jour 5 | 2 | Vocabulaire | L2 | 30 mn |
-| Jour 5 | 3 | Développer la Fluidité de la Lecture | L1/L2 | 30 mn |
+Each session object carries:
 
-Only reading sessions. Remédiation CGP is the only remediation and lasts 60 mn.
+- `jour` (1–5) · `seance` (order within the day) · `ordre` (1–22 across the week)
+- `titre` — the bilingual session title (e.g. *Waxinu Lammiñ / Expression Orale*)
+- `langue` — `L1`, `L2`, or `L1/L2 (parité)` / `L1/L2` (choose the bilingual pattern below by this + the category)
+- `duree` — e.g. `30 mn`, `60 mn`, `30/60 mn` (use the longer value in later paliers where the curriculum indicates it)
+- `categorie` — `oral` · `comprehension` · `language-tool` · `production` · `poetry` · `writing` · `word-id` · `fluency` · `remediation` (drives the phase spine and metadata field set below)
+- `standard` — the objectif/standard the session teaches: `{ type, osTexte, statementCode, components[] }`. Take the OS/competency wording **verbatim** from `osTexte`; a `remediation` session has `standard: null` and teaches no objectif.
+
+A week has **one** `remediation` session (Remédiation CGP, 60 mn). Several sessions may teach the **same** standard (e.g. the L1 and L2 Vocabulaire sessions, and the comprehension/word-id/fluency sessions all share the week's *Lecture* standard) — that is expected. Poésie-Récitation and Écriture are `L1/L2 (parité)` (alternate the lead language **L1 odd weeks / L2 even weeks**). If `sessions` is empty or a field is missing, follow "Missing official wording" — never invent a session the graph does not list.
 
 ---
 
@@ -213,7 +197,7 @@ A clean **Word (.docx)**, named `Guide enseignant - Semaine N - CE1 Lecture.docx
 - [ ] Grammar/ortho/conj: Production attendue + manipulation before rule
 - [ ] CGP fiche: full diagnostic header + spine with a real syllable grid + concours
 - [ ] One autonomous reinvestment per day; 🔁 transfer scripted
-- [ ] All 22 sessions in order with correct lang/duration; divergences from the grid stated
+- [ ] Exactly the sessions `get_curriculum` returns, in `ordre`, with its language/duration; none added, dropped, or reordered
 
 **Formatting & file**
 - [ ] Palette applied; Wolof dark-blue `#1F4E79` style applied to all L1 text (incl. L1 fragments in L2/L1-L2 sessions, as a localization flag); reading text in Andika; rules framed; phase rows shaded

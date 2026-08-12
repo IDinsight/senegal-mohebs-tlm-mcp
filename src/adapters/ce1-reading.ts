@@ -19,11 +19,12 @@ import type {
 const ADAPTER_ID = "ce1-reading/nodes-relationships-v1";
 
 // The six language-tool strands the KG scopes per week (the "outils de langue"),
-// carried in a standard's statement_type. Weeks also hold oral/reading standards
-// (Expression orale / Récitation / Lecture) which this teacher-guide deliverable
-// does not cover — the projection filters to these six.
+// carried in a standard's statement_type — the reading-specific `detect` signal.
+// Scope B surfaces ALL nine teachable standard types (these six plus the
+// oral/reading ones — Expression orale / Lecture / Récitation), each taught by
+// one or more of the week's daily sessions, so the read projection no longer
+// filters to the six.
 const STRAND_TYPES = new Set(["Conjugaison", "Vocabulaire", "Orthographe", "Grammaire", "Écriture / Copie", "Production d'écrits"]);
-const STRAND_ORDER = ["Vocabulaire", "Grammaire", "Orthographe", "Conjugaison", "Production d'écrits", "Écriture / Copie"];
 
 // Weeks NOT produced with this prompt: integration weeks close each palier
 // (9, 17, 24) and week 25 is the end-of-year evaluation.
@@ -38,20 +39,27 @@ type Meta = { role?: string; palier?: number | null; genre?: string | null };
 const meta = (u: CurriculumUnit): Meta => (u.properties.metadata as Meta) ?? {};
 const strandOf = (u: CurriculumUnit): string | null => (u.properties.statement_type as string) ?? null;
 
+// A session Lesson's teaching-schedule metadata (day/order/language/…), authored
+// onto the content Lesson by the Scope B migration.
+type SessionMeta = { day?: number; order_in_day?: number; session_order?: number; language?: string; duration?: string; session_category?: string };
+const sessionMeta = (u: CurriculumUnit): SessionMeta => (u.properties.metadata as SessionMeta) ?? {};
+
 // ── Raw envelope → CurriculumModel ──────────────────────────────────────────
-// Post content-layer step (graph-native authoring, Scope A): the week is now a
+// Post content-layer step (graph-native authoring, Scope B): the week is a
 // content `LessonGrouping` (LABEL) but keeps kind `week` (its natural meaning —
-// role wins over label), and each language-tool objective is a content `Lesson`
-// that `supports` its spine `expectation`. Reading thus gains the same content
-// layer + LC labels as maths; its grouping stays a week rather than a chapter.
+// role wins over label). Each of the week's 22 daily sessions is a content
+// `Lesson` that `supports` the spine `expectation` it teaches (many sessions →
+// one standard; Remédiation supports none). Weeks 1–8 oral/comprehension/poetry
+// sessions align to the shared palier-1 combined standards, which live under a
+// separate non-numeric "1 à 8" grouping.
 const READING_PARSE: GraphParseDescriptor = {
   roleToKind: { week: "week", expectation: "expectation" },
   labelToKind: { Lesson: "lesson", LearningComponent: "component" },
   numberFrom: "description", // week number is a bare-number description
-  // Spine-scope. Keep the weeks (groupings), their lessons, the expectations those
-  // lessons support (filtered to the six language-tool strands), and their
-  // components; drop the rest (oral/reading standards, orphans). Reads stay
-  // identical — this just keeps the store lean, exactly as before the content layer.
+  // Spine-scope. Keep the weeks (groupings), their session lessons, every
+  // expectation those sessions support (all nine teachable types now, not just
+  // the six language tools), and their components; drop the rest (orphans). This
+  // just keeps the store lean.
   postParse: (units) => {
     const byId = new Map(units.map((u) => [u.id, u]));
     const keep = new Set<string>();
@@ -60,12 +68,12 @@ const READING_PARSE: GraphParseDescriptor = {
       keep.add(g.id);
       for (const cid of g.childIds) if (byId.get(cid)?.kind === "lesson") keep.add(cid);
     }
-    // Expectations a kept lesson supports (lesson→supports→expectation ⇒
-    // expectation.childIds ∋ the lesson), filtered to the language-tool strands.
+    // Expectations a kept session supports (session→supports→expectation ⇒
+    // expectation.childIds ∋ the session).
     for (const ex of units) {
       if (ex.kind !== "expectation") continue;
       const supported = ex.childIds.some((cid) => byId.get(cid)?.kind === "lesson" && keep.has(cid));
-      if (supported && STRAND_TYPES.has(String(ex.properties.statement_type ?? ""))) keep.add(ex.id);
+      if (supported) keep.add(ex.id);
     }
     for (const u of units) if (u.kind === "component") { const p = byId.get(u.parentId ?? ""); if (p && keep.has(p.id)) keep.add(u.id); }
     return units.filter((u) => keep.has(u.id));
@@ -97,46 +105,81 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
   };
 
   // A week is a content `LessonGrouping` (label) of kind `week`, addressed by its
-  // number (= normalized `order`, from the bare-number description). palier and
-  // genre are read from the grouping's baked metadata — no tree-walk.
-  const groupingsIn = (m: CurriculumModel) => m.unitsOfKind("week").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  // number (= normalized `order`, from the bare-number description). The
+  // non-numeric "1 à 8" grouping (which only holds the palier-1 combined
+  // standards, no sessions) has a null order and is filtered out here — it is a
+  // container of standards, not a guide week. palier and genre are read from the
+  // grouping's baked metadata — no tree-walk.
+  const groupingsIn = (m: CurriculumModel) =>
+    m.unitsOfKind("week").filter((w) => w.order != null).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const weeks = () => groupingsIn(ensure());
   const weekOf = (m: CurriculumModel, wk: number) => groupingsIn(m).find((w) => w.order === wk) ?? null;
   const listUnitsIn = (m: CurriculumModel) =>
     groupingsIn(m).map((w) => ({ semaine: w.order, palier: meta(w).palier ?? null, genre: meta(w).genre ?? null }));
 
-  // A content Lesson supports one expectation (the language-tool standard it
-  // teaches); the parser records that as expectation.childIds ∋ the Lesson.
-  const expectationOfLesson = (m: CurriculumModel) => {
+  // A content session Lesson supports (at most) one expectation — the standard it
+  // teaches; the parser records that as expectation.childIds ∋ the Lesson.
+  const standardOfLesson = (m: CurriculumModel) => {
     const map = new Map<string, CurriculumUnit>();
     for (const ex of m.unitsOfKind("expectation"))
       for (const child of m.childrenOf(ex.id)) if (child.kind === "lesson") map.set(child.id, ex);
     return map;
   };
 
+  // The week's 22 daily sessions, in timetable order, each with the standard it
+  // teaches (or null for Remédiation). Walk grouping → session Lesson →
+  // (supports) → standard; the session's day/language/duration ride its metadata.
   const buildSlice = (wk: number, m: CurriculumModel = ensure()) => {
     const week = weekOf(m, wk);
     if (!week) return null;
-    const expOf = expectationOfLesson(m);
-    // Walk grouping → Lesson → (supports) → language-tool standard, then emit the
-    // same languageToolStandards shape the generation prompt consumes.
-    const standards = m.childrenOf(week.id)
+    const stdOf = standardOfLesson(m);
+    const sessions = m.childrenOf(week.id)
       .filter((c) => c.kind === "lesson")
-      .map((ln) => expOf.get(ln.id))
-      .filter((std): std is CurriculumUnit => !!std && STRAND_TYPES.has(strandOf(std) ?? ""))
-      .sort((a, b) => STRAND_ORDER.indexOf(strandOf(a) ?? "") - STRAND_ORDER.indexOf(strandOf(b) ?? ""))
-      .map((std) => ({
-        strand: strandOf(std),
-        osTexte: std.text,
-        statementCode: (std.properties.statement_code as string) ?? null,
-        components: m.childrenOf(std.id).filter((c) => c.kind === "component").map((c) => ({ identifier: c.id, description: c.text })),
-      }));
+      .sort((a, b) => (sessionMeta(a).session_order ?? 0) - (sessionMeta(b).session_order ?? 0))
+      .map((ln) => {
+        const sm = sessionMeta(ln);
+        const std = stdOf.get(ln.id) ?? null;
+        return {
+          jour: sm.day ?? null,
+          seance: sm.order_in_day ?? null,
+          ordre: sm.session_order ?? null,
+          titre: ln.text,
+          langue: sm.language ?? null,
+          duree: sm.duration ?? null,
+          categorie: sm.session_category ?? null,
+          standard: std
+            ? {
+                type: strandOf(std),
+                osTexte: std.text,
+                statementCode: (std.properties.statement_code as string) ?? null,
+                components: m.childrenOf(std.id).filter((c) => c.kind === "component").map((c) => ({ identifier: c.id, description: c.text })),
+              }
+            : null,
+        };
+      });
     return {
       semaine: wk,
       palier: meta(week).palier ?? null,
       genre: meta(week).genre ?? null,
-      languageToolStandards: standards,
+      sessions,
     };
+  };
+
+  // The distinct standards a week teaches across its sessions (deduped — several
+  // sessions may teach the same standard), the coverage a guide must honour.
+  const coverageOf = (wk: number, m: CurriculumModel = ensure()) => {
+    const slice = buildSlice(wk, m);
+    if (!slice) return [];
+    const seen = new Set<string>();
+    const out: { type: string | null; osTexte: string | null }[] = [];
+    for (const s of slice.sessions) {
+      if (!s.standard) continue;
+      const key = `${s.standard.type}|${s.standard.osTexte}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ type: s.standard.type, osTexte: s.standard.osTexte });
+    }
+    return out;
   };
 
   // Progression by week ordering across the weeks the KG carries (it skips
@@ -175,10 +218,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),
     progression: (scope) => buildProgression(Number(scope)),
-    requiredCoverage: (scope) => {
-      const s = buildSlice(Number(scope));
-      return s ? s.languageToolStandards.map((st) => ({ strand: st.strand, osTexte: st.osTexte })) : [];
-    },
+    requiredCoverage: (scope) => coverageOf(Number(scope)),
     scopeValues: () => weeks().map((w) => w.order).filter((n): n is number => n != null),
 
     async buildGenerationContext(scope, deliverableKey, model) {
@@ -225,7 +265,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
       return {
         unit: week, deliverable: deliverableKey,
         curriculum: curriculumSlice, progression: buildProgression(week, m),
-        requiredLanguageToolCoverage: curriculumSlice ? curriculumSlice.languageToolStandards.map((st) => ({ strand: st.strand, osTexte: st.osTexte })) : [],
+        requiredCoverage: curriculumSlice ? coverageOf(week, m) : [],
         establishedCharacters, recentThemes,
         terminology: { note: "Session titles and metalinguistic terms come from the KG's own bilingual wording; when a term's wording is missing, search the MOHEBS FR/Wolof terminology via get_terminology and use that (Wolof for L1 sessions, French for L2). Do not invent wording.", sections: terminologySections() },
         coverage, notes,
