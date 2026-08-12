@@ -1,8 +1,11 @@
-// ── The recipe registry — the MIRROR get_capabilities renders ────────────────
-// One descriptor per generic verb. get_capabilities renders THIS array (never a
-// hand-authored copy), so what Claude discovers can't drift from what's built.
-// The verbs are subject-agnostic and available on every subject — validity is
-// structural (the graph), not a per-subject allowlist.
+/*
+ * kg-recipes · recipe registry (the get_capabilities mirror)
+ *
+ * One descriptor per verb. get_capabilities renders THIS array, never a
+ * hand-written copy — so the tool list Claude sees can't drift from the verbs
+ * actually wired up. Available on every subject; validity is structural (checked
+ * against the graph), not a per-subject allowlist.
+ */
 
 export type RecipeParam = { name: string; required: boolean; note?: string };
 export type RecipeDescriptor = {

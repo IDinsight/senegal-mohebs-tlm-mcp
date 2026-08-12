@@ -1,8 +1,10 @@
-// ── Recipe: reposition (generic) ─────────────────────────────────────────────
-// Set ONE node's POSITION — its ordinal among its siblings. Replaces renumber.
-// In canonical LC, membership is the containment EDGE, not a number, so changing
-// a node's position never cascades to anything: it is a single-node ordinal edit.
-// (The old renumber's chapter→lessons number cascade is gone with the join key.)
+/*
+ * Recipe: reposition (generic)
+ *
+ * Set ONE node's POSITION — its ordinal among its siblings. Membership is the
+ * containment EDGE, not a number, so bumping a node's position never touches its
+ * children or siblings: it is a single-node edit.
+ */
 
 import { type GraphMutation } from "../kg-store/index.js";
 import { RecipeCommon, nodeById, setPosition } from "./shared.js";

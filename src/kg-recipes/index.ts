@@ -1,12 +1,13 @@
-// Public surface of the kg-recipes module — the generic, subject-agnostic
-// curriculum verbs (add_node / move_node / reposition / set_content) that
-// COMPOSE the kg-store structural primitives, plus the registry get_capabilities
-// mirrors. Recipes speak pure canonical LC (see lc.ts) and derive a created
-// node's identity from the graph itself — there is no RecipeProfile.
-//
-// Layering: this is a services-layer module that imports kg-store ONLY through
-// its barrel (../kg-store/index.js); kg-store never imports back, so the edge is
-// one-way (no cycle). External callers (server/*) import the verbs from here.
+/*
+ * kg-recipes · public surface
+ *
+ * The generic curriculum verbs (add_node / move_node / reposition / set_content)
+ * that compose kg-store's structural primitives, plus the get_capabilities
+ * mirror. External callers (server/*) import the verbs from here.
+ *
+ * Layering gotcha: import kg-store ONLY through its barrel (../kg-store/index.js),
+ * a one-way edge (kg-store never imports back) that check-cycles enforces.
+ */
 
 export { addNode, type AddNodeArgs } from "./add-node.js";
 export { moveNode, type MoveNodeArgs } from "./move-node.js";
