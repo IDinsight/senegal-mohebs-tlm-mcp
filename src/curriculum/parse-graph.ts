@@ -89,6 +89,11 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
       title: grouping ? ((p.description as string) ?? null) : null,
       text: grouping ? null : ((p.description as string) ?? null),
       order: orderOf(n),
+      // Canonical LC marks an assessment on the node itself (educationalUse ===
+      // "Assessment") — e.g. a maths end-of-chapter bilan lesson. Read it here so
+      // no subject postParse hook has to; a subject that has no assessments simply
+      // never sees the flag set.
+      isAssessment: p.educationalUse === "Assessment",
       properties: p,
       labels: n.labels ?? [],
     }));

@@ -14,15 +14,13 @@
  * projection. The two axes — schedule (week→OS) and content (domaine→chapter→OS)
  * — are read through the edges (childrenOf), never a denormalized number.
  */
-import { readFileSync } from "node:fs";
-import { CONFIG, kgSource } from "../config.js";
-import { sourcePath, sessionState } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
 import { neighborhoodDomains, suggestFreshDomain, domainUsage } from "../generation/index.js";
-import { parseGraph, terminologySections, PRELOADED_MODEL_KEY, emptyContainerWarnings, type GraphParseDescriptor } from "../curriculum/index.js";
+import { parseGraph, terminologySections, emptyContainerWarnings, type GraphParseDescriptor } from "../curriculum/index.js";
 import { noAccents } from "../utils/index.js";
+import { makeEnsure, detectEnvelope, aggregateCharacters, alignedStandardOf, textWording } from "./engine.js";
 import type {
-  SubjectAdapter, DeliverableSpec, CharacterRef,
+  SubjectAdapter, DeliverableSpec,
   CurriculumModel, CurriculumUnit, GraphView,
 } from "../types.js";
 
@@ -71,23 +69,9 @@ const MATHS_PARSE: GraphParseDescriptor = {
   labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Activity: "task" },
   numberFrom: "order",
   progressionEdge: "buildsTowards",
-  // Bilan (end-of-chapter assessment) is now explicit graph DATA, not a parse-time
-  // heuristic: a Lesson node carries LC `educational_use = "Assessment"`. Read it
-  // straight through (materialized once by scripts/migrate-maths-graph.mjs; set by
-  // add_lesson's `isBilan` thereafter).
-  postParse: (units) => {
-    for (const u of units) {
-      if (u.kind === "lesson" && u.properties.educationalUse === "Assessment") u.isAssessment = true;
-    }
-  },
+  // The bilan (end-of-chapter assessment) needs no hook: parseGraph reads it from
+  // canonical LC educationalUse === "Assessment" onto isAssessment for every subject.
 };
-
-function detect(raw: unknown): boolean {
-  const g = raw as { nodes?: unknown[]; relationships?: unknown[] } | undefined;
-  if (!Array.isArray(g?.nodes) || !Array.isArray(g?.relationships)) return false;
-  // Maths-specific signal: a chapter grouping (a `Chapitre` with role "subtopic").
-  return g!.nodes.some((n: any) => n?.properties?.statementType === "Chapitre" && n?.properties?.metadata?.role === "subtopic");
-}
 
 function parse(raw: unknown): CurriculumModel {
   return parseGraph(raw, MATHS_PARSE);
@@ -138,16 +122,7 @@ function ciMathsCoverageWarnings(graph: GraphView): string[] {
 
 // ── Factory: build the (grade, subject)-bound adapter ────────────────────────
 export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdapter {
-  let model: CurriculumModel | null = null;
-  const ensure = (): CurriculumModel => {
-    if (model) return model;
-    if (kgSource() === "firestore") {
-      const preloaded = sessionState().bag.get(PRELOADED_MODEL_KEY) as CurriculumModel | undefined;
-      if (!preloaded) throw new Error("KG_SOURCE=firestore but curriculum was not preloaded from the store. Call activateContext() first.");
-      return (model = preloaded);
-    }
-    return (model = parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
-  };
+  const ensure = makeEnsure(parse);
 
   // Read helpers, all parametrized by the CurriculumModel they read (published via
   // ensure(); a draft-resolved model for preview). Chapter→lesson and week→lesson
@@ -174,22 +149,12 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       .map((c) => ({ chapitreNum: c.order, chapitreTitre: c.title, domaine: domaineOf(m, c) }))
       .sort((a, b) => (a.chapitreNum ?? 0) - (b.chapitreNum ?? 0));
 
-  // A content Lesson `supports` exactly one expectation (the spine standard it
-  // aligns to). The parser records that support edge as expectation.childIds ∋
-  // Lesson, so we index it by scanning expectations once.
-  const expectationOfLesson = (m: CurriculumModel) => {
-    const map = new Map<string, CurriculumUnit>();
-    for (const ex of m.unitsOfKind("expectation"))
-      for (const child of m.childrenOf(ex.id)) if (child.kind === "lesson") map.set(child.id, ex);
-    return map;
-  };
-
   const buildSlice = (chapNum: number, m: CurriculumModel = ensure()) => {
     const chapter = chapterOf(m, chapNum);
     if (!chapter) return null;
     const lessonUnits = lessonsOf(m, chapter);
     const weekOf = weekMap(m);
-    const expOf = expectationOfLesson(m);
+    const expOf = alignedStandardOf(m); // lesson → the spine standard it aligns to
     // Illustrative tasks align to a STANDARD; the component each exemplifies rides
     // in metadata.illustratesComponent. Index tasks by that component id (ordered),
     // replacing the old (non-canonical) activity→component edge.
@@ -262,25 +227,16 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     // Lesson node has no `raw.os_texte` mirror, so its alias must not list one
     // (the upsert existing-key rule would block the edit).
     wordingAliases: {
+      // lesson/component/task carry standard text/text_en; chapter keeps its name
+      // in `title`, and the expectation (OS) mirrors a second raw path (raw.osTexte).
+      ...textWording("lesson", "component", "task"),
       chapter: {
         title:    ["title", "raw.description"],
         title_en: ["raw.metadata.en.description"],
       },
-      lesson: {
-        text:    ["text", "raw.description"],
-        text_en: ["raw.metadata.en.description"],
-      },
       expectation: {
         text:    ["text", "raw.description", "raw.osTexte"],
         text_en: ["raw.metadata.en.description", "raw.metadata.en.os_texte"],
-      },
-      component: {
-        text:    ["text", "raw.description"],
-        text_en: ["raw.metadata.en.description"],
-      },
-      task: {
-        text:    ["text", "raw.description"],
-        text_en: ["raw.metadata.en.description"],
       },
     },
 
@@ -291,7 +247,7 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     // by copying an existing chapter/lesson in the graph.
     coverageWarnings: ciMathsCoverageWarnings,
 
-    detect, parse,
+    detect: detectEnvelope, parse,
 
     listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),
@@ -308,22 +264,7 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       const docType = deliverableKey;
       const notes: string[] = [];
       const entries = await listEntries();
-
-      // Aggregate established characters by name; earliest chapter wins, details merge.
-      const charMap = new Map<string, { name: string; type?: string; role?: string; description?: string; firstChapter: number }>();
-      for (const e of entries) {
-        for (const raw of e.content.characters ?? []) {
-          const c: CharacterRef = typeof raw === "string" ? { name: raw } : raw;
-          if (!c?.name) continue;
-          const existing = charMap.get(c.name);
-          if (!existing) charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstChapter: e.unit });
-          else {
-            existing.firstChapter = Math.min(existing.firstChapter, e.unit);
-            existing.type ??= c.type; existing.role ??= c.role; existing.description ??= c.description;
-          }
-        }
-      }
-      const establishedCharacters = [...charMap.values()].sort((a, b) => a.firstChapter - b.firstChapter || a.name.localeCompare(b.name));
+      const establishedCharacters = aggregateCharacters(entries);
 
       const coverage = listUnitsIn(m).map((c) => ({
         chapter: c.chapitreNum,

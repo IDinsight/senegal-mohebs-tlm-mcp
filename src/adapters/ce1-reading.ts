@@ -9,25 +9,18 @@
  * projection. A "unit" is a WEEK (semaine); its slice is the week's six
  * language-tool standards (the "outils de langue") with their components.
  */
-import { readFileSync } from "node:fs";
-import { CONFIG, kgSource } from "../config.js";
-import { sourcePath, sessionState } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
-import { parseGraph, terminologySections, PRELOADED_MODEL_KEY, emptyContainerWarnings, multiParentWarnings, type GraphParseDescriptor } from "../curriculum/index.js";
+import { parseGraph, terminologySections, emptyContainerWarnings, multiParentWarnings, type GraphParseDescriptor } from "../curriculum/index.js";
+import { makeEnsure, detectEnvelope, aggregateCharacters, alignedStandardOf } from "./engine.js";
 import type {
-  SubjectAdapter, DeliverableSpec, CharacterRef,
+  SubjectAdapter, DeliverableSpec,
   CurriculumModel, CurriculumUnit, GraphView,
 } from "../types.js";
 
 const ADAPTER_ID = "ce1-reading/nodes-relationships-v1";
 
-// The six language-tool strands the KG scopes per week (the "outils de langue"),
-// carried in a standard's statement_type — the reading-specific `detect` signal.
-// Scope B surfaces ALL nine teachable standard types (these six plus the
-// oral/reading ones — Expression orale / Lecture / Récitation), each taught by
-// one or more of the week's daily sessions, so the read projection no longer
-// filters to the six.
-const STRAND_TYPES = new Set(["Conjugaison", "Vocabulaire", "Orthographe", "Grammaire", "Écriture / Copie", "Production d'écrits"]);
+// Reading's only editable wording shape: normalized `text` + its raw source.
+const TEXT_ONLY = { text: ["text", "raw.description"] };
 
 // Weeks NOT produced with this prompt: integration weeks close each palier
 // (9, 17, 24) and week 25 is the end-of-year evaluation.
@@ -132,29 +125,13 @@ const READING_PARSE: GraphParseDescriptor = {
   },
 };
 
-function detect(raw: unknown): boolean {
-  const g = raw as { nodes?: unknown[]; relationships?: unknown[] } | undefined;
-  if (!Array.isArray(g?.nodes) || !Array.isArray(g?.relationships)) return false;
-  // Reading-specific signal: a language-tool strand standard.
-  return g!.nodes.some((n: any) => STRAND_TYPES.has(n?.properties?.statementType) && n?.properties?.normalizedStatementType === "Standard");
-}
-
 function parse(raw: unknown): CurriculumModel {
   return parseGraph(raw, READING_PARSE);
 }
 
 // ── Factory: build the (grade, subject)-bound adapter ────────────────────────
 export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectAdapter {
-  let model: CurriculumModel | null = null;
-  const ensure = (): CurriculumModel => {
-    if (model) return model;
-    if (kgSource() === "firestore") {
-      const preloaded = sessionState().bag.get(PRELOADED_MODEL_KEY) as CurriculumModel | undefined;
-      if (!preloaded) throw new Error("KG_SOURCE=firestore but curriculum was not preloaded from the store. Call activateContext() first.");
-      return (model = preloaded);
-    }
-    return (model = parse(JSON.parse(readFileSync(sourcePath(CONFIG.kgFile), "utf8"))));
-  };
+  const ensure = makeEnsure(parse);
 
   // A week is a content `LessonGrouping` (label) of kind `week`, addressed by its
   // number (= normalized `order`, from the bare-number description). The
@@ -169,22 +146,13 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
   const listUnitsIn = (m: CurriculumModel) =>
     groupingsIn(m).map((w) => ({ semaine: w.order, palier: meta(w).palier ?? null, genre: meta(w).genre ?? null }));
 
-  // A content session Lesson supports (at most) one expectation — the standard it
-  // teaches; the parser records that as expectation.childIds ∋ the Lesson.
-  const standardOfLesson = (m: CurriculumModel) => {
-    const map = new Map<string, CurriculumUnit>();
-    for (const ex of m.unitsOfKind("expectation"))
-      for (const child of m.childrenOf(ex.id)) if (child.kind === "lesson") map.set(child.id, ex);
-    return map;
-  };
-
   // The week's 22 daily sessions, in timetable order, each with the standard it
   // teaches (or null for Remédiation). Walk grouping → session Lesson →
   // (supports) → standard; the session's day/language/duration ride its metadata.
   const buildSlice = (wk: number, m: CurriculumModel = ensure()) => {
     const week = weekOf(m, wk);
     if (!week) return null;
-    const stdOf = standardOfLesson(m);
+    const stdOf = alignedStandardOf(m); // session lesson → the standard it teaches
     // Sessions live one level down now: week → Jour(1–5) day grouping → session.
     const sessions = m.childrenOf(week.id)
       .filter((c) => c.kind === "day")
@@ -261,24 +229,13 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     id: ADAPTER_ID,
     deliverables: DELIVERABLES,
     capabilities: { exampleDomainRotation: false, characterConsistency: true },
-    // Reading's wording lives in `text` (normalized) + `raw.description` (source)
-    // on strand standards and their components. Weeks carry no editable wording.
+    // Reading wording is text-only (no English mirror): the normalized `text` +
+    // its `raw.description` source. Weeks carry none. For content nodes only the
+    // TITLE is wording — a Material's `content` is edited via set_content, never
+    // upsert_property.
     wordingAliases: {
-      standard: { text: ["text", "raw.description"] },
-      component: { text: ["text", "raw.description"] },
-      // Scope C content nodes. Only the TITLE is wording (editable via
-      // upsert_property); a Material's `content` is deliberately NOT here — it is
-      // load-bearing and edited only via add_material / set_material_content (see
-      // MATERIAL_CONTENT_PATH). An Activity carries a title but no content.
-      activity: { text: ["text", "raw.description"] },
-      material: { text: ["text", "raw.description"] },
+      standard: TEXT_ONLY, component: TEXT_ONLY, activity: TEXT_ONLY, material: TEXT_ONLY,
     },
-
-    // The curriculum recipes are now generic, graph-derived verbs (kg-recipes) —
-    // no recipeProfile / structuralAliases / lcNodeTemplate / availableRecipes.
-    // add_node reads a created Activity's/Material's LC identity (labels
-    // Activity/Material, ordinal path raw.position) from an example in the graph,
-    // or from canonical LC defaults for reading's first Activity (none exist yet).
 
     // Coverage warnings (#13) — reading uses the subject-neutral shapes only. A
     // reading lesson/component has exactly one parent (unlike a maths lesson,
@@ -288,7 +245,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
       ...multiParentWarnings(graph, ["lesson", "component"]),
     ],
 
-    detect, parse,
+    detect: detectEnvelope, parse,
 
     listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),
@@ -301,22 +258,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
       const week = Number(scope);
       const notes: string[] = [];
       const entries = await listEntries();
-
-      // Aggregate recurring characters by name; earliest week wins, details merge.
-      const charMap = new Map<string, { name: string; type?: string; role?: string; description?: string; firstWeek: number }>();
-      for (const e of entries) {
-        for (const raw of e.content.characters ?? []) {
-          const c: CharacterRef = typeof raw === "string" ? { name: raw } : raw;
-          if (!c?.name) continue;
-          const existing = charMap.get(c.name);
-          if (!existing) charMap.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstWeek: e.unit });
-          else {
-            existing.firstWeek = Math.min(existing.firstWeek, e.unit);
-            existing.type ??= c.type; existing.role ??= c.role; existing.description ??= c.description;
-          }
-        }
-      }
-      const establishedCharacters = [...charMap.values()].sort((a, b) => a.firstWeek - b.firstWeek || a.name.localeCompare(b.name));
+      const establishedCharacters = aggregateCharacters(entries);
 
       const recentThemes = [...entries]
         .filter((e) => e.unit !== week)

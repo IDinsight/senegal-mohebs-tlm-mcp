@@ -235,9 +235,11 @@ export interface SubjectAdapter {
    */
   coverageWarnings?(graph: GraphView): string[];
 
-  // Raw envelope → normalized CurriculumModel. Owns all raw-schema knowledge
-  // (envelope layout, endpoint keying, node taxonomy). detect() is the schema
-  // guard set_context runs against the KG before activating a context.
+  // Raw envelope → normalized CurriculumModel; parse() owns all raw-schema
+  // knowledge (via its GraphParseDescriptor). detect() is the bundle-mode schema
+  // guard set_context runs before activating — now a generic envelope check
+  // (adapters/engine.ts::detectEnvelope); the subject was already chosen by the
+  // grade/subject key, so no subject-specific signal is needed.
   detect(raw: unknown): boolean;
   parse(raw: unknown): CurriculumModel;
 
