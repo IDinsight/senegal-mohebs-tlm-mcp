@@ -2,17 +2,20 @@
 
 > **Status: Current — implemented and live.** Landed for CI maths via PR #28
 > (split + authoring/edit surface) and PR #29 (bilan as data), both merged; the
-> Firestore store has been re-seeded (ci/maths: 509 nodes / 885 edges). The
-> migration is reproducible via `scripts/migrate-maths-graph.mjs`. CE1 reading now has the
+> Firestore store has been re-seeded (ci/maths was 509 nodes / 885 edges at the split;
+> now **501 / 877** after the canonical migration + the RECE / illustrative-activity
+> cleanups below). The migration is reproducible via `scripts/migrate-maths-graph.mjs`. CE1 reading now has the
 > content layer too (Scope A — one Lesson per language-tool standard per week;
 > `scripts/migrate-reading-graph.mjs`; reads byte-identical). **Scope B** then made
 > reading's full **22-session daily timetable** graph-native — one content `Lesson`
 > per session, aligned to the standard it teaches (`scripts/migrate-reading-graph-scope-b.mjs`;
 > ce1/reading now 1863 nodes / 2139 edges); the read projection is a per-week session
 > list and the generation prompt reads it from `get_curriculum` instead of a hardcoded
-> table. **Scope B merged** (PR #34), re-seeded, and deployed to Cloud Run. A further
-> **Scope C** (activities & materials *inside* a lesson) is **planned, not started** —
-> see the Scope C section below. LC type/edge vocabulary confirmed against
+> table. **Scope B merged** (PR #34), re-seeded, and deployed to Cloud Run.
+> **Scope C** (activities & materials *inside* a lesson) is **in progress** — Increment 1
+> (reading's scoped recipe surface + per-recipe availability) merged (PR #36); Increment 2
+> (`add_activity` / `add_material` recipes + read projection) is next. See the Scope C
+> section below. LC type/edge vocabulary confirmed against
 > the [LC Curriculum reference](https://docs.learningcommons.org/knowledge-graph/graph-reference/curriculum)
 > (Activity, Material, Lesson, LessonGrouping). The project now uses **canonical LC
 > at rest** (camelCase, `hasPart`/`hasEducationalAlignment`); the *Representation
@@ -84,10 +87,20 @@ SPINE (knowledge, stable)                 CONTENT (teaching, authored — LC typ
         │  LessonGrouping/Material            └─hasPart→ Material          (content = HTML:
         │  may all align)                         (content = prose,         steps, examples)
    week ┘                                          scene image, …)
-                                            IllustrativeTask = an Activity with an
-                                            illustrative `educationalUse` — the existing
-                                            RECE course, an authoring input (unchanged).
+                                            IllustrativeTask = an Activity that
+                                            `hasEducationalAlignment`s a standard and
+                                            carries `metadata.illustratesComponent`;
+                                            the RECE + six "Composants dérivés" frames
+                                            hold these as an authoring input.
 ```
+
+> **Update (post-canonical):** RECE was normalized to match the other "Composants
+> dérivés" frames — the illustrative-task `Course` wrapper was removed and its
+> activities re-homed directly under the frame's sub-SFIs. And illustrative
+> activities now `hasEducationalAlignment` a **standard** (canonical), carrying the
+> specific component in `metadata.illustratesComponent` — there is no
+> Activity↔LearningComponent edge. See *Decision 5* below (updated) and
+> [canonical-lc-migration.md](canonical-lc-migration.md).
 
 ### Decisions
 
@@ -115,12 +128,16 @@ SPINE (knowledge, stable)                 CONTENT (teaching, authored — LC typ
 5. **Prescriptive vs illustrative Activity is positional, not an enum.** Both are LC
    `Activity`. LC has no property for this axis — `educationalUse` is only
    `Instruction` | `Assessment` (teach vs test). So distinguish by *position*: an
-   authored prescriptive activity is a `hasChild` of a `Lesson` (part of the teaching
-   sequence); a RECE illustrative task `supports` a standard/component as an exemplar,
-   and already carries `content_type: "Tâche illustrative (…)"`. Keep that marker;
-   invent no new flag. Separately, `educationalUse` gives us a clean home for the
-   **bilan / assessment** axis: `educationalUse: Assessment` for assessment content,
-   `Instruction` for teaching content (replaces the ad-hoc `isAssessment`).
+   authored **prescriptive** activity is a `hasPart` of a `Lesson` (part of the teaching
+   sequence); an **illustrative** task lives under a "Composants dérivés" frame SFI and
+   `hasEducationalAlignment`s a **standard** (its component's parent SFI — canonical LC
+   has no Activity↔LearningComponent edge), carrying the specific component it exemplifies
+   in `metadata.illustratesComponent = {id, name, order}` and a `contentType`
+   ("Tâche illustrative (…)"). So the test is "is it a `hasPart` child of a Lesson?"
+   (prescriptive) vs "does it align to a standard from a derived frame?" (illustrative).
+   Separately, `educationalUse` gives us a clean home for the **bilan / assessment**
+   axis: `educationalUse: Assessment` for assessment content, `Instruction` for teaching
+   content (replaces the ad-hoc `isAssessment`).
 6. **`Image` is a `Material`.** LC `Material` explicitly covers images; there is no
    separate Image type. Note `materialType` (`Core` | `Supporting` | `Reference`) is
    *centrality*, not medium — an opening scene is `materialType: Core`, and its
@@ -387,36 +404,34 @@ Activities. So the standard a session teaches already names the skills to cover 
 components) — and those components are the natural **seed** for that session's
 activities.
 
-**Edges — canonical LC vs. our serialization (read this carefully).** Per the
-*Representation convention* above we serialize canonical edges onto the existing
-graph's vocabulary. For the nodes Scope C touches:
+**Edges — now canonical LC directly.** The project moved to **canonical LC at rest**
+([canonical-lc-migration.md](canonical-lc-migration.md)), so Scope C uses the canonical
+edges as-is (the old "our serialization" column is retired):
 
-| relationship | canonical LC | our serialization |
-|---|---|---|
-| Lesson → standard (alignment) | `hasEducationalAlignment` | `supports` |
-| Activity → standard (alignment) | `hasEducationalAlignment` | `supports` |
-| LearningComponent → standard | `supports` | `supports` |
-| Lesson → Activity (containment) | `hasPart` | `hasChild` |
-| Activity → Material (containment) | `hasPart` | `hasChild` |
+| relationship | edge |
+|---|---|
+| Lesson / Activity → standard (alignment) | `hasEducationalAlignment` → `StandardsFrameworkItem` |
+| LearningComponent → standard | `supports` → `StandardsFrameworkItem` |
+| Course/LessonGrouping → Lesson, Lesson → Activity, Activity → Material (containment) | `hasPart` |
 
-Two consequences worth stating flatly: **(a)** canonically a **Lesson or Activity
-aligns via `hasEducationalAlignment`, never `supports`** — `supports` is the
-LearningComponent→SFI edge; our graph deliberately collapses both onto `supports`, a
-known divergence (Open Question #1). **(b)** alignment can only target a
-`StandardsFrameworkItem`, **never a `LearningComponent`** — so components are a
-*generation input*, not an edge target. There is no Lesson↔LearningComponent nor
-Activity↔LearningComponent edge in LC, and Scope C does not invent one.
+One consequence worth stating flatly: alignment (`hasEducationalAlignment`) can only
+target a `StandardsFrameworkItem`, **never a `LearningComponent`** — there is no
+Lesson↔LearningComponent nor Activity↔LearningComponent edge in LC. So a component is a
+*generation input*, not an edge target; where an activity must record the specific
+component it exemplifies, that rides in `metadata.illustratesComponent` (see the
+post-canonical cleanups in [canonical-lc-migration.md](canonical-lc-migration.md)).
 
 **What Scope C stores (the hybrid rule).** Per *Prose lives in `Material.content`*: the
 reviewable, load-bearing content is stored; the render phrases only connective tissue.
-- **`Activity`** — a task node under a Lesson (`hasChild`): `student_grouping_type`
-  (individual / pairs / group), `time_required`, `position`, `educational_use`
-  (Instruction / Assessment). *Prescriptive* by position — a `hasChild` of the Lesson —
-  per *Decision 5* (as opposed to the RECE illustrative tasks, which `supports` a
-  standard as exemplars).
+- **`Activity`** — a task node under a Lesson (`hasPart`): `studentGroupingType`
+  (individual / pairs / group), `timeRequired`, `position`, `educationalUse`
+  (Instruction / Assessment). *Prescriptive* by position — a `hasPart` of the Lesson —
+  per *Decision 5* (as opposed to illustrative tasks, which live under a "Composants
+  dérivés" frame and `hasEducationalAlignment` a standard + carry
+  `metadata.illustratesComponent`).
 - **`Material`** — the actual prose / steps / numbers (and image briefs) as `content`
-  (HTML), with `material_type` (Core / Supporting / Reference), attached to its Activity
-  (or Lesson) by `hasChild`.
+  (HTML), with `materialType` (Core / Supporting / Reference), attached to its Activity
+  (or Lesson) by `hasPart`.
 
 **Derivation is a generation aid, not a stored edge.** The author flow reads a
 session's standard + its LearningComponents and *derives* candidate activities (one
@@ -430,25 +445,26 @@ is written (LC defines none).
    render-time phrasing (the hybrid rule's boundary for reading's dense sessions — e.g.
    is each *Étape* an Activity with its scripted content as Material, or is each teacher
    move an Activity?). This is the pivotal call; it sets node volume and review effort.
-2. **Reading needs a recipe surface** — reading declares no `recipeProfile` /
-   `lcNodeTemplate` today (only maths does). Scope C must add them, with Activity/Material
-   `lcNodeTemplate` stamps so recipe-created nodes round-trip through the parser.
-3. **New recipes** — `add_activity` (Activity under a Lesson via `hasChild`),
+2. **Reading needs a recipe surface** — ✅ **done in Increment 1** (PR #36): reading now
+   declares a `recipeProfile` + `structuralAliases` + `lcNodeTemplate` (week/lesson/activity/
+   material stamps) + `availableRecipes`, and the parser gained `Activity`/`Material` kinds.
+3. **New recipes** — `add_activity` (Activity under a Lesson via `hasPart`),
    `add_material` / `set_material_content` (Material `content` on an Activity/Lesson),
    plus `move_activity` / `renumber` for editorial ordering. All ride the existing
    two-phase `runGraphMutation` (dry-run → diff + token → confirm → draft), inheriting
    draft/publish, `diff_draft`, `preview_generation`, and audit.
 4. **Activity-level alignment** — recommend default **off**: the Lesson already aligns to
-   the standard, so activities inherit coverage; add an `Activity → SFI` `supports` only
-   when an activity targets a finer/different standard. Keeps the coverage rules simple.
+   the standard, so activities inherit coverage; add an `Activity —hasEducationalAlignment→
+   SFI` only when an activity targets a finer/different standard. Keeps coverage simple.
 5. **Read projection** — `buildSlice` grows to include each session's activities
    (+ materials); the parser gains `Activity` / `Material` kinds (`labelToKind`); the
    golden gate is regenerated (not byte-identical).
 6. **Reading vs maths** — reading has **0** Activities (Scope C authors them); maths has
-   **104** (RECE illustrative tasks, `supports`-linked exemplars, label `Curriculum` /
-   `normalized_type: "Activity"`). Confirm the prescriptive (`hasChild` of a Lesson) vs.
-   illustrative (`supports` a standard) split holds for both, and whether reading
-   activities should optionally `hasReference` any maths-style exemplars.
+   **104** illustrative `Activity`s (label `Activity`) under its "Composants dérivés"
+   frames, each `hasEducationalAlignment`-ing a standard + carrying
+   `metadata.illustratesComponent`. The prescriptive (`hasPart` of a Lesson) vs.
+   illustrative (aligned to a derived-frame standard) split holds for both; reading
+   activities may optionally `hasReference` maths-style exemplars.
 7. **`.docx` repositioning** (Open Question #6) — the guide becomes a render of the
    stored activities/materials, traceable to a published graph version.
 
