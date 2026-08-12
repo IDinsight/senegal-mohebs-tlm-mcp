@@ -77,6 +77,30 @@ describe("kg-export — LC ontology (maths)", () => {
     expect(components.every((c) => hasChildTargets.has(c.id))).toBe(true);
   });
 
+  it("display edges carry the real relation (honest badge); illustrative tasks nest under their component", async () => {
+    const g = (await exportNamespace(mathsNs))!;
+    // Every edge has a traversal type AND a real type for the badge.
+    expect(g.edges.every((e) => typeof e.rel === "string" && e.rel.length > 0)).toBe(true);
+    // Content containment folds to a hasChild TRAVERSAL edge but keeps its real
+    // type — so Course→chapter badges as "hasPart", not a blanket "hasChild".
+    const course = g.nodes.find((n) => n.label === "Course")!;
+    const courseEdges = g.edges.filter((e) => e.s === course.id);
+    expect(courseEdges.length).toBe(25);
+    expect(courseEdges.every((e) => e.r === "hasChild" && e.rel === "hasPart")).toBe(true);
+
+    // An illustrative Activity is re-parented under the LearningComponent it
+    // exemplifies (metadata.illustratesComponent), rel "illustrates" — NOT left as
+    // a sibling under the standard it merely aligns to.
+    const compIds = new Set(g.nodes.filter((n) => n.label === "LearningComponent").map((n) => n.id));
+    const act = g.nodes.find((n) => n.label === "Activity" && compIds.has((n.props as any)?.illustratesComponent?.id))!;
+    expect(act).toBeTruthy();
+    const compId = (act.props as any).illustratesComponent.id as string;
+    const parents = g.edges.filter((e) => e.r === "hasChild" && e.t === act.id);
+    expect(parents).toHaveLength(1);            // exactly one containment parent
+    expect(parents[0].s).toBe(compId);          // and it's the component, not the SFI
+    expect(parents[0].rel).toBe("illustrates");
+  });
+
   it("node detail carries the raw LC properties generically (no subject fields on the node)", async () => {
     const g = (await exportNamespace(mathsNs))!;
     const lesson = g.nodes.find((n) => n.label === "Lesson")!;
