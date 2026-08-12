@@ -108,6 +108,23 @@ A week has **one** `remediation` session (Remédiation CGP, 60 mn). Several sess
 
 ---
 
+## Authored content, when the graph carries it (activities & materials)
+
+A session may already carry its **authored, reviewed content** in the graph — the phase-by-phase script, curated and approved, not something to reinvent. `get_curriculum(unit=N)` surfaces this on each session:
+
+- `session.activities[]` — the session's **phases (Étapes)**, in order. Each activity has a `titre` (the phase name, e.g. *Étape 1 : Découvrir le vocabulaire*), optional `groupement` (individual / pairs / group), `duree`, `usage` (*Instruction* / *Assessment*), and its own `materials[]`.
+- `materials[]` (on an activity, on a session, or on the week itself) — the **load-bearing content**: `titre`, `type` (*Core* / *Supporting* / *Reference*), and `contenu` — the actual scripted prose, steps, questions, or image-brief.
+
+**The rule: authored content is authoritative — render it, do not paraphrase it.**
+
+- When a session's `activities` are present, produce **exactly those phases, in that order**, rendering each activity's `materials.contenu` faithfully into the guide (formatted per the bilingual and layout conventions below). Do not drop, merge, reorder, or "improve" an authored phase; its content was approved as-is.
+- A **week-level** or **session-level** material (e.g. an opening-scene image brief on the week, or the shared *Jukki* text on the session) is content that spans the phases — place it where it belongs (the week opener, the session's reading step) rather than inside one Étape.
+- When a session's `activities` list is **empty** (no content authored yet), fall back to composing the session freely from its `standard` + `categorie`, following the phase spine and density floor below — the current behaviour. Most weeks are in this state today.
+
+This keeps the guide **traceable**: where content is authored, the `.docx` is a faithful render of a specific published graph version; where it is not, you compose it to the same grain.
+
+---
+
 ## Characters
 
 The programme's world is one connected family. Use the established characters from `get_generation_context`; when that list is empty, **harvest from weeks 1–8** — do not invent a new lead. The core family in the existing guides is:

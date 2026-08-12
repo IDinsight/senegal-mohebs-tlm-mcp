@@ -34,6 +34,10 @@ export { addLessonGrouping, type AddLessonGroupingArgs } from "./add-lesson-grou
 export { moveLesson, type MoveLessonArgs } from "./move-lesson.js";
 export { splitLessonGrouping, type SplitLessonGroupingArgs } from "./split-lesson-grouping.js";
 export { renumber, type RenumberArgs } from "./renumber.js";
+// Scope C content-layer recipes (Activity / Material inside a lesson).
+export { addActivity, type AddActivityArgs } from "./add-activity.js";
+export { addMaterial, type AddMaterialArgs } from "./add-material.js";
+export { setMaterialContent, type SetMaterialContentArgs } from "./set-material-content.js";
 
 export { STRUCTURAL_EDIT_SAFE_PATHS, structuralEditErrors, editStructural } from "./structural-edit.js";
 

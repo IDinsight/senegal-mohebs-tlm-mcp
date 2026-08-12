@@ -69,4 +69,41 @@ export const RECIPES: readonly RecipeDescriptor[] = [
     ],
     renumberBearing: true,
   },
+  // ── Scope C content-layer recipes (Activity / Material inside a lesson) ──────
+  {
+    name: "add_activity",
+    summary: "Create an Activity (a task/phase — an 'Étape') and link it (hasPart) to an existing lesson. Additive. No alignment edge — the activity inherits the lesson's standard (phase-grained; scripted content goes in the activity's Material via add_material).",
+    params: [
+      { name: "lessonId", required: true, note: "the existing lesson this activity sits in" },
+      { name: "text", required: true, note: "the activity/phase title (e.g. 'Étape 1 : Découvrir le vocabulaire')" },
+      { name: "text_en", required: false },
+      { name: "studentGroupingType", required: false, note: "individual / pairs / group" },
+      { name: "timeRequired", required: false, note: "e.g. '10 mn'" },
+      { name: "educationalUse", required: false, note: "Instruction (default) / Assessment" },
+      { name: "position", required: false, note: "within-lesson order; defaults to appending" },
+    ],
+    renumberBearing: false,
+  },
+  {
+    name: "add_material",
+    summary: "Create a Material (the reviewable, load-bearing content — prose / steps / image-brief) and link it (hasPart) to an existing container. The parent may be an Activity, a Lesson, or a LessonGrouping (week/chapter). Additive.",
+    params: [
+      { name: "parentId", required: true, note: "an existing Activity, Lesson, or LessonGrouping" },
+      { name: "content", required: true, note: "the payload (HTML/prose/steps/image-brief)" },
+      { name: "materialType", required: false, note: "Core (default) / Supporting / Reference" },
+      { name: "text", required: false, note: "optional title" },
+      { name: "text_en", required: false },
+      { name: "position", required: false, note: "within-parent order; defaults to appending" },
+    ],
+    renumberBearing: false,
+  },
+  {
+    name: "set_material_content",
+    summary: "Replace an existing Material's content (the load-bearing payload). The dedicated verb for editing content — upsert_property is wording-only and cannot reach it.",
+    params: [
+      { name: "materialId", required: true },
+      { name: "content", required: true, note: "the new payload" },
+    ],
+    renumberBearing: false,
+  },
 ];

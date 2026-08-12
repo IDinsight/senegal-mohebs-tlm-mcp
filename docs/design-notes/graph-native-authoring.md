@@ -16,8 +16,9 @@
 > table. **Scope B merged** (PR #34), re-seeded, and deployed to Cloud Run.
 > **Scope C** (activities & materials *inside* a lesson) is **in progress** — Increment 1
 > (reading's scoped recipe surface + per-recipe availability) merged (PR #36); Increment 2
-> (`add_activity` / `add_material` recipes + read projection) is next. See the Scope C
-> section below. LC type/edge vocabulary confirmed against
+> (`add_activity` / `add_material` / `set_material_content` recipes + read projection +
+> prompt) built (this PR — machinery only; the bulk authoring of reading's sessions is a
+> later pass). See the Scope C section below. LC type/edge vocabulary confirmed against
 > the [LC Curriculum reference](https://docs.learningcommons.org/knowledge-graph/graph-reference/curriculum)
 > (Activity, Material, Lesson, LessonGrouping). The project now uses **canonical LC
 > at rest** (camelCase, `hasPart`/`hasEducationalAlignment`); the *Representation
@@ -377,21 +378,35 @@ piece — the guide's pedagogical quality is the acceptance bar beyond the tests
 
 ## Scope C — activities & materials inside a lesson (in progress)
 
-> **Status: In progress — Increment 1 landed on branch `feat/reading-scope-c-activities`.**
+> **Status: In progress — Increment 2 built (machinery); bulk authoring pending.**
 > **Decisions confirmed:** (1) **grain = phase-grained** — one `Activity` per phase
 > (Étape), its scripted teacher/pupil content stored as that activity's `Material.content`;
 > (2) **recipe scope = per-recipe availability** — recipes gained a per-subject allowlist
 > (`SubjectAdapter.availableRecipes`), so reading opts into only the recipes that fit and
 > **not** week-level `split`/`renumber`; (3) reading now reads its week number from the
 > canonical **`position`** (`numberFrom: "position"`), retiring the bare-number-`description`
-> reliance. **Increment 1 (done):** reading recipe surface — `recipeProfile` (canonical
+> reliance; (4) **a `Material` may hang off any container level** — an `Activity` (an Étape's
+> script), a `Lesson` (session-level, e.g. the shared *Jukki*), **or** a `LessonGrouping` (a
+> week/chapter, e.g. an opening-scene image) — all via `hasPart`; (5) **content is edited
+> only** by `add_material` / `set_material_content` (a `Material`'s `content` is deliberately
+> **not** a `wordingAlias`, so `upsert_property` can't reach load-bearing content — see
+> `MATERIAL_CONTENT_PATH`); (6) **activity alignment = default off** — an `Activity` inherits
+> its lesson's standard, so `add_activity` writes **no** alignment edge.
+> **Increment 1 (done):** reading recipe surface — `recipeProfile` (canonical
 > `hasPart`/`hasEducationalAlignment`, `activityKind`/`materialKind`), `structuralAliases`,
-> `lcNodeTemplate` (week/lesson/activity/material), `availableRecipes: ["move_lesson"]`;
-> parser `numberFrom: "position"`; `Activity`/`Material` parse kinds; per-recipe gating in
-> `server/recipes.ts` + the `get_capabilities` mirror. Golden gates unchanged; build + all
-> tests green (+ `ce1-reading.recipes.test.ts`). **Increment 2 (next):** the `add_activity`
-> / `add_material` / `set_material_content` recipes (phase-grained), `buildSlice` surfacing
-> a session's activities+materials, and the prompt reading them. Builds directly on Scope B. Scope B made the
+> `lcNodeTemplate` (week/lesson/activity/material); parser `numberFrom: "position"`;
+> `Activity`/`Material` parse kinds; per-recipe gating in `server/recipes.ts` + the
+> `get_capabilities` mirror. **Increment 2 (built — this PR, machinery only):** the
+> `add_activity` / `add_material` / `set_material_content` recipes (`kg-store/recipes/*`,
+> registry + three MCP tools), `postParse` keeping the content layer, `buildSlice` surfacing
+> each session's `activities` (+ their `materials`) plus session-/week-level `materials`, the
+> prompt rendering authored content when present (else composing freely),
+> `availableRecipes: ["move_lesson", "add_activity", "add_material", "set_material_content"]`.
+> Golden **regenerated** (additive: new empty `activities`/`materials` arrays — every
+> existing value byte-identical); build + all tests green (+ `ce1-reading.scope-c.test.ts`).
+> The **bulk authoring** of reading's sessions (a deterministic first-pass seed derived from
+> each session's components) is a **separate later pass** — until it runs, real sessions read
+> back with empty `activities`. Builds directly on Scope B. Scope B made the
 > *lessons* (the 22 daily sessions) graph-native; Scope C makes what a lesson
 > *contains* — its teaching **Activities** and their **Materials** — graph-native too,
 > so the load-bearing content is authored, reviewable (`diff_draft` / `preview`), and
@@ -451,25 +466,30 @@ so derivation is per-*(session, standard)*). The curator reviews/edits; then
 `add_activity` / `add_material` persist the approved result. No component→activity edge
 is written (LC defines none).
 
-**Open decisions (confirm before coding).**
-1. **Store-vs-render grain** — exactly what becomes an `Activity` + `Material` vs. stays
-   render-time phrasing (the hybrid rule's boundary for reading's dense sessions — e.g.
-   is each *Étape* an Activity with its scripted content as Material, or is each teacher
-   move an Activity?). This is the pivotal call; it sets node volume and review effort.
+**Open decisions — now resolved (Increment 2).**
+1. **Store-vs-render grain** — ✅ **phase-grained**: each *Étape* is one `Activity`; its
+   scripted teacher/pupil content is that activity's `Material.content` (not one Activity
+   per teacher move). Sets node volume at ~one per phase.
 2. **Reading needs a recipe surface** — ✅ **done in Increment 1** (PR #36): reading now
    declares a `recipeProfile` + `structuralAliases` + `lcNodeTemplate` (week/lesson/activity/
    material stamps) + `availableRecipes`, and the parser gained `Activity`/`Material` kinds.
-3. **New recipes** — `add_activity` (Activity under a Lesson via `hasPart`),
-   `add_material` / `set_material_content` (Material `content` on an Activity/Lesson),
-   plus `move_activity` / `renumber` for editorial ordering. All ride the existing
-   two-phase `runGraphMutation` (dry-run → diff + token → confirm → draft), inheriting
-   draft/publish, `diff_draft`, `preview_generation`, and audit.
-4. **Activity-level alignment** — recommend default **off**: the Lesson already aligns to
-   the standard, so activities inherit coverage; add an `Activity —hasEducationalAlignment→
-   SFI` only when an activity targets a finer/different standard. Keeps coverage simple.
-5. **Read projection** — `buildSlice` grows to include each session's activities
-   (+ materials); the parser gains `Activity` / `Material` kinds (`labelToKind`); the
-   golden gate is regenerated (not byte-identical).
+3. **New recipes** — ✅ **`add_activity` / `add_material` / `set_material_content`** built
+   (Increment 2). `add_activity` puts an Activity under a Lesson via `hasPart`;
+   `add_material` puts a Material `content` under an **Activity, Lesson, OR LessonGrouping**
+   (any container level); `set_material_content` rewrites an existing Material's content —
+   the only content-edit verb, since `content` is **not** a `wordingAlias` and `upsert_property`
+   can't reach it. All ride the existing two-phase `runGraphMutation` (dry-run → diff + token
+   → confirm → draft), inheriting draft/publish, `diff_draft`, `preview_generation`, audit,
+   and per-recipe availability. `move_activity` / activity `renumber` were **not** built —
+   editorial reordering is deferred until authored content exists to reorder.
+4. **Activity-level alignment** — ✅ **default off**: the Lesson already aligns to the
+   standard, so activities inherit coverage; `add_activity` writes **no** alignment edge. An
+   `Activity —hasEducationalAlignment→ SFI` for a finer/different standard is a future,
+   explicit step. Keeps coverage simple.
+5. **Read projection** — ✅ `buildSlice` now includes each session's `activities`
+   (+ their `materials`) plus session- and week-level `materials`; `postParse` keeps the
+   content layer under kept lessons/weeks; the golden gate was **regenerated** (additive
+   only — new empty arrays; every existing value byte-identical).
 6. **Reading vs maths** — reading has **0** Activities (Scope C authors them); maths has
    **104** illustrative `Activity`s (label `Activity`) under its "Composants dérivés"
    frames, each `hasEducationalAlignment`-ing a standard + carrying

@@ -136,6 +136,7 @@
         "semaine": 1,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -167,7 +168,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -199,7 +202,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -231,7 +236,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -255,7 +262,9 @@
                   "description": "Déterminer le sens de mots liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -287,7 +296,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -307,7 +318,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -331,7 +344,9 @@
                   "description": "Repérer dans un texte les limites d’une phrase en identifiant la majuscule initiale et la ponctuation finale (point, point d’interrogation, point d’exclamation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -359,7 +374,9 @@
                   "description": "Écrire des mots en respectant les règles de placement des voyelles."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -391,7 +408,9 @@
                   "description": "Repérer des marqueurs temporels indiquant la succession des actions dans un texte narratif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -423,7 +442,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -455,7 +476,9 @@
                   "description": "Repérer des marqueurs temporels indiquant la succession des actions dans un texte narratif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -465,7 +488,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -489,7 +514,9 @@
                   "description": "Déterminer le sens de mots liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -521,7 +548,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -549,7 +578,9 @@
                   "description": "Identifier si une action ou un événement se situe au passé, au présent ou au futur à partir d’indices temporels."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -577,7 +608,9 @@
                   "description": "Écrire des mots en respectant les règles de placement des voyelles."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -601,7 +634,9 @@
                   "description": "Tracer correctement en écriture cursive majuscule les lettres A, M, N, T, U, V, O et Q."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -625,7 +660,9 @@
                   "description": "Repérer dans un texte les limites d’une phrase en identifiant la majuscule initiale et la ponctuation finale (point, point d’interrogation, point d’exclamation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -653,7 +690,9 @@
                   "description": "Identifier si une action ou un événement se situe au passé, au présent ou au futur à partir d’indices temporels."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -685,7 +724,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -709,7 +750,9 @@
                   "description": "Déterminer le sens de mots liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -741,7 +784,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -796,6 +841,7 @@
         "semaine": 2,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -827,7 +873,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -859,7 +907,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -891,7 +941,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -915,7 +967,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -947,7 +1001,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -967,7 +1023,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -991,7 +1049,9 @@
                   "description": "Repérer dans un texte où commence et où se termine une phrase (majuscule initiale et ponctuation finale)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1023,7 +1083,9 @@
                   "description": "Comparer la forme écrite d’un mot à sa ou ses formes orales et relever les différences."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1055,7 +1117,9 @@
                   "description": "Sélectionner des exemples de mots, expressions ou structures utiles à la production écrite visée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1087,7 +1151,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1119,7 +1185,9 @@
                   "description": "Sélectionner des exemples de mots, expressions ou structures utiles à la production écrite visée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1129,7 +1197,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1153,7 +1223,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1185,7 +1257,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1213,7 +1287,9 @@
                   "description": "Ordonner une liste d’actions ou d’événements selon leur déroulement chronologique."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1245,7 +1321,9 @@
                   "description": "Comparer la forme écrite d’un mot à sa ou ses formes orales et relever les différences."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -1269,7 +1347,9 @@
                   "description": "Tracer correctement en écriture cursive les majuscules « A, M, N, T, U, V, O, Q »."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -1293,7 +1373,9 @@
                   "description": "Repérer dans un texte où commence et où se termine une phrase (majuscule initiale et ponctuation finale)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -1321,7 +1403,9 @@
                   "description": "Ordonner une liste d’actions ou d’événements selon leur déroulement chronologique."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -1353,7 +1437,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -1377,7 +1463,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -1409,7 +1497,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -1466,6 +1556,7 @@
         "semaine": 3,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -1497,7 +1588,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -1529,7 +1622,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -1561,7 +1656,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -1589,7 +1686,9 @@
                   "description": "Repérer dans un texte narratif les connecteurs de cause et de conséquence (ex. parce que, donc)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -1621,7 +1720,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1641,7 +1742,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1673,7 +1776,9 @@
                   "description": "Repérer une phrase affirmative et identifier son verbe conjugué."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1701,7 +1806,9 @@
                   "description": "Appliquer la règle d’orthographe « m devant m, b, p » dans l’écriture de mots."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1729,7 +1836,9 @@
                   "description": "Rassembler des mots, expressions ou exemples pertinents à intégrer dans un référentiel lié au sujet d’écriture."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1761,7 +1870,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1789,7 +1900,9 @@
                   "description": "Rassembler des mots, expressions ou exemples pertinents à intégrer dans un référentiel lié au sujet d’écriture."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -1799,7 +1912,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1827,7 +1942,9 @@
                   "description": "Repérer dans un texte narratif les connecteurs de cause et de conséquence (ex. parce que, donc)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1859,7 +1976,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1887,7 +2006,9 @@
                   "description": "Conjuguer au présent de l’indicatif un verbe d’action du 1er groupe aux six personnes (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -1915,7 +2036,9 @@
                   "description": "Appliquer la règle d’orthographe « m devant m, b, p » dans l’écriture de mots."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -1943,7 +2066,9 @@
                   "description": "Copier fidèlement un court texte narratif en respectant l’ordre des mots et des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -1975,7 +2100,9 @@
                   "description": "Repérer une phrase affirmative et identifier son verbe conjugué."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -2003,7 +2130,9 @@
                   "description": "Conjuguer au présent de l’indicatif un verbe d’action du 1er groupe aux six personnes (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -2035,7 +2164,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -2063,7 +2194,9 @@
                   "description": "Repérer dans un texte narratif les connecteurs de cause et de conséquence (ex. parce que, donc)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -2095,7 +2228,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -2152,6 +2287,7 @@
         "semaine": 4,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -2183,7 +2319,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2215,7 +2353,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2247,7 +2387,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2275,7 +2417,9 @@
                   "description": "Repérer dans un texte narratif les connecteurs (mots ou groupes de mots) qui relient les phrases ou les événements."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2307,7 +2451,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -2327,7 +2473,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -2359,7 +2507,9 @@
                   "description": "Repérer dans une phrase simple la forme affirmative (énoncé « positif »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -2387,7 +2537,9 @@
                   "description": "Choisir et écrire correctement « a » ou « à » dans un mot selon la voyelle visée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -2415,7 +2567,9 @@
                   "description": "Organiser ces éléments dans un référentiel structuré (liste, tableau, carte mentale) selon des catégories adaptées."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -2447,7 +2601,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -2475,7 +2631,9 @@
                   "description": "Organiser ces éléments dans un référentiel structuré (liste, tableau, carte mentale) selon des catégories adaptées."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -2485,7 +2643,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -2513,7 +2673,9 @@
                   "description": "Repérer dans un texte narratif les connecteurs (mots ou groupes de mots) qui relient les phrases ou les événements."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -2545,7 +2707,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -2573,7 +2737,9 @@
                   "description": "Conjuguer des verbes d’action au présent de l’indicatif en accordant correctement le verbe avec la personne."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -2601,7 +2767,9 @@
                   "description": "Choisir et écrire correctement « a » ou « à » dans un mot selon la voyelle visée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -2629,7 +2797,9 @@
                   "description": "Copier un texte narratif mot à mot en respectant l’orthographe des mots."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -2661,7 +2831,9 @@
                   "description": "Repérer dans une phrase simple la forme affirmative (énoncé « positif »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -2689,7 +2861,9 @@
                   "description": "Conjuguer des verbes d’action au présent de l’indicatif en accordant correctement le verbe avec la personne."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -2721,7 +2895,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -2749,7 +2925,9 @@
                   "description": "Repérer dans un texte narratif les connecteurs (mots ou groupes de mots) qui relient les phrases ou les événements."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -2781,7 +2959,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -2838,6 +3018,7 @@
         "semaine": 5,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -2869,7 +3050,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2901,7 +3084,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2933,7 +3118,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2961,7 +3148,9 @@
                   "description": "Reconnaître que des mots appartiennent à une même famille en repérant une partie commune (radical) et un sens lié."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -2993,7 +3182,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3013,7 +3204,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3037,7 +3230,9 @@
                   "description": "Distinguer le nom propre du nom commun dans des mots ou de courtes phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3065,7 +3260,9 @@
                   "description": "Identifier, à l’écrit, la consonne géminée qui distingue deux mots proches."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3097,7 +3294,9 @@
                   "description": "Déterminer les attentes de la production écrite à réaliser (type de texte, destinataire, consigne)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3129,7 +3328,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3161,7 +3362,9 @@
                   "description": "Déterminer les attentes de la production écrite à réaliser (type de texte, destinataire, consigne)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3171,7 +3374,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3199,7 +3404,9 @@
                   "description": "Reconnaître que des mots appartiennent à une même famille en repérant une partie commune (radical) et un sens lié."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3231,7 +3438,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3263,7 +3472,9 @@
                   "description": "Identifier un verbe d’action du 1er groupe à partir de son infinitif (terminaison -er)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3291,7 +3502,9 @@
                   "description": "Identifier, à l’écrit, la consonne géminée qui distingue deux mots proches."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -3319,7 +3532,9 @@
                   "description": "Produire une copie lisible et soignée sur 3 à 4 pages (respect de l’alignement, de l’espacement et de la présentation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -3343,7 +3558,9 @@
                   "description": "Distinguer le nom propre du nom commun dans des mots ou de courtes phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -3375,7 +3592,9 @@
                   "description": "Identifier un verbe d’action du 1er groupe à partir de son infinitif (terminaison -er)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -3407,7 +3626,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -3435,7 +3656,9 @@
                   "description": "Reconnaître que des mots appartiennent à une même famille en repérant une partie commune (radical) et un sens lié."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -3467,7 +3690,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -3524,6 +3749,7 @@
         "semaine": 6,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -3555,7 +3781,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -3587,7 +3815,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -3619,7 +3849,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -3643,7 +3875,9 @@
                   "description": "Expliquer ce qu’on appelle une « famille de mots » (mots construits sur une même base/radical)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -3675,7 +3909,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3695,7 +3931,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3723,7 +3961,9 @@
                   "description": "Classer des noms en « noms propres » ou « noms communs » en justifiant le choix par un critère simple."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3747,7 +3987,9 @@
                   "description": "Distinguer et utiliser correctement les homophones « a » et « à » dans des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3771,7 +4013,9 @@
                   "description": "Identifier des critères de réussite pertinents pour la production écrite attendue (contenu, organisation, langue)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3803,7 +4047,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3827,7 +4073,9 @@
                   "description": "Identifier des critères de réussite pertinents pour la production écrite attendue (contenu, organisation, langue)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -3837,7 +4085,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3861,7 +4111,9 @@
                   "description": "Expliquer ce qu’on appelle une « famille de mots » (mots construits sur une même base/radical)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3893,7 +4145,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3921,7 +4175,9 @@
                   "description": "Repérer et appliquer les régularités de terminaison du présent des verbes du 1er groupe selon la personne."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -3945,7 +4201,9 @@
                   "description": "Distinguer et utiliser correctement les homophones « a » et « à » dans des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -3977,7 +4235,9 @@
                   "description": "Produire une écriture lisible et correctement espacée lors de la copie (lettres formées, mots séparés)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -4005,7 +4265,9 @@
                   "description": "Classer des noms en « noms propres » ou « noms communs » en justifiant le choix par un critère simple."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -4033,7 +4295,9 @@
                   "description": "Repérer et appliquer les régularités de terminaison du présent des verbes du 1er groupe selon la personne."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -4065,7 +4329,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -4089,7 +4355,9 @@
                   "description": "Expliquer ce qu’on appelle une « famille de mots » (mots construits sur une même base/radical)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -4121,7 +4389,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -4178,6 +4448,7 @@
         "semaine": 7,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -4209,7 +4480,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4241,7 +4514,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4273,7 +4548,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4301,7 +4578,9 @@
                   "description": "Classer correctement des mots ayant la même première lettre en utilisant la deuxième (puis la troisième) lettre pour départager."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4333,7 +4612,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -4353,7 +4634,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -4377,7 +4660,9 @@
                   "description": "Repérer un déterminant minimal dans un groupe nominal."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -4401,7 +4686,9 @@
                   "description": "Orthographier correctement une liste de mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -4429,7 +4716,9 @@
                   "description": "Relire et réviser son texte narratif pour améliorer la cohérence (ajouts, suppressions, corrections simples)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -4461,7 +4750,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -4489,7 +4780,9 @@
                   "description": "Relire et réviser son texte narratif pour améliorer la cohérence (ajouts, suppressions, corrections simples)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -4499,7 +4792,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -4527,7 +4822,9 @@
                   "description": "Classer correctement des mots ayant la même première lettre en utilisant la deuxième (puis la troisième) lettre pour départager."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -4559,7 +4856,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -4587,7 +4886,9 @@
                   "description": "Distinguer les pronoms personnels sujets simples dans des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -4611,7 +4912,9 @@
                   "description": "Orthographier correctement une liste de mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -4635,7 +4938,9 @@
                   "description": "Copier un texte de 3 à 4 lignes en respectant l’orthographe, la ponctuation et la mise en page du modèle."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -4659,7 +4964,9 @@
                   "description": "Repérer un déterminant minimal dans un groupe nominal."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -4687,7 +4994,9 @@
                   "description": "Distinguer les pronoms personnels sujets simples dans des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -4719,7 +5028,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -4747,7 +5058,9 @@
                   "description": "Classer correctement des mots ayant la même première lettre en utilisant la deuxième (puis la troisième) lettre pour départager."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -4779,7 +5092,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -4836,6 +5151,7 @@
         "semaine": 8,
         "palier": 1,
         "genre": "narratif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -4867,7 +5183,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4899,7 +5217,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4931,7 +5251,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4959,7 +5281,9 @@
                   "description": "Départager des mots ayant la même première lettre en comparant les lettres suivantes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -4991,7 +5315,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5011,7 +5337,9 @@
                   "description": "Réciter de mémoire un texte court (poème ou prose) sans support écrit."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5039,7 +5367,9 @@
                   "description": "Repérer l’article dans un groupe nominal (le, la, les, un, une, des, etc.)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5063,7 +5393,9 @@
                   "description": "Orthographier correctement une liste de mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5095,7 +5427,9 @@
                   "description": "Organiser les actions du récit dans un ordre chronologique clair."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5127,7 +5461,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5159,7 +5495,9 @@
                   "description": "Organiser les actions du récit dans un ordre chronologique clair."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5169,7 +5507,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5197,7 +5537,9 @@
                   "description": "Départager des mots ayant la même première lettre en comparant les lettres suivantes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5229,7 +5571,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5261,7 +5605,9 @@
                   "description": "Identifier dans une phrase les pronoms personnels sujets simples (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5285,7 +5631,9 @@
                   "description": "Orthographier correctement une liste de mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -5313,7 +5661,9 @@
                   "description": "Recopier fidèlement un texte modèle de 3 à 4 lignes en respectant mots, orthographe et ponctuation."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -5341,7 +5691,9 @@
                   "description": "Repérer l’article dans un groupe nominal (le, la, les, un, une, des, etc.)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -5373,7 +5725,9 @@
                   "description": "Identifier dans une phrase les pronoms personnels sujets simples (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -5405,7 +5759,9 @@
                   "description": "Présenter les informations essentielles de l’événement (qui, quoi, où, quand)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -5433,7 +5789,9 @@
                   "description": "Départager des mots ayant la même première lettre en comparant les lettres suivantes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -5465,7 +5823,9 @@
                   "description": "Décoder des mots en appliquant des correspondances graphophonologiques (lettres/graphèmes → sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -5522,6 +5882,7 @@
         "semaine": 10,
         "palier": 2,
         "genre": "narratif, descriptif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -5549,7 +5910,9 @@
                   "description": "Utiliser des adjectifs qualificatifs adaptés pour décrire un objet."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -5581,7 +5944,9 @@
                   "description": "Comprendre un texte descriptif lu ou entendu (par soi-même, un adulte ou un camarade)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -5613,7 +5978,9 @@
                   "description": "Comprendre un texte descriptif lu ou entendu (par soi-même, un adulte ou un camarade)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -5641,7 +6008,9 @@
                   "description": "Déterminer le sens de mots de vocabulaire liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -5673,7 +6042,9 @@
                   "description": "Comprendre un texte descriptif lu ou entendu (par soi-même, un adulte ou un camarade)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5701,7 +6072,9 @@
                   "description": "Réciter oralement le texte sans support écrit, avec une restitution complète et sans omissions majeures."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5729,7 +6102,9 @@
                   "description": "Identifier le genre d’un nom (masculin ou féminin) dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5761,7 +6136,9 @@
                   "description": "Former le féminin d’un nom en appliquant la règle générale (ajout de -e ou adaptation orthographique simple)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5793,7 +6170,9 @@
                   "description": "Repérer l’organisation de la description (progression spatiale, du général au particulier, par aspects)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5825,7 +6204,9 @@
                   "description": "Comprendre un texte descriptif lu ou entendu (par soi-même, un adulte ou un camarade)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5857,7 +6238,9 @@
                   "description": "Repérer l’organisation de la description (progression spatiale, du général au particulier, par aspects)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -5867,7 +6250,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5895,7 +6280,9 @@
                   "description": "Déterminer le sens de mots de vocabulaire liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5927,7 +6314,9 @@
                   "description": "Comprendre un texte descriptif lu ou entendu (par soi-même, un adulte ou un camarade)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5955,7 +6344,9 @@
                   "description": "Appliquer les terminaisons régulières de l’imparfait (-ais, -ais, -ait, -ions, -iez, -aient) selon la personne."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -5987,7 +6378,9 @@
                   "description": "Former le féminin d’un nom en appliquant la règle générale (ajout de -e ou adaptation orthographique simple)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -6015,7 +6408,9 @@
                   "description": "Copier un texte descriptif en utilisant différents types de copie selon la consigne (directe, différée, segmentée, etc.)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -6043,7 +6438,9 @@
                   "description": "Identifier le genre d’un nom (masculin ou féminin) dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -6071,7 +6468,9 @@
                   "description": "Appliquer les terminaisons régulières de l’imparfait (-ais, -ais, -ait, -ions, -iez, -aient) selon la personne."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -6099,7 +6498,9 @@
                   "description": "Utiliser des adjectifs qualificatifs adaptés pour décrire un objet."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -6127,7 +6528,9 @@
                   "description": "Déterminer le sens de mots de vocabulaire liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -6159,7 +6562,9 @@
                   "description": "Comprendre un texte descriptif lu ou entendu (par soi-même, un adulte ou un camarade)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -6216,6 +6621,7 @@
         "semaine": 11,
         "palier": 2,
         "genre": "narratif, descriptif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -6243,7 +6649,9 @@
                   "description": "Indiquer l’usage ou la fonction principale d’un objet dans une phrase simple."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -6275,7 +6683,9 @@
                   "description": "Reconnaître et lire correctement des mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -6307,7 +6717,9 @@
                   "description": "Reconnaître et lire correctement des mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -6331,7 +6743,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui en illustrent correctement le sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -6363,7 +6777,9 @@
                   "description": "Reconnaître et lire correctement des mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -6395,7 +6811,9 @@
                   "description": "Réciter le texte sans support écrit, sans omissions majeures ni ajouts."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -6423,7 +6841,9 @@
                   "description": "Repérer l’adjectif qualificatif dans un groupe nominal."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -6447,7 +6867,9 @@
                   "description": "Mettre des noms au pluriel en appliquant la règle générale du pluriel."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -6475,7 +6897,9 @@
                   "description": "Sélectionner et relever des mots, expressions ou tournures pertinents à intégrer au référentiel."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -6507,7 +6931,9 @@
                   "description": "Reconnaître et lire correctement des mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -6535,7 +6961,9 @@
                   "description": "Sélectionner et relever des mots, expressions ou tournures pertinents à intégrer au référentiel."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -6545,7 +6973,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -6569,7 +6999,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui en illustrent correctement le sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -6601,7 +7033,9 @@
                   "description": "Reconnaître et lire correctement des mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -6633,7 +7067,9 @@
                   "description": "Décrire la régularité des formes de l’imparfait du 1er groupe en comparant les terminaisons selon les personnes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -6657,7 +7093,9 @@
                   "description": "Mettre des noms au pluriel en appliquant la règle générale du pluriel."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -6685,7 +7123,9 @@
                   "description": "Tracer correctement en écriture cursive les majuscules P, B, D, F, R, L et S."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -6713,7 +7153,9 @@
                   "description": "Repérer l’adjectif qualificatif dans un groupe nominal."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -6745,7 +7187,9 @@
                   "description": "Décrire la régularité des formes de l’imparfait du 1er groupe en comparant les terminaisons selon les personnes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -6773,7 +7217,9 @@
                   "description": "Indiquer l’usage ou la fonction principale d’un objet dans une phrase simple."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -6797,7 +7243,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui en illustrent correctement le sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -6829,7 +7277,9 @@
                   "description": "Reconnaître et lire correctement des mots fréquents."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -6886,6 +7336,7 @@
         "semaine": 12,
         "palier": 2,
         "genre": "narratif, descriptif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -6913,7 +7364,9 @@
                   "description": "Situer les éléments d’un lieu en utilisant des repères spatiaux (prépositions, adverbes, orientation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -6945,7 +7398,9 @@
                   "description": "Lire un texte descriptif avec fluidité (précision et rythme adaptés)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -6977,7 +7432,9 @@
                   "description": "Lire un texte descriptif avec fluidité (précision et rythme adaptés)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -7009,7 +7466,9 @@
                   "description": "Remplacer un mot répété dans un texte par un synonyme approprié pour éviter les répétitions."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -7041,7 +7500,9 @@
                   "description": "Lire un texte descriptif avec fluidité (précision et rythme adaptés)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7069,7 +7530,9 @@
                   "description": "Adapter l’intonation, le rythme et les pauses au sens du texte récité."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7097,7 +7560,9 @@
                   "description": "Identifier le sujet du verbe dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7121,7 +7586,9 @@
                   "description": "Associer un sujet nominal (groupe nominal sujet) au pronom de conjugaison correspondant (je/tu/il-elle/nous/vous/ils-elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7145,7 +7612,9 @@
                   "description": "Organiser ces éléments dans un référentiel consultable (liste, tableau ou catégories) adapté à la tâche d’écriture."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7177,7 +7646,9 @@
                   "description": "Lire un texte descriptif avec fluidité (précision et rythme adaptés)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7201,7 +7672,9 @@
                   "description": "Organiser ces éléments dans un référentiel consultable (liste, tableau ou catégories) adapté à la tâche d’écriture."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7211,7 +7684,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -7243,7 +7718,9 @@
                   "description": "Remplacer un mot répété dans un texte par un synonyme approprié pour éviter les répétitions."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -7275,7 +7752,9 @@
                   "description": "Lire un texte descriptif avec fluidité (précision et rythme adaptés)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -7307,7 +7786,9 @@
                   "description": "Conjuguer le verbe « être » à l’imparfait de l’indicatif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -7331,7 +7812,9 @@
                   "description": "Associer un sujet nominal (groupe nominal sujet) au pronom de conjugaison correspondant (je/tu/il-elle/nous/vous/ils-elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -7367,7 +7850,9 @@
                   "description": "Adapter sa copie selon le type demandé (copie directe, différée ou par segments) tout en conservant l’exactitude du texte."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -7395,7 +7880,9 @@
                   "description": "Identifier le sujet du verbe dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -7427,7 +7914,9 @@
                   "description": "Conjuguer le verbe « être » à l’imparfait de l’indicatif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -7455,7 +7944,9 @@
                   "description": "Situer les éléments d’un lieu en utilisant des repères spatiaux (prépositions, adverbes, orientation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -7487,7 +7978,9 @@
                   "description": "Remplacer un mot répété dans un texte par un synonyme approprié pour éviter les répétitions."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -7519,7 +8012,9 @@
                   "description": "Lire un texte descriptif avec fluidité (précision et rythme adaptés)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -7576,6 +8071,7 @@
         "semaine": 13,
         "palier": 2,
         "genre": "narratif, descriptif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -7607,7 +8103,9 @@
                   "description": "Employer un vocabulaire précis pour nommer les éléments d’un lieu et leurs propriétés (taille, forme, couleur, matière)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -7639,7 +8137,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -7671,7 +8171,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -7699,7 +8201,9 @@
                   "description": "Employer des mots nouveaux dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -7731,7 +8235,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7755,7 +8261,9 @@
                   "description": "Réciter de mémoire un texte (poème ou prose) avec une diction compréhensible et une intonation adaptée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7779,7 +8287,9 @@
                   "description": "Identifier le pronom personnel sujet correspondant à une personne (1re, 2e, 3e) et à un nombre (singulier/pluriel)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7807,7 +8317,9 @@
                   "description": "Identifier le sujet d’un verbe lorsqu’il est placé devant le verbe dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7839,7 +8351,9 @@
                   "description": "Utiliser le référentiel construit pour planifier ou vérifier une production écrite par rapport aux critères définis."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7871,7 +8385,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7903,7 +8419,9 @@
                   "description": "Utiliser le référentiel construit pour planifier ou vérifier une production écrite par rapport aux critères définis."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -7913,7 +8431,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -7941,7 +8461,9 @@
                   "description": "Employer des mots nouveaux dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -7973,7 +8495,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -8005,7 +8529,9 @@
                   "description": "Conjuguer des verbes à l’inaccompli (« doon/daan ») dans des phrases simples."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -8033,7 +8559,9 @@
                   "description": "Identifier le sujet d’un verbe lorsqu’il est placé devant le verbe dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -8065,7 +8593,9 @@
                   "description": "Adapter sa copie à différents types de copie (par exemple : modèle proche, modèle éloigné, copie par segments)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -8089,7 +8619,9 @@
                   "description": "Identifier le pronom personnel sujet correspondant à une personne (1re, 2e, 3e) et à un nombre (singulier/pluriel)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -8121,7 +8653,9 @@
                   "description": "Conjuguer des verbes à l’inaccompli (« doon/daan ») dans des phrases simples."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -8153,7 +8687,9 @@
                   "description": "Employer un vocabulaire précis pour nommer les éléments d’un lieu et leurs propriétés (taille, forme, couleur, matière)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -8181,7 +8717,9 @@
                   "description": "Employer des mots nouveaux dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -8213,7 +8751,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -8270,6 +8810,7 @@
         "semaine": 14,
         "palier": 2,
         "genre": "narratif, descriptif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -8301,7 +8842,9 @@
                   "description": "Décrire les caractéristiques physiques de l’animal (taille, couleur, parties du corps) avec des adjectifs appropriés."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -8333,7 +8876,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -8365,7 +8910,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -8393,7 +8940,9 @@
                   "description": "Déterminer le sens de mots liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -8425,7 +8974,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -8449,7 +9000,9 @@
                   "description": "Réciter le texte mémorisé sans support en respectant les mots et la ponctuation (pauses, intonation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -8473,7 +9026,9 @@
                   "description": "Classer un article repéré comme défini ou indéfini."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -8505,7 +9060,9 @@
                   "description": "Choisir la forme correcte d’un mot parmi deux formes alternantes en fonction de sa nature (verbe ou nom) dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -8537,7 +9094,9 @@
                   "description": "Organiser les critères et indicateurs dans une fiche structurée (rubriques, ordre, présentation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -8569,7 +9128,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -8601,7 +9162,9 @@
                   "description": "Organiser les critères et indicateurs dans une fiche structurée (rubriques, ordre, présentation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -8611,7 +9174,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -8639,7 +9204,9 @@
                   "description": "Déterminer le sens de mots liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -8671,7 +9238,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -8703,7 +9272,9 @@
                   "description": "Conjuguer au futur de l’indicatif un verbe du 1er groupe aux six personnes (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -8735,7 +9306,9 @@
                   "description": "Choisir la forme correcte d’un mot parmi deux formes alternantes en fonction de sa nature (verbe ou nom) dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -8763,7 +9336,9 @@
                   "description": "Réaliser une copie de texte en variant le type de copie (copie directe, copie différée ou copie à partir d’un support différent) tout en gardant la lisibilité."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -8787,7 +9362,9 @@
                   "description": "Classer un article repéré comme défini ou indéfini."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -8819,7 +9396,9 @@
                   "description": "Conjuguer au futur de l’indicatif un verbe du 1er groupe aux six personnes (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -8851,7 +9430,9 @@
                   "description": "Décrire les caractéristiques physiques de l’animal (taille, couleur, parties du corps) avec des adjectifs appropriés."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -8879,7 +9460,9 @@
                   "description": "Déterminer le sens de mots liés au thème du texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -8911,7 +9494,9 @@
                   "description": "Comprendre un texte descriptif lu (par soi-même, par un adulte ou par un camarade) en identifiant l’objet/personne/lieu décrit et ses caractéristiques."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -8968,6 +9553,7 @@
         "semaine": 15,
         "palier": 2,
         "genre": "narratif, descriptif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -8995,7 +9581,9 @@
                   "description": "Décrire le mode de vie d’un animal (habitat, alimentation, déplacements)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9027,7 +9615,9 @@
                   "description": "Décoder des mots d’un texte en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9059,7 +9649,9 @@
                   "description": "Décoder des mots d’un texte en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9091,7 +9683,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9123,7 +9717,9 @@
                   "description": "Décoder des mots d’un texte en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9147,7 +9743,9 @@
                   "description": "Réciter de mémoire un texte (poème ou prose) en respectant l’ordre des mots et la ponctuation/les pauses principales."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9171,7 +9769,9 @@
                   "description": "Repérer et identifier les déterminants possessifs dans des phrases ou un texte."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9199,7 +9799,9 @@
                   "description": "Reconnaître qu’une paire de mots peut avoir la même prononciation ou la même graphie tout en ayant des sens différents (homophones/homographes)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9227,7 +9829,9 @@
                   "description": "Enchaîner les actions d’un récit de manière chronologique à l’aide de connecteurs temporels simples."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9259,7 +9863,9 @@
                   "description": "Décoder des mots d’un texte en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9287,7 +9893,9 @@
                   "description": "Enchaîner les actions d’un récit de manière chronologique à l’aide de connecteurs temporels simples."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9297,7 +9905,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -9329,7 +9939,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -9361,7 +9973,9 @@
                   "description": "Décoder des mots d’un texte en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -9393,7 +10007,9 @@
                   "description": "Conjuguer au futur de l’indicatif des verbes du 1er groupe en variant correctement selon les personnes (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -9421,7 +10037,9 @@
                   "description": "Reconnaître qu’une paire de mots peut avoir la même prononciation ou la même graphie tout en ayant des sens différents (homophones/homographes)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -9449,7 +10067,9 @@
                   "description": "Réaliser une copie de texte selon différents types de copie (ex. copie directe, copie différée, copie par segments)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -9473,7 +10093,9 @@
                   "description": "Repérer et identifier les déterminants possessifs dans des phrases ou un texte."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -9505,7 +10127,9 @@
                   "description": "Conjuguer au futur de l’indicatif des verbes du 1er groupe en variant correctement selon les personnes (je, tu, il/elle, nous, vous, ils/elles)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -9533,7 +10157,9 @@
                   "description": "Décrire le mode de vie d’un animal (habitat, alimentation, déplacements)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -9565,7 +10191,9 @@
                   "description": "Employer des mots liés au thème dans des phrases qui illustrent clairement leur sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -9597,7 +10225,9 @@
                   "description": "Décoder des mots d’un texte en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -9654,6 +10284,7 @@
         "semaine": 16,
         "palier": 2,
         "genre": "narratif, descriptif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -9685,7 +10316,9 @@
                   "description": "Décrire le milieu de vie de l’animal (où il vit)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9717,7 +10350,9 @@
                   "description": "Appliquer des correspondances graphophonologiques pour décoder des mots rencontrés dans un texte descriptif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9749,7 +10384,9 @@
                   "description": "Appliquer des correspondances graphophonologiques pour décoder des mots rencontrés dans un texte descriptif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9777,7 +10414,9 @@
                   "description": "Retrouver un mot dans le dictionnaire en s’appuyant sur sa première lettre."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -9809,7 +10448,9 @@
                   "description": "Appliquer des correspondances graphophonologiques pour décoder des mots rencontrés dans un texte descriptif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9837,7 +10478,9 @@
                   "description": "Réciter le texte de mémoire en respectant l’ordre des mots et des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9861,7 +10504,9 @@
                   "description": "Classer une liste de mots selon un critère donné (par exemple : ordre alphabétique, catégorie, thème)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9881,7 +10526,9 @@
                   "description": "Écrire correctement, sous la dictée, les mots fréquents de l’échelon n°9 (« fite »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9913,7 +10560,9 @@
                   "description": "Rédiger un texte narratif structuré avec un début, un déroulement et une fin."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9945,7 +10594,9 @@
                   "description": "Appliquer des correspondances graphophonologiques pour décoder des mots rencontrés dans un texte descriptif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9977,7 +10628,9 @@
                   "description": "Rédiger un texte narratif structuré avec un début, un déroulement et une fin."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -9987,7 +10640,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10015,7 +10670,9 @@
                   "description": "Retrouver un mot dans le dictionnaire en s’appuyant sur sa première lettre."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10047,7 +10704,9 @@
                   "description": "Appliquer des correspondances graphophonologiques pour décoder des mots rencontrés dans un texte descriptif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10071,7 +10730,9 @@
                   "description": "Conjuguer le verbe « avoir » au futur de l’indicatif aux six personnes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10091,7 +10752,9 @@
                   "description": "Écrire correctement, sous la dictée, les mots fréquents de l’échelon n°9 (« fite »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -10123,7 +10786,9 @@
                   "description": "Copier un texte descriptif de 3 à 4 lignes en respectant fidèlement l’orthographe, la ponctuation et les retours à la ligne."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -10147,7 +10812,9 @@
                   "description": "Classer une liste de mots selon un critère donné (par exemple : ordre alphabétique, catégorie, thème)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -10171,7 +10838,9 @@
                   "description": "Conjuguer le verbe « avoir » au futur de l’indicatif aux six personnes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -10203,7 +10872,9 @@
                   "description": "Décrire le milieu de vie de l’animal (où il vit)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -10231,7 +10902,9 @@
                   "description": "Retrouver un mot dans le dictionnaire en s’appuyant sur sa première lettre."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -10263,7 +10936,9 @@
                   "description": "Appliquer des correspondances graphophonologiques pour décoder des mots rencontrés dans un texte descriptif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -10320,6 +10995,7 @@
         "semaine": 18,
         "palier": 3,
         "genre": "narratif, descriptif, injonctif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -10347,7 +11023,9 @@
                   "description": "Utiliser une tournure injonctive appropriée (impératif, infinitif de consigne, « il faut… ») pour donner un ordre ou une demande."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -10379,7 +11057,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif (consignes, recettes, règles) lu par soi-même, par un adulte ou par un camarade."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -10411,7 +11091,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif (consignes, recettes, règles) lu par soi-même, par un adulte ou par un camarade."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -10439,7 +11121,9 @@
                   "description": "Classer des mots du thème selon leur sens (synonymes, mots proches, mots d’un même champ lexical)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -10471,7 +11155,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif (consignes, recettes, règles) lu par soi-même, par un adulte ou par un camarade."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -10495,7 +11181,9 @@
                   "description": "Réciter oralement le texte de mémoire avec une diction intelligible et une intonation adaptée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -10523,7 +11211,9 @@
                   "description": "Produire une phrase correcte à l’infinitif pour formuler une consigne (ex. « Ne pas courir »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -10551,7 +11241,9 @@
                   "description": "Former le pluriel des noms concernés par la règle indiquée pour les noms en « ou »."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -10579,7 +11271,9 @@
                   "description": "Repérer la structure d’un texte narratif (situation initiale, élément perturbateur, péripéties, dénouement)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -10611,7 +11305,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif (consignes, recettes, règles) lu par soi-même, par un adulte ou par un camarade."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -10639,7 +11335,9 @@
                   "description": "Repérer la structure d’un texte narratif (situation initiale, élément perturbateur, péripéties, dénouement)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -10649,7 +11347,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10677,7 +11377,9 @@
                   "description": "Classer des mots du thème selon leur sens (synonymes, mots proches, mots d’un même champ lexical)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10709,7 +11411,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif (consignes, recettes, règles) lu par soi-même, par un adulte ou par un camarade."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10737,7 +11441,9 @@
                   "description": "Identifier, à partir d’exemples (ex. « dem na », « dem nanu », « dem nañu »), différentes formes conjuguées d’un même verbe."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -10765,7 +11471,9 @@
                   "description": "Former le pluriel des noms concernés par la règle indiquée pour les noms en « ou »."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -10793,7 +11501,9 @@
                   "description": "Former correctement en écriture cursive les majuscules C, E, G, I, J et K (tracé, sens, proportions)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -10821,7 +11531,9 @@
                   "description": "Produire une phrase correcte à l’infinitif pour formuler une consigne (ex. « Ne pas courir »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -10849,7 +11561,9 @@
                   "description": "Identifier, à partir d’exemples (ex. « dem na », « dem nanu », « dem nañu »), différentes formes conjuguées d’un même verbe."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -10877,7 +11591,9 @@
                   "description": "Utiliser une tournure injonctive appropriée (impératif, infinitif de consigne, « il faut… ») pour donner un ordre ou une demande."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -10905,7 +11621,9 @@
                   "description": "Classer des mots du thème selon leur sens (synonymes, mots proches, mots d’un même champ lexical)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -10937,7 +11655,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif (consignes, recettes, règles) lu par soi-même, par un adulte ou par un camarade."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -10994,6 +11714,7 @@
         "semaine": 19,
         "palier": 3,
         "genre": "narratif, descriptif, injonctif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -11017,7 +11738,9 @@
                   "description": "Expliquer le sens de « jëfloo » / « faire agir » dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11049,7 +11772,9 @@
                   "description": "Lire à voix haute un texte injonctif avec une fluidité suffisante (précision et rythme)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11081,7 +11806,9 @@
                   "description": "Lire à voix haute un texte injonctif avec une fluidité suffisante (précision et rythme)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11109,7 +11836,9 @@
                   "description": "Identifier des verbes d’action appropriés pour formuler des consignes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11141,7 +11870,9 @@
                   "description": "Lire à voix haute un texte injonctif avec une fluidité suffisante (précision et rythme)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11169,7 +11900,9 @@
                   "description": "Mémoriser un texte court (poème ou prose) en vue de sa restitution orale."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11201,7 +11934,9 @@
                   "description": "Expliquer brièvement en quoi le mot ajouté change le sens du verbe (plus lentement, un peu, etc.)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11229,7 +11964,9 @@
                   "description": "Former des phrases à l’impératif négatif en utilisant correctement « ne … pas » avec les formes « tu » et « vous »."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11261,7 +11998,9 @@
                   "description": "Sélectionner et retenir les informations du référentiel qui correspondent directement aux exigences de la production attendue."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11293,7 +12032,9 @@
                   "description": "Lire à voix haute un texte injonctif avec une fluidité suffisante (précision et rythme)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11325,7 +12066,9 @@
                   "description": "Sélectionner et retenir les informations du référentiel qui correspondent directement aux exigences de la production attendue."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11335,7 +12078,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -11363,7 +12108,9 @@
                   "description": "Identifier des verbes d’action appropriés pour formuler des consignes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -11395,7 +12142,9 @@
                   "description": "Lire à voix haute un texte injonctif avec une fluidité suffisante (précision et rythme)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -11427,7 +12176,9 @@
                   "description": "Conjuguer un verbe à la forme incitative (impératif/incitatif) pour formuler une consigne simple."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -11455,7 +12206,9 @@
                   "description": "Former des phrases à l’impératif négatif en utilisant correctement « ne … pas » avec les formes « tu » et « vous »."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -11487,7 +12240,9 @@
                   "description": "Former correctement les majuscules cursives C, E, G, I, J et K."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -11519,7 +12274,9 @@
                   "description": "Expliquer brièvement en quoi le mot ajouté change le sens du verbe (plus lentement, un peu, etc.)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -11551,7 +12308,9 @@
                   "description": "Conjuguer un verbe à la forme incitative (impératif/incitatif) pour formuler une consigne simple."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -11575,7 +12334,9 @@
                   "description": "Expliquer le sens de « jëfloo » / « faire agir » dans une phrase."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -11603,7 +12364,9 @@
                   "description": "Identifier des verbes d’action appropriés pour formuler des consignes."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -11635,7 +12398,9 @@
                   "description": "Lire à voix haute un texte injonctif avec une fluidité suffisante (précision et rythme)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -11692,6 +12457,7 @@
         "semaine": 20,
         "palier": 3,
         "genre": "narratif, descriptif, injonctif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -11715,7 +12481,9 @@
                   "description": "Construire une phrase correcte avec « faire + infinitif » en respectant l’ordre des mots et les compléments (ex. faire courir quelqu’un)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11747,7 +12515,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif en identifiant la consigne et l’action demandée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11779,7 +12549,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif en identifiant la consigne et l’action demandée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11811,7 +12583,9 @@
                   "description": "Déterminer le sens de mots liés au thème d’un texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -11843,7 +12617,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif en identifiant la consigne et l’action demandée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11863,7 +12639,9 @@
                   "description": "Réciter de mémoire un texte (poème ou prose)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11895,7 +12673,9 @@
                   "description": "Identifier des déterminants quantitatifs dans des groupes nominaux (ex. « un », « tous les »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11923,7 +12703,9 @@
                   "description": "Appliquer les règles d’orthographe « dëpp / safaan » dans l’écriture de mots (ex. lem → lemmi ; dëpp → dippi)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11951,7 +12733,9 @@
                   "description": "Identifier les éléments attendus de la production écrite (structure, contenu, langue, présentation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -11983,7 +12767,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif en identifiant la consigne et l’action demandée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12011,7 +12797,9 @@
                   "description": "Identifier les éléments attendus de la production écrite (structure, contenu, langue, présentation)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12021,7 +12809,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12053,7 +12843,9 @@
                   "description": "Déterminer le sens de mots liés au thème d’un texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12085,7 +12877,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif en identifiant la consigne et l’action demandée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12117,7 +12911,9 @@
                   "description": "Employer correctement l’impératif présent de verbes du 1er groupe dans des phrases d’ordre ou d’incitation."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12145,7 +12941,9 @@
                   "description": "Appliquer les règles d’orthographe « dëpp / safaan » dans l’écriture de mots (ex. lem → lemmi ; dëpp → dippi)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -12173,7 +12971,9 @@
                   "description": "Réaliser une copie de texte injonctif en variant le type de copie demandé (par exemple : copie directe, différée ou par segments)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -12205,7 +13005,9 @@
                   "description": "Identifier des déterminants quantitatifs dans des groupes nominaux (ex. « un », « tous les »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -12237,7 +13039,9 @@
                   "description": "Employer correctement l’impératif présent de verbes du 1er groupe dans des phrases d’ordre ou d’incitation."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -12261,7 +13065,9 @@
                   "description": "Construire une phrase correcte avec « faire + infinitif » en respectant l’ordre des mots et les compléments (ex. faire courir quelqu’un)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -12293,7 +13099,9 @@
                   "description": "Déterminer le sens de mots liés au thème d’un texte à produire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -12325,7 +13133,9 @@
                   "description": "Comprendre le sens global d’un texte injonctif en identifiant la consigne et l’action demandée."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -12382,6 +13192,7 @@
         "semaine": 21,
         "palier": 3,
         "genre": "narratif, descriptif, injonctif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -12405,7 +13216,9 @@
                   "description": "Employer « jëfloo » correctement dans une phrase pour exprimer une action causée (quelqu’un fait agir quelqu’un d’autre)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -12437,7 +13250,9 @@
                   "description": "Décoder des mots d’un texte injonctif en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -12469,7 +13284,9 @@
                   "description": "Décoder des mots d’un texte injonctif en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -12501,7 +13318,9 @@
                   "description": "Employer le vocabulaire thématique dans des phrases qui en montrent clairement le sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -12533,7 +13352,9 @@
                   "description": "Décoder des mots d’un texte injonctif en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12561,7 +13382,9 @@
                   "description": "Réciter oralement le texte mémorisé de façon continue et complète, sans omissions ni ajouts majeurs."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12589,7 +13412,9 @@
                   "description": "Utiliser des déterminants démonstratifs dans des phrases pour désigner précisément un nom."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12617,7 +13442,9 @@
                   "description": "Distinguer des voyelles brèves et des voyelles longues à l’oral et/ou à l’écrit (ex. xal / xaal)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12645,7 +13472,9 @@
                   "description": "Formuler chaque critère sous forme d’énoncé clair et vérifiable (ex. « le texte comporte une introduction »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12677,7 +13506,9 @@
                   "description": "Décoder des mots d’un texte injonctif en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12705,7 +13536,9 @@
                   "description": "Formuler chaque critère sous forme d’énoncé clair et vérifiable (ex. « le texte comporte une introduction »)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -12715,7 +13548,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12747,7 +13582,9 @@
                   "description": "Employer le vocabulaire thématique dans des phrases qui en montrent clairement le sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12779,7 +13616,9 @@
                   "description": "Décoder des mots d’un texte injonctif en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12807,7 +13646,9 @@
                   "description": "Conjuguer correctement à l’impératif présent des verbes du premier groupe."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -12835,7 +13676,9 @@
                   "description": "Distinguer des voyelles brèves et des voyelles longues à l’oral et/ou à l’écrit (ex. xal / xaal)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -12863,7 +13706,9 @@
                   "description": "Copier un texte injonctif de 3 à 4 lignes en respectant la mise en page et les signes de ponctuation."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -12891,7 +13736,9 @@
                   "description": "Utiliser des déterminants démonstratifs dans des phrases pour désigner précisément un nom."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -12919,7 +13766,9 @@
                   "description": "Conjuguer correctement à l’impératif présent des verbes du premier groupe."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -12943,7 +13792,9 @@
                   "description": "Employer « jëfloo » correctement dans une phrase pour exprimer une action causée (quelqu’un fait agir quelqu’un d’autre)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -12975,7 +13826,9 @@
                   "description": "Employer le vocabulaire thématique dans des phrases qui en montrent clairement le sens."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -13007,7 +13860,9 @@
                   "description": "Décoder des mots d’un texte injonctif en appliquant des correspondances graphophonologiques (lettres/sons)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -13064,6 +13919,7 @@
         "semaine": 22,
         "palier": 3,
         "genre": "narratif, descriptif, injonctif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -13087,7 +13943,9 @@
                   "description": "Produire une phrase qui exprime le fait de faire agir quelqu’un (faire faire une action)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13119,7 +13977,9 @@
                   "description": "Identifier visuellement des mots fréquents dans un texte injonctif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13151,7 +14011,9 @@
                   "description": "Identifier visuellement des mots fréquents dans un texte injonctif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13179,7 +14041,9 @@
                   "description": "Utiliser correctement des prépositions courantes (par ex. « dans », « sur », « à », « chez ») dans des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13211,7 +14075,9 @@
                   "description": "Identifier visuellement des mots fréquents dans un texte injonctif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13239,7 +14105,9 @@
                   "description": "Respecter le rythme et l’intonation du texte lors de la récitation."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13267,7 +14135,9 @@
                   "description": "Employer des déterminants démonstratifs dans des groupes nominaux en respectant le genre et le nombre du nom."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13287,7 +14157,9 @@
                   "description": "Orthographier correctement des mots fréquents correspondant à l’échelon n°10."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13319,7 +14191,9 @@
                   "description": "Intégrer des éléments de récit (personnages, lieu, moment) pour situer l’histoire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13351,7 +14225,9 @@
                   "description": "Identifier visuellement des mots fréquents dans un texte injonctif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13383,7 +14259,9 @@
                   "description": "Intégrer des éléments de récit (personnages, lieu, moment) pour situer l’histoire."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13393,7 +14271,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -13421,7 +14301,9 @@
                   "description": "Utiliser correctement des prépositions courantes (par ex. « dans », « sur », « à », « chez ») dans des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -13453,7 +14335,9 @@
                   "description": "Identifier visuellement des mots fréquents dans un texte injonctif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -13485,7 +14369,9 @@
                   "description": "Conjuguer au passé composé un verbe du 1er groupe avec l’auxiliaire avoir (j’ai parlé, nous avons joué)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -13505,7 +14391,9 @@
                   "description": "Orthographier correctement des mots fréquents correspondant à l’échelon n°10."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -13533,7 +14421,9 @@
                   "description": "Copier un texte injonctif de 3 à 4 lignes en respectant l’orthographe et la ponctuation du modèle."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -13561,7 +14451,9 @@
                   "description": "Employer des déterminants démonstratifs dans des groupes nominaux en respectant le genre et le nombre du nom."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -13593,7 +14485,9 @@
                   "description": "Conjuguer au passé composé un verbe du 1er groupe avec l’auxiliaire avoir (j’ai parlé, nous avons joué)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -13617,7 +14511,9 @@
                   "description": "Produire une phrase qui exprime le fait de faire agir quelqu’un (faire faire une action)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -13645,7 +14541,9 @@
                   "description": "Utiliser correctement des prépositions courantes (par ex. « dans », « sur », « à », « chez ») dans des phrases."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -13677,7 +14575,9 @@
                   "description": "Identifier visuellement des mots fréquents dans un texte injonctif."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
@@ -13734,6 +14634,7 @@
         "semaine": 23,
         "palier": 3,
         "genre": "narratif, descriptif, injonctif",
+        "materials": [],
         "sessions": [
           {
             "jour": 1,
@@ -13757,7 +14658,9 @@
                   "description": "Formuler une consigne simple pour amener une personne à réaliser une action."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13789,7 +14692,9 @@
                   "description": "Comprendre un texte injonctif en identifiant les consignes/actions à réaliser."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13821,7 +14726,9 @@
                   "description": "Comprendre un texte injonctif en identifiant les consignes/actions à réaliser."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13849,7 +14756,9 @@
                   "description": "Trouver l’entrée d’un mot dans le dictionnaire en utilisant les repères de page (mots-guides) lorsque disponibles."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 1,
@@ -13881,7 +14790,9 @@
                   "description": "Comprendre un texte injonctif en identifiant les consignes/actions à réaliser."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13905,7 +14816,9 @@
                   "description": "Réciter un texte (poème ou prose) de mémoire en respectant l’ordre et l’exactitude des mots."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13929,7 +14842,9 @@
                   "description": "Accorder les déterminants et adjectifs d’un groupe nominal en genre et en nombre avec le nom noyau."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13953,7 +14868,9 @@
                   "description": "Transcrire correctement des mots dictés en respectant l’orthographe."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -13985,7 +14902,9 @@
                   "description": "Utiliser des connecteurs temporels pour marquer l’enchaînement des actions (ex. d’abord, puis, ensuite, enfin)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -14017,7 +14936,9 @@
                   "description": "Comprendre un texte injonctif en identifiant les consignes/actions à réaliser."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -14049,7 +14970,9 @@
                   "description": "Utiliser des connecteurs temporels pour marquer l’enchaînement des actions (ex. d’abord, puis, ensuite, enfin)."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 2,
@@ -14059,7 +14982,9 @@
             "langue": "L1/L2",
             "duree": "60 mn",
             "categorie": "remediation",
-            "standard": null
+            "standard": null,
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -14087,7 +15012,9 @@
                   "description": "Trouver l’entrée d’un mot dans le dictionnaire en utilisant les repères de page (mots-guides) lorsque disponibles."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -14119,7 +15046,9 @@
                   "description": "Comprendre un texte injonctif en identifiant les consignes/actions à réaliser."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -14151,7 +15080,9 @@
                   "description": "Repérer dans un texte les marques de conjugaison (personne et nombre) portées par les formes verbales."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 3,
@@ -14175,7 +15106,9 @@
                   "description": "Transcrire correctement des mots dictés en respectant l’orthographe."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -14199,7 +15132,9 @@
                   "description": "Former en écriture cursive les majuscules C, E, G, I, J et K."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -14223,7 +15158,9 @@
                   "description": "Accorder les déterminants et adjectifs d’un groupe nominal en genre et en nombre avec le nom noyau."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 4,
@@ -14255,7 +15192,9 @@
                   "description": "Repérer dans un texte les marques de conjugaison (personne et nombre) portées par les formes verbales."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -14279,7 +15218,9 @@
                   "description": "Formuler une consigne simple pour amener une personne à réaliser une action."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -14307,7 +15248,9 @@
                   "description": "Trouver l’entrée d’un mot dans le dictionnaire en utilisant les repères de page (mots-guides) lorsque disponibles."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           },
           {
             "jour": 5,
@@ -14339,7 +15282,9 @@
                   "description": "Comprendre un texte injonctif en identifiant les consignes/actions à réaliser."
                 }
               ]
-            }
+            },
+            "activities": [],
+            "materials": []
           }
         ]
       },
