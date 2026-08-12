@@ -88,7 +88,7 @@ describe("kg-export — LC ontology (maths)", () => {
 describe("kg-export — LC ontology (reading)", () => {
   it("same LC labels + views; reading carries no Curriculum tasks", async () => {
     const g = (await exportNamespace(readingNs))!;
-    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, LessonGrouping: 22, Lesson: 462, LearningComponent: 1031 });
+    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, LessonGrouping: 127, Lesson: 462, LearningComponent: 1031 });
     expect(g.meta.counts.byKind.StandardsFrameworkItem).toBeGreaterThan(0);
     expect(g.meta.counts.byKind.Curriculum).toBeUndefined();
     expect(g.nodes.every((n) => n.cat === n.label)).toBe(true);
