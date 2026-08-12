@@ -8,8 +8,10 @@
 > content layer too (Scope A — one Lesson per language-tool standard per week;
 > `scripts/migrate-reading-graph.mjs`; reads byte-identical). **Scope B** then made
 > reading's full **22-session daily timetable** graph-native — one content `Lesson`
-> per session, aligned to the standard it teaches (`scripts/migrate-reading-graph-scope-b.mjs`;
-> ce1/reading now 1863 nodes / 2139 edges); the read projection is a per-week session
+> per session, aligned to the standard it teaches (`scripts/migrate-reading-graph-scope-b.mjs`);
+> sessions were later nested under **`Jour 1–5` day `LessonGrouping`s**
+> (`scripts/migrate-reading-day-groupings.mjs`; ce1/reading now **1968 nodes / 2244 edges**).
+> The read projection is a per-week session
 > list and the generation prompt reads it from `get_curriculum` instead of a hardcoded
 > table. **Scope B merged** (PR #34), re-seeded, and deployed to Cloud Run.
 > **Scope C** (activities & materials *inside* a lesson) is **in progress** — Increment 1
@@ -338,8 +340,17 @@ sessions from `get_curriculum` instead of hardcoding them.
 become a subset of the 22 sessions). A session `Lesson` carries: day (Jour 1–5), order,
 session type (L1/L2 title), language (L1 / L2 / parité), duration, and a session
 category (oral / comprehension / language-tool / production / poetry / writing /
-remediation); it `supports` the standard it teaches where one exists (many sessions →
-one standard; Remédiation may have none). The week stays a `LessonGrouping`.
+remediation); it `hasEducationalAlignment`s the standard it teaches where one exists
+(many sessions → one standard; Remédiation may have none). The week stays a
+`LessonGrouping`.
+
+> **Refinement (later):** sessions are no longer direct children of the week. Each
+> week now holds **`Jour 1–5` day `LessonGrouping`s** (kind `day`, `groupName "Jour"`),
+> and the sessions hang under their day (`week → day → session`;
+> `scripts/migrate-reading-day-groupings.mjs`). The read projection is unchanged —
+> `buildSlice` gathers sessions across the days and sorts by `session_order` — so the
+> golden gate stayed green; `get_curriculum`'s session list is still flat (each session
+> carries its `jour`).
 
 **It's an authoring/extraction task, not a mechanical migration.** The session
 structure lives in the prompt's canonical table + the authored weeks 1–8 exemplars (in
