@@ -91,9 +91,9 @@ async function readDraft(): Promise<MutationGraph | null> {
 }
 
 // ── graph inspection helpers ──────────────────────────────────────────────────
-const HAS_CHILD = "hasChild";
+const HAS_CHILD = "hasPart"; // canonical LC: chapter→lesson content containment
 // A chapter's number now lives in the normalized `order` field (mirrored under
-// raw.metadata.order). Chapter→lesson membership is the hasChild edge, not a number.
+// raw.metadata.order). Chapter→lesson membership is the hasPart edge, not a number.
 const chapterNum = (n: { properties: Record<string, unknown> }): number | undefined => n.properties.order as number | undefined;
 const findChapter = (g: MutationGraph, num: number) => g.nodes.find((n) => n.type === "chapter" && chapterNum(n) === num)!;
 const lessonIdsOf = (g: MutationGraph, groupingId: string) =>
@@ -110,7 +110,7 @@ const freeGapNumber = (g: MutationGraph): number => { const used = new Set(g.nod
 // Post-split, add_lesson aligns a new content lesson to an EXISTING spine
 // expectation. Any expectation serves for these structural tests.
 const someExpectation = (g: MutationGraph): string => g.nodes.find((n) => n.type === "expectation")!.id;
-const SUPPORTS = "supports";
+const SUPPORTS = "hasEducationalAlignment"; // canonical LC: lesson→expectation alignment
 
 // Common recipe-arg bag (the subject vocabulary the server tool would supply) —
 // includes lcNodeTemplate so created nodes get their LC labels, as in production.

@@ -23,14 +23,16 @@
 
 import type { GraphView } from "../types.js";
 
-const HAS_CHILD = "hasChild";
+// Canonical LC splits containment across `hasChild` (standards hierarchy) and
+// `hasPart` (content tree) — a container "has children" via either.
+const CONTAINMENT = new Set(["hasChild", "hasPart"]);
 
-// Nodes of one of `containerKinds` that have zero outgoing hasChild edges.
+// Nodes of one of `containerKinds` that have zero outgoing containment edges.
 // `label` names the kind in the message (e.g. "chapter", "week").
 export function emptyContainerWarnings(graph: GraphView, containerKinds: Iterable<string>): string[] {
   const kinds = new Set(containerKinds);
   const hasAChild = new Set(
-    graph.edges.filter((e) => e.type === HAS_CHILD).map((e) => e.from),
+    graph.edges.filter((e) => CONTAINMENT.has(e.type)).map((e) => e.from),
   );
   const warnings: string[] = [];
   for (const n of graph.nodes) {
@@ -52,7 +54,7 @@ export function multiParentWarnings(graph: GraphView, childKinds?: Iterable<stri
   const restrict = childKinds ? new Set(childKinds) : null;
   const parentsByChild = new Map<string, string[]>();
   for (const e of graph.edges) {
-    if (e.type !== HAS_CHILD) continue;
+    if (!CONTAINMENT.has(e.type)) continue;
     (parentsByChild.get(e.to) ?? parentsByChild.set(e.to, []).get(e.to)!).push(e.from);
   }
   const byId = new Map(graph.nodes.map((n) => [n.id, n]));

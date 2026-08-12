@@ -49,14 +49,17 @@ export type DisplayNode = {
 export type TaxonomyEntry = { key: string; label: { fr: string; en: string }; color: string };
 
 // One colour per LC label (palette kept in sync with hosting/public/index.html).
+// Canonical LC labels, in containment order (Course → grouping → lesson →
+// activity → material), with the standards labels first and LearningComponent last.
 const LABEL_DEFS: TaxonomyEntry[] = [
   { key: "StandardsFramework",     label: { fr: "Cadre de référence", en: "Standards framework" }, color: "#5b8def" },
   { key: "StandardsFrameworkItem", label: { fr: "Élément du cadre",   en: "Framework item" },      color: "#378add" },
+  { key: "Course",                 label: { fr: "Cours",              en: "Course" },               color: "#b5651d" },
   { key: "LessonGrouping",         label: { fr: "Regroupement",       en: "Lesson grouping" },      color: "#7f77dd" },
   { key: "Lesson",                 label: { fr: "Leçon",              en: "Lesson" },               color: "#1d9e75" },
-  { key: "LearningComponent",      label: { fr: "Composant",          en: "Learning component" },   color: "#d4537e" },
-  { key: "Curriculum",             label: { fr: "Curriculum",         en: "Curriculum" },           color: "#c98a1a" },
+  { key: "Activity",               label: { fr: "Activité",           en: "Activity" },             color: "#c98a1a" },
   { key: "Material",               label: { fr: "Matériel",           en: "Material" },             color: "#888780" },
+  { key: "LearningComponent",      label: { fr: "Composant",          en: "Learning component" },   color: "#d4537e" },
 ];
 
 export type DisplayEdge = { s: string; t: string; r: string; o: number };
@@ -128,7 +131,7 @@ const LABEL_BY_KIND: Record<string, string> = {
   standard: "StandardsFrameworkItem",
   week: "StandardsFrameworkItem",
   component: "LearningComponent",
-  task: "Curriculum",
+  task: "Activity",
 };
 
 const str = (v: unknown): string => (v == null ? "" : String(v));
@@ -147,14 +150,14 @@ function toDisplayNode(n: StoredNode): DisplayNode {
     label,
     kind: label,   // LC-only: the explorer keys on the label, not the subject kind
     cat: label,
-    code: str(p.code ?? r("statement_code") ?? r("identifier")),
+    code: str(p.code ?? r("statementCode") ?? r("identifier")),
     ord: typeof p.order === "number" ? (p.order as number) : (typeof m.order === "number" ? (m.order as number) : null),
-    desc: str(p.text ?? p.title ?? r("description") ?? r("os_texte")),
+    desc: str(p.text ?? p.title ?? r("description") ?? r("osTexte")),
     desc_en: str(en("description") ?? en("os_texte")),
-    nt: str(r("normalized_type") ?? r("normalized_statement_type") ?? r("content_type")),
-    st: str(r("statement_type")),
+    nt: str(r("normalizedType") ?? r("normalizedStatementType") ?? r("contentType")),
+    st: str(r("statementType")),
     st_en: str(en("statement_type")),
-    srcKey: str(r("source_key")),
+    srcKey: str(r("sourceKey")),
     // The whole raw LC property bag — the detail panel renders it generically, so
     // no field is subject-specific here. `metadata` is flattened one level for
     // readability (role/order/palier/genre/… become top-level keys).
@@ -187,16 +190,17 @@ function edgeOrder(e: StoredEdge): number {
     : 0;
 }
 
-// One stored edge → its DISPLAY edge(s). `supports` is CONTAINMENT in the LC
-// ontology (a component/task is part-of the standard it supports), and the
-// parser folds it into the hasChild child tree with the direction REVERSED
-// (parent = the supported end, child = the supporting start). The explorer page
-// renders a hasChild tree, so we mirror that fold here — otherwise the tree
-// stops at lessons and never reaches the learning components/tasks. The store
-// keeps the real `supports` edge untouched (this is display-only). hasChild /
-// buildsTowards / relatesTo pass through with their own type.
+// One stored edge → its DISPLAY edge(s). The explorer renders a single "hasChild"
+// containment tree, so we normalise canonical LC's edges onto it (display-only —
+// the store keeps the real edges):
+//   • `hasPart` (content containment) → forward display hasChild.
+//   • `supports` (component→SFI) and `hasEducationalAlignment` (lesson/activity→SFI)
+//     are alignment/part-of the standard: fold REVERSED (parent = the supported
+//     end) so components/lessons stay reachable under the standard they align to.
+//   • hasChild / buildsTowards / relatesTo pass through with their own type.
 function toDisplayEdges(e: StoredEdge): DisplayEdge[] {
-  if (e.type === "supports") return [{ s: e.to, t: e.from, r: "hasChild", o: edgeOrder(e) }];
+  if (e.type === "supports" || e.type === "hasEducationalAlignment") return [{ s: e.to, t: e.from, r: "hasChild", o: edgeOrder(e) }];
+  if (e.type === "hasPart") return [{ s: e.from, t: e.to, r: "hasChild", o: edgeOrder(e) }];
   return [{ s: e.from, t: e.to, r: e.type, o: edgeOrder(e) }];
 }
 

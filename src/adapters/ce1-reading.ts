@@ -37,7 +37,7 @@ const DELIVERABLES: DeliverableSpec[] = [
 // ── Typed accessors over the raw passthrough (unit.properties) ────────────────
 type Meta = { role?: string; palier?: number | null; genre?: string | null };
 const meta = (u: CurriculumUnit): Meta => (u.properties.metadata as Meta) ?? {};
-const strandOf = (u: CurriculumUnit): string | null => (u.properties.statement_type as string) ?? null;
+const strandOf = (u: CurriculumUnit): string | null => (u.properties.statementType as string) ?? null;
 
 // A session Lesson's teaching-schedule metadata (day/order/language/…), authored
 // onto the content Lesson by the Scope B migration.
@@ -84,7 +84,7 @@ function detect(raw: unknown): boolean {
   const g = raw as { nodes?: unknown[]; relationships?: unknown[] } | undefined;
   if (!Array.isArray(g?.nodes) || !Array.isArray(g?.relationships)) return false;
   // Reading-specific signal: a language-tool strand standard.
-  return g!.nodes.some((n: any) => STRAND_TYPES.has(n?.properties?.statement_type) && n?.properties?.normalized_statement_type === "Standard");
+  return g!.nodes.some((n: any) => STRAND_TYPES.has(n?.properties?.statementType) && n?.properties?.normalizedStatementType === "Standard");
 }
 
 function parse(raw: unknown): CurriculumModel {
@@ -151,7 +151,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
             ? {
                 type: strandOf(std),
                 osTexte: std.text,
-                statementCode: (std.properties.statement_code as string) ?? null,
+                statementCode: (std.properties.statementCode as string) ?? null,
                 components: m.childrenOf(std.id).filter((c) => c.kind === "component").map((c) => ({ identifier: c.id, description: c.text })),
               }
             : null,

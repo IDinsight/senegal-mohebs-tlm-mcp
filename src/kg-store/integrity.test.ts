@@ -155,20 +155,22 @@ describe("delete_node force cascade", () => {
 
   it("force=true cascades the whole dependent subtree + all incident edges atomically; dry-run shows the full set", async () => {
     const g = await readPublished(ns);
+    // Canonical LC containment spans hasChild (standards) + hasPart (content).
+    const isContainment = (t: string) => t === "hasChild" || t === "hasPart";
     // Pick a chapter with lessons (and hence components/tasks below them).
     const chapterWithChildren = g.nodes.find(
-      (n) => n.type === "chapter" && g.edges.some((e) => e.type === "hasChild" && e.from === n.id),
+      (n) => n.type === "chapter" && g.edges.some((e) => isContainment(e.type) && e.from === n.id),
     )!;
 
-    // Compute the expected removed set by hand: chapter → its hasChild subtree.
-    const childrenOf = (id: string) => g.edges.filter((e) => e.type === "hasChild" && e.from === id).map((e) => e.to);
+    // Compute the expected removed set by hand: chapter → its containment subtree.
+    const childrenOf = (id: string) => g.edges.filter((e) => isContainment(e.type) && e.from === id).map((e) => e.to);
     const expectedNodes = new Set<string>([chapterWithChildren.id]);
     const stack = [chapterWithChildren.id];
     while (stack.length) {
       const cur = stack.pop()!;
       for (const c of childrenOf(cur)) {
-        // Only cascade if every hasChild parent of c is already in the set.
-        const parents = g.edges.filter((e) => e.type === "hasChild" && e.to === c).map((e) => e.from);
+        // Only cascade if every containment parent of c is already in the set.
+        const parents = g.edges.filter((e) => isContainment(e.type) && e.to === c).map((e) => e.from);
         if (parents.every((p) => expectedNodes.has(p)) && !expectedNodes.has(c)) { expectedNodes.add(c); stack.push(c); }
       }
     }
@@ -233,7 +235,7 @@ describe("coverage warnings — inform, never block", () => {
     // has a lesson but no bilan (isAssessment not set on the lesson).
     const preview = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
-      args: { edgeType: "hasChild", fromId: chapterId, toId: lessonId, properties: { orderInParent: 0 }, namespace: ns },
+      args: { edgeType: "hasPart", fromId: chapterId, toId: lessonId, properties: { orderInParent: 0 }, namespace: ns },
       coverage,
     });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
@@ -243,7 +245,7 @@ describe("coverage warnings — inform, never block", () => {
     // And confirming still works.
     const applied = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
-      args: { edgeType: "hasChild", fromId: chapterId, toId: lessonId, properties: { orderInParent: 0 }, namespace: ns },
+      args: { edgeType: "hasPart", fromId: chapterId, toId: lessonId, properties: { orderInParent: 0 }, namespace: ns },
       confirm: true, token: preview.confirmationToken, coverage,
     });
     expect(applied).toMatchObject({ ok: true });
@@ -268,7 +270,7 @@ describe("coverage warnings — inform, never block", () => {
     // Reuse two real chapters, and a real lesson child of the first; link the
     // same lesson under a second chapter too.
     const g = await readPublished(ns);
-    const parentEdge = g.edges.find((e) => e.type === "hasChild"
+    const parentEdge = g.edges.find((e) => e.type === "hasPart"
       && g.nodes.find((n) => n.id === e.from)?.type === "chapter"
       && g.nodes.find((n) => n.id === e.to)?.type === "lesson")!;
     const lessonId = parentEdge.to;
@@ -276,7 +278,7 @@ describe("coverage warnings — inform, never block", () => {
 
     const preview = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
-      args: { edgeType: "hasChild", fromId: otherChapter.id, toId: lessonId, properties: {}, namespace: ns },
+      args: { edgeType: "hasPart", fromId: otherChapter.id, toId: lessonId, properties: {}, namespace: ns },
       coverage,
     });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
@@ -398,7 +400,7 @@ describe("parity — coverage/force work does not leak into published reads", ()
     }
     const before = await reads();
     const g = await readPublished(ns);
-    const chapter = g.nodes.find((n) => n.type === "chapter" && g.edges.some((e) => e.type === "hasChild" && e.from === n.id))!;
+    const chapter = g.nodes.find((n) => n.type === "chapter" && g.edges.some((e) => e.type === "hasPart" && e.from === n.id))!;
     await apply(deleteNode, { nodeId: chapter.id, force: true }); // draft only
     const after = await reads();
     expect(after).toEqual(before);

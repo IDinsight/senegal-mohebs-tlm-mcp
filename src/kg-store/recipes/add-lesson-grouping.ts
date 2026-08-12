@@ -60,9 +60,9 @@ export const addLessonGrouping: GraphMutation<AddLessonGroupingArgs> = {
     props = stampLcProps(props, a.profile.chapterKind, a.lcNodeTemplate, resolveStatementType(base, null, a.profile.chapterKind, a.lcNodeTemplate, a.profile.containerEdge));
     // LC-native grouping type + level (the authoritative type; statement_type is a
     // legacy mirror carried only on the migrated seed groupings).
-    props = writeAtPath(props, "raw.group_name", groupName);
-    props = writeAtPath(props, "raw.group_level", a.number);
-    props = writeAtPath(props, "raw.statement_type", groupName);
+    props = writeAtPath(props, "raw.groupName", groupName);
+    props = writeAtPath(props, "raw.groupLevel", a.number);
+    props = writeAtPath(props, "raw.statementType", groupName);
     return createNode.apply(base, { kind: a.profile.chapterKind, properties: props, namespace: a.namespace, aliases: a.wordingAliases, newNodeId: a.groupingId, labels: lcLabels(a.profile.chapterKind, a.lcNodeTemplate) });
   },
 };

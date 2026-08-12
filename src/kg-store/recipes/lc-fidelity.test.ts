@@ -82,10 +82,10 @@ describe("LC fidelity — recipe-created nodes are faithful LC nodes", () => {
     // A content Lesson: real LC label + normalized_type, no objective/strand of
     // its own (those live on the aligned expectation).
     expect(lesson.labels).toEqual(["Lesson"]);
-    expect(at(lesson.properties, "raw.normalized_type")).toBe("Lesson");
+    expect(at(lesson.properties, "raw.normalizedType")).toBe("Lesson");
     expect(at(lesson.properties, "raw.metadata.role")).toBeUndefined();
-    // It aligns to the standard via a supports edge (coverage).
-    expect(after.edges.some((e) => e.type === "supports" && e.from === "lc-fidelity-new-lesson" && e.to === expectationId)).toBe(true);
+    // It aligns to the standard via a hasEducationalAlignment edge (canonical LC coverage).
+    expect(after.edges.some((e) => e.type === "hasEducationalAlignment" && e.from === "lc-fidelity-new-lesson" && e.to === expectationId)).toBe(true);
   });
 
   it("survives a re-parse through the LC parser as a lesson (does not get dropped)", () => {
@@ -119,7 +119,7 @@ describe("LC fidelity — recipe-created nodes are faithful LC nodes", () => {
       groupingId, expectationId: someExpectation(g), lessonId: "lc-fidelity-bilan", text: "Bilan", isBilan: true,
     });
     const lesson = after.nodes.find((n) => n.id === "lc-fidelity-bilan")!;
-    expect(at(lesson.properties, "raw.educational_use")).toBe("Assessment");
+    expect(at(lesson.properties, "raw.educationalUse")).toBe("Assessment");
 
     const rawLcNode = { id: lesson.id, labels: lesson.labels, properties: at(lesson.properties, "raw") };
     const reparsed = adapter.parse({ nodes: [rawLcNode], relationships: [] });
