@@ -25,8 +25,9 @@ export type GraphParseDescriptor = {
   // (components/tasks carry a label but no metadata.role).
   labelToKind?: Record<string, string>;
   // Where a unit's ordinal comes from: "order" = metadata.order (maths);
-  // "description" = a bare-number description (reading weeks).
-  numberFrom: "order" | "description";
+  // "position" = the canonical LC `position` prop (reading, post canonical-LC);
+  // "description" = a bare-number description (legacy reading weeks).
+  numberFrom: "order" | "position" | "description";
   // Edge types. Defaults match canonical LC. Each accepts one type or several:
   // canonical LC splits containment across `hasChild` (standards hierarchy) and
   // `hasPart` (content tree), and attachment across `supports` (component→SFI)
@@ -61,6 +62,10 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
     if (d.numberFrom === "order") {
       const o = n.properties?.metadata?.order;
       return typeof o === "number" ? o : null;
+    }
+    if (d.numberFrom === "position") {
+      const p = n.properties?.position;
+      return typeof p === "number" ? p : null;
     }
     const desc = String(n.properties?.description ?? "");
     return /^\d+$/.test(desc) ? Number(desc) : null;

@@ -213,7 +213,12 @@ export type RecipeProfile = {
   // expectationKind`. Omitted by subjects whose lessons carry the objective
   // inline (no separate standard to align to).
   expectationKind?: string;     // e.g. "expectation" — the spine standard (OS) a lesson aligns to
-  alignmentEdge?: string;       // e.g. "supports" — the lesson→expectation coverage edge
+  alignmentEdge?: string;       // e.g. "hasEducationalAlignment" — the lesson→expectation coverage edge
+  // Scope C content layer: the kinds `add_activity` creates — an `Activity` under
+  // a lesson (via containerEdge) and its `Material` (the scripted content).
+  // Omitted by subjects without an activity/material layer.
+  activityKind?: string;        // e.g. "activity"
+  materialKind?: string;        // e.g. "material"
 };
 
 /**
@@ -283,6 +288,15 @@ export interface SubjectAdapter {
    * See `RecipeProfile`.
    */
   readonly recipeProfile?: RecipeProfile;
+
+  /**
+   * Per-recipe availability allowlist (by recipe name, e.g. `["move_lesson",
+   * "add_activity"]`). Recipes are otherwise all-or-nothing per subject; this
+   * lets a subject whose structure doesn't fit every recipe opt into only the
+   * ones that make sense (e.g. CE1 reading enables the content recipes but not
+   * week-level split/renumber). Omit to expose the whole family (CI maths).
+   */
+  readonly availableRecipes?: readonly string[];
 
   /**
    * The LC identity fields to stamp onto recipe-created nodes so they are

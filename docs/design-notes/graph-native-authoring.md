@@ -347,9 +347,23 @@ the new shape** (review the diff, not byte-identical); update `READING_PARSE` + 
 build + tests green; branch → PR → merge → re-seed. The prompt rewrite is the highest-risk
 piece — the guide's pedagogical quality is the acceptance bar beyond the tests.
 
-## Scope C — activities & materials inside a lesson (planned, not started)
+## Scope C — activities & materials inside a lesson (in progress)
 
-> **Status: Planned; not started.** Builds directly on Scope B. Scope B made the
+> **Status: In progress — Increment 1 landed on branch `feat/reading-scope-c-activities`.**
+> **Decisions confirmed:** (1) **grain = phase-grained** — one `Activity` per phase
+> (Étape), its scripted teacher/pupil content stored as that activity's `Material.content`;
+> (2) **recipe scope = per-recipe availability** — recipes gained a per-subject allowlist
+> (`SubjectAdapter.availableRecipes`), so reading opts into only the recipes that fit and
+> **not** week-level `split`/`renumber`; (3) reading now reads its week number from the
+> canonical **`position`** (`numberFrom: "position"`), retiring the bare-number-`description`
+> reliance. **Increment 1 (done):** reading recipe surface — `recipeProfile` (canonical
+> `hasPart`/`hasEducationalAlignment`, `activityKind`/`materialKind`), `structuralAliases`,
+> `lcNodeTemplate` (week/lesson/activity/material), `availableRecipes: ["move_lesson"]`;
+> parser `numberFrom: "position"`; `Activity`/`Material` parse kinds; per-recipe gating in
+> `server/recipes.ts` + the `get_capabilities` mirror. Golden gates unchanged; build + all
+> tests green (+ `ce1-reading.recipes.test.ts`). **Increment 2 (next):** the `add_activity`
+> / `add_material` / `set_material_content` recipes (phase-grained), `buildSlice` surfacing
+> a session's activities+materials, and the prompt reading them. Builds directly on Scope B. Scope B made the
 > *lessons* (the 22 daily sessions) graph-native; Scope C makes what a lesson
 > *contains* — its teaching **Activities** and their **Materials** — graph-native too,
 > so the load-bearing content is authored, reviewable (`diff_draft` / `preview`), and
