@@ -385,11 +385,11 @@ data has the CI maths-shaped fields it gets the rich views; otherwise it renders
 **The store now holds the FULL Learning-Commons graph** (superseding the earlier spine-only
 design). The seed pipeline still runs each adapter's `parse()`, but `parseGraph` echoes the raw
 graph onto the model (`CurriculumModel.rawGraph`), and `serializeModel` persists EVERY raw node and
-EVERY raw edge verbatim (`ci/maths`: 501 nodes / 877 edges; `ce1/reading`: 1863 / 2139):
+EVERY raw edge verbatim (`ci/maths`: 501 nodes / 877 edges; `ce1/reading`: 1968 / 2244):
 
 - **Spine nodes** (the ones `parse()` keeps — `ci/maths` domaine→chapter→lesson (+aligned
-  expectation)→component, `ce1/reading` week→session-lesson→standard→component) carry
-  `spine: true` plus their normalized fields.
+  expectation)→component, `ce1/reading` week→day(Jour 1–5)→session-lesson→standard→component)
+  carry `spine: true` plus their normalized fields.
 - **Non-spine nodes** (the RECE + six other "Composants dérivés" frame SFIs, their derived
   `LearningComponent`s, and the illustrative `Activity`s hanging off them) carry `spine: false`
   and only `properties.raw` — kept purely for faithful re-export.
