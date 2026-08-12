@@ -250,9 +250,58 @@ optional. End state: both subjects share the same content-layer shape.
    or access implication for how we store/emit material content.
 4. **Subtopic semantics** — confirm no subtopic carries independent standards meaning
    (decision 7).
-5. **Reading's lesson grain** — reading's expectations are finer; its authoring unit is
-   not yet defined. Defer; maths first.
+5. **Reading's lesson grain** — RESOLVED for Scope A (one Lesson per language-tool
+   standard per week). The fuller session model is *Scope B* below.
 6. **Rendered `.docx` repositioning.** `create_upload_url` / `log_generation` /
    `record_document_content` write live today. Under this model the `.docx` becomes a
    downstream *render* of published graph content that must trace back to a published
    graph version.
+
+## Scope B — reading's weekly session timetable (planned, not started)
+
+> **Status: Planned.** Scope A (above) gave reading a content layer with one Lesson
+> per language-tool standard per week, reads byte-identical. Scope B is the larger,
+> not-yet-started follow-on.
+
+**Problem.** A reading week's teacher guide is **22 daily sessions across 5 days**
+(oral, comprehension L1/L2, the six language tools, recitation/poetry, production,
+writing, remediation). That timetable is **hardcoded in the generation prompt**
+(`sources/ce1/reading/PROMPT_generate_lessons.md`, ~lines 94–112), NOT in the graph —
+the graph carries only the per-skill standards. So the real teaching structure isn't
+graph-native; Scope A surfaces only the 6 language-tool objectives.
+
+**Goal.** Move the sessions into the graph as content `Lesson` nodes (one per
+session) so the graph is the single source of truth, and rewrite the prompt to read
+sessions from `get_curriculum` instead of hardcoding them.
+
+**This is deliberately NOT byte-identical** (unlike Scope A / the maths split): it
+**changes reading's read projection** (from `languageToolStandards` to a per-week
+**session list**) **and the generation prompt**. It subsumes Scope A's 6 lessons (they
+become a subset of the 22 sessions). A session `Lesson` carries: day (Jour 1–5), order,
+session type (L1/L2 title), language (L1 / L2 / parité), duration, and a session
+category (oral / comprehension / language-tool / production / poetry / writing /
+remediation); it `supports` the standard it teaches where one exists (many sessions →
+one standard; Remédiation may have none). The week stays a `LessonGrouping`.
+
+**It's an authoring/extraction task, not a mechanical migration.** The session
+structure lives in the prompt's canonical table + the authored weeks 1–8 exemplars (in
+Storage, via `list_documents` / `get_document_text`); sessions must be created and
+aligned to existing standards, following the curriculum tool where a week diverges.
+
+**Recommended first step:** build the **22-session → week-attached-standard mapping**
+(which sessions align to a standard, which don't, the many-to-one shape). It decides the
+node schema and shows how many of reading's currently-"non-spine" components are
+teachable sessions vs. deeper scaffolding.
+
+**Open decisions (confirm before coding):** (1) session→standard alignment + no-standard
+sessions; (2) session node schema in the existing convention (day/language/duration/type
+as raw metadata + normalized order; `timeRequired`/`educational_use`); (3) day as a Lesson
+attribute vs. a nested per-day grouping; (4) the new `buildSlice` session shape; (5) how
+much of the prompt's table moves to `get_curriculum` (the riskiest part — the guide is
+finely tuned); (6) integration/evaluation weeks (9/17/24/25).
+
+**Method:** same pattern — deterministic authoring script; a golden gate **regenerated to
+the new shape** (review the diff, not byte-identical); update `READING_PARSE` + `buildSlice`
++ the reading prompt; fix faithful-reexport counts / parse-graph checkpoint / explorer;
+build + tests green; branch → PR → merge → re-seed. The prompt rewrite is the highest-risk
+piece — the guide's pedagogical quality is the acceptance bar beyond the tests.
