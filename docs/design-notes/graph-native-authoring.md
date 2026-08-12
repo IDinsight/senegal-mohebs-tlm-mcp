@@ -5,8 +5,12 @@
 > Firestore store has been re-seeded (ci/maths: 509 nodes / 885 edges). The
 > migration is reproducible via `scripts/migrate-maths-graph.mjs`. CE1 reading now has the
 > content layer too (Scope A — one Lesson per language-tool standard per week;
-> `scripts/migrate-reading-graph.mjs`; reads byte-identical). The fuller 22-session
-> timetable (Scope B) is still prompt-hardcoded. LC type/edge vocabulary confirmed against
+> `scripts/migrate-reading-graph.mjs`; reads byte-identical). **Scope B** then made
+> reading's full **22-session daily timetable** graph-native — one content `Lesson`
+> per session, aligned to the standard it teaches (`scripts/migrate-reading-graph-scope-b.mjs`;
+> ce1/reading now 1863 nodes / 2139 edges); the read projection is a per-week session
+> list and the generation prompt reads it from `get_curriculum` instead of a hardcoded
+> table. Landed on a branch, **re-seed pending** before deploy. LC type/edge vocabulary confirmed against
 > the [LC Curriculum reference](https://docs.learningcommons.org/knowledge-graph/graph-reference/curriculum)
 > (Activity, Material, Lesson, LessonGrouping); this project uses the graph's
 > existing serialization (snake_case, `hasChild`/`supports`), not canonical LC —
@@ -257,11 +261,35 @@ optional. End state: both subjects share the same content-layer shape.
    downstream *render* of published graph content that must trace back to a published
    graph version.
 
-## Scope B — reading's weekly session timetable (planned, not started)
+## Scope B — reading's weekly session timetable (implemented, re-seed pending)
 
-> **Status: Planned.** Scope A (above) gave reading a content layer with one Lesson
-> per language-tool standard per week, reads byte-identical. Scope B is the larger,
-> not-yet-started follow-on.
+> **Status: Implemented on a branch; re-seed pending.** Scope A (above) gave reading
+> a content layer with one Lesson per language-tool standard per week, reads
+> byte-identical. Scope B is the larger follow-on: it makes the full daily timetable
+> graph-native. Migration `scripts/migrate-reading-graph-scope-b.mjs`; read projection
+> in `src/adapters/ce1-reading.ts`; prompt in `sources/ce1/reading/PROMPT_generate_lessons.md`.
+>
+> **Decisions taken** (confirmed before coding):
+> 1. *Alignment gap* — attach existing standards, keep gaps honest. Each session
+>    `supports` the standard it teaches; weeks 1–8 oral/comprehension/poetry sessions
+>    align to the **shared palier-1 combined standards** (the pre-existing `"1 à 8"`
+>    grouping's Expression orale / Lecture / Récitation nodes), so the only genuinely
+>    standard-less session is **Remédiation** — a first-class coverage gap, not invented
+>    spine. (The feared "weeks 1–8 have no oral standards" turned out false: they exist
+>    as one combined node each.)
+> 2. *Session schema* — flat: 22 `Lesson` nodes directly under the week's
+>    `LessonGrouping`; day / order-in-day / global session order / language / duration /
+>    session category as snake_case `metadata`, plus `time_required` + `educational_use`.
+>    No per-day grouping layer.
+> 3. *Prompt scope* — sessions + alignment move into the graph; the pedagogy (phase
+>    spines, density floor, bilingual conventions, formatting) stays in the prompt. The
+>    prompt now reads `sessions` from `get_curriculum` and produces exactly those.
+>
+> **Outcome:** 462 session Lessons (22 × 21 guide weeks), 441 `supports` alignments,
+> 0 unresolved. Read projection replaced `languageToolStandards` with a `sessions`
+> list; golden gate regenerated (reviewed diff, not byte-identical — by design);
+> faithful-reexport / parse-graph checkpoint / explorer counts updated; build + all
+> tests green. **Remaining:** re-seed Firestore (`seed:kg-store`) + deploy.
 
 **Problem.** A reading week's teacher guide is **22 daily sessions across 5 days**
 (oral, comprehension L1/L2, the six language tools, recitation/poetry, production,

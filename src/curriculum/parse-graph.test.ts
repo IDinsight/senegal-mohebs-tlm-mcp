@@ -25,9 +25,9 @@ const MATHS: GraphParseDescriptor = {
   progressionEdge: "buildsTowards",
 };
 
-// Reading is post content-layer (Scope A): the week is a content LessonGrouping
-// (kept as kind `week`), each language-tool objective a content `Lesson` that
-// `supports` its spine `expectation`.
+// Reading is post content-layer (Scope B): the week is a content LessonGrouping
+// (kept as kind `week`) holding its 22 daily sessions, each a content `Lesson`
+// that `supports` the spine `expectation` it teaches (Remédiation teaches none).
 const READING: GraphParseDescriptor = {
   roleToKind: { week: "week", expectation: "expectation" },
   labelToKind: { Lesson: "lesson", LearningComponent: "component" },
@@ -87,7 +87,7 @@ describe("generic parseGraph — maths (new shape)", () => {
   });
 });
 
-describe("generic parseGraph — reading (unchanged shape)", () => {
+describe("generic parseGraph — reading (Scope B — daily sessions)", () => {
   const m = parseGraph(load("sources/ce1/reading/knowledge_graph.json"), READING);
 
   it("classifies weeks, lessons, expectation leaves", () => {
@@ -103,16 +103,19 @@ describe("generic parseGraph — reading (unchanged shape)", () => {
     expect(w.title).toBe("3");
   });
 
-  it("links week→lesson (hasChild), lesson→expectation (supports), expectation→components", () => {
+  it("holds 22 daily sessions per week, all-but-Remédiation aligned to a standard", () => {
     const week = m.unitsOfKind("week").find((u) => u.order === 3)!;
     const lessons = m.childrenOf(week.id).filter((u) => u.kind === "lesson");
-    expect(lessons.length).toBeGreaterThan(0);
-    // lesson supports its expectation ⇒ expectation.childIds ∋ the lesson.
-    const expForLesson = new Map<string, string>();
-    for (const ex of m.unitsOfKind("expectation")) for (const c of m.childrenOf(ex.id)) if (c.kind === "lesson") expForLesson.set(c.id, ex.id);
-    const aligned = lessons.filter((l) => expForLesson.has(l.id));
-    expect(aligned.length).toBe(lessons.length); // every lesson aligns to an expectation
-    const withComponents = aligned.filter((l) => m.childrenOf(expForLesson.get(l.id)!).some((c) => c.kind === "component"));
+    expect(lessons.length).toBe(22); // the week's full daily timetable
+    // session supports its standard ⇒ standard.childIds ∋ the session.
+    const stdForSession = new Map<string, string>();
+    for (const ex of m.unitsOfKind("expectation")) for (const c of m.childrenOf(ex.id)) if (c.kind === "lesson") stdForSession.set(c.id, ex.id);
+    const aligned = lessons.filter((l) => stdForSession.has(l.id));
+    const unaligned = lessons.filter((l) => !stdForSession.has(l.id));
+    expect(aligned.length).toBe(21); // every session but Remédiation
+    expect(unaligned).toHaveLength(1);
+    expect((unaligned[0].properties.metadata as { session_category?: string }).session_category).toBe("remediation");
+    const withComponents = aligned.filter((l) => m.childrenOf(stdForSession.get(l.id)!).some((c) => c.kind === "component"));
     expect(withComponents.length).toBeGreaterThan(0);
   });
 });
