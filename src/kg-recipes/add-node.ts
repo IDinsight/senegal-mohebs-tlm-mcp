@@ -1,14 +1,15 @@
-// ── Recipe: add_node (generic) ───────────────────────────────────────────────
-// Create ONE node with an LC `label`, attach it under `parentId` via the
-// canonical containment edge for that label (hasPart for content, hasChild for
-// standards — override with `via`), at a `position`, optionally aligned to a
-// standard (`alignTo` → hasEducationalAlignment). One atomic composite.
-//
-// This single verb replaces the old add_lesson / add_lesson_grouping /
-// add_activity / add_material. It carries NO subject vocabulary: the node's
-// identity skeleton (labels, normalized type, role, and where its ordinal lives
-// in raw) is DERIVED FROM THE GRAPH (deriveTemplate), and any extra canonical LC
-// props ride the freeform `properties` bag (written under raw.*).
+/*
+ * Recipe: add_node (generic)
+ *
+ * Create ONE node with an LC `label` and attach it under `parentId` via the
+ * canonical containment edge (hasPart for content, hasChild for standards —
+ * override with `via`), at a `position`, optionally aligned to a standard
+ * (`alignTo` → hasEducationalAlignment). One atomic composite. The new node's
+ * identity is copied from an existing node of the same label (deriveTemplate);
+ * extra props ride the freeform `properties` bag (→ raw.*).
+ *
+ * Rationale: docs/design-notes/graph-native-authoring.md.
+ */
 
 import { createNode, linkNodes, type GraphMutation, type MutationNode } from "../kg-store/index.js";
 import { RecipeCommon, buildCreatedProps, nextPosition, nodeById } from "./shared.js";
@@ -45,6 +46,8 @@ export const addNode: GraphMutation<AddNodeArgs> = {
     return { errors, warnings: [] };
   },
   apply: (base, a) => {
+    // apply() runs before validate() on the dry-run, so a bad parent id must
+    // return base (→ clean "blocked" from validate) rather than throw here.
     const parent = nodeById(base, a.parentId);
     if (!parent) return base;
     const template = deriveTemplate(base, a.label);

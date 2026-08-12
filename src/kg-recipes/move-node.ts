@@ -1,12 +1,13 @@
-// ── Recipe: move_node (generic) ──────────────────────────────────────────────
-// Re-parent a node within the containment tree along ONE axis: detach its
-// current parent edge(s) of that axis, attach the new parent, and set its
-// position under the target. One atomic composite. Replaces move_lesson.
-//
-// The axis is the node's canonical containment edge (hasPart for content),
-// overridable via `via`. Only that axis is touched — a node with a second axis
-// (a maths lesson also scheduled under a week via hasChild) keeps the other
-// parent, exactly as before. Referential integrity validates the whole result.
+/*
+ * Recipe: move_node (generic)
+ *
+ * Re-parent a node along ONE containment axis: detach its current parent edge(s)
+ * on that axis, attach the new parent, set its position. One atomic composite.
+ * The axis is the node's canonical containment edge (hasPart for content),
+ * overridable via `via`. Only that axis moves — e.g. a maths lesson lives under
+ * both a chapter (hasPart) and a week (hasChild); moving it to another chapter
+ * leaves the week untouched.
+ */
 
 import { linkNodes, unlinkNodes, type GraphMutation } from "../kg-store/index.js";
 import { RecipeCommon, nextPosition, nodeById, parentEdgeIds, setPosition } from "./shared.js";

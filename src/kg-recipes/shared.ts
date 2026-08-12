@@ -1,11 +1,11 @@
-// ── Module: kg-recipes · internal toolkit ────────────────────────────────────
-// The subject-agnostic primitives the four generic verbs fold together. Unlike
-// the old recipes there is NO `RecipeProfile`, NO `structuralAliases`, and NO
-// chapter/lesson vocabulary: a node's ordinal is a single POSITION concept, the
-// containment edge is canonical LC (see lc.ts), and a created node's identity is
-// derived from the graph (deriveTemplate). Wording aliases are gone from the
-// write path too — a created node's title/order are written to their canonical
-// LC paths directly (only `upsert_property` still uses `wordingAliases`).
+/*
+ * kg-recipes · internal toolkit
+ *
+ * The subject-agnostic helpers the four verbs share: a single POSITION concept,
+ * containment/parent lookups over any edge, and the created-node property
+ * builder. Titles and ordinals are written straight to their canonical LC paths —
+ * no wording/structural aliases here (only `upsert_property` still uses those).
+ */
 
 import { readAtPath, writeAtPath, type MutationGraph, type MutationNode } from "../kg-store/index.js";
 import { POSITION, orderPathsOf, type NodeTemplate } from "./lc.js";
@@ -50,13 +50,11 @@ export function nextPosition(g: MutationGraph, parentId: string, edge: string): 
 const put = (props: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> =>
   value === undefined ? props : writeAtPath(props, path, value);
 
-// Build a created node's full `properties` — normalized fields (title/text,
-// order, isAssessment) alongside the `raw` passthrough — from its derived
-// template. `extraRaw` carries any additional canonical LC props the caller
-// supplied (studentGroupingType, materialType, content, educationalUse, …),
-// each written under `raw.*`. The node re-parses faithfully because raw carries
-// its identity (labels come from the template, stamped by createNode) and its
-// ordinal at the source's own path.
+// Build a created node's full `properties`: normalized fields (title/text, order,
+// isAssessment) alongside the `raw` passthrough. `extraRaw` holds any extra
+// canonical LC props the caller supplied (studentGroupingType, materialType,
+// content, …), each written under `raw.*`. Raw carries the node's identity and
+// ordinal, so it re-parses faithfully.
 export function buildCreatedProps(
   t: NodeTemplate,
   opts: { title?: string; title_en?: string; position: number; isAssessment: boolean; extraRaw?: Record<string, unknown> },
@@ -96,6 +94,5 @@ export function setPosition(nodes: MutationNode[], nodeId: string, position: num
 // (via properties.content) and set_content write it.
 export const MATERIAL_CONTENT_PATH = "raw.content";
 
-// Shared arg shape: every verb carries the namespace it operates in. The rest is
-// verb-specific — there is no subject profile to thread anymore.
+// Every verb carries the namespace it operates in; the rest is verb-specific.
 export type RecipeCommon = { namespace: string };

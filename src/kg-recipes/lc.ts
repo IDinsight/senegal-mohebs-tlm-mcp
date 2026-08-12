@@ -1,17 +1,14 @@
-// ── Module: kg-recipes · canonical Learning-Commons vocabulary ───────────────
-// The generic recipes speak PURE canonical LC — no subject vocabulary (no
-// "chapter"/"domaine"/"week"), and no per-subject `RecipeProfile`. Everything
-// they need is either a canonical LC constant (the containment/alignment edges,
-// the position property) or DERIVED FROM THE GRAPH ITSELF — the "skeleton
-// embedded in the graph": to create a faithful node of a given LC label, we copy
-// the identity skeleton from an existing node of that label (its labels,
-// normalized type, role, and — the subtle part — WHERE it stores its ordinal in
-// `raw`, which differs by source: `raw.position` vs `raw.metadata.order`). When
-// no example exists yet (e.g. reading's first Activity), we fall back to
-// canonical LC defaults.
-//
-// This is the whole point of the refactor: the graph teaches the recipe what a
-// node of each kind looks like, instead of an adapter hardcoding it.
+/*
+ * kg-recipes · canonical Learning-Commons vocabulary
+ *
+ * Canonical LC constants (containment/alignment edges, the ordinal field) plus
+ * `deriveTemplate`. To add, say, a Lesson, we don't hardcode what a Lesson looks
+ * like — we copy an existing Lesson's shape (its labels, normalized type, role,
+ * and which raw field holds its order) off the graph. First of a kind, with no
+ * example to copy (reading has no Activity yet)? Fall back to canonical defaults.
+ *
+ * Full rationale: docs/design-notes/graph-native-authoring.md.
+ */
 
 import type { MutationGraph, MutationNode } from "../kg-store/index.js";
 
@@ -49,10 +46,9 @@ const FALLBACK_KIND: Record<string, string> = {
   LessonGrouping: "grouping", Course: "course",
 };
 
-// The identity skeleton for a created node: its internal kind, LC labels, whether
-// it is a grouping (title vs text), the raw path its ordinal lives at, and the
-// raw identity fields (normalizedType / normalizedStatementType / role) that make
-// it survive a re-parse.
+// The identity skeleton for a created node — enough to make it survive a
+// re-parse: internal kind, LC labels, grouping-ness (title vs text), the raw
+// ordinal path(s), and the raw identity fields.
 export type NodeTemplate = {
   kind: string;
   labels: string[];

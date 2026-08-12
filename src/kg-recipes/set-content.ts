@@ -1,10 +1,12 @@
-// ── Recipe: set_content (generic) ────────────────────────────────────────────
-// Replace a node's load-bearing `content` (canonical LC `Material.content`, see
-// MATERIAL_CONTENT_PATH). The one editorial verb for content: it is deliberately
-// separate from `upsert_property` (wording-only — it cannot reach content), so
-// editing the reviewable payload is an explicit, audited act. Immutable set of a
-// single path; every other property is preserved verbatim. Replaces
-// set_material_content, generalized to any node that carries content.
+/*
+ * Recipe: set_content (generic)
+ *
+ * Replace a node's load-bearing `content` (canonical LC `Material.content`, see
+ * MATERIAL_CONTENT_PATH). The one verb for content: kept separate from
+ * `upsert_property` (wording-only, can't reach content) so editing the reviewable
+ * payload is an explicit, audited act. Immutable single-path set; everything else
+ * is preserved.
+ */
 
 import { writeAtPath, type GraphMutation } from "../kg-store/index.js";
 import { RecipeCommon, MATERIAL_CONTENT_PATH, nodeById } from "./shared.js";
