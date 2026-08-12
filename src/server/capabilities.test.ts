@@ -22,7 +22,8 @@ import { CONFIG } from "../config.js";
 import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../context/index.js";
 import { resolveAdapter } from "../adapters/index.js";
 import { serializeModel } from "../curriculum/index.js";
-import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, upsertProperty, STRUCTURAL_RULES, UPSERT_PROPERTY_SAFE_PATHS, STRUCTURAL_EDIT_SAFE_PATHS, RECIPES, __resetMutationsForTest } from "../kg-store/index.js";
+import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, upsertProperty, STRUCTURAL_RULES, UPSERT_PROPERTY_SAFE_PATHS, __resetMutationsForTest } from "../kg-store/index.js";
+import { RECIPES } from "../kg-recipes/index.js";
 import { __setStorageForTest } from "../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../actor.js";
 import { authorize } from "../authz.js";
@@ -254,26 +255,14 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.coverageWarnings.enabled).toBe(true);
   });
 
-  it("editable.recipes IS a MIRROR of the RECIPES registry (#14) — no hand-authored copy", async () => {
+  it("editable.recipes IS a MIRROR of the generic RECIPES registry — no hand-authored copy", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    // Generic verbs are available on every subject (no per-subject profile/allowlist).
     expect(caps.editable.recipes.available).toBe(true);
-    // Names, order, and the renumber flag all come straight from RECIPES.
     expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(RECIPES.map((r) => r.name));
-    expect(caps.editable.recipes.list).toEqual(RECIPES.map((r) => ({
-      name: r.name, summary: r.summary, params: r.params,
-      renumberBearing: r.renumberBearing,
-    })));
-    // renumber is the one renumber-bearing recipe; the rest are additive/edge-only.
-    const byName = new Map<string, { renumberBearing: boolean }>(caps.editable.recipes.list.map((r: { name: string }) => [r.name, r]));
-    expect(byName.get("renumber")!.renumberBearing).toBe(true);
-    expect(["add_lesson", "add_lesson_grouping", "move_lesson", "split_lesson_grouping"].every((n) => byName.get(n)!.renumberBearing === false)).toBe(true);
-  });
-
-  it("editable.structuralKeys mirrors the adapter's structuralAliases + the central allowlist (#14)", async () => {
-    const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
-    expect(caps.editable.structuralKeys.keysByNodeKind).toEqual(adapter.structuralAliases);
-    expect(caps.editable.structuralKeys.safePaths).toEqual([...STRUCTURAL_EDIT_SAFE_PATHS].sort());
+    expect(caps.editable.recipes.list).toEqual(RECIPES.map((r) => ({ name: r.name, summary: r.summary, params: r.params })));
+    // The four generic verbs, in order.
+    expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(["add_node", "move_node", "reposition", "set_content"]);
   });
 });
 

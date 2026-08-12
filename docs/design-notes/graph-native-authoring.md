@@ -378,7 +378,24 @@ piece — the guide's pedagogical quality is the acceptance bar beyond the tests
 
 ## Scope C — activities & materials inside a lesson (in progress)
 
-> **Status: In progress — Increment 2 built (machinery); bulk authoring pending.**
+> **Status: In progress — content machinery built; bulk authoring pending.**
+>
+> **⚠️ Superseded surface:** the named content recipes described below (`add_activity` /
+> `add_material` / `set_material_content`) have been **replaced by four GENERIC verbs** in
+> the `kg-recipes` module — `add_node` / `move_node` / `reposition` / `set_content` — which
+> also replaced the old maths recipes (`add_lesson` / `add_lesson_grouping` / `move_lesson` /
+> `renumber`; `split_lesson_grouping` was dropped). The verbs speak **pure canonical LC** and
+> carry **no `RecipeProfile`**: `add_node(parentId, label, …)` derives the created node's
+> identity skeleton (labels, normalized type, role, raw ordinal path(s)) by **copying an
+> existing node of that label from the graph** (canonical defaults for the first of a kind).
+> An adapter no longer declares `recipeProfile` / `structuralAliases` / `lcNodeTemplate` /
+> `availableRecipes`; per-subject recipe gating is gone (validity is structural). The
+> conceptual model below (phase-grained Activities, Material.content, the hybrid rule, the
+> read projection, alignment default-off) is unchanged — only the *tool surface* generalized.
+> Reading a session's authored content: `add_node` with `label:"Activity"` / `"Material"`
+> (+ `properties.content`) and `set_content`; `buildSlice` surfacing is identical. See the
+> `kg-recipes/` module + `docs/design-notes/kg-mutations-framework.md`.
+>
 > **Decisions confirmed:** (1) **grain = phase-grained** — one `Activity` per phase
 > (Étape), its scripted teacher/pupil content stored as that activity's `Material.content`;
 > (2) **recipe scope = per-recipe availability** — recipes gained a per-subject allowlist

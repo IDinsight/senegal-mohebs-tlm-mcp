@@ -281,49 +281,11 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
       },
     },
 
-    // Structural keys the recipes (#14) may edit. The chapitreNum join key is
-    // GONE — chapter→lesson is the hasChild edge now — so `lesson.chapterNumber`
-    // is dropped. A number lives in BOTH the normalized `order` and its raw
-    // mirror `raw.metadata.order`.
-    structuralAliases: {
-      chapter: {
-        number:   ["order", "raw.metadata.order"],
-      },
-      lesson: {
-        position: ["order", "raw.metadata.order"],
-      },
-    },
-
-    recipeProfile: {
-      chapterKind: "chapter",
-      lessonKind: "lesson",
-      containerEdge: "hasPart",            // canonical LC content containment
-      assessmentProperty: "isAssessment",
-      expectationKind: "expectation",
-      alignmentEdge: "hasEducationalAlignment", // canonical LC alignment (content → SFI)
-    },
-
-    // LC identity stamped onto recipe-created nodes so they are faithful LC
-    // nodes (survive a re-parse / re-export) — the inverse of MATHS_PARSE's
-    // label/role → kind mapping. Post-split, both are content-layer nodes:
-    // a chapter is a `LessonGrouping` (kept as a "Standard Grouping" so the parser
-    // reads its title, with statement_type "Chapitre" and role "subtopic" so it is
-    // byte-identical to the migrated chapters); a lesson is a `Lesson` node — no
-    // objective/strand of its own, since it ALIGNS to a spine expectation.
-    lcNodeTemplate: {
-      chapter: {
-        labels: ["LessonGrouping"],
-        role: "subtopic",
-        normalizedType: "Lesson Grouping",
-        normalizedStatementType: "Standard Grouping",
-        statementType: "Chapitre",
-      },
-      lesson: {
-        labels: ["Lesson"],
-        normalizedType: "Lesson",
-      },
-    },
-
+    // The curriculum recipes are now generic, graph-derived verbs (kg-recipes);
+    // this adapter no longer declares a recipeProfile / structuralAliases /
+    // lcNodeTemplate. add_node reads a created chapter's/lesson's LC identity
+    // (labels, "Chapitre" statement type, role, ordinal path raw.metadata.order)
+    // by copying an existing chapter/lesson in the graph.
     coverageWarnings: ciMathsCoverageWarnings,
 
     detect, parse,

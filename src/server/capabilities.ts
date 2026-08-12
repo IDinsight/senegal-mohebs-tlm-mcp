@@ -23,8 +23,8 @@ import { currentActor } from "../actor.js";
 import { authorize, type AuthAction } from "../authz.js";
 import {
   kgNamespace, getKgStore, UPSERT_PROPERTY_SAFE_PATHS, STRUCTURAL_RULES,
-  STRUCTURAL_EDIT_SAFE_PATHS, RECIPES,
 } from "../kg-store/index.js";
+import { RECIPES } from "../kg-recipes/index.js";
 
 // The five actions this server has today. Kept as a const-tuple so the
 // response shape is stable and the mirror-property test can iterate over
@@ -93,42 +93,25 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   // the JSON is stable. `structural` describes the four raw verbs a
   // curator has for growing / connecting / detaching / pruning the graph;
   // they observe the current graph's vocabulary rather than a schema.
-  // ── recipes: a MIRROR of the recipe registry (#14). Rendered straight from
-  // RECIPES so what Claude discovers cannot drift from what is built. Available
-  // only when the active subject's adapter declares a recipeProfile.
-  const recipesAvailable = !!adapter.recipeProfile && !!adapter.structuralAliases;
+  // ── recipes: a MIRROR of the recipe registry. Rendered straight from RECIPES
+  // so what Claude discovers cannot drift from what is built. The verbs are
+  // GENERIC and subject-agnostic (add_node / move_node / reposition /
+  // set_content), so they are available on EVERY subject — validity is
+  // structural, not a per-subject allowlist.
   const recipes = {
-    available: recipesAvailable,
-    note: recipesAvailable
-      ? "Recipes are COMPOSITE mutations: one intent → one whole-composite diff → one confirmation token → one atomic draft write → one audit event. They are the ergonomic layer over the raw structural verbs, made safe by the same referential-integrity floor. `renumberBearing` marks a recipe that changes an existing chapter's number. Chapter↔lesson membership is the hasChild edge, so move/split/renumber rewire edges — there is no chapter-membership number to cascade."
-      : `Composite recipes are not available for ${adapter.grade}/${adapter.subject} (its adapter declares no recipeProfile) — only wording edits and the raw structural verbs are.`,
-    list: recipesAvailable ? RECIPES.filter((r) => !adapter.availableRecipes || adapter.availableRecipes.includes(r.name)).map((r) => ({
-      name: r.name,
-      summary: r.summary,
-      params: r.params,
-      renumberBearing: r.renumberBearing,
-    })) : [],
+    available: true,
+    note: "Recipes are GENERIC COMPOSITE mutations over canonical LC: one intent → one whole-composite diff → one confirmation token → one atomic draft write → one audit event. They speak pure LC (hasPart/hasChild/hasEducationalAlignment/position) and derive a created node's identity from the graph itself — there is no per-subject profile. Containment membership is the edge, so move/reposition rewire edges rather than cascading a number.",
+    list: RECIPES.map((r) => ({ name: r.name, summary: r.summary, params: r.params })),
   };
 
   const editable = {
-    scope: "term-wording + structural verbs + structural-property edits + composite recipes",
+    scope: "term-wording + structural verbs + composite recipes",
     note:
-      "Wording (chapter titles, lesson objectives, component/task descriptions) is editable via upsert_property. " +
-      "The graph structure is editable via four raw primitives (see `structural.verbs`) AND via composite recipes (see `recipes`). " +
-      "Structural PROPERTIES of existing nodes (a chapter's number, a lesson's position) are editable only THROUGH the recipes (see `structuralKeys`), never by upsert_property.",
+      "Wording (titles, objectives, component/task descriptions) is editable via upsert_property. " +
+      "The graph structure is editable via four raw primitives (see `structural.verbs`) AND via the generic composite recipes (see `recipes`). " +
+      "A node's POSITION (ordinal) and load-bearing content are edited only THROUGH the recipes (reposition / set_content), never by upsert_property.",
     keysByNodeKind: adapter.wordingAliases,
     safePaths: [...UPSERT_PROPERTY_SAFE_PATHS].sort(),
-    // Structural-property editing of EXISTING nodes (#14). Sourced from the
-    // adapter's structuralAliases (the logical keys) + the central
-    // STRUCTURAL_EDIT_SAFE_PATHS allowlist (the storage paths a recipe may
-    // touch). These are edited only inside the recipes — there is no direct
-    // structural-edit tool by design.
-    structuralKeys: {
-      keysByNodeKind: adapter.structuralAliases ?? {},
-      safePaths: [...STRUCTURAL_EDIT_SAFE_PATHS].sort(),
-      note:
-        "Editable only through the recipes (renumber changes a chapter's number and cascades to its lessons; move_lesson/split_lesson_grouping rewrite a moved lesson's chapter-membership number). Values are NUMERIC (order/number), not wording. There is deliberately no raw structural-property tool.",
-    },
     structural: {
       verbs: ["create_node", "link_nodes", "unlink_nodes", "delete_node"],
       // delete_node cascades ONLY on an explicit force:true — never implicitly.
@@ -138,7 +121,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
         "link_nodes adds an edge; edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across kinds is not enforced (deferred to human review at publish). " +
         "unlink_nodes removes an edge by id. " +
         "delete_node by default REFUSES to remove a node with incident edges (detach with unlink_nodes first); pass force:true to cascade-delete the node AND its dependent subtree (children, their children, …) plus every incident edge in one atomic mutation — the dry-run diff shows the full set that will vanish. Cascade never happens without explicit force. " +
-        "For curriculum-meaningful edits (add/split/move a chapter or lesson, renumber) prefer the composite `recipes` over hand-sequencing these verbs.",
+        "For curriculum-meaningful edits (add a node, move it, reposition it, set its content) prefer the generic composite `recipes` over hand-sequencing these verbs.",
     },
     recipes,
     coverageWarnings: {

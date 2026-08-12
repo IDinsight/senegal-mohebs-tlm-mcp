@@ -1,13 +1,13 @@
-// ── CE1 reading — Scope C content recipes, end to end ────────────────────────
-// Drives add_activity / add_material / set_material_content through the #5
-// two-phase framework on the REAL reading seed, then proves the read projection
-// (buildSlice, via buildGenerationContext) surfaces the authored content. Also
-// checks the per-recipe availability gate and add_material's parent-kind guard.
+// ── CE1 reading — content layer via the GENERIC verbs, end to end ────────────
+// Drives add_node / set_content through the two-phase framework on the REAL
+// reading seed, then proves the read projection (buildSlice, via
+// buildGenerationContext) surfaces the authored content. The verbs carry no
+// subject vocabulary: `add_node` with an LC `label` derives the node's identity
+// from the graph (or canonical LC defaults for reading's first Activity).
 //
-// The invariant under test: what a curator stages with these recipes is what a
-// draft read (preview) shows — an Activity under a session Lesson (hasPart), its
-// Material carrying the scripted content (raw.content), and both reachable from
-// the week's slice once authored.
+// The invariant under test: what a curator stages is what a draft read shows —
+// an Activity under a session Lesson (hasPart), its Material carrying the
+// scripted content (raw.content), and both reachable from the week's slice.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
@@ -18,9 +18,9 @@ import { serializeModel, toRawEnvelope } from "../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
   runGraphMutation, mintNodeId, edgeId as makeEdgeId,
-  addActivity, addMaterial, setMaterialContent,
   __resetMutationsForTest, __resetDraftTokensForTest,
 } from "../kg-store/index.js";
+import { addNode, setContent } from "../kg-recipes/index.js";
 import { __setStorageForTest } from "../storage/index.js";
 import { __setActorForTest, type Actor } from "../actor.js";
 import type { MutationGraph, GraphMutation, StoredMeta, KgNodeStore } from "../kg-store/index.js";
@@ -46,7 +46,6 @@ let store: KgNodeStore;
 const contexts = listAvailableContexts();
 const ns = kgNamespace("ce1", "reading");
 const adapter = () => resolveAdapter("ce1", "reading")!;
-const bag = () => ({ namespace: ns, profile: adapter().recipeProfile!, structuralAliases: adapter().structuralAliases!, wordingAliases: adapter().wordingAliases, lcNodeTemplate: adapter().lcNodeTemplate });
 const coverage = (g: MutationGraph): string[] => adapter().coverageWarnings?.(g as never) ?? [];
 
 async function seedFreshStore(): Promise<KgNodeStore> {
@@ -76,10 +75,8 @@ async function readPublished(): Promise<MutationGraph> {
   const p = await store.readPointer(ns);
   return readSlot(p!.publishedSlot);
 }
-// Hydrate a slot the way a real read does — raw envelope → adapter.parse.
 const modelOf = (g: MutationGraph): CurriculumModel => adapter().parse(toRawEnvelope({ nodes: g.nodes, edges: g.edges }));
 
-// Preview → confirm a recipe with a stable args object.
 async function runRecipe<A>(mutation: GraphMutation<A>, args: A) {
   const preview = await runGraphMutation({ namespace: ns, mutation, args, coverage });
   if (preview.phase !== "preview") return { preview, confirm: null };
@@ -87,7 +84,6 @@ async function runRecipe<A>(mutation: GraphMutation<A>, args: A) {
   return { preview, confirm };
 }
 
-// A real week-1 session Lesson id, from the published seed.
 function week1SessionLesson(g: MutationGraph): string {
   const m = modelOf(g);
   const wk = m.unitsOfKind("week").find((w) => w.order === 1)!;
@@ -109,55 +105,46 @@ afterAll(() => {
   __setKgStoreForTest(null);
 });
 
-describe("add_activity", () => {
-  it("adds one Activity node + a hasPart edge from the lesson; dry-run stages nothing", async () => {
-    const published = await readPublished();
-    const lessonId = week1SessionLesson(published);
+describe("add_node — Activity under a session lesson", () => {
+  it("adds one Activity node + a hasPart edge; identity is derived from canonical LC (no example yet)", async () => {
+    const lessonId = week1SessionLesson(await readPublished());
     const activityId = mintNodeId();
-    const args = { ...bag(), lessonId, activityId, text: "Étape 1 : Découvrir le vocabulaire", studentGroupingType: "group", timeRequired: "10 mn" };
+    const args = { namespace: ns, parentId: lessonId, label: "Activity", newNodeId: activityId, title: "Étape 1 : Découvrir le vocabulaire", properties: { studentGroupingType: "group", timeRequired: "10 mn", educationalUse: "Instruction" } };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: addActivity, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args, coverage });
     if (preview.phase !== "preview") throw new Error("expected preview");
     expect(preview.diff.nodes.added.map((n) => n.id)).toEqual([activityId]);
     expect(preview.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId(HAS_PART, lessonId, activityId));
 
-    const confirm = await runGraphMutation({ namespace: ns, mutation: addActivity, args, confirm: true, token: preview.confirmationToken, coverage });
+    const confirm = await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken, coverage });
     expect(confirm.phase).toBe("apply");
 
-    const draft = await readDraft();
-    const node = draft.nodes.find((n) => n.id === activityId)!;
-    expect(node.type).toBe("activity");
+    const node = (await readDraft()).nodes.find((n) => n.id === activityId)!;
+    expect(node.type).toBe("activity");             // canonical fallback kind for label Activity
     expect(node.labels).toContain("Activity");
-    // Faithful LC: title + props ride raw so they survive re-parse.
-    const rawProps = node.properties.raw as Record<string, unknown>;
-    expect(rawProps.description).toBe("Étape 1 : Découvrir le vocabulaire");
-    expect(rawProps.normalizedType).toBe("Activity");
-    expect(rawProps.studentGroupingType).toBe("group");
-    expect(rawProps.educationalUse).toBe("Instruction"); // default
+    const raw = node.properties.raw as Record<string, unknown>;
+    expect(raw.description).toBe("Étape 1 : Découvrir le vocabulaire");
+    expect(raw.normalizedType).toBe("Activity");
+    expect(raw.position).toBe(1);                    // reading's ordinal path
+    expect(raw.studentGroupingType).toBe("group");
   });
 
-  it("blocks an activity on a non-lesson (e.g. a week grouping)", async () => {
-    const published = await readPublished();
-    const m = modelOf(published);
-    const weekId = m.unitsOfKind("week").find((w) => w.order === 1)!.id;
-    const args = { ...bag(), lessonId: weekId, activityId: mintNodeId(), text: "bad" };
-    const preview = await runGraphMutation({ namespace: ns, mutation: addActivity, args, coverage });
+  it("blocks when the parent does not exist", async () => {
+    const args = { namespace: ns, parentId: "does-not-exist", label: "Activity", newNodeId: mintNodeId(), title: "x" };
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args, coverage });
     expect(preview.phase).toBe("blocked");
-    if (preview.phase === "blocked") expect(preview.errors.join()).toMatch(/not a lesson/i);
+    if (preview.phase === "blocked") expect(preview.errors.join()).toMatch(/parent .* does not exist/i);
   });
 });
 
-describe("add_material", () => {
-  it("hangs a Material off an Activity with content in raw.content; buildSlice surfaces it", async () => {
-    const published = await readPublished();
-    const lessonId = week1SessionLesson(published);
-
-    // Author an activity, then a material under it.
+describe("add_node — Material + set_content; the slice surfaces them", () => {
+  it("hangs a Material off an Activity with content in raw.content; buildSlice shows it", async () => {
+    const lessonId = week1SessionLesson(await readPublished());
     const activityId = mintNodeId();
-    await runRecipe(addActivity, { ...bag(), lessonId, activityId, text: "Étape 3 : Écouter le texte" });
+    await runRecipe(addNode, { namespace: ns, parentId: lessonId, label: "Activity", newNodeId: activityId, title: "Étape 3 : Écouter le texte" });
     const materialId = mintNodeId();
     const content = "<p>M lit le texte 2 fois, dramatisé.</p>";
-    const { confirm } = await runRecipe(addMaterial, { ...bag(), parentId: activityId, materialId, content, materialType: "Core" });
+    const { confirm } = await runRecipe(addNode, { namespace: ns, parentId: activityId, label: "Material", newNodeId: materialId, properties: { content, materialType: "Core" } });
     expect(confirm?.phase).toBe("apply");
 
     const draft = await readDraft();
@@ -166,64 +153,35 @@ describe("add_material", () => {
     expect((mat.properties.raw as Record<string, unknown>).content).toBe(content);
     expect(draft.edges.map((e) => e.id)).toContain(makeEdgeId(HAS_PART, activityId, materialId));
 
-    // Read projection: the week-1 slice shows the activity + its material.
     const ctx = await adapter().buildGenerationContext(1, "teacher_guide", modelOf(draft)) as { curriculum: { sessions: { activities: { titre: string | null; materials: { contenu: string | null }[] }[] }[] } };
-    const sessions = ctx.curriculum.sessions;
-    const authored = sessions.flatMap((s) => s.activities).find((a) => a.titre === "Étape 3 : Écouter le texte")!;
+    const authored = ctx.curriculum.sessions.flatMap((s) => s.activities).find((x) => x.titre === "Étape 3 : Écouter le texte")!;
     expect(authored).toBeTruthy();
     expect(authored.materials.map((mm) => mm.contenu)).toContain(content);
   });
 
-  it("allows a Material directly on a week grouping (opening-scene image) and on a lesson", async () => {
+  it("allows a Material directly on a week grouping and on a lesson (any container)", async () => {
     const published = await readPublished();
-    const m = modelOf(published);
-    const weekId = m.unitsOfKind("week").find((w) => w.order === 1)!.id;
+    const weekId = modelOf(published).unitsOfKind("week").find((w) => w.order === 1)!.id;
     const lessonId = week1SessionLesson(published);
 
-    const onWeek = await runRecipe(addMaterial, { ...bag(), parentId: weekId, materialId: mintNodeId(), content: "[week opening scene]", materialType: "Reference" });
-    expect(onWeek.confirm?.phase).toBe("apply");
-    const onLesson = await runRecipe(addMaterial, { ...bag(), parentId: lessonId, materialId: mintNodeId(), content: "[shared reading text]" });
-    expect(onLesson.confirm?.phase).toBe("apply");
+    expect((await runRecipe(addNode, { namespace: ns, parentId: weekId, label: "Material", newNodeId: mintNodeId(), properties: { content: "[week opening scene]", materialType: "Reference" } })).confirm?.phase).toBe("apply");
+    expect((await runRecipe(addNode, { namespace: ns, parentId: lessonId, label: "Material", newNodeId: mintNodeId(), properties: { content: "[shared reading text]" } })).confirm?.phase).toBe("apply");
 
     const ctx = await adapter().buildGenerationContext(1, "teacher_guide", modelOf(await readDraft())) as { curriculum: { materials: { contenu: string | null }[]; sessions: { materials: { contenu: string | null }[] }[] } };
-    const slice = ctx.curriculum;
-    expect(slice.materials.map((x) => x.contenu)).toContain("[week opening scene]");
-    expect(slice.sessions.flatMap((s) => s.materials).map((x) => x.contenu)).toContain("[shared reading text]");
+    expect(ctx.curriculum.materials.map((x) => x.contenu)).toContain("[week opening scene]");
+    expect(ctx.curriculum.sessions.flatMap((s) => s.materials).map((x) => x.contenu)).toContain("[shared reading text]");
   });
 
-  it("blocks a Material on a component (not a container kind)", async () => {
-    const published = await readPublished();
-    const m = modelOf(published);
-    const componentId = m.unitsOfKind("component")[0].id;
-    const args = { ...bag(), parentId: componentId, materialId: mintNodeId(), content: "x" };
-    const preview = await runGraphMutation({ namespace: ns, mutation: addMaterial, args, coverage });
-    expect(preview.phase).toBe("blocked");
-  });
-});
-
-describe("set_material_content", () => {
-  it("replaces an existing Material's content, preserving everything else", async () => {
-    const published = await readPublished();
-    const lessonId = week1SessionLesson(published);
+  it("set_content replaces an existing node's content, preserving everything else", async () => {
+    const lessonId = week1SessionLesson(await readPublished());
     const materialId = mintNodeId();
-    await runRecipe(addMaterial, { ...bag(), parentId: lessonId, materialId, content: "old", text: "Jukki" });
+    await runRecipe(addNode, { namespace: ns, parentId: lessonId, label: "Material", newNodeId: materialId, title: "Jukki", properties: { content: "old" } });
 
-    const { confirm } = await runRecipe(setMaterialContent, { ...bag(), materialId, content: "new & improved" });
+    const { confirm } = await runRecipe(setContent, { namespace: ns, nodeId: materialId, content: "new & improved" });
     expect(confirm?.phase).toBe("apply");
 
-    const draft = await readDraft();
-    const mat = draft.nodes.find((n) => n.id === materialId)!;
-    const raw = mat.properties.raw as Record<string, unknown>;
+    const raw = (await readDraft()).nodes.find((n) => n.id === materialId)!.properties.raw as Record<string, unknown>;
     expect(raw.content).toBe("new & improved");
     expect(raw.description).toBe("Jukki"); // title untouched
-  });
-
-  it("blocks when the id is not a material", async () => {
-    const published = await readPublished();
-    const lessonId = week1SessionLesson(published);
-    const args = { ...bag(), materialId: lessonId, content: "x" };
-    const preview = await runGraphMutation({ namespace: ns, mutation: setMaterialContent, args, coverage });
-    expect(preview.phase).toBe("blocked");
-    if (preview.phase === "blocked") expect(preview.errors.join()).toMatch(/not a material/i);
   });
 });
