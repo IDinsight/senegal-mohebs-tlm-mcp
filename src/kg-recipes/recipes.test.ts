@@ -130,13 +130,13 @@ describe("add_node", () => {
 
   it("creates a LessonGrouping (chapter) that re-parses as a chapter", async () => {
     const published = await readPublished();
-    const someLesson = pick(published).lessonId; // any content parent-less anchor; use the framework root instead
-    const m0 = modelOf(published);
-    const root = m0.unitsOfKind("chapter")[0].parentId!; // the domaine/framework the chapters hang under
+    // Attach under the Course content root — the canonical parent the chapters
+    // now hang under (Course --hasPart--> LessonGrouping). The Course is a
+    // non-spine node, so it isn't in the parsed model; find it by LC label.
+    const root = published.nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
     const groupingId = mintNodeId();
     const { confirm } = await runRecipe(addNode, { namespace: ns, parentId: root, label: "LessonGrouping", newNodeId: groupingId, title: "Chapitre neuf", properties: { statementType: "Chapitre", groupName: "Chapitre" } });
     expect(confirm?.phase).toBe("apply");
-    void someLesson;
 
     const node = (await readDraft())!.nodes.find((n) => n.id === groupingId)!;
     expect(node.labels).toContain("LessonGrouping");

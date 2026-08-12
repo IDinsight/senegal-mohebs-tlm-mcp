@@ -47,13 +47,13 @@ describe("kg-export — LC ontology (maths)", () => {
   it("categorizes nodes by LC label; taxonomy lists the present labels in order", async () => {
     const g = (await exportNamespace(mathsNs))!;
     expect(g).toBeTruthy();
-    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, LessonGrouping: 25, Lesson: 112, Activity: 104, LearningComponent: 80 });
+    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, Course: 1, LessonGrouping: 25, Lesson: 112, Activity: 104, LearningComponent: 80 });
     expect(g.meta.counts.byKind.StandardsFrameworkItem).toBeGreaterThan(0);
     expect(g.meta.counts.byKind.Curriculum).toBeUndefined(); // canonical: relabeled to Activity/LessonGrouping
-    expect(g.meta.counts.byKind.Course).toBeUndefined();     // RECE illustrative Course removed (RECE is a derived-components frame)
+    expect(g.meta.counts.byKind.Course).toBe(1);             // the "Outil de l'élève" content root the 25 chapters hang under
     // every node's legend category IS its LC label — no subject roles/kinds
     expect(g.nodes.every((n) => n.cat === n.label && n.kind === n.label)).toBe(true);
-    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "LessonGrouping", "Lesson", "Activity", "LearningComponent"]);
+    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "Course", "LessonGrouping", "Lesson", "Activity", "LearningComponent"]);
     expect(g.meta.taxonomy.every((x) => /^#[0-9a-f]{6}$/i.test(x.color) && x.label.fr && x.label.en)).toBe(true);
   });
 
