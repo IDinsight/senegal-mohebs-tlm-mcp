@@ -38,6 +38,10 @@ const DELIVERABLES: DeliverableSpec[] = [
 type Meta = { role?: string; order?: number; en?: Record<string, any> };
 const meta = (u: CurriculumUnit): Meta => (u.properties.metadata as Meta) ?? {};
 const rawStr = (u: CurriculumUnit, k: string): string | null => (u.properties[k] as string) ?? null;
+// An illustrative task (Activity) aligns to a STANDARD via hasEducationalAlignment;
+// the specific component it exemplifies is carried here (canonical: no Activity↔LC edge).
+type Illustrates = { id?: string; name?: string; order?: number };
+const illustrates = (u: CurriculumUnit): Illustrates => ((u.properties.metadata as { illustratesComponent?: Illustrates })?.illustratesComponent) ?? {};
 
 // ── Raw envelope → CurriculumModel ──────────────────────────────────────────
 // Delegated to the generic parser; the descriptor is all that is subject-specific.
@@ -183,6 +187,15 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     const lessonUnits = lessonsOf(m, chapter);
     const weekOf = weekMap(m);
     const expOf = expectationOfLesson(m);
+    // Illustrative tasks align to a STANDARD; the component each exemplifies rides
+    // in metadata.illustratesComponent. Index tasks by that component id (ordered),
+    // replacing the old (non-canonical) activity→component edge.
+    const tasksByComponent = new Map<string, CurriculumUnit[]>();
+    for (const t of m.unitsOfKind("task")) {
+      const cid = illustrates(t).id;
+      if (cid) (tasksByComponent.get(cid) ?? tasksByComponent.set(cid, []).get(cid)!).push(t);
+    }
+    for (const list of tasksByComponent.values()) list.sort((a, b) => (illustrates(a).order ?? 0) - (illustrates(b).order ?? 0));
     // The lesson's stable identifier is its aligned expectation's id (the OS): the
     // Lesson node is an authoring wrapper, but downstream references key on the OS.
     const identityOf = (ln: CurriculumUnit) => expOf.get(ln.id)?.id ?? ln.id;
@@ -200,7 +213,7 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
         description: cn.text ?? null,
         description_en: meta(cn).en?.description ?? null,
         reference: rawStr(cn, "reference"),
-        tasks: m.childrenOf(cn.id).filter((t) => t.kind === "task").map((tn) => ({
+        tasks: (tasksByComponent.get(cn.id) ?? []).map((tn) => ({
           identifier: tn.id,
           description: tn.text ?? null,
           contentType: rawStr(tn, "contentType"),
