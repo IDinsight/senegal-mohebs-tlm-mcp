@@ -137,6 +137,31 @@ that change are `faithful-reexport` (now asserts canonical labels/edges/camelCas
 4. **Strict export** — does a *strict* canonical export (sidecar stripped) need to exist now,
    or is the lossless internal-canonical form enough for this initiative?
 
+## Post-canonical cleanups (merged)
+
+Two follow-on fixes surfaced while reviewing the canonicalized maths graph:
+
+1. **RECE is a "Composants dérivés" frame** (PR #37). RECE wrapped its illustrative
+   activities in a content `Course → task-groupings → activities`; the other derived
+   frames (Rwanda P1, Kenya KICD, …) hang activities directly off their SFI. RECE was
+   normalized to match: the `Course`, the 6 task-groupings, and the empty
+   "Tâches illustratives (RECE)" wrapper SFI were removed, and the 49 activities
+   re-homed onto RECE's six leaf sub-SFIs (`scripts/migrate-rece-derived-components.mjs`;
+   ci/maths → 501 nodes / 877 edges).
+2. **Illustrative activities align to a standard** (PR #39). The canonical transform had
+   blindly turned `Activity --supports--> LearningComponent` into
+   `hasEducationalAlignment → LearningComponent`, but that edge is doubly wrong:
+   `hasEducationalAlignment` targets a `StandardsFrameworkItem` only, and LC defines no
+   Activity↔LearningComponent edge at all. Fixed: each illustrative `Activity`
+   `hasEducationalAlignment`s the **standard** (its component's single, unambiguous
+   parent SFI), and the specific component it exemplifies rides in
+   `metadata.illustratesComponent = {id, name, order}`
+   (`scripts/migrate-activity-alignment-canonical.mjs`). `buildSlice` groups a lesson's
+   illustrative tasks by that property (ordered) instead of the old edge → byte-identical
+   reads, golden green. After: `hasEducationalAlignment` is 216 edges, **all → SFI**;
+   zero Activity↔LearningComponent edges. See *Decision 5* in
+   [graph-native-authoring.md](graph-native-authoring.md).
+
 ## Then: Scope C, authored canonically
 
 With canonical at rest, Scope C (activities & materials inside a lesson —

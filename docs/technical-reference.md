@@ -327,10 +327,10 @@ explorer's display schema:
 |---|---|---|---|
 | `label` | derived from `kind` | `dom` | domaine node's name, **propagated** to its content-axis descendants server-side |
 | `kind` | store `type` (`domaine`/`chapter`/`week`/`lesson`/`standard`/`component`/`task`) | `pal` | `raw.palier` / `raw.metadata.palier` (weeks) |
-| `code` | `properties.code` (`raw.statement_code`) | `ord` | `properties.order` / `raw.metadata.order` (domaine: canonical index) |
-| `desc`/`desc_en` | `properties.text`/`title` · `raw.description`/`raw.os_texte` · `_en` from `raw.metadata.en.*` | `os`/`os_en` | `raw.os_texte` / `raw.metadata.en.os_texte` |
-| `st`/`st_en` | `raw.statement_type` (category) / `raw.metadata.en.statement_type` | `src`/`ref`/`statut` | `raw.source`/`reference`/`statut` |
-| `nt` | `raw.normalized_statement_type` / `raw.content_type` | `srcKey` | `raw.source_key` |
+| `code` | `properties.code` (`raw.statementCode`) | `ord` | `properties.order` / `raw.metadata.order` (domaine: canonical index) |
+| `desc`/`desc_en` | `properties.text`/`title` · `raw.description`/`raw.osTexte` · `_en` from `raw.metadata.en.*` | `os`/`os_en` | `raw.osTexte` / `raw.metadata.en.os_texte` |
+| `st`/`st_en` | `raw.statementType` (category) / `raw.metadata.en.statement_type` | `src`/`ref`/`statut` | `raw.source`/`reference`/`statut` |
+| `nt` | `raw.normalizedType` / `raw.normalizedStatementType` / `raw.contentType` | `srcKey` | `raw.sourceKey` |
 | `ex`/`ex_en`, `apt`, `comm` | `raw.examples` / `raw.aptitude_ci` / `raw.commentaire_progression` (`_en` under `raw.metadata.en`) | `strand`,`genre` | `raw.statement_type` (reading standards only), `raw.metadata.genre` (weeks) |
 
 Edges are the stored `hasChild` + `buildsTowards` as `{s,t,r,o}`. Domaine / Semaine / Chapitre are now
@@ -385,14 +385,18 @@ data has the CI maths-shaped fields it gets the rich views; otherwise it renders
 **The store now holds the FULL Learning-Commons graph** (superseding the earlier spine-only
 design). The seed pipeline still runs each adapter's `parse()`, but `parseGraph` echoes the raw
 graph onto the model (`CurriculumModel.rawGraph`), and `serializeModel` persists EVERY raw node and
-EVERY raw edge verbatim (`ci/maths`: 397 nodes / 773 edges; `ce1/reading`: 1401 / 1362):
+EVERY raw edge verbatim (`ci/maths`: 501 nodes / 877 edges; `ce1/reading`: 1863 / 2139):
 
-- **Spine nodes** (the ones `parse()` keeps — `ci/maths` domaine→chapter→lesson→component→task,
-  `ce1/reading` week→standard→component) carry `spine: true` plus their normalized fields.
-- **Non-spine nodes** (the RECE framework, the six derived-source family branches, grouping
-  wrappers) carry `spine: false` and only `properties.raw` — kept purely for faithful re-export.
-- **Edges** keep their real LC type — `hasChild`, `supports`, `relatesTo`, `buildsTowards` — with a
-  `seq` recording raw order. `supports` is no longer folded into `hasChild`.
+- **Spine nodes** (the ones `parse()` keeps — `ci/maths` domaine→chapter→lesson (+aligned
+  expectation)→component, `ce1/reading` week→session-lesson→standard→component) carry
+  `spine: true` plus their normalized fields.
+- **Non-spine nodes** (the RECE + six other "Composants dérivés" frame SFIs, their derived
+  `LearningComponent`s, and the illustrative `Activity`s hanging off them) carry `spine: false`
+  and only `properties.raw` — kept purely for faithful re-export.
+- **Edges** keep their real canonical LC type — `hasChild` (standards hierarchy), `hasPart`
+  (content containment), `supports` (component→SFI), `hasEducationalAlignment` (content→SFI),
+  `relatesTo`, `buildsTowards` — with a `seq` recording raw order. In the explorer, both
+  `supports` and `hasEducationalAlignment` fold (reversed) into the display containment tree.
 
 **Reads are unchanged.** Hydration rebuilds the raw envelope (`toRawEnvelope`) and re-runs the same
 `adapter.parse`, so the read model is the identical spine — guarded byte-for-byte by
