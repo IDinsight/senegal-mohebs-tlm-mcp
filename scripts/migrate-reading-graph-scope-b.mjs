@@ -1,28 +1,31 @@
-// ── Reading content-layer migration (graph-native authoring, Scope B) ─────────
-// CE1 reading. Scope A gave each week a content layer of 6 language-tool Lessons
-// (byte-identical reads). Scope B replaces that with the *real* teaching
-// structure: the week's 22 daily sessions, which until now lived only as a
-// hardcoded table in the generation prompt. This is deliberately NOT
-// byte-identical — it changes reading's read projection (a per-week session list)
-// and subsumes Scope A's 6 lessons (they become a subset of the 22 sessions).
-//
-// What it does, per guide week (the 21 numeric week groupings; 9/17/24/25 are
-// integration/eval weeks and carry no sessions):
-//   1. Remove Scope A's content layer entirely — every Lesson node and its
-//      week→lesson `hasChild` and lesson→standard `supports` edges.
-//   2. Mint 22 content `Lesson` nodes (one per session) under the week's
-//      `LessonGrouping` via `hasChild`, each carrying day / order / language /
-//      duration / session category as snake_case metadata (the graph's existing
-//      convention).
-//   3. Each session `supports` the spine standard it teaches, resolved by
-//      (week, standard-type). Weeks 1–8 oral/comprehension/récitation sessions
-//      align to the shared palier-1 combined standard (the "1 à 8" grouping's
-//      nodes). Remédiation (CGP) teaches no standard → no `supports` (an honest,
-//      first-class coverage gap).
-// The spine (standards + their components) is untouched.
-//
-// Re-runnable: bails (no-op) if the graph already carries session Lessons.
-// Run: node scripts/migrate-reading-graph-scope-b.mjs   (add --dry to preview).
+/*
+ * Reading content-layer migration (graph-native authoring, Scope B)
+ *
+ * CE1 reading. Scope A gave each week a content layer of 6 language-tool Lessons
+ * (byte-identical reads). Scope B replaces that with the *real* teaching
+ * structure: the week's 22 daily sessions, which until now lived only as a
+ * hardcoded table in the generation prompt. This is deliberately NOT
+ * byte-identical — it changes reading's read projection (a per-week session list)
+ * and subsumes Scope A's 6 lessons (they become a subset of the 22 sessions).
+ *
+ * What it does, per guide week (the 21 numeric week groupings; 9/17/24/25 are
+ * integration/eval weeks and carry no sessions):
+ *   1. Remove Scope A's content layer entirely — every Lesson node and its
+ *      week→lesson `hasChild` and lesson→standard `supports` edges.
+ *   2. Mint 22 content `Lesson` nodes (one per session) under the week's
+ *      `LessonGrouping` via `hasChild`, each carrying day / order / language /
+ *      duration / session category as snake_case metadata (the graph's existing
+ *      convention).
+ *   3. Each session `supports` the spine standard it teaches, resolved by
+ *      (week, standard-type). Weeks 1–8 oral/comprehension/récitation sessions
+ *      align to the shared palier-1 combined standard (the "1 à 8" grouping's
+ *      nodes). Remédiation (CGP) teaches no standard → no `supports` (an honest,
+ *      first-class coverage gap).
+ * The spine (standards + their components) is untouched.
+ *
+ * Re-runnable: bails (no-op) if the graph already carries session Lessons.
+ * Run: node scripts/migrate-reading-graph-scope-b.mjs   (add --dry to preview).
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

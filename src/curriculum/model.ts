@@ -1,8 +1,11 @@
-// ── Module: curriculum · internal ────────────────────────────────────────────
-// The subject-neutral shape every graph is parsed into: a flat set of units
-// linked by parentId/childIds. Adapters (curriculum/adapters/*) do the raw-graph
-// parsing and hand the units here; buildModel() adds the lookup indexes the
-// presenters and generation code read. See docs/design-notes/multi-subject-architecture.md §5.1.
+/*
+ * Module: curriculum · internal
+ *
+ * The subject-neutral shape every graph is parsed into: a flat set of units
+ * linked by parentId/childIds. Adapters (curriculum/adapters/*) do the raw-graph
+ * parsing and hand the units here; buildModel() adds the lookup indexes the
+ * presenters and generation code read. See docs/design-notes/multi-subject-architecture.md §5.1.
+ */
 import type { CurriculumUnit, CurriculumModel } from "../types.js";
 
 // Assemble a CurriculumModel from a flat list of units. Callers set each unit's

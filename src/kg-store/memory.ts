@@ -1,7 +1,10 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// In-memory KgNodeStore for tests and the parity harness. Mirrors the
-// Firestore backend's slot + pointer model so the same lifecycle tests
-// exercise both implementations. No network, no persistence.
+/*
+ * Module: kg-store · internal
+ *
+ * In-memory KgNodeStore for tests and the parity harness. Mirrors the
+ * Firestore backend's slot + pointer model so the same lifecycle tests
+ * exercise both implementations. No network, no persistence.
+ */
 import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
 import { otherSlot } from "./types.js";
 import { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";

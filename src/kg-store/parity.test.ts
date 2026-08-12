@@ -1,15 +1,18 @@
-// ── Parity harness (KG_SOURCE=bundle vs KG_SOURCE=firestore) ─────────────────
-// Primary acceptance oracle for the KG-store swap AND for the adapter refactor.
-// Iterates every installed grade/subject and every unit inside it, calls the
-// curriculum + KG read tools against BOTH backends (bundle read directly from
-// sources/, and firestore hydrated from an in-memory KgNodeStore that mirrors
-// what the seed script writes), and asserts DEEP structural equality on the
-// parsed results.
-//
-// Any diff fails the build — this is the byte-for-byte parity check the task
-// requires. The harness uses the memory store so it runs in CI without live
-// Firestore; the SAME code path exercises a real Firestore store when
-// `KG_SOURCE=firestore` is set at runtime.
+/*
+ * Parity harness (KG_SOURCE=bundle vs KG_SOURCE=firestore)
+ *
+ * Primary acceptance oracle for the KG-store swap AND for the adapter refactor.
+ * Iterates every installed grade/subject and every unit inside it, calls the
+ * curriculum + KG read tools against BOTH backends (bundle read directly from
+ * sources/, and firestore hydrated from an in-memory KgNodeStore that mirrors
+ * what the seed script writes), and asserts DEEP structural equality on the
+ * parsed results.
+ *
+ * Any diff fails the build — this is the byte-for-byte parity check the task
+ * requires. The harness uses the memory store so it runs in CI without live
+ * Firestore; the SAME code path exercises a real Firestore store when
+ * `KG_SOURCE=firestore` is set at runtime.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";

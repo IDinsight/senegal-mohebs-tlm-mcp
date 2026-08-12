@@ -1,19 +1,22 @@
-// ── Make RECE a "Composants dérivés" frame like the others (Rwanda P1 etc.) ──
-// The other derived frames hang their illustrative Activities DIRECTLY off a
-// StandardsFrameworkItem via hasChild. RECE instead wrapped them in a content
-// Course → task-groupings → activities. This transform removes that wrapper and
-// re-homes the activities onto RECE's own leaf sub-SFIs, matching the pattern.
-//
-// Deterministic + re-runnable (bails if the RECE Course is already gone):
-//   1. Map each of the 6 RECE task-groupings ("OP — LEVEL") to RECE's matching
-//      leaf sub-SFI (LEVEL under operation OP).
-//   2. Re-point every task-grouping --hasPart--> Activity onto
-//      leaf-sub-SFI --hasChild--> Activity (Rwanda-style). Alignments
-//      (Activity --hasEducationalAlignment--> LearningComponent) are untouched, so
-//      generation is unaffected (the golden gate stays green).
-//   3. Delete the Course, the 6 task-groupings, and the now-empty
-//      "Tâches illustratives (RECE)" wrapper SFI, plus their incident edges.
-// Run: node scripts/migrate-rece-derived-components.mjs  (add --dry to preview).
+/*
+ * Make RECE a "Composants dérivés" frame like the others (Rwanda P1 etc.)
+ *
+ * The other derived frames hang their illustrative Activities DIRECTLY off a
+ * StandardsFrameworkItem via hasChild. RECE instead wrapped them in a content
+ * Course → task-groupings → activities. This transform removes that wrapper and
+ * re-homes the activities onto RECE's own leaf sub-SFIs, matching the pattern.
+ *
+ * Deterministic + re-runnable (bails if the RECE Course is already gone):
+ *   1. Map each of the 6 RECE task-groupings ("OP — LEVEL") to RECE's matching
+ *      leaf sub-SFI (LEVEL under operation OP).
+ *   2. Re-point every task-grouping --hasPart--> Activity onto
+ *      leaf-sub-SFI --hasChild--> Activity (Rwanda-style). Alignments
+ *      (Activity --hasEducationalAlignment--> LearningComponent) are untouched, so
+ *      generation is unaffected (the golden gate stays green).
+ *   3. Delete the Course, the 6 task-groupings, and the now-empty
+ *      "Tâches illustratives (RECE)" wrapper SFI, plus their incident edges.
+ * Run: node scripts/migrate-rece-derived-components.mjs  (add --dry to preview).
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -1,18 +1,21 @@
-// ── Illustrative activities align to a STANDARD (canonical hasEducationalAlignment) ─
-// Illustrative activities were attached to the LearningComponent they exemplify
-// via `Activity --hasEducationalAlignment--> LearningComponent`. But canonically
-// `hasEducationalAlignment` targets a StandardsFrameworkItem only, and LC defines
-// no Activity↔LearningComponent edge at all.
-//
-// Canonical fix: point each Activity's `hasEducationalAlignment` at the STANDARD —
-// the component's (unambiguous) parent StandardsFrameworkItem — and keep the finer
-// "which component/skill" as a PROPERTY (`metadata.illustratesComponent =
-// {id, name, order}`) rather than a non-canonical edge. `order` preserves the
-// activity's position within the component so the read projection is byte-identical
-// (buildSlice groups tasks by this property instead of the old edge).
-//
-// Deterministic + re-runnable (bails if no Activity→LC alignment edges remain).
-// Run: node scripts/migrate-activity-alignment-canonical.mjs  (add --dry to preview).
+/*
+ * Illustrative activities align to a STANDARD (canonical hasEducationalAlignment)
+ *
+ * Illustrative activities were attached to the LearningComponent they exemplify
+ * via `Activity --hasEducationalAlignment--> LearningComponent`. But canonically
+ * `hasEducationalAlignment` targets a StandardsFrameworkItem only, and LC defines
+ * no Activity↔LearningComponent edge at all.
+ *
+ * Canonical fix: point each Activity's `hasEducationalAlignment` at the STANDARD —
+ * the component's (unambiguous) parent StandardsFrameworkItem — and keep the finer
+ * "which component/skill" as a PROPERTY (`metadata.illustratesComponent =
+ * {id, name, order}`) rather than a non-canonical edge. `order` preserves the
+ * activity's position within the component so the read projection is byte-identical
+ * (buildSlice groups tasks by this property instead of the old edge).
+ *
+ * Deterministic + re-runnable (bails if no Activity→LC alignment edges remain).
+ * Run: node scripts/migrate-activity-alignment-canonical.mjs  (add --dry to preview).
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

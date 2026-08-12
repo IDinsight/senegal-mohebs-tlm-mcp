@@ -1,34 +1,37 @@
-// ── Module: server · tool group: structural graph edits ─────────────────────
-// The four raw structural primitives — create_node, link_nodes, unlink_nodes,
-// delete_node. Each is a single #5 mutation exposed as an MCP tool. All share
-// the pattern established by upsert_property:
-//
-//   • Two-phase confirm (dry-run returns diff + confirmationToken; confirm
-//     applies to the DRAFT only).
-//   • #6's structural rules always fire (id-immutable, no-orphan). Plus a
-//     mutation-specific validate — see src/kg-store/structural.ts.
-//   • #7 audits every apply and every denial.
-//   • #8 gates all four on the curator/approver role.
-//
-// Deliberately verbs-only in this step:
-//   • delete_node REFUSES to remove a node with incident edges — cascade
-//     lives in #14. The caller's manual flow is unlink_nodes each incident
-//     edge, then delete_node.
-//   • No composite / recipe tools (add-lesson-grouping, split-lesson-grouping) — those live
-//     in #13. Multi-primitive sequences still accumulate atomically on the
-//     draft and publish together via the existing publish_draft flow.
-//   • No structural-property editing of EXISTING nodes (renumber, code
-//     change) — separate future step. create_node sets properties at
-//     birth; upsert_property remains wording-only.
-//
-// id-minting for create_node is a TOOL-LAYER concern: the tool generates a
-// randomUUID once per dry-run and threads it through as `newNodeId` in the
-// mutation args. The framework hashes the args (including the id) into the
-// confirmation token, so a confirm can only apply the same dry-run's id.
-// The tool response surfaces `mintedNodeId` at the top level so Claude can
-// pass it back on confirm. The tool's input schema does NOT declare an
-// `id` parameter — a caller cannot supply one; the mutation's validate
-// also hard-rejects a caller-supplied `id` in `properties`.
+/*
+ * Module: server · tool group: structural graph edits
+ *
+ * The four raw structural primitives — create_node, link_nodes, unlink_nodes,
+ * delete_node. Each is a single #5 mutation exposed as an MCP tool. All share
+ * the pattern established by upsert_property:
+ *
+ *   • Two-phase confirm (dry-run returns diff + confirmationToken; confirm
+ *     applies to the DRAFT only).
+ *   • #6's structural rules always fire (id-immutable, no-orphan). Plus a
+ *     mutation-specific validate — see src/kg-store/structural.ts.
+ *   • #7 audits every apply and every denial.
+ *   • #8 gates all four on the curator/approver role.
+ *
+ * Deliberately verbs-only in this step:
+ *   • delete_node REFUSES to remove a node with incident edges — cascade
+ *     lives in #14. The caller's manual flow is unlink_nodes each incident
+ *     edge, then delete_node.
+ *   • No composite / recipe tools (add-lesson-grouping, split-lesson-grouping) — those live
+ *     in #13. Multi-primitive sequences still accumulate atomically on the
+ *     draft and publish together via the existing publish_draft flow.
+ *   • No structural-property editing of EXISTING nodes (renumber, code
+ *     change) — separate future step. create_node sets properties at
+ *     birth; upsert_property remains wording-only.
+ *
+ * id-minting for create_node is a TOOL-LAYER concern: the tool generates a
+ * randomUUID once per dry-run and threads it through as `newNodeId` in the
+ * mutation args. The framework hashes the args (including the id) into the
+ * confirmation token, so a confirm can only apply the same dry-run's id.
+ * The tool response surfaces `mintedNodeId` at the top level so Claude can
+ * pass it back on confirm. The tool's input schema does NOT declare an
+ * `id` parameter — a caller cannot supply one; the mutation's validate
+ * also hard-rejects a caller-supplied `id` in `properties`.
+ */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";

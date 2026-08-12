@@ -1,20 +1,23 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// The draft lifecycle: promote (publish) and throw-away (discard) of the
-// double-buffered draft slot, plus the whole-draft diff that feeds them.
-//
-// Two layers live here:
-//   • Raw wrappers — publishDraft / discardDraft — wrap the store's lifecycle
-//     primitives so #8's role check and #7's audit both fire, atomically with
-//     the state write (the store commits both in one Firestore transaction).
-//     Tests and user-facing tools go through these, NEVER `store.publishDraft`
-//     / `store.discardDraft` directly — that's how enforcement stays complete.
-//   • Two-phase confirm wrappers — publishDraftWithConfirm /
-//     discardDraftWithConfirm — layer dry-run/confirm plumbing (a draft-level
-//     concurrency token) on top, mirroring the per-mutation two-phase flow in
-//     mutations.ts but with their own token space.
-//
-// This module depends one-way on mutations.ts (the framework) for the graph
-// hash / slot-strip / diff helpers; mutations.ts never imports back.
+/*
+ * Module: kg-store · internal
+ *
+ * The draft lifecycle: promote (publish) and throw-away (discard) of the
+ * double-buffered draft slot, plus the whole-draft diff that feeds them.
+ *
+ * Two layers live here:
+ *   • Raw wrappers — publishDraft / discardDraft — wrap the store's lifecycle
+ *     primitives so #8's role check and #7's audit both fire, atomically with
+ *     the state write (the store commits both in one Firestore transaction).
+ *     Tests and user-facing tools go through these, NEVER `store.publishDraft`
+ *     / `store.discardDraft` directly — that's how enforcement stays complete.
+ *   • Two-phase confirm wrappers — publishDraftWithConfirm /
+ *     discardDraftWithConfirm — layer dry-run/confirm plumbing (a draft-level
+ *     concurrency token) on top, mirroring the per-mutation two-phase flow in
+ *     mutations.ts but with their own token space.
+ *
+ * This module depends one-way on mutations.ts (the framework) for the graph
+ * hash / slot-strip / diff helpers; mutations.ts never imports back.
+ */
 
 import { randomBytes, randomUUID } from "node:crypto";
 import { getKgStore } from "./adapter.js";

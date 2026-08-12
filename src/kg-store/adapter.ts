@@ -1,8 +1,11 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// Lazy singleton for the active KgNodeStore. Firestore init needs credentials
-// and a network call, so we build it on first use — a stdio run that never
-// touches the KG (e.g. only pulling docs from the bucket) doesn't need one.
-// Tests inject a memory store via `__setKgStoreForTest`.
+/*
+ * Module: kg-store · internal
+ *
+ * Lazy singleton for the active KgNodeStore. Firestore init needs credentials
+ * and a network call, so we build it on first use — a stdio run that never
+ * touches the KG (e.g. only pulling docs from the bucket) doesn't need one.
+ * Tests inject a memory store via `__setKgStoreForTest`.
+ */
 import { createFirestoreKgStore } from "./firestore.js";
 import type { KgNodeStore } from "./types.js";
 

@@ -1,9 +1,12 @@
-// ── Module: server · internal helpers ────────────────────────────────────────
-// Tool helpers that depend on app-layer state (the active adapter / context),
-// so they live inside the server module rather than in utils (which stays a
-// leaf). The pure asJson primitive comes from the utils barrel and is
-// re-exported here so each tool group imports all its helpers from one place
-// ("./shared.js").
+/*
+ * Module: server · internal helpers
+ *
+ * Tool helpers that depend on app-layer state (the active adapter / context),
+ * so they live inside the server module rather than in utils (which stays a
+ * leaf). The pure asJson primitive comes from the utils barrel and is
+ * re-exported here so each tool group imports all its helpers from one place
+ * ("./shared.js").
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { asJson, buildConfirmEnvelope, classifyError, toolError, isDebug, type ToolResult } from "../utils/index.js";
 import { getActiveAdapter } from "../adapters/index.js";

@@ -1,20 +1,23 @@
-// ── Module: server · tool group: get_capabilities ────────────────────────────
-// A read-only mirror of what the current caller can do RIGHT NOW: role,
-// allowed actions, whether a draft exists, what's editable, and the safety
-// rules in force. Never a second source of truth — every field is sourced
-// from the module that ACTUALLY enforces or defines it:
-//
-//   actor.role           ← currentActor()               (from #1's verified JWT)
-//   actions.*            ← authorize(actor, X, ns)      (from #8, the real gate)
-//   draft.exists         ← store.readPointer()           (from #4)
-//   draft.createdBy      ← store.listAudit()             (from #7)
-//   editable.keys        ← adapter.wordingAliases       (from #10's adapter surface)
-//   editable.safePaths   ← UPSERT_PROPERTY_SAFE_PATHS   (from #10's central allowlist)
-//   rules.structural     ← STRUCTURAL_RULES              (from #6)
-//
-// Any calculation of "who can do what" done here would be a copy that could
-// drift. The mirror-property test asserts every actions.* value matches
-// what authorize() returns for the same (actor, action, namespace).
+/*
+ * Module: server · tool group: get_capabilities
+ *
+ * A read-only mirror of what the current caller can do RIGHT NOW: role,
+ * allowed actions, whether a draft exists, what's editable, and the safety
+ * rules in force. Never a second source of truth — every field is sourced
+ * from the module that ACTUALLY enforces or defines it:
+ *
+ *   actor.role           ← currentActor()               (from #1's verified JWT)
+ *   actions.*            ← authorize(actor, X, ns)      (from #8, the real gate)
+ *   draft.exists         ← store.readPointer()           (from #4)
+ *   draft.createdBy      ← store.listAudit()             (from #7)
+ *   editable.keys        ← adapter.wordingAliases       (from #10's adapter surface)
+ *   editable.safePaths   ← UPSERT_PROPERTY_SAFE_PATHS   (from #10's central allowlist)
+ *   rules.structural     ← STRUCTURAL_RULES              (from #6)
+ *
+ * Any calculation of "who can do what" done here would be a copy that could
+ * drift. The mirror-property test asserts every actions.* value matches
+ * what authorize() returns for the same (actor, action, namespace).
+ */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { asJson, guarded } from "./shared.js";

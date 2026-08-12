@@ -1,7 +1,9 @@
-// KG-export (read-only explorer backend) — verifies the converged shape yields
-// the right display nodes, hasChild edges, and data-driven views. Seeds a memory
-// store from the real sources (parse → serializeModel), exactly like the other
-// firestore-mode suites, then calls exportNamespace.
+/*
+ * KG-export (read-only explorer backend) — verifies the converged shape yields
+ * the right display nodes, hasChild edges, and data-driven views. Seeds a memory
+ * store from the real sources (parse → serializeModel), exactly like the other
+ * firestore-mode suites, then calls exportNamespace.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";

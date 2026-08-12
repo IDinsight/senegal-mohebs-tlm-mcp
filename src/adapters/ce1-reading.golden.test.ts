@@ -1,14 +1,17 @@
-// ── Golden-snapshot acceptance gate — CE1-reading read projections ───────────
-// The reading content-layer step (docs/design-notes/graph-native-authoring.md,
-// Scope A) restructures the source graph and parse (week→LessonGrouping; one
-// content Lesson per language-tool standard). Like the maths gate, this freezes
-// the deterministic read projections — listUnits, slice, progression,
-// requiredCoverage, scopeValues — so the change proves it kept them
-// byte-identical (its acceptance test). buildGenerationContext (characters,
-// themes) is deliberately out of scope.
-//
-// The golden fixture is committed. Regenerate it ONLY when a change to the read
-// projections is intended, with:  UPDATE_GOLDEN=1 npx vitest run src/adapters/ce1-reading.golden.test.ts
+/*
+ * Golden-snapshot acceptance gate — CE1-reading read projections
+ *
+ * The reading content-layer step (docs/design-notes/graph-native-authoring.md,
+ * Scope A) restructures the source graph and parse (week→LessonGrouping; one
+ * content Lesson per language-tool standard). Like the maths gate, this freezes
+ * the deterministic read projections — listUnits, slice, progression,
+ * requiredCoverage, scopeValues — so the change proves it kept them
+ * byte-identical (its acceptance test). buildGenerationContext (characters,
+ * themes) is deliberately out of scope.
+ *
+ * The golden fixture is committed. Regenerate it ONLY when a change to the read
+ * projections is intended, with:  UPDATE_GOLDEN=1 npx vitest run src/adapters/ce1-reading.golden.test.ts
+ */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

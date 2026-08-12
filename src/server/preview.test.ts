@@ -1,21 +1,24 @@
-// ── preview_generation — draft-resolved preview, isolated from published ─────
-// Acceptance criteria under test (Phase 3, step 1):
-//   1. A preview built from the DRAFT reflects a staged-but-unpublished edit,
-//      while published generation (buildGenerationContext with no model) still
-//      reflects the OLD wording.
-//   2. useDraft/preview with NO draft → a clear "no draft" notice, no output.
-//   3. ISOLATION: after a preview run, the published slot, the pointer, the
-//      canonical documents bucket, history, and log_generation are all
-//      untouched; the only audit added is a PREVIEW event (never apply/publish
-//      and never a real-generation record).
-//   4. Preview output is SEGREGATED: create_preview_upload_url returns an object
-//      key under previews/, never the canonical documents/ keyspace.
-//   5. ROLE matrix: curator + approver may preview; signed-in-no-role and
-//      unknown are blocked (and the denial is audited).
-//   6. SCOPING: an unknown deliverable is rejected; a preview is scoped to the
-//      one unit asked for (no implicit whole-curriculum path).
-//   7. PARITY: the published buildGenerationContext output is unchanged for
-//      existing callers.
+/*
+ * preview_generation — draft-resolved preview, isolated from published
+ *
+ * Acceptance criteria under test (Phase 3, step 1):
+ *   1. A preview built from the DRAFT reflects a staged-but-unpublished edit,
+ *      while published generation (buildGenerationContext with no model) still
+ *      reflects the OLD wording.
+ *   2. useDraft/preview with NO draft → a clear "no draft" notice, no output.
+ *   3. ISOLATION: after a preview run, the published slot, the pointer, the
+ *      canonical documents bucket, history, and log_generation are all
+ *      untouched; the only audit added is a PREVIEW event (never apply/publish
+ *      and never a real-generation record).
+ *   4. Preview output is SEGREGATED: create_preview_upload_url returns an object
+ *      key under previews/, never the canonical documents/ keyspace.
+ *   5. ROLE matrix: curator + approver may preview; signed-in-no-role and
+ *      unknown are blocked (and the denial is audited).
+ *   6. SCOPING: an unknown deliverable is rejected; a preview is scoped to the
+ *      one unit asked for (no implicit whole-curriculum path).
+ *   7. PARITY: the published buildGenerationContext output is unchanged for
+ *      existing callers.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

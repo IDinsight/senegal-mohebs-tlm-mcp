@@ -1,15 +1,18 @@
-// ── #8 enforcement tests ─────────────────────────────────────────────────────
-// Drives runGraphMutation + the publish/discard wrappers under different
-// actors to prove:
-//   - authz derives ONLY from the verified Actor (spoof attempts via args are
-//     ignored — the args interface doesn't even accept an actor / role);
-//   - curator can apply/discard but not publish;
-//   - approver can publish and everything a curator can;
-//   - unknown / no-role is denied all three, with a blocked audit record;
-//   - denials never issue a token and never touch state;
-//   - self-approve config gates the publish path; the publish audit ALWAYS
-//     carries `selfAuthored` regardless of the flag;
-//   - reads and generation remain fully open for unknown actors.
+/*
+ * #8 enforcement tests
+ *
+ * Drives runGraphMutation + the publish/discard wrappers under different
+ * actors to prove:
+ *   - authz derives ONLY from the verified Actor (spoof attempts via args are
+ *     ignored — the args interface doesn't even accept an actor / role);
+ *   - curator can apply/discard but not publish;
+ *   - approver can publish and everything a curator can;
+ *   - unknown / no-role is denied all three, with a blocked audit record;
+ *   - denials never issue a token and never touch state;
+ *   - self-approve config gates the publish path; the publish audit ALWAYS
+ *     carries `selfAuthored` regardless of the flag;
+ *   - reads and generation remain fully open for unknown actors.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";

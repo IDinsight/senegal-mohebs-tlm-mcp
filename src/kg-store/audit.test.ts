@@ -1,10 +1,13 @@
-// ── Append-only audit log — tests ────────────────────────────────────────────
-// Every state-changing graph op writes exactly one committed-change audit
-// record; every rejected mutation writes a blocked record; nothing else
-// touches the audit collection. The framework is the only production entry
-// point that produces audits, so completeness is enforced there — the tests
-// drive it through runGraphMutation, plus a few direct calls to prove the
-// #4 lifecycle ops accept and commit audit records too.
+/*
+ * Append-only audit log — tests
+ *
+ * Every state-changing graph op writes exactly one committed-change audit
+ * record; every rejected mutation writes a blocked record; nothing else
+ * touches the audit collection. The framework is the only production entry
+ * point that produces audits, so completeness is enforced there — the tests
+ * drive it through runGraphMutation, plus a few direct calls to prove the
+ * #4 lifecycle ops accept and commit audit records too.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

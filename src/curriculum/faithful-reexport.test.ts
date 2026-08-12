@@ -1,9 +1,12 @@
-// ── Faithful re-export: the store round-trips to the source LC graph ─────────
-// The whole point of full-graph storage is that Firestore can REPLACE the source
-// knowledge_graph.json. This guards that: parse → serializeModel (store shape) →
-// toRawEnvelope reproduces EVERY node and EVERY edge of the source — same ids,
-// labels, properties, and edge (type, endpoints) — including the framework/
-// derived nodes and the supports/relatesTo cross-links that used to be dropped.
+/*
+ * Faithful re-export: the store round-trips to the source LC graph
+ *
+ * The whole point of full-graph storage is that Firestore can REPLACE the source
+ * knowledge_graph.json. This guards that: parse → serializeModel (store shape) →
+ * toRawEnvelope reproduces EVERY node and EVERY edge of the source — same ids,
+ * labels, properties, and edge (type, endpoints) — including the framework/
+ * derived nodes and the supports/relatesTo cross-links that used to be dropped.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";

@@ -1,11 +1,14 @@
-// ── ping tool + advertised-schema integration tests ─────────────────────────
-// Drives the REAL assembled MCP server (buildServer) through an in-memory
-// client/server transport pair, so these assert the wire-visible contract:
-//   • ping is registered, returns ok, and touches NO datastore (proven by
-//     wiring a storage adapter that throws on every method — ping must still
-//     answer, distinguishing "transport up, store down" from "server down");
-//   • list_documents ADVERTISES its inputSchema (limit/cursor/unit/type) —
-//     the schema/validator divergence from live testing cannot recur.
+/*
+ * ping tool + advertised-schema integration tests
+ *
+ * Drives the REAL assembled MCP server (buildServer) through an in-memory
+ * client/server transport pair, so these assert the wire-visible contract:
+ *   • ping is registered, returns ok, and touches NO datastore (proven by
+ *     wiring a storage adapter that throws on every method — ping must still
+ *     answer, distinguishing "transport up, store down" from "server down");
+ *   • list_documents ADVERTISES its inputSchema (limit/cursor/unit/type) —
+ *     the schema/validator divergence from live testing cannot recur.
+ */
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";

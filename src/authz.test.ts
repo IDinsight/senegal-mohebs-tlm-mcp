@@ -1,8 +1,11 @@
-// ── Pure-logic tests for the authorize() function ────────────────────────────
-// The check is a small function over the Actor shape — testable directly with
-// no I/O, no store, no framework. Integration tests (that the framework and
-// the lifecycle wrappers actually CALL authorize) live in
-// src/kg-store/authz-enforcement.test.ts.
+/*
+ * Pure-logic tests for the authorize() function
+ *
+ * The check is a small function over the Actor shape — testable directly with
+ * no I/O, no store, no framework. Integration tests (that the framework and
+ * the lifecycle wrappers actually CALL authorize) live in
+ * src/kg-store/authz-enforcement.test.ts.
+ */
 import { describe, it, expect, afterEach } from "vitest";
 import { authorize, selfApproveAllowed } from "./authz.js";
 import { UNKNOWN_ACTOR, type Actor } from "./actor.js";

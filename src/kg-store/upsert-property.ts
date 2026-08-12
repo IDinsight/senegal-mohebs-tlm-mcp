@@ -1,26 +1,29 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// upsert_property (#10) — the first real edit. A concrete GraphMutation built
-// on the two-phase framework in mutations.ts (same relationship structural.ts
-// and recipes.ts have). Edits ONE logical wording on ONE existing node. The
-// curator supplies a LOGICAL key ("title" / "text" / "title_en" / "text_en");
-// the ADAPTER's wordingAliases (see src/types.ts::WordingAliases) resolves it to
-// the concrete storage paths for that node's kind — typically both the
-// normalized field (what presenters read) and the raw source (what preserves
-// the source graph). All resolved paths are updated atomically in ONE mutation
-// call, ONE audit entry — no drift risk from the curator forgetting a "second
-// update."
-//
-// Safety, layered:
-//   1. Adapter says WHICH logical keys apply on WHICH node kinds and WHERE
-//      each is stored. Subject-specific knowledge, in subject code.
-//   2. This mutation validates every resolved path against the central
-//      SAFE_PATHS allowlist below — a rogue/careless adapter cannot
-//      expand the pilot's editable surface by declaring an unsafe path.
-//   3. Existing-key rule: every resolved path must currently hold a
-//      non-null string on the node. The pilot fixes wording that's there;
-//      it does not create new fields (that's #12's job).
-//   4. #6's structural rules (id-immutable, no-orphan) still run over the
-//      apply result at the framework level.
+/*
+ * Module: kg-store · internal
+ *
+ * upsert_property (#10) — the first real edit. A concrete GraphMutation built
+ * on the two-phase framework in mutations.ts (same relationship structural.ts
+ * and recipes.ts have). Edits ONE logical wording on ONE existing node. The
+ * curator supplies a LOGICAL key ("title" / "text" / "title_en" / "text_en");
+ * the ADAPTER's wordingAliases (see src/types.ts::WordingAliases) resolves it to
+ * the concrete storage paths for that node's kind — typically both the
+ * normalized field (what presenters read) and the raw source (what preserves
+ * the source graph). All resolved paths are updated atomically in ONE mutation
+ * call, ONE audit entry — no drift risk from the curator forgetting a "second
+ * update."
+ *
+ * Safety, layered:
+ *   1. Adapter says WHICH logical keys apply on WHICH node kinds and WHERE
+ *      each is stored. Subject-specific knowledge, in subject code.
+ *   2. This mutation validates every resolved path against the central
+ *      SAFE_PATHS allowlist below — a rogue/careless adapter cannot
+ *      expand the pilot's editable surface by declaring an unsafe path.
+ *   3. Existing-key rule: every resolved path must currently hold a
+ *      non-null string on the node. The pilot fixes wording that's there;
+ *      it does not create new fields (that's #12's job).
+ *   4. #6's structural rules (id-immutable, no-orphan) still run over the
+ *      apply result at the framework level.
+ */
 
 import type { GraphMutation } from "./mutations.js";
 import type { WordingAliases } from "../types.js";

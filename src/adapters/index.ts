@@ -1,18 +1,21 @@
-// ── Module: adapters ─────────────────────────────────────────────────────────
-// Registry that binds each `(grade, subject)` to its SubjectAdapter, plus the
-// active-adapter accessors the server tools use. Replaces the historical split
-// of profiles/ + curriculum/adapters/ — each subject now ships ONE adapter
-// module (this directory) exposing behavior for the whole read path.
-//
-// Resolution is many-to-one capable by construction: the registry is keyed on
-// `${grade}/${subject}` (grade × subject, not just subject — different grades
-// of the "same" subject may need different adapters when their graphs differ),
-// and multiple keys may point at the same builder when their graphs happen to
-// share a shape.
-//
-// Adapters are BEHAVIOR ONLY. There is no `schema` export, no LC property/edge
-// declarations, and no integrity rules — that is deliberate. Write-safety
-// rules for later phases live in the write tools, not on the adapter.
+/*
+ * Module: adapters
+ *
+ * Registry that binds each `(grade, subject)` to its SubjectAdapter, plus the
+ * active-adapter accessors the server tools use. Replaces the historical split
+ * of profiles/ + curriculum/adapters/ — each subject now ships ONE adapter
+ * module (this directory) exposing behavior for the whole read path.
+ *
+ * Resolution is many-to-one capable by construction: the registry is keyed on
+ * `${grade}/${subject}` (grade × subject, not just subject — different grades
+ * of the "same" subject may need different adapters when their graphs differ),
+ * and multiple keys may point at the same builder when their graphs happen to
+ * share a shape.
+ *
+ * Adapters are BEHAVIOR ONLY. There is no `schema` export, no LC property/edge
+ * declarations, and no integrity rules — that is deliberate. Write-safety
+ * rules for later phases live in the write tools, not on the adapter.
+ */
 import type { SubjectAdapter } from "../types.js";
 import { ContextNotSetError, listAvailableContexts, sessionState } from "../context/index.js";
 import { buildCiMathsAdapter } from "./ci-maths.js";

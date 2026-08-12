@@ -1,18 +1,21 @@
-// ── Reading content-layer migration (graph-native authoring, Scope A) ────────
-// CE1 reading, maths-parallel and LOSSLESS. Reads sources/ce1/reading/
-// knowledge_graph.json and gives it a content layer, in the graph's existing
-// serialization (snake_case, hasChild/supports labels):
-//   1. Each `week` (role "week") is converted IN PLACE to a content
-//      `LessonGrouping` (labels → ["LessonGrouping"]), group_name "Semaine".
-//   2. Per language-tool standard directly under a week (the six "outils de
-//      langue"), mint a content `Lesson`, RE-POINT the week→standard hasChild
-//      edge onto the Lesson, and add `Lesson --supports--> standard`.
-//   3. The standard stays on the spine with its components untouched.
-// Reads stay byte-identical: buildSlice walks week→Lesson→(supports)→standard
-// and emits the same languageToolStandards shape.
-//
-// Re-runnable: bails (no-op) if the graph already has Lesson-labelled nodes.
-// Run: node scripts/migrate-reading-graph.mjs   (add --dry to preview counts).
+/*
+ * Reading content-layer migration (graph-native authoring, Scope A)
+ *
+ * CE1 reading, maths-parallel and LOSSLESS. Reads sources/ce1/reading/
+ * knowledge_graph.json and gives it a content layer, in the graph's existing
+ * serialization (snake_case, hasChild/supports labels):
+ *   1. Each `week` (role "week") is converted IN PLACE to a content
+ *      `LessonGrouping` (labels → ["LessonGrouping"]), group_name "Semaine".
+ *   2. Per language-tool standard directly under a week (the six "outils de
+ *      langue"), mint a content `Lesson`, RE-POINT the week→standard hasChild
+ *      edge onto the Lesson, and add `Lesson --supports--> standard`.
+ *   3. The standard stays on the spine with its components untouched.
+ * Reads stay byte-identical: buildSlice walks week→Lesson→(supports)→standard
+ * and emits the same languageToolStandards shape.
+ *
+ * Re-runnable: bails (no-op) if the graph already has Lesson-labelled nodes.
+ * Run: node scripts/migrate-reading-graph.mjs   (add --dry to preview counts).
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

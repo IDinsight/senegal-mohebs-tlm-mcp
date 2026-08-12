@@ -1,43 +1,46 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// The four structural mutation primitives — the raw verbs a curator uses to
-// grow, connect, disconnect, and prune the graph. Each is a single #5
-// GraphMutation with its own validate hook. All four run through the same
-// framework as upsert_property: two-phase confirm envelope, #6's structural
-// rules on the proposed result, #7's audit, #8's role gate.
-//
-// Deliberately conservative:
-//   • create_node MINTS the id server-side (never caller-supplied) so
-//     Rule 1's rename check has a stable identity anchor.
-//   • link_nodes / unlink_nodes / delete_node work over existing ids;
-//     Rule 2 blocks a delete_node that would leave dangling edges, so the
-//     caller's flow for a connected node is "unlink first, then delete."
-//     No cascade — that's #14.
-//   • Composite / recipe operations (add-lesson-grouping, split-lesson-grouping) are #13.
-//   • Editing STRUCTURAL properties of existing nodes (renumber, code
-//     change) is a separate future step. create_node sets properties at
-//     birth; upsert_property stays wording-only.
-//
-// Validation beyond #6's two rules is deliberately minimal because there is
-// no schema layer in this codebase. See Step 0 findings: LC's own
-// domain/range isn't machine-readable in the stored graph (the raw file
-// lists schema entity NAMES only; the adapter's parse() drops the LC
-// labels and replaces them with internal kinds like "chapter"/"lesson").
-// The extra checks we add here observe the CURRENT graph's vocabulary:
-//   • create_node's `kind` must be a kind already present in the graph.
-//     Introducing an unheard-of kind would be an obvious typo / mistake
-//     that Rule 2 wouldn't catch on its own, so we block early. To
-//     genuinely introduce a new kind, a future step would add a schema
-//     hook to the adapter.
-//   • link_nodes's `edgeType` must be an edge type already present.
-//     Rejects "hasLesson" / "supports" / other invented type strings.
-//     Does NOT enforce domain/range (e.g. hasChild(task→chapter) passes
-//     these checks even though it's semantically nonsense) — that judgment
-//     is deferred to human review at publish, as the task specifies.
-//
-// The "known kind / known edge type" set is derived from `base` (the draft
-// state the mutation is being applied on top of), so a create_node followed
-// by a link_nodes to that new node's kind works — the new node's kind is
-// present in the base of the second mutation.
+/*
+ * Module: kg-store · internal
+ *
+ * The four structural mutation primitives — the raw verbs a curator uses to
+ * grow, connect, disconnect, and prune the graph. Each is a single #5
+ * GraphMutation with its own validate hook. All four run through the same
+ * framework as upsert_property: two-phase confirm envelope, #6's structural
+ * rules on the proposed result, #7's audit, #8's role gate.
+ *
+ * Deliberately conservative:
+ *   • create_node MINTS the id server-side (never caller-supplied) so
+ *     Rule 1's rename check has a stable identity anchor.
+ *   • link_nodes / unlink_nodes / delete_node work over existing ids;
+ *     Rule 2 blocks a delete_node that would leave dangling edges, so the
+ *     caller's flow for a connected node is "unlink first, then delete."
+ *     No cascade — that's #14.
+ *   • Composite / recipe operations (add-lesson-grouping, split-lesson-grouping) are #13.
+ *   • Editing STRUCTURAL properties of existing nodes (renumber, code
+ *     change) is a separate future step. create_node sets properties at
+ *     birth; upsert_property stays wording-only.
+ *
+ * Validation beyond #6's two rules is deliberately minimal because there is
+ * no schema layer in this codebase. See Step 0 findings: LC's own
+ * domain/range isn't machine-readable in the stored graph (the raw file
+ * lists schema entity NAMES only; the adapter's parse() drops the LC
+ * labels and replaces them with internal kinds like "chapter"/"lesson").
+ * The extra checks we add here observe the CURRENT graph's vocabulary:
+ *   • create_node's `kind` must be a kind already present in the graph.
+ *     Introducing an unheard-of kind would be an obvious typo / mistake
+ *     that Rule 2 wouldn't catch on its own, so we block early. To
+ *     genuinely introduce a new kind, a future step would add a schema
+ *     hook to the adapter.
+ *   • link_nodes's `edgeType` must be an edge type already present.
+ *     Rejects "hasLesson" / "supports" / other invented type strings.
+ *     Does NOT enforce domain/range (e.g. hasChild(task→chapter) passes
+ *     these checks even though it's semantically nonsense) — that judgment
+ *     is deferred to human review at publish, as the task specifies.
+ *
+ * The "known kind / known edge type" set is derived from `base` (the draft
+ * state the mutation is being applied on top of), so a create_node followed
+ * by a link_nodes to that new node's kind works — the new node's kind is
+ * present in the base of the second mutation.
+ */
 
 import { randomUUID } from "node:crypto";
 import { edgeId } from "./types.js";

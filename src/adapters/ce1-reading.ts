@@ -1,11 +1,14 @@
-// ── Module: adapters · CE1 reading ────────────────────────────────────────────
-// The single per-subject adapter module for CE1 reading. Behavior only. The
-// source graph is the converged `{ nodes, relationships }` envelope with the LC
-// metadata scheme, cleaned in Phase 1 (twin weeks deduped; palier + genre baked
-// onto each week under metadata). Parsing is delegated to the shared generic
-// `parseGraph`; this module supplies only the descriptor and the read-time
-// projection. A "unit" is a WEEK (semaine); its slice is the week's six
-// language-tool standards (the "outils de langue") with their components.
+/*
+ * Module: adapters · CE1 reading
+ *
+ * The single per-subject adapter module for CE1 reading. Behavior only. The
+ * source graph is the converged `{ nodes, relationships }` envelope with the LC
+ * metadata scheme, cleaned in Phase 1 (twin weeks deduped; palier + genre baked
+ * onto each week under metadata). Parsing is delegated to the shared generic
+ * `parseGraph`; this module supplies only the descriptor and the read-time
+ * projection. A "unit" is a WEEK (semaine); its slice is the week's six
+ * language-tool standards (the "outils de langue") with their components.
+ */
 import { readFileSync } from "node:fs";
 import { CONFIG, kgSource } from "../config.js";
 import { sourcePath, sessionState } from "../context/index.js";

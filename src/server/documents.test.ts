@@ -1,8 +1,11 @@
-// ── list_documents pagination — pageDocuments() paging contract ──────────────
-// pageDocuments is the pure paging over the already-(unit asc, type asc)-sorted
-// history. These tests pin the limit + opaque-cursor contract without standing up
-// storage: default/clamped limits, walking pages via nextCursor with no overlap or
-// gaps, a null nextCursor on the final page, and a rejected bad cursor.
+/*
+ * list_documents pagination — pageDocuments() paging contract
+ *
+ * pageDocuments is the pure paging over the already-(unit asc, type asc)-sorted
+ * history. These tests pin the limit + opaque-cursor contract without standing up
+ * storage: default/clamped limits, walking pages via nextCursor with no overlap or
+ * gaps, a null nextCursor on the final page, and a rejected bad cursor.
+ */
 import { describe, it, expect } from "vitest";
 import { pageDocuments } from "./documents.js";
 import type { HistoryEntry } from "../types.js";

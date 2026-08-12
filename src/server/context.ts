@@ -1,6 +1,9 @@
-// ── Module: server · tool group: teaching context ────────────────────────────
-// Choosing the active grade/subject. These are the only tools that work with no
-// context set (they're how you set it), so they are not wrapped in guarded().
+/*
+ * Module: server · tool group: teaching context
+ *
+ * Choosing the active grade/subject. These are the only tools that work with no
+ * context set (they're how you set it), so they are not wrapped in guarded().
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson } from "./shared.js";

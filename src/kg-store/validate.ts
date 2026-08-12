@@ -1,35 +1,38 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// Two structural rules the framework applies to every graph mutation before
-// the human review gate. They protect against the two errors a reviewer
-// cannot eyeball:
-//
-//   Rule 1 (id-immutable): node/edge ids never silently change. Ids are the
-//     LC IRI (nodes) and edgeId(type, from, to) (edges) — every edge points
-//     at node ids, so a silent rename orphans everything.
-//   Rule 2 (no-orphan): every edge points at nodes that exist. No dangling
-//     references after the edit.
-//
-// Everything else — is the title good, is the wording right, does this
-// number make sense — is the reviewer's job when they look at the diff.
-// We deliberately don't check content values.
-//
-// Rule 1's reference — the "source of truth for identity" to compare `after`
-// against — is PUBLISHED, not "the draft state right before this mutation."
-// That matters: a disguised rename doesn't have to happen inside a single
-// mutation. Delete X in one mutation, then create-a-new-id with X's content
-// in a following mutation on the same draft, and the per-mutation view sees
-// only a lone delete and a lone create — nothing to pair up. Comparing
-// against PUBLISHED catches this: across the whole open draft, if a
-// currently-published id is missing from `after` and there's an added-in-
-// `after` id whose content matches, that pair is a rename attempt. Rule 2
-// still only inspects `after` — self-consistency, no reference needed.
-//
-// Load-bearing status:
-//   - Rule 1 fires today (any mutation that renames a node/edge is blocked)
-//     and, with the published-reference framing, catches cross-mutation
-//     disguised renames as soon as #12 lands the create/delete verbs.
-//   - Rule 2 was trivially satisfied while only wording edits existed; it
-//     becomes load-bearing with #12's delete/link/unlink primitives.
+/*
+ * Module: kg-store · internal
+ *
+ * Two structural rules the framework applies to every graph mutation before
+ * the human review gate. They protect against the two errors a reviewer
+ * cannot eyeball:
+ *
+ *   Rule 1 (id-immutable): node/edge ids never silently change. Ids are the
+ *     LC IRI (nodes) and edgeId(type, from, to) (edges) — every edge points
+ *     at node ids, so a silent rename orphans everything.
+ *   Rule 2 (no-orphan): every edge points at nodes that exist. No dangling
+ *     references after the edit.
+ *
+ * Everything else — is the title good, is the wording right, does this
+ * number make sense — is the reviewer's job when they look at the diff.
+ * We deliberately don't check content values.
+ *
+ * Rule 1's reference — the "source of truth for identity" to compare `after`
+ * against — is PUBLISHED, not "the draft state right before this mutation."
+ * That matters: a disguised rename doesn't have to happen inside a single
+ * mutation. Delete X in one mutation, then create-a-new-id with X's content
+ * in a following mutation on the same draft, and the per-mutation view sees
+ * only a lone delete and a lone create — nothing to pair up. Comparing
+ * against PUBLISHED catches this: across the whole open draft, if a
+ * currently-published id is missing from `after` and there's an added-in-
+ * `after` id whose content matches, that pair is a rename attempt. Rule 2
+ * still only inspects `after` — self-consistency, no reference needed.
+ *
+ * Load-bearing status:
+ *   - Rule 1 fires today (any mutation that renames a node/edge is blocked)
+ *     and, with the published-reference framing, catches cross-mutation
+ *     disguised renames as soon as #12 lands the create/delete verbs.
+ *   - Rule 2 was trivially satisfied while only wording edits existed; it
+ *     becomes load-bearing with #12's delete/link/unlink primitives.
+ */
 
 import type { MutationEdge, MutationGraph, MutationNode, ValidationResult } from "./types.js";
 

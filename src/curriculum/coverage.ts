@@ -1,25 +1,28 @@
-// ── Module: curriculum · internal ────────────────────────────────────────────
-// Subject-NEUTRAL coverage helpers (#13). These compute structural-completeness
-// WARNINGS that any adapter can reuse by naming its own kinds — they carry no
-// subject vocabulary of their own. Subject-SPECIFIC rules (a CI maths chapter's
-// bilan, or its chapter-parent-scoped multi-parent rule) live in the adapter, not here.
-//
-// Why these two shapes are generic: they're properties of a `hasChild` tree,
-// which every subject's graph is, regardless of what the levels are called.
-//   • emptyContainerWarnings — a node that is expected to have children but
-//     has none. "Expected to" is the caller's call (it passes the kinds).
-//   • multiParentWarnings — a node with more than one `hasChild` parent. In a
-//     tree every node has at most one parent; two is almost always a mistake.
-//
-// All of these are WARNINGS. They never block — a curator may legitimately be
-// mid-edit (a freshly created chapter with no lessons yet is valid-but-suspect,
-// not corrupt). Referential CORRUPTION (a dangling edge) is caught earlier and
-// separately, as an ERROR, by validateStructural.
-//
-// Operates directly on the raw {nodes, edges} view rather than the deserialized
-// CurriculumModel, because multi-parent detection needs every `hasChild` edge
-// (the model collapses a node's parent to a single value and would hide a
-// second parent).
+/*
+ * Module: curriculum · internal
+ *
+ * Subject-NEUTRAL coverage helpers (#13). These compute structural-completeness
+ * WARNINGS that any adapter can reuse by naming its own kinds — they carry no
+ * subject vocabulary of their own. Subject-SPECIFIC rules (a CI maths chapter's
+ * bilan, or its chapter-parent-scoped multi-parent rule) live in the adapter, not here.
+ *
+ * Why these two shapes are generic: they're properties of a `hasChild` tree,
+ * which every subject's graph is, regardless of what the levels are called.
+ *   • emptyContainerWarnings — a node that is expected to have children but
+ *     has none. "Expected to" is the caller's call (it passes the kinds).
+ *   • multiParentWarnings — a node with more than one `hasChild` parent. In a
+ *     tree every node has at most one parent; two is almost always a mistake.
+ *
+ * All of these are WARNINGS. They never block — a curator may legitimately be
+ * mid-edit (a freshly created chapter with no lessons yet is valid-but-suspect,
+ * not corrupt). Referential CORRUPTION (a dangling edge) is caught earlier and
+ * separately, as an ERROR, by validateStructural.
+ *
+ * Operates directly on the raw {nodes, edges} view rather than the deserialized
+ * CurriculumModel, because multi-parent detection needs every `hasChild` edge
+ * (the model collapses a node's parent to a single value and would hide a
+ * second parent).
+ */
 
 import type { GraphView } from "../types.js";
 

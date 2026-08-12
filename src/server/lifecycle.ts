@@ -1,20 +1,23 @@
-// ── Module: server · tool group: draft lifecycle + upsert_property ──────────
-// The curator loop, exposed as MCP tools:
-//
-//   diff_draft       — read-only. Whole-draft diff vs published. Curator +
-//                      approver only; unknown/no-role blocked.
-//   upsert_property  — curator writes wording. Runs through #5's confirm
-//                      framework (per-mutation diff + token) unchanged; the
-//                      adapter's wordingAliases resolve the logical key to
-//                      concrete storage paths.
-//   publish_draft    — approver only. Two-phase (dry-run whole-draft diff +
-//                      draft-level token → confirm promotes atomically).
-//   discard_draft    — curator or approver. Two-phase.
-//
-// All four use the active grade/subject via getActiveAdapter() (same
-// convention as list_units, get_curriculum, etc.) — no explicit namespace
-// arg. authorize() runs inside each underlying function, so denials never
-// leak the diff and never issue tokens.
+/*
+ * Module: server · tool group: draft lifecycle + upsert_property
+ *
+ * The curator loop, exposed as MCP tools:
+ *
+ *   diff_draft       — read-only. Whole-draft diff vs published. Curator +
+ *                      approver only; unknown/no-role blocked.
+ *   upsert_property  — curator writes wording. Runs through #5's confirm
+ *                      framework (per-mutation diff + token) unchanged; the
+ *                      adapter's wordingAliases resolve the logical key to
+ *                      concrete storage paths.
+ *   publish_draft    — approver only. Two-phase (dry-run whole-draft diff +
+ *                      draft-level token → confirm promotes atomically).
+ *   discard_draft    — curator or approver. Two-phase.
+ *
+ * All four use the active grade/subject via getActiveAdapter() (same
+ * convention as list_units, get_curriculum, etc.) — no explicit namespace
+ * arg. authorize() runs inside each underlying function, so denials never
+ * leak the diff and never issue tokens.
+ */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";

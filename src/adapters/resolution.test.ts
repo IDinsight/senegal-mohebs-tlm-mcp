@@ -1,13 +1,16 @@
-// ── Resolution-mapping test ──────────────────────────────────────────────────
-// The task requires the (grade, subject) → adapter registry to permit
-// many-to-one — two different (grade, subject) pairs pointing at one adapter
-// builder — even if that isn't the case for any subject shipped today.
-//
-// The check uses `__registerAdapterForTest` to attach the SAME builder under
-// two synthetic keys, then asserts both resolve to adapters whose builder
-// output shares the same adapter id and deliverables. We deliberately do NOT
-// register these keys as part of listAvailableContexts (there are no source
-// folders for them) — the resolution mapping is source-independent by design.
+/*
+ * Resolution-mapping test
+ *
+ * The task requires the (grade, subject) → adapter registry to permit
+ * many-to-one — two different (grade, subject) pairs pointing at one adapter
+ * builder — even if that isn't the case for any subject shipped today.
+ *
+ * The check uses `__registerAdapterForTest` to attach the SAME builder under
+ * two synthetic keys, then asserts both resolve to adapters whose builder
+ * output shares the same adapter id and deliverables. We deliberately do NOT
+ * register these keys as part of listAvailableContexts (there are no source
+ * folders for them) — the resolution mapping is source-independent by design.
+ */
 import { describe, it, expect, afterEach } from "vitest";
 import { resolveAdapter, __registerAdapterForTest } from "./index.js";
 import { buildCiMathsAdapter } from "./ci-maths.js";

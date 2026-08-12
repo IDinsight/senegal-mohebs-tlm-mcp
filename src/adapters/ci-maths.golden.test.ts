@@ -1,15 +1,18 @@
-// ── Golden-snapshot acceptance gate — CI-maths read projections ──────────────
-// The graph-native-authoring migration (docs/design-notes/graph-native-authoring.md)
-// restructures BOTH the source graph and the parse/read path (split
-// lesson↔expectation, chapter→LessonGrouping, etc.). This test freezes the
-// deterministic read projections the generation layer consumes — listUnits,
-// slice, progression, requiredCoverage, scopeValues — so the migration can prove
-// it kept them byte-identical (its acceptance test). Non-deterministic pieces
-// (exampleDomains, established characters) are deliberately out of scope: they
-// live in buildGenerationContext, not here.
-//
-// The golden fixture is committed. Regenerate it ONLY when a change to the read
-// projections is intended, with:  UPDATE_GOLDEN=1 npx vitest run src/adapters/ci-maths.golden.test.ts
+/*
+ * Golden-snapshot acceptance gate — CI-maths read projections
+ *
+ * The graph-native-authoring migration (docs/design-notes/graph-native-authoring.md)
+ * restructures BOTH the source graph and the parse/read path (split
+ * lesson↔expectation, chapter→LessonGrouping, etc.). This test freezes the
+ * deterministic read projections the generation layer consumes — listUnits,
+ * slice, progression, requiredCoverage, scopeValues — so the migration can prove
+ * it kept them byte-identical (its acceptance test). Non-deterministic pieces
+ * (exampleDomains, established characters) are deliberately out of scope: they
+ * live in buildGenerationContext, not here.
+ *
+ * The golden fixture is committed. Regenerate it ONLY when a change to the read
+ * projections is intended, with:  UPDATE_GOLDEN=1 npx vitest run src/adapters/ci-maths.golden.test.ts
+ */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

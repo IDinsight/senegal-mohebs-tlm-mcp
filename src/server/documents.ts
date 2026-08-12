@@ -1,7 +1,10 @@
-// ── Module: server · tool group: documents & history (bucket) ────────────────
-// Reconcile, list, signed upload/download URLs, text extraction, and recording
-// what was generated or ingested. "unit"/"deliverable" are the tool-facing names;
-// they map to the internal history schema's unit/type at the boundary below.
+/*
+ * Module: server · tool group: documents & history (bucket)
+ *
+ * Reconcile, list, signed upload/download URLs, text extraction, and recording
+ * what was generated or ingested. "unit"/"deliverable" are the tool-facing names;
+ * they map to the internal history schema's unit/type at the boundary below.
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded, badDeliverable, requireConfirmation } from "./shared.js";

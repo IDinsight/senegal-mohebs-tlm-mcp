@@ -1,13 +1,16 @@
-// ── CE1 reading — content layer via the GENERIC verbs, end to end ────────────
-// Drives add_node / set_content through the two-phase framework on the REAL
-// reading seed, then proves the read projection (buildSlice, via
-// buildGenerationContext) surfaces the authored content. The verbs carry no
-// subject vocabulary: `add_node` with an LC `label` derives the node's identity
-// from the graph (or canonical LC defaults for reading's first Activity).
-//
-// The invariant under test: what a curator stages is what a draft read shows —
-// an Activity under a session Lesson (hasPart), its Material carrying the
-// scripted content (raw.content), and both reachable from the week's slice.
+/*
+ * CE1 reading — content layer via the GENERIC verbs, end to end
+ *
+ * Drives add_node / set_content through the two-phase framework on the REAL
+ * reading seed, then proves the read projection (buildSlice, via
+ * buildGenerationContext) surfaces the authored content. The verbs carry no
+ * subject vocabulary: `add_node` with an LC `label` derives the node's identity
+ * from the graph (or canonical LC defaults for reading's first Activity).
+ *
+ * The invariant under test: what a curator stages is what a draft read shows —
+ * an Activity under a session Lesson (hasPart), its Material carrying the
+ * scripted content (raw.content), and both reachable from the week's slice.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";

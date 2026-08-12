@@ -1,8 +1,11 @@
-// ── Module: server · tool group: generation (subject-agnostic) ───────────────
-// What an agent loads right before generating, delegated to the active adapter:
-// the deliverable's prompt and the composite generation context. Subject-
-// specific generation tools (e.g. CI CI maths example-domain variety) live in
-// server/ci-maths.ts.
+/*
+ * Module: server · tool group: generation (subject-agnostic)
+ *
+ * What an agent loads right before generating, delegated to the active adapter:
+ * the deliverable's prompt and the composite generation context. Subject-
+ * specific generation tools (e.g. CI CI maths example-domain variety) live in
+ * server/ci-maths.ts.
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { readFileSync } from "node:fs";

@@ -1,26 +1,29 @@
-// ── Module: server · tool group: preview generation (draft-resolved) ─────────
-// Closes the editing loop: the #5 dry-run shows the DIFF a staged edit makes to
-// the graph; preview_generation shows the RESULT — the teaching material that
-// same edit would yield — by resolving the curriculum from the DRAFT slot
-// instead of published, and running the SAME generation flow on it.
-//
-// ISOLATION is the whole point. A preview:
-//   • reads the DRAFT (unpublished) — it does NOT mutate the graph;
-//   • NEVER reads or writes published;
-//   • its .docx output goes to a SEGREGATED previews/ prefix (not the canonical
-//     documents/ bucket), via short-lived, clearly-labelled signed URLs, and is
-//     NEVER recorded through log_generation / list_documents / history;
-//   • is role-gated to the same trust tier as diff_draft (curator + approver;
-//     unknown/no-role blocked + audited), because a draft is pre-publish WIP.
-//
-// What is REUSED (not rebuilt): the exact draft slot diff_draft reads (pointer
-// .draftSlot → listNodes/listEdges), the store-bridge deserializeToModel (#3),
-// and the subject adapter's own buildGenerationContext — which now accepts a
-// pre-resolved model so the published read path stays byte-identical.
-//
-// The tool bodies delegate to the exported cores below (previewGeneration /
-// createPreviewUploadUrl) so tests can drive the real logic directly, the same
-// way capabilities.ts exposes buildCapabilitiesReport.
+/*
+ * Module: server · tool group: preview generation (draft-resolved)
+ *
+ * Closes the editing loop: the #5 dry-run shows the DIFF a staged edit makes to
+ * the graph; preview_generation shows the RESULT — the teaching material that
+ * same edit would yield — by resolving the curriculum from the DRAFT slot
+ * instead of published, and running the SAME generation flow on it.
+ *
+ * ISOLATION is the whole point. A preview:
+ *   • reads the DRAFT (unpublished) — it does NOT mutate the graph;
+ *   • NEVER reads or writes published;
+ *   • its .docx output goes to a SEGREGATED previews/ prefix (not the canonical
+ *     documents/ bucket), via short-lived, clearly-labelled signed URLs, and is
+ *     NEVER recorded through log_generation / list_documents / history;
+ *   • is role-gated to the same trust tier as diff_draft (curator + approver;
+ *     unknown/no-role blocked + audited), because a draft is pre-publish WIP.
+ *
+ * What is REUSED (not rebuilt): the exact draft slot diff_draft reads (pointer
+ * .draftSlot → listNodes/listEdges), the store-bridge deserializeToModel (#3),
+ * and the subject adapter's own buildGenerationContext — which now accepts a
+ * pre-resolved model so the published read path stays byte-identical.
+ *
+ * The tool bodies delegate to the exported cores below (previewGeneration /
+ * createPreviewUploadUrl) so tests can drive the real logic directly, the same
+ * way capabilities.ts exposes buildCapabilitiesReport.
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";

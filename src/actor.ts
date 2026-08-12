@@ -1,14 +1,17 @@
-// ── Module: actor (leaf) ─────────────────────────────────────────────────────
-// Request-scoped identity of the caller. Populated ONLY by the HTTP entry from
-// the verified auth layer (Supabase JWT → `req.auth.extra`), and read by tool
-// handlers via `currentActor()`. Tool arguments, request bodies, and custom
-// headers are never trusted for identity — the whole surface for setting the
-// actor is `resolveActor(auth)` below, so a later change (e.g. flipping the
-// unknown-actor policy or adding roles) happens in one place.
-//
-// This is step 1 of a larger roadmap (curator/approver roles, audit log,
-// draft/published split). Everything downstream will build on this — do not
-// add spoofable inputs here.
+/*
+ * Module: actor (leaf)
+ *
+ * Request-scoped identity of the caller. Populated ONLY by the HTTP entry from
+ * the verified auth layer (Supabase JWT → `req.auth.extra`), and read by tool
+ * handlers via `currentActor()`. Tool arguments, request bodies, and custom
+ * headers are never trusted for identity — the whole surface for setting the
+ * actor is `resolveActor(auth)` below, so a later change (e.g. flipping the
+ * unknown-actor policy or adding roles) happens in one place.
+ *
+ * This is step 1 of a larger roadmap (curator/approver roles, audit log,
+ * draft/published split). Everything downstream will build on this — do not
+ * add spoofable inputs here.
+ */
 import { AsyncLocalStorage } from "node:async_hooks";
 
 /**
