@@ -37,9 +37,15 @@ type RecipeBinding = {
   lcNodeTemplate?: LcNodeTemplate;
   coverage: (g: MutationGraph) => string[];
 };
-function bindRecipes(adapter: SubjectAdapter): RecipeBinding | { unavailable: string } {
+function bindRecipes(adapter: SubjectAdapter, recipeName: string): RecipeBinding | { unavailable: string } {
   if (!adapter.recipeProfile || !adapter.structuralAliases) {
     return { unavailable: `Curriculum recipes are not available for ${adapter.grade}/${adapter.subject} — this subject's adapter declares no recipeProfile. Use the raw structural verbs (create_node/link_nodes/…) instead.` };
+  }
+  // Per-recipe availability: a subject may opt into a subset (e.g. CE1 reading
+  // enables the content recipes but not week-level split/renumber). An absent
+  // allowlist means the whole family is available (CI maths).
+  if (adapter.availableRecipes && !adapter.availableRecipes.includes(recipeName)) {
+    return { unavailable: `The '${recipeName}' recipe is not available for ${adapter.grade}/${adapter.subject}. Available recipes: ${adapter.availableRecipes.join(", ") || "(none)"}.` };
   }
   return {
     namespace: kgNamespace(adapter.grade, adapter.subject),
@@ -81,7 +87,7 @@ export function registerRecipeTools(server: McpServer) {
       },
     },
     guarded(async (a: { groupingId: string; expectationId: string; text: string; text_en?: string; order?: number; isBilan?: boolean; mintedLessonId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter());
+      const bind = bindRecipes(getActiveAdapter(), "add_lesson");
       if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
       const lessonId = a.confirm ? (a.mintedLessonId ?? "") : mintNodeId();
       const result = await runGraphMutation({
@@ -114,7 +120,7 @@ export function registerRecipeTools(server: McpServer) {
       },
     },
     guarded(async (a: { number: number; title: string; title_en?: string; groupName?: string; mintedGroupingId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter());
+      const bind = bindRecipes(getActiveAdapter(), "add_lesson_grouping");
       if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
       const groupingId = a.confirm ? (a.mintedGroupingId ?? "") : mintNodeId();
       const result = await runGraphMutation({
@@ -145,7 +151,7 @@ export function registerRecipeTools(server: McpServer) {
       },
     },
     guarded(async (a: { lessonId: string; toGroupingId: string; position?: number; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter());
+      const bind = bindRecipes(getActiveAdapter(), "move_lesson");
       if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
       const result = await runGraphMutation({
         namespace: bind.namespace,
@@ -178,7 +184,7 @@ export function registerRecipeTools(server: McpServer) {
       },
     },
     guarded(async (a: { groupingId: string; atLessonId: string; newTitle?: string; newTitle_en?: string; newNumber?: number; mintedGroupingId?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter());
+      const bind = bindRecipes(getActiveAdapter(), "split_lesson_grouping");
       if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
       const newGroupingId = a.confirm ? (a.mintedGroupingId ?? "") : mintNodeId();
       const result = await runGraphMutation({
@@ -208,7 +214,7 @@ export function registerRecipeTools(server: McpServer) {
       },
     },
     guarded(async (a: { groupingId: string; newNumber: number; confirm?: boolean; confirmationToken?: string }) => {
-      const bind = bindRecipes(getActiveAdapter());
+      const bind = bindRecipes(getActiveAdapter(), "renumber");
       if ("unavailable" in bind) return asJson({ phase: "blocked", kind: "graphMutation", errors: [bind.unavailable], warnings: [] });
       const result = await runGraphMutation({
         namespace: bind.namespace,

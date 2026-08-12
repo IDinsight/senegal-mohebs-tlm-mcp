@@ -54,8 +54,8 @@ const sessionMeta = (u: CurriculumUnit): SessionMeta => (u.properties.metadata a
 // separate non-numeric "1 à 8" grouping.
 const READING_PARSE: GraphParseDescriptor = {
   roleToKind: { week: "week", expectation: "expectation" },
-  labelToKind: { Lesson: "lesson", LearningComponent: "component" },
-  numberFrom: "description", // week number is a bare-number description
+  labelToKind: { Lesson: "lesson", LearningComponent: "component", Activity: "activity", Material: "material" },
+  numberFrom: "position", // canonical LC: week number is the grouping's `position`
   // Spine-scope. Keep the weeks (groupings), their session lessons, every
   // expectation those sessions support (all nine teachable types now, not just
   // the six language tools), and their components; drop the rest (orphans). This
@@ -203,6 +203,35 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     wordingAliases: {
       standard: { text: ["text", "raw.description"] },
       component: { text: ["text", "raw.description"] },
+    },
+
+    // ── Recipe surface (Scope C) ──────────────────────────────────────────────
+    // Reading opts into ONLY the recipes that fit its structure (see
+    // `availableRecipes`): the content recipes and session reordering — NOT
+    // week-level split/renumber (weeks are the fixed 1–25 timetable). A session
+    // `Lesson` sits under its week via `hasPart` and aligns to the standard it
+    // teaches via `hasEducationalAlignment`; Scope C adds `Activity`/`Material`
+    // under a lesson.
+    recipeProfile: {
+      chapterKind: "week",
+      lessonKind: "lesson",
+      containerEdge: "hasPart",
+      assessmentProperty: "isAssessment",
+      expectationKind: "expectation",
+      alignmentEdge: "hasEducationalAlignment",
+      activityKind: "activity",
+      materialKind: "material",
+    },
+    availableRecipes: ["move_lesson"], // add_activity / add_material land next
+    structuralAliases: {
+      week: { number: ["order", "raw.position"] },
+      lesson: { position: ["order", "raw.position"] },
+    },
+    lcNodeTemplate: {
+      week: { labels: ["LessonGrouping"], role: "week", normalizedType: "Lesson Grouping", normalizedStatementType: "Standard Grouping" },
+      lesson: { labels: ["Lesson"], normalizedType: "Lesson" },
+      activity: { labels: ["Activity"], normalizedType: "Activity" },
+      material: { labels: ["Material"], normalizedType: "Material" },
     },
 
     // Coverage warnings (#13) — reading uses the subject-neutral shapes only. A
