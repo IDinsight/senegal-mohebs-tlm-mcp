@@ -1,15 +1,18 @@
-// ── Module: curriculum · internal ────────────────────────────────────────────
-// Generic, descriptor-driven parser: the shared skeleton that turns a
-// `{ nodes, relationships }` graph (the converged CE1-reading / CI-maths
-// envelope with the LC metadata scheme) into a CurriculumModel. All
-// subject-specific knowledge is injected via a GraphParseDescriptor, so ONE
-// traversal serves every subject on this envelope. Adapters own the descriptor
-// values (which role is a week/chapter/leaf, where the number lives, which edge
-// types matter, plus an optional post-parse hook); this module owns the walk.
-//
-// Layering: adapters (above) call this; it uses curriculum/model (below). It is
-// the single place that reads raw node/edge shape generically — the per-subject
-// raw quirks that don't fit the descriptor ride in `postParse`.
+/*
+ * Module: curriculum · internal
+ *
+ * Generic, descriptor-driven parser: the shared skeleton that turns a
+ * `{ nodes, relationships }` graph (the converged CE1-reading / CI-maths
+ * envelope with the LC metadata scheme) into a CurriculumModel. All
+ * subject-specific knowledge is injected via a GraphParseDescriptor, so ONE
+ * traversal serves every subject on this envelope. Adapters own the descriptor
+ * values (which role is a week/chapter/leaf, where the number lives, which edge
+ * types matter, plus an optional post-parse hook); this module owns the walk.
+ *
+ * Layering: adapters (above) call this; it uses curriculum/model (below). It is
+ * the single place that reads raw node/edge shape generically — the per-subject
+ * raw quirks that don't fit the descriptor ride in `postParse`.
+ */
 import { buildModel, unit } from "./model.js";
 import type { CurriculumModel, CurriculumUnit } from "../types.js";
 

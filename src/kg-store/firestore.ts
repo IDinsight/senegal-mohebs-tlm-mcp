@@ -1,18 +1,21 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// Firestore-backed KgNodeStore. Three top-level collections:
-//   kg_nodes    — {namespace, slot, id, type, properties, …}
-//   kg_edges    — {namespace, slot, id, type, from, to, properties, …}
-//   kg_pointers — one doc per namespace: {publishedSlot, draftSlot|null}
-//                 the atomic swap point for the draft/published lifecycle.
-// A per-namespace meta stamp lives on the pointer doc (one field per slot),
-// so it participates in the same transactional writes as the pointer itself.
-//
-// Doc ids are `${nsSlug}::${slot}::${id}` so slot A and slot B can hold two
-// copies of the same node id side by side without collision.
-//
-// Firebase Admin is initialised the same way `storage/firebase.ts` does it
-// (key file, key JSON, or ADC). The SDK dedupes app initialisation, so both
-// modules can call it independently without stepping on each other.
+/*
+ * Module: kg-store · internal
+ *
+ * Firestore-backed KgNodeStore. Three top-level collections:
+ *   kg_nodes    — {namespace, slot, id, type, properties, …}
+ *   kg_edges    — {namespace, slot, id, type, from, to, properties, …}
+ *   kg_pointers — one doc per namespace: {publishedSlot, draftSlot|null}
+ *                 the atomic swap point for the draft/published lifecycle.
+ * A per-namespace meta stamp lives on the pointer doc (one field per slot),
+ * so it participates in the same transactional writes as the pointer itself.
+ *
+ * Doc ids are `${nsSlug}::${slot}::${id}` so slot A and slot B can hold two
+ * copies of the same node id side by side without collision.
+ *
+ * Firebase Admin is initialised the same way `storage/firebase.ts` does it
+ * (key file, key JSON, or ADC). The SDK dedupes app initialisation, so both
+ * modules can call it independently without stepping on each other.
+ */
 import { createRequire } from "node:module";
 import { CONFIG } from "../config.js";
 import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";

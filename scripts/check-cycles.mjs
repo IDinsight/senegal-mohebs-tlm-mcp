@@ -1,22 +1,24 @@
 #!/usr/bin/env node
-// Build-time architecture check (run by `npm run build` before tsc).
-//
-// Enforces the module layering documented in src/index.ts and README:
-//
-//   app       server/* · index.ts · activate.ts · http.ts
-//   adapters  adapters/*
-//   services  storage/* · curriculum/* · generation/* · kg-store/*
-//   core      config.ts · types.ts · context/* · utils/*
-//
-// Rules:
-//   1. No import cycles anywhere.
-//   2. Imports only ever point DOWN (an importer's layer >= the importee's).
-//      In particular, service modules must never import adapters/*.
-//   3. Cross-module imports go through the target module's index.ts barrel;
-//      only files inside the same module import siblings directly.
-//      (Single-file modules — config.ts, types.ts, activate.ts — are their own barrel.)
-//
-// Exits non-zero with a readable report on any violation.
+/*
+ * Build-time architecture check (run by `npm run build` before tsc).
+ *
+ * Enforces the module layering documented in src/index.ts and README:
+ *
+ *   app       server/* · index.ts · activate.ts · http.ts
+ *   adapters  adapters/*
+ *   services  storage/* · curriculum/* · generation/* · kg-store/*
+ *   core      config.ts · types.ts · context/* · utils/*
+ *
+ * Rules:
+ *   1. No import cycles anywhere.
+ *   2. Imports only ever point DOWN (an importer's layer >= the importee's).
+ *      In particular, service modules must never import adapters/*.
+ *   3. Cross-module imports go through the target module's index.ts barrel;
+ *      only files inside the same module import siblings directly.
+ *      (Single-file modules — config.ts, types.ts, activate.ts — are their own barrel.)
+ *
+ * Exits non-zero with a readable report on any violation.
+ */
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, resolve, relative, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";

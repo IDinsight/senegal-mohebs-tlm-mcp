@@ -1,14 +1,17 @@
-// ── Module: context · state (leaf) ───────────────────────────────────────────
-// The active teaching context — which grade + subject the server is working on.
-// The choice selects (a) which local sources load and (b) which Firebase
-// namespace documents and history live under. It must be set before any source-
-// or bucket-dependent tool runs; when it isn't, requireContext() throws
-// ContextNotSetError and the server prompts the user to choose one.
-//
-// This module is a dependency-light LEAF (imports only config + utils + the
-// context/shared types). Many modules import it at init time, so it must not
-// import adapters/* or storage/* back — the adapter resolution + schema guard
-// that need those live in the app-layer activate.ts (at the repo root).
+/*
+ * Module: context · state (leaf)
+ *
+ * The active teaching context — which grade + subject the server is working on.
+ * The choice selects (a) which local sources load and (b) which Firebase
+ * namespace documents and history live under. It must be set before any source-
+ * or bucket-dependent tool runs; when it isn't, requireContext() throws
+ * ContextNotSetError and the server prompts the user to choose one.
+ *
+ * This module is a dependency-light LEAF (imports only config + utils + the
+ * context/shared types). Many modules import it at init time, so it must not
+ * import adapters/* or storage/* back — the adapter resolution + schema guard
+ * that need those live in the app-layer activate.ts (at the repo root).
+ */
 import { readdirSync, existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { CONFIG, basePrefix } from "../config.js";

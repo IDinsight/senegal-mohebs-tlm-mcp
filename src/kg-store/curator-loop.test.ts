@@ -1,23 +1,26 @@
-// ── End-to-end curator loop (#9 + #10) ───────────────────────────────────────
-// This is the milestone definition-of-done for #9 + #10 combined. One long
-// test walks the whole loop the way a real curator + approver would:
-//
-//   0. seed a fresh graph                    (given)
-//   1. curator dry-runs upsert_property      → per-mutation diff + token, no state change
-//   2. curator confirms upsert_property      → applied to draft, audited
-//   3. curator dry-runs a second edit        → per-mutation diff (this one only)
-//   4. curator confirms the second edit      → both edits now on the draft
-//   5. diff_draft (approver)                 → shows the CUMULATIVE draft vs published
-//   6. approver dry-runs publish_draft       → whole-draft diff + draft-level token
-//   7. approver confirms publish_draft       → atomic promotion, audited
-//   8. subsequent read of published          → new wording is what generation sees
-//
-// Plus the negative paths:
-//   - upsert_property on a non-wording key  → rejected (safety allowlist)
-//   - upsert_property on a missing key      → rejected (existing-key rule)
-//   - stale publish (draft moved)           → rejected via the draft-level token
-//   - curator can't publish                 → unauthorized
-//   - unknown can't diff_draft              → unauthorized
+/*
+ * End-to-end curator loop (#9 + #10)
+ *
+ * This is the milestone definition-of-done for #9 + #10 combined. One long
+ * test walks the whole loop the way a real curator + approver would:
+ *
+ *   0. seed a fresh graph                    (given)
+ *   1. curator dry-runs upsert_property      → per-mutation diff + token, no state change
+ *   2. curator confirms upsert_property      → applied to draft, audited
+ *   3. curator dry-runs a second edit        → per-mutation diff (this one only)
+ *   4. curator confirms the second edit      → both edits now on the draft
+ *   5. diff_draft (approver)                 → shows the CUMULATIVE draft vs published
+ *   6. approver dry-runs publish_draft       → whole-draft diff + draft-level token
+ *   7. approver confirms publish_draft       → atomic promotion, audited
+ *   8. subsequent read of published          → new wording is what generation sees
+ *
+ * Plus the negative paths:
+ *   - upsert_property on a non-wording key  → rejected (safety allowlist)
+ *   - upsert_property on a missing key      → rejected (existing-key rule)
+ *   - stale publish (draft moved)           → rejected via the draft-level token
+ *   - curator can't publish                 → unauthorized
+ *   - unknown can't diff_draft              → unauthorized
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

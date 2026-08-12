@@ -1,7 +1,9 @@
-// Proves ONE generic parser serves both subjects: parse each real source graph
-// with its descriptor and assert the resulting CurriculumModel has the right
-// spine shape (kinds, counts, and edge-derived parent/child links). This is the
-// 2a checkpoint — the parser is validated before any adapter is wired to it.
+/*
+ * Proves ONE generic parser serves both subjects: parse each real source graph
+ * with its descriptor and assert the resulting CurriculumModel has the right
+ * spine shape (kinds, counts, and edge-derived parent/child links). This is the
+ * 2a checkpoint — the parser is validated before any adapter is wired to it.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";

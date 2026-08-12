@@ -1,8 +1,11 @@
-// ── Typed tool-error tests (issue #3) ───────────────────────────────────────
-// `guarded` must turn a thrown error into a STRUCTURED { error: { code, message } }
-// envelope with isError set — never the bare, undifferentiated string that made
-// a store outage indistinguishable from a bad argument in live testing. Also
-// covers classifyError's store-vs-internal split and the debug-only stack.
+/*
+ * Typed tool-error tests (issue #3)
+ *
+ * `guarded` must turn a thrown error into a STRUCTURED { error: { code, message } }
+ * envelope with isError set — never the bare, undifferentiated string that made
+ * a store outage indistinguishable from a bad argument in live testing. Also
+ * covers classifyError's store-vs-internal split and the debug-only stack.
+ */
 import { describe, it, expect, afterEach } from "vitest";
 import { guarded } from "./shared.js";
 import { classifyError, CodedError } from "../utils/index.js";

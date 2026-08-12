@@ -1,25 +1,28 @@
-// ── Module: kg-store · internal ──────────────────────────────────────────────
-// Two-phase confirm framework for GRAPH mutations. A mutation is a pure
-// function over {nodes, edges}; the framework layers dry-run/confirm plumbing
-// on top so every new mutation gets:
-//   • preview → shared confirm envelope + per-mutation diff + warnings + a
-//     confirmation token; changes NO state.
-//   • confirm → token check (base version still current, nonce unused,
-//     mutation + args match the preview), lazy draft creation if needed,
-//     apply to the DRAFT slot only.
-//
-// STAKES: graph mutations STAGE a draft edit that is only visible to
-// generation after a SEPARATE publish step. This is intentionally different
-// from the document tools, which write live. The confirm envelope's `action`
-// field must carry that distinction verbatim — see envelope shape below.
-//
-// LAYERING: the framework works on the raw {nodes, edges} shape (see
-// SerializedGraph in curriculum/store-bridge.ts, mirrored here to keep
-// kg-store dependency-free). Curriculum-shaped mutations that need the
-// CurriculumModel serialize/deserialize on top of this — not inside it.
-//
-// The empty `validate` seam declared here is what #6 fills to make write-safety
-// rules block confirmation entirely (errors → no token, no confirm path).
+/*
+ * Module: kg-store · internal
+ *
+ * Two-phase confirm framework for GRAPH mutations. A mutation is a pure
+ * function over {nodes, edges}; the framework layers dry-run/confirm plumbing
+ * on top so every new mutation gets:
+ *   • preview → shared confirm envelope + per-mutation diff + warnings + a
+ *     confirmation token; changes NO state.
+ *   • confirm → token check (base version still current, nonce unused,
+ *     mutation + args match the preview), lazy draft creation if needed,
+ *     apply to the DRAFT slot only.
+ *
+ * STAKES: graph mutations STAGE a draft edit that is only visible to
+ * generation after a SEPARATE publish step. This is intentionally different
+ * from the document tools, which write live. The confirm envelope's `action`
+ * field must carry that distinction verbatim — see envelope shape below.
+ *
+ * LAYERING: the framework works on the raw {nodes, edges} shape (see
+ * SerializedGraph in curriculum/store-bridge.ts, mirrored here to keep
+ * kg-store dependency-free). Curriculum-shaped mutations that need the
+ * CurriculumModel serialize/deserialize on top of this — not inside it.
+ *
+ * The empty `validate` seam declared here is what #6 fills to make write-safety
+ * rules block confirmation entirely (errors → no token, no confirm path).
+ */
 
 import { createHash, randomBytes } from "node:crypto";
 import { getKgStore } from "./adapter.js";

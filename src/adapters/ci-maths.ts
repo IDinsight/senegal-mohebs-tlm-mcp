@@ -1,16 +1,19 @@
-// ── Module: adapters · CI maths ───────────────────────────────────────────────
-// The single per-subject adapter module for CI maths. Behavior only: no schema,
-// no LC property/edge/cardinality declarations, no integrity rules. Storage
-// round-trip lives in curriculum/store-bridge.ts and runs on the parsed
-// CurriculumModel (subject-agnostic).
-//
-// The source graph is now the CONVERGED `{ nodes, relationships }` envelope with
-// the LC metadata scheme (normalized_statement_type = container/leaf,
-// metadata.role = fine role, metadata.order = number, statement_type = category
-// on leaves, description = text/title). Parsing is delegated to the generic
-// `parseGraph`; this module only supplies the descriptor and the read-time
-// projection. The two axes — schedule (week→OS) and content (domaine→chapter→OS)
-// — are read through the edges (childrenOf), never a denormalized number.
+/*
+ * Module: adapters · CI maths
+ *
+ * The single per-subject adapter module for CI maths. Behavior only: no schema,
+ * no LC property/edge/cardinality declarations, no integrity rules. Storage
+ * round-trip lives in curriculum/store-bridge.ts and runs on the parsed
+ * CurriculumModel (subject-agnostic).
+ *
+ * The source graph is now the CONVERGED `{ nodes, relationships }` envelope with
+ * the LC metadata scheme (normalized_statement_type = container/leaf,
+ * metadata.role = fine role, metadata.order = number, statement_type = category
+ * on leaves, description = text/title). Parsing is delegated to the generic
+ * `parseGraph`; this module only supplies the descriptor and the read-time
+ * projection. The two axes — schedule (week→OS) and content (domaine→chapter→OS)
+ * — are read through the edges (childrenOf), never a denormalized number.
+ */
 import { readFileSync } from "node:fs";
 import { CONFIG, kgSource } from "../config.js";
 import { sourcePath, sessionState } from "../context/index.js";

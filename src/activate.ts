@@ -1,15 +1,18 @@
-// ── Layer: app ───────────────────────────────────────────────────────────────
-// Orchestrates switching the active teaching context: resolve the subject
-// adapter, run the schema guard for the KG source in use, then bind the
-// context and install the adapter. In KG_SOURCE=firestore mode this also
-// hydrates the parsed CurriculumModel from the store and pins it in the
-// session bag, so the (sync) adapter read methods can read from it without
-// needing to become async themselves.
-//
-// This is app-layer composition — it wires the leaf context module to the
-// adapters/ registry and the kg-store service — so it lives at the root
-// alongside index.ts rather than inside context/ (which stays a dependency-
-// light leaf).
+/*
+ * Layer: app
+ *
+ * Orchestrates switching the active teaching context: resolve the subject
+ * adapter, run the schema guard for the KG source in use, then bind the
+ * context and install the adapter. In KG_SOURCE=firestore mode this also
+ * hydrates the parsed CurriculumModel from the store and pins it in the
+ * session bag, so the (sync) adapter read methods can read from it without
+ * needing to become async themselves.
+ *
+ * This is app-layer composition — it wires the leaf context module to the
+ * adapters/ registry and the kg-store service — so it lives at the root
+ * alongside index.ts rather than inside context/ (which stays a dependency-
+ * light leaf).
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CONFIG, kgSource } from "./config.js";

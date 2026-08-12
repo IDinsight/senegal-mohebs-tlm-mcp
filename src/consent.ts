@@ -1,15 +1,18 @@
-// ── Layer: app · OAuth authorization UI ──────────────────────────────────────
-// Supabase's OAuth server delegates the login + consent screen to the
-// application: its dashboard "Authorization Path" must point at a page that
-// authenticates the user and approves/denies the authorization request via
-// supabase-js. This serves that page (framework-free, single HTML response) so
-// no separate frontend deployment is needed. It is intentionally public — the
-// user is mid-login here, so bearer auth cannot apply.
-//
-// Flow (per Supabase OAuth Server docs): the authorize endpoint redirects here
-// with ?authorization_id=…; the page signs the user in (email+password),
-// fetches the authorization details, and calls approve/deny, then follows the
-// returned redirect back to the client (e.g. Claude).
+/*
+ * Layer: app · OAuth authorization UI
+ *
+ * Supabase's OAuth server delegates the login + consent screen to the
+ * application: its dashboard "Authorization Path" must point at a page that
+ * authenticates the user and approves/denies the authorization request via
+ * supabase-js. This serves that page (framework-free, single HTML response) so
+ * no separate frontend deployment is needed. It is intentionally public — the
+ * user is mid-login here, so bearer auth cannot apply.
+ *
+ * Flow (per Supabase OAuth Server docs): the authorize endpoint redirects here
+ * with ?authorization_id=…; the page signs the user in (email+password),
+ * fetches the authorization details, and calls approve/deny, then follows the
+ * returned redirect back to the client (e.g. Claude).
+ */
 export function consentPage(supabaseUrl: string, anonKey: string): string {
   return `<!doctype html>
 <html lang="fr">

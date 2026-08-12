@@ -1,21 +1,24 @@
-// ── Layer: app · entry point (remote) ────────────────────────────────────────
-// Streamable HTTP entry for central hosting (e.g. Cloud Run): one process, many
-// MCP sessions. Each session gets its own McpServer + SessionState, and every
-// request runs inside AsyncLocalStorage (runInSession) so the whole codebase
-// sees per-session context/caches with zero call-site plumbing. Local stdio
-// mode (index.ts) is unchanged.
-//
-// Auth: this server is an OAuth 2.1 *resource server*. Supabase Auth is the
-// authorization server — we advertise it via protected-resource metadata and
-// verify its JWTs against its JWKS. No passwords or OAuth flows live here.
-//
-// Env:
-//   PORT                   listen port (default 8080)
-//   PUBLIC_URL             this server's public base URL (required with auth)
-//   SUPABASE_URL           https://<ref>.supabase.co — enables auth
-//   SUPABASE_ANON_KEY      the project's public (anon/publishable) key — used only
-//                          by the browser-side login/consent page, safe to expose
-//   ALLOW_UNAUTHENTICATED  "1" to run without auth (local testing only)
+/*
+ * Layer: app · entry point (remote)
+ *
+ * Streamable HTTP entry for central hosting (e.g. Cloud Run): one process, many
+ * MCP sessions. Each session gets its own McpServer + SessionState, and every
+ * request runs inside AsyncLocalStorage (runInSession) so the whole codebase
+ * sees per-session context/caches with zero call-site plumbing. Local stdio
+ * mode (index.ts) is unchanged.
+ *
+ * Auth: this server is an OAuth 2.1 *resource server*. Supabase Auth is the
+ * authorization server — we advertise it via protected-resource metadata and
+ * verify its JWTs against its JWKS. No passwords or OAuth flows live here.
+ *
+ * Env:
+ *   PORT                   listen port (default 8080)
+ *   PUBLIC_URL             this server's public base URL (required with auth)
+ *   SUPABASE_URL           https://<ref>.supabase.co — enables auth
+ *   SUPABASE_ANON_KEY      the project's public (anon/publishable) key — used only
+ *                          by the browser-side login/consent page, safe to expose
+ *   ALLOW_UNAUTHENTICATED  "1" to run without auth (local testing only)
+ */
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { createRemoteJWKSet, jwtVerify } from "jose";

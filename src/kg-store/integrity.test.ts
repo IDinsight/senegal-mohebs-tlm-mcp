@@ -1,17 +1,20 @@
-// ── #13 referential-integrity tests ─────────────────────────────────────────
-// The block-vs-warn split, the explicit-force cascade, and coverage warnings.
-//
-//   • BLOCK (error, no token): a delete that would dangle an edge; a link to a
-//     missing node. (Rule 2, extended coverage.)
-//   • FORCE cascade: force=false refuses a connected node; force=true removes
-//     the node + its dependent subtree + all incident edges in ONE mutation,
-//     the dry-run diff shows the FULL set, and the result is integrity-clean.
-//     Cascade never happens without explicit force.
-//   • WARN (never blocks): coverage warnings fire on dry-run AND diff_draft for
-//     the real CI maths rules (empty chapter, missing bilan, lesson >1 parent,
-//     chapitreNum drift), but the edit stays confirmable and publishable.
-//   • publish-with-warnings succeeds and records warningsAtPublish.
-//   • role matrix + audit intact; parity green; regime-B (chapitreNum) warns.
+/*
+ * #13 referential-integrity tests
+ *
+ * The block-vs-warn split, the explicit-force cascade, and coverage warnings.
+ *
+ *   • BLOCK (error, no token): a delete that would dangle an edge; a link to a
+ *     missing node. (Rule 2, extended coverage.)
+ *   • FORCE cascade: force=false refuses a connected node; force=true removes
+ *     the node + its dependent subtree + all incident edges in ONE mutation,
+ *     the dry-run diff shows the FULL set, and the result is integrity-clean.
+ *     Cascade never happens without explicit force.
+ *   • WARN (never blocks): coverage warnings fire on dry-run AND diff_draft for
+ *     the real CI maths rules (empty chapter, missing bilan, lesson >1 parent,
+ *     chapitreNum drift), but the edit stays confirmable and publishable.
+ *   • publish-with-warnings succeeds and records warningsAtPublish.
+ *   • role matrix + audit intact; parity green; regime-B (chapitreNum) warns.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

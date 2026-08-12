@@ -1,9 +1,12 @@
-// ── Module: curriculum · internal ────────────────────────────────────────────
-// Round-trip between the normalized CurriculumUnit shape (what every read tool
-// consumes) and the generic StoredNode/StoredEdge shape (what the kg-store
-// module holds). Lives here (not in kg-store/) so kg-store stays subject-
-// agnostic — it doesn't know CurriculumModel at all — and so no import cycle
-// forms between curriculum and kg-store.
+/*
+ * Module: curriculum · internal
+ *
+ * Round-trip between the normalized CurriculumUnit shape (what every read tool
+ * consumes) and the generic StoredNode/StoredEdge shape (what the kg-store
+ * module holds). Lives here (not in kg-store/) so kg-store stays subject-
+ * agnostic — it doesn't know CurriculumModel at all — and so no import cycle
+ * forms between curriculum and kg-store.
+ */
 import { buildModel, unit } from "./model.js";
 import type { CurriculumModel, CurriculumUnit, RawGraphSnapshot } from "../types.js";
 import type { StoredNode, StoredEdge } from "../kg-store/index.js";

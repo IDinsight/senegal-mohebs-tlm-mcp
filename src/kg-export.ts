@@ -1,25 +1,28 @@
-// ── Layer: app · read-only KG export ─────────────────────────────────────────
-// Backs the live KG explorer (a hosted static page). Reads the PUBLISHED slot of
-// the generic node/edge store and transforms it into the "display schema" the
-// explorer's views + modal consume. READ-ONLY and published-only: it resolves
-// the pointer's publishedSlot and never touches drafts, so a curator's in-flight
-// edit never leaks here until they publish.
-//
-// This is purely additive — it reuses the same store the MCP read/curator tools
-// use (getKgStore + readPointer/listNodes/listEdges), and reuses the same
-// namespace enumeration (listAvailableContexts × a published pointer). It does
-// NOT go through the subject adapters' presenter layer (get_curriculum), because
-// the explorer needs the WHOLE spine graph (every node + edge), not a
-// per-unit slice. It reads the same normalized store those adapters hydrate from.
-//
-// Data-scope note (see docs/design-notes/kg-explorer-findings.md): the store now holds the
-// FULL Learning-Commons graph — the curriculum spine (for CI maths
-// `domaine → chapter → lesson → component → task` via hasChild, plus
-// `chapter → chapter` buildsTowards; for CE1 reading `week → standard →
-// component`) AND the framework/derived nodes + supports/relatesTo cross-links
-// that used to be dropped at ingest. The explorer surfaces all of it: spine
-// nodes keep their category, non-spine nodes fall into the neutral `framework`
-// legend bucket, and every edge type renders.
+/*
+ * Layer: app · read-only KG export
+ *
+ * Backs the live KG explorer (a hosted static page). Reads the PUBLISHED slot of
+ * the generic node/edge store and transforms it into the "display schema" the
+ * explorer's views + modal consume. READ-ONLY and published-only: it resolves
+ * the pointer's publishedSlot and never touches drafts, so a curator's in-flight
+ * edit never leaks here until they publish.
+ *
+ * This is purely additive — it reuses the same store the MCP read/curator tools
+ * use (getKgStore + readPointer/listNodes/listEdges), and reuses the same
+ * namespace enumeration (listAvailableContexts × a published pointer). It does
+ * NOT go through the subject adapters' presenter layer (get_curriculum), because
+ * the explorer needs the WHOLE spine graph (every node + edge), not a
+ * per-unit slice. It reads the same normalized store those adapters hydrate from.
+ *
+ * Data-scope note (see docs/design-notes/kg-explorer-findings.md): the store now holds the
+ * FULL Learning-Commons graph — the curriculum spine (for CI maths
+ * `domaine → chapter → lesson → component → task` via hasChild, plus
+ * `chapter → chapter` buildsTowards; for CE1 reading `week → standard →
+ * component`) AND the framework/derived nodes + supports/relatesTo cross-links
+ * that used to be dropped at ingest. The explorer surfaces all of it: spine
+ * nodes keep their category, non-spine nodes fall into the neutral `framework`
+ * legend bucket, and every edge type renders.
+ */
 import { getKgStore, kgNamespace } from "./kg-store/index.js";
 import type { StoredNode, StoredEdge } from "./kg-store/index.js";
 import { listAvailableContexts } from "./context/index.js";

@@ -1,20 +1,23 @@
-// ── Reading: nest daily sessions under Jour 1–5 LessonGroupings ──────────────
-// Scope B put a week's 22 sessions directly under the week LessonGrouping (day as
-// a session attribute). This inserts an explicit day layer, so containment reads
-// week → Jour(1–5) LessonGrouping → session Lesson (LC lets LessonGrouping nest
-// via hasPart). Each session already carries metadata.day, so the grouping is
-// deterministic.
-//
-// For each guide week (numeric-position week LessonGrouping):
-//   1. mint 5 day LessonGroupings (Jour 1..5; role "day", groupName "Jour",
-//      position = day number), linked week --hasPart--> day.
-//   2. re-point each week --hasPart--> session onto day --hasPart--> session,
-//      keyed by the session's metadata.day.
-// Reads stay byte-identical: buildSlice gathers sessions across the day groupings
-// and sorts by session_order.
-//
-// Deterministic + re-runnable (bails if day groupings already exist).
-// Run: node scripts/migrate-reading-day-groupings.mjs  (add --dry to preview).
+/*
+ * Reading: nest daily sessions under Jour 1–5 LessonGroupings
+ *
+ * Scope B put a week's 22 sessions directly under the week LessonGrouping (day as
+ * a session attribute). This inserts an explicit day layer, so containment reads
+ * week → Jour(1–5) LessonGrouping → session Lesson (LC lets LessonGrouping nest
+ * via hasPart). Each session already carries metadata.day, so the grouping is
+ * deterministic.
+ *
+ * For each guide week (numeric-position week LessonGrouping):
+ *   1. mint 5 day LessonGroupings (Jour 1..5; role "day", groupName "Jour",
+ *      position = day number), linked week --hasPart--> day.
+ *   2. re-point each week --hasPart--> session onto day --hasPart--> session,
+ *      keyed by the session's metadata.day.
+ * Reads stay byte-identical: buildSlice gathers sessions across the day groupings
+ * and sorts by session_order.
+ *
+ * Deterministic + re-runnable (bails if day groupings already exist).
+ * Run: node scripts/migrate-reading-day-groupings.mjs  (add --dry to preview).
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

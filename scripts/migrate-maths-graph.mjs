@@ -1,24 +1,27 @@
-// ── One-shot migration: split lesson↔expectation, chapter→LessonGrouping ─────
-// Graph-native-authoring migration (docs/design-notes/graph-native-authoring.md),
-// maths only. Reads sources/ci/maths/knowledge_graph.json and rewrites it into
-// the split topology, in the graph's EXISTING serialization convention
-// (Curriculum/StandardsFrameworkItem labels, hasChild/supports edges, snake_case).
-//
-// What it does, mechanically and losslessly (1:1 with today):
-//   1. Each `subtopic` (Chapitre) SFI is converted IN PLACE to a content
-//      LessonGrouping: labels → ["LessonGrouping"], normalized_type added. Its
-//      id, order, title, buildsTowards edges, and statement_type stay, so
-//      progression / detect() / listUnits are unaffected.
-//   2. Per expectation (role "expectation" | "intégration du palier") we mint a
-//      content `Lesson` node, then RE-POINT every hasChild edge whose end is that
-//      expectation (its chapter edge AND its week edge — the two-axis pattern now
-//      rides the Lesson) and add `Lesson --supports--> expectation` (coverage).
-//   3. The expectation stays on the spine with its components/tasks untouched.
-//
-// Re-runnable: on a fresh (pre-split) graph it does the full split THEN
-// materializes the bilan flag; on an already-split graph it only re-materializes
-// the bilan flag (idempotent), so the pass can be applied to the committed graph.
-// Run: node scripts/migrate-maths-graph.mjs   (add --dry to preview counts only)
+/*
+ * One-shot migration: split lesson↔expectation, chapter→LessonGrouping
+ *
+ * Graph-native-authoring migration (docs/design-notes/graph-native-authoring.md),
+ * maths only. Reads sources/ci/maths/knowledge_graph.json and rewrites it into
+ * the split topology, in the graph's EXISTING serialization convention
+ * (Curriculum/StandardsFrameworkItem labels, hasChild/supports edges, snake_case).
+ *
+ * What it does, mechanically and losslessly (1:1 with today):
+ *   1. Each `subtopic` (Chapitre) SFI is converted IN PLACE to a content
+ *      LessonGrouping: labels → ["LessonGrouping"], normalized_type added. Its
+ *      id, order, title, buildsTowards edges, and statement_type stay, so
+ *      progression / detect() / listUnits are unaffected.
+ *   2. Per expectation (role "expectation" | "intégration du palier") we mint a
+ *      content `Lesson` node, then RE-POINT every hasChild edge whose end is that
+ *      expectation (its chapter edge AND its week edge — the two-axis pattern now
+ *      rides the Lesson) and add `Lesson --supports--> expectation` (coverage).
+ *   3. The expectation stays on the spine with its components/tasks untouched.
+ *
+ * Re-runnable: on a fresh (pre-split) graph it does the full split THEN
+ * materializes the bilan flag; on an already-split graph it only re-materializes
+ * the bilan flag (idempotent), so the pass can be applied to the committed graph.
+ * Run: node scripts/migrate-maths-graph.mjs   (add --dry to preview counts only)
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

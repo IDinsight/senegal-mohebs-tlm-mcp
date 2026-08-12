@@ -1,11 +1,14 @@
-// ── Module: server · tool group: CI-CI-maths-specific ──────────────────────────────
-// Tools that only make sense for the CI-CI CI maths storybook model (example-domain
-// rotation — keeping each chapter's object families fresh). MCP tools register
-// once at startup, before a context is chosen, so these are always registered
-// but gated at call time on capabilities.exampleDomainRotation: for a subject
-// that doesn't enable it they return "not applicable" rather than misleading
-// data. Delegation goes through the active adapter's optional
-// suggestFreshDomain / domainUsage methods.
+/*
+ * Module: server · tool group: CI-CI-maths-specific
+ *
+ * Tools that only make sense for the CI-CI CI maths storybook model (example-domain
+ * rotation — keeping each chapter's object families fresh). MCP tools register
+ * once at startup, before a context is chosen, so these are always registered
+ * but gated at call time on capabilities.exampleDomainRotation: for a subject
+ * that doesn't enable it they return "not applicable" rather than misleading
+ * data. Delegation goes through the active adapter's optional
+ * suggestFreshDomain / domainUsage methods.
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { asJson, guarded, needsCapability } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";

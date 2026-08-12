@@ -1,27 +1,30 @@
-// ── Canonical Learning Commons migration (representation at rest) ─────────────
-// Rewrites each source knowledge_graph.json from our simplified serialization to
-// canonical LC (see docs/design-notes/canonical-lc-migration.md). Deterministic,
-// re-runnable, per-subject. What it changes:
-//   1. Props snake_case → camelCase on every node + edge (with LC overrides for
-//      caseIdentifierURI / caseIdentifierUUID). The `metadata` object is our
-//      extension sidecar — kept VERBATIM (provenance + palier/genre live there).
-//   2. Content-side containment `hasChild → hasPart` (only where BOTH ends are
-//      content nodes: Course/LessonGrouping/Lesson/Activity/Material). The
-//      standards hierarchy `hasChild` (Framework/SFI → SFI) stays — LC uses
-//      hasChild there.
-//   3. Content-source alignment `supports → hasEducationalAlignment` (Lesson /
-//      Activity / … → SFI). `LearningComponent → SFI` stays `supports` (canonical).
-//   4. Label `Curriculum → Activity | Course` (from normalized_type). We KEEP
-//      `normalizedType` (camelCased) — it is part of a content node's faithful LC
-//      identity (recipe-created nodes stamp it too; see recipes/lc-fidelity).
-//   5. Ordinal → canonical `position` on content nodes (from metadata.session_order
-//      / metadata.order / a bare-number description).
-// buildsTowards and relatesTo are left as-is (canonical / out-of-scope cross-links).
-//
-// Read projections must stay byte-identical after the matching parser lands — the
-// golden gates are the acceptance test. Run:
-//   node scripts/migrate-to-canonical-lc.mjs [--dry] [grade subject]
-// with no grade/subject it processes both installed contexts.
+/*
+ * Canonical Learning Commons migration (representation at rest)
+ *
+ * Rewrites each source knowledge_graph.json from our simplified serialization to
+ * canonical LC (see docs/design-notes/canonical-lc-migration.md). Deterministic,
+ * re-runnable, per-subject. What it changes:
+ *   1. Props snake_case → camelCase on every node + edge (with LC overrides for
+ *      caseIdentifierURI / caseIdentifierUUID). The `metadata` object is our
+ *      extension sidecar — kept VERBATIM (provenance + palier/genre live there).
+ *   2. Content-side containment `hasChild → hasPart` (only where BOTH ends are
+ *      content nodes: Course/LessonGrouping/Lesson/Activity/Material). The
+ *      standards hierarchy `hasChild` (Framework/SFI → SFI) stays — LC uses
+ *      hasChild there.
+ *   3. Content-source alignment `supports → hasEducationalAlignment` (Lesson /
+ *      Activity / … → SFI). `LearningComponent → SFI` stays `supports` (canonical).
+ *   4. Label `Curriculum → Activity | Course` (from normalized_type). We KEEP
+ *      `normalizedType` (camelCased) — it is part of a content node's faithful LC
+ *      identity (recipe-created nodes stamp it too; see recipes/lc-fidelity).
+ *   5. Ordinal → canonical `position` on content nodes (from metadata.session_order
+ *      / metadata.order / a bare-number description).
+ * buildsTowards and relatesTo are left as-is (canonical / out-of-scope cross-links).
+ *
+ * Read projections must stay byte-identical after the matching parser lands — the
+ * golden gates are the acceptance test. Run:
+ *   node scripts/migrate-to-canonical-lc.mjs [--dry] [grade subject]
+ * with no grade/subject it processes both installed contexts.
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

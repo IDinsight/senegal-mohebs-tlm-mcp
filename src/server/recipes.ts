@@ -1,20 +1,23 @@
-// ── Module: server · tool group: curriculum recipes ─────────────────────────
-// The four GENERIC curriculum verbs — add_node, move_node, reposition,
-// set_content — each a SINGLE two-phase mutation exposed as an MCP tool. They
-// share the exact envelope every graph edit uses (two-phase confirm, the #13
-// referential-integrity floor on the whole result, #7 audit, #8 role gate); what
-// makes them "recipes" is that ONE confirm applies a whole composite atomically
-// to the draft.
-//
-// Unlike the old recipes there is NO RecipeProfile and NO per-subject
-// availability: the verbs are subject-agnostic (they speak pure canonical LC and
-// derive a created node's identity from the graph — see kg-recipes/lc.ts), so
-// they are available on EVERY subject. Validity is structural, enforced by each
-// verb's own `validate` + the shared integrity rules.
-//
-// id-minting mirrors create_node: add_node mints the id server-side on the
-// dry-run and surfaces it at the response top level; the caller passes the SAME
-// id back on confirm so the framework's args-hash matches.
+/*
+ * Module: server · tool group: curriculum recipes
+ *
+ * The four GENERIC curriculum verbs — add_node, move_node, reposition,
+ * set_content — each a SINGLE two-phase mutation exposed as an MCP tool. They
+ * share the exact envelope every graph edit uses (two-phase confirm, the #13
+ * referential-integrity floor on the whole result, #7 audit, #8 role gate); what
+ * makes them "recipes" is that ONE confirm applies a whole composite atomically
+ * to the draft.
+ *
+ * Unlike the old recipes there is NO RecipeProfile and NO per-subject
+ * availability: the verbs are subject-agnostic (they speak pure canonical LC and
+ * derive a created node's identity from the graph — see kg-recipes/lc.ts), so
+ * they are available on EVERY subject. Validity is structural, enforced by each
+ * verb's own `validate` + the shared integrity rules.
+ *
+ * id-minting mirrors create_node: add_node mints the id server-side on the
+ * dry-run and surfaces it at the response top level; the caller passes the SAME
+ * id back on confirm so the framework's args-hash matches.
+ */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";

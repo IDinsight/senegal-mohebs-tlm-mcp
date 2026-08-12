@@ -1,20 +1,23 @@
-// ── get_capabilities — the mirror-property test ─────────────────────────────
-// The value of this tool is that it CANNOT lie: every actions.* value must
-// agree with what authorize() actually returns for the same (actor, action,
-// namespace). If they ever disagree, one of them is a copy that drifted —
-// this test catches that immediately.
-//
-// Same test also exercises:
-//   - the role-change-flows-through property (running as different actors
-//     produces different responses with zero code change);
-//   - draft.exists reflecting the actual pointer;
-//   - editable + rules sourced from the real modules (adapter aliases and
-//     STRUCTURAL_RULES), not literal strings that could rot;
-//   - unknown-safe behavior (a truthful read/generate-only response, no error);
-//   - no-state-change (audit is quiet across a get_capabilities call).
-//
-// The tool is exposed via MCP; here we test the underlying logic by driving
-// it via a McpServer connected to a memory transport.
+/*
+ * get_capabilities — the mirror-property test
+ *
+ * The value of this tool is that it CANNOT lie: every actions.* value must
+ * agree with what authorize() actually returns for the same (actor, action,
+ * namespace). If they ever disagree, one of them is a copy that drifted —
+ * this test catches that immediately.
+ *
+ * Same test also exercises:
+ *   - the role-change-flows-through property (running as different actors
+ *     produces different responses with zero code change);
+ *   - draft.exists reflecting the actual pointer;
+ *   - editable + rules sourced from the real modules (adapter aliases and
+ *     STRUCTURAL_RULES), not literal strings that could rot;
+ *   - unknown-safe behavior (a truthful read/generate-only response, no error);
+ *   - no-state-change (audit is quiet across a get_capabilities call).
+ *
+ * The tool is exposed via MCP; here we test the underlying logic by driving
+ * it via a McpServer connected to a memory transport.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

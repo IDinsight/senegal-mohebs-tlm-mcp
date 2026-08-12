@@ -1,9 +1,12 @@
-// ── Module: server · tool group: curriculum (local sources) ──────────────────
-// Read-only views of the active subject's curriculum and terminology. Generic
-// vocabulary: "unit" is the subject's top-level generation unit (a chapter for
-// CI maths; a week for CE1 reading). Values come from the active adapter, so
-// the RETURNED shapes are still subject-specific (CI CI maths returns chapitreNum/
-// leconNum, etc.) even though the tool names/params are neutral.
+/*
+ * Module: server · tool group: curriculum (local sources)
+ *
+ * Read-only views of the active subject's curriculum and terminology. Generic
+ * vocabulary: "unit" is the subject's top-level generation unit (a chapter for
+ * CI maths; a week for CE1 reading). Values come from the active adapter, so
+ * the RETURNED shapes are still subject-specific (CI CI maths returns chapitreNum/
+ * leconNum, etc.) even though the tool names/params are neutral.
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";

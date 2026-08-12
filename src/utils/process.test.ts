@@ -1,13 +1,16 @@
-// ── Process safety-net tests (issue #1 — the crash-loop) ─────────────────────
-// The crash-loop was: a single unhandled rejection / uncaught exception (Node's
-// default is to TERMINATE the process) took the whole multi-session server down,
-// the host cold-restarted it, it recovered, and the next stray failure repeated
-// it. installProcessGuards must register handlers for BOTH fatal events and make
-// them log-and-continue, so one bad async failure can no longer be fatal.
-//
-// We invoke the registered handlers DIRECTLY (rather than emitting the real
-// process events, which would also trip vitest's own listeners) to prove they
-// swallow the failure without throwing — i.e. the process would stay up.
+/*
+ * Process safety-net tests (issue #1 — the crash-loop)
+ *
+ * The crash-loop was: a single unhandled rejection / uncaught exception (Node's
+ * default is to TERMINATE the process) took the whole multi-session server down,
+ * the host cold-restarted it, it recovered, and the next stray failure repeated
+ * it. installProcessGuards must register handlers for BOTH fatal events and make
+ * them log-and-continue, so one bad async failure can no longer be fatal.
+ *
+ * We invoke the registered handlers DIRECTLY (rather than emitting the real
+ * process events, which would also trip vitest's own listeners) to prove they
+ * swallow the failure without throwing — i.e. the process would stay up.
+ */
 import { describe, it, expect, vi } from "vitest";
 import { installProcessGuards } from "./process.js";
 

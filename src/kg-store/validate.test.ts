@@ -1,13 +1,16 @@
-// ── Structural write-safety rules — direct + framework-integration tests ────
-// Two rules:
-//   Rule 1 (id-immutable): no silent rename of a node/edge.
-//   Rule 2 (no-orphan): every edge points at nodes that exist.
-// These tests do two things:
-//   1. Call validateStructural directly with crafted before/after graphs, so
-//      the rules are covered even though no real edit tool exists yet.
-//   2. Drive them through runGraphMutation via a couple of internal test-only
-//      mutations, so the "errors block confirmation" path in #5 fires for the
-//      first time (previously unreachable because validate was empty).
+/*
+ * Structural write-safety rules — direct + framework-integration tests
+ *
+ * Two rules:
+ *   Rule 1 (id-immutable): no silent rename of a node/edge.
+ *   Rule 2 (no-orphan): every edge points at nodes that exist.
+ * These tests do two things:
+ *   1. Call validateStructural directly with crafted before/after graphs, so
+ *      the rules are covered even though no real edit tool exists yet.
+ *   2. Drive them through runGraphMutation via a couple of internal test-only
+ *      mutations, so the "errors block confirmation" path in #5 fires for the
+ *      first time (previously unreachable because validate was empty).
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

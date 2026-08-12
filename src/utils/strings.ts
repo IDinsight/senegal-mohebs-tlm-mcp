@@ -1,6 +1,9 @@
-// ── Module: utils · internal ─────────────────────────────────────────────────
-// Pure, dependency-free string helpers. This module imports nothing from the
-// project (a core leaf), so any layer can use it without risk of a cycle.
+/*
+ * Module: utils · internal
+ *
+ * Pure, dependency-free string helpers. This module imports nothing from the
+ * project (a core leaf), so any layer can use it without risk of a cycle.
+ */
 
 // Strip accents/diacritics and lowercase, for accent-insensitive matching
 // (e.g. comparing "leçons" and "lecons").

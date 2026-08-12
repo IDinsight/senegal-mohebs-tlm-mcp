@@ -1,18 +1,21 @@
-// ── read_audit — the approver-gated audit reader (#16) ───────────────────────
-// Proves the whole contract: approver-only gating (curator / no-role blocked,
-// and the blocked read itself audited), namespace scoping, the filter set
-// (actor / action / outcome / nodeId / time), newest-first cursor pagination,
-// summary-vs-detail payloads, the STRICT read-only invariant (the append-only
-// log is byte-for-byte unaffected by reads, aside from the lightweight
-// read-events it appends), the read-event being lightweight + non-recursive,
-// and the end-to-end readback verification of a known session (applies /
-// createDraft / publish-with-self-authorship / discard / force-cascade delete /
-// recipe / blocked all present and correctly attributed).
-//
-// Setup mirrors capabilities.test.ts / audit.test.ts: a memory KG store seeded
-// from the real sources, KG_SOURCE=firestore to exercise the lifecycle path,
-// and the tool's exported core (`readAudit`) driven directly inside an active
-// context + actor.
+/*
+ * read_audit — the approver-gated audit reader (#16)
+ *
+ * Proves the whole contract: approver-only gating (curator / no-role blocked,
+ * and the blocked read itself audited), namespace scoping, the filter set
+ * (actor / action / outcome / nodeId / time), newest-first cursor pagination,
+ * summary-vs-detail payloads, the STRICT read-only invariant (the append-only
+ * log is byte-for-byte unaffected by reads, aside from the lightweight
+ * read-events it appends), the read-event being lightweight + non-recursive,
+ * and the end-to-end readback verification of a known session (applies /
+ * createDraft / publish-with-self-authorship / discard / force-cascade delete /
+ * recipe / blocked all present and correctly attributed).
+ *
+ * Setup mirrors capabilities.test.ts / audit.test.ts: a memory KG store seeded
+ * from the real sources, KG_SOURCE=firestore to exercise the lifecycle path,
+ * and the tool's exported core (`readAudit`) driven directly inside an active
+ * context + actor.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";

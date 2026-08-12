@@ -1,24 +1,27 @@
-// ── #12 structural primitives — tests ────────────────────────────────────────
-// Drives create_node / link_nodes / unlink_nodes / delete_node through the
-// #5 framework end to end. Acceptance criteria mirror the task spec:
-//
-//   • create_node MINTS the id; a caller-supplied id in properties is
-//     hard-rejected.
-//   • link_nodes creates an edge; rejects endpoint missing (Rule 2), rejects
-//     an edge type not observed on this namespace (LC-legality-lite), rejects
-//     a duplicate edge.
-//   • unlink_nodes removes an edge; enables the manual detach-then-delete
-//     flow.
-//   • delete_node deletes an ISOLATED node; rejects (Rule 2 / early Rule-2
-//     mirror) when incident edges survive; does NOT cascade.
-//   • Rule 1 (id-immutable) rename-detection FIRES across a delete_node +
-//     create_node sequence on the same draft (published-reference check).
-//   • Role matrix per primitive (curator/approver ok; no-role/unknown blocked
-//     with a `blocked` audit record + no state change + no token).
-//   • Audit fires on writes (event=apply) AND denials (event=blocked).
-//   • End-to-end: create chapter node → create lesson node → link them →
-//     diff_draft shows the whole → publish_draft flips them live atomically.
-//   • Parity: untouched published reads unchanged.
+/*
+ * #12 structural primitives — tests
+ *
+ * Drives create_node / link_nodes / unlink_nodes / delete_node through the
+ * #5 framework end to end. Acceptance criteria mirror the task spec:
+ *
+ *   • create_node MINTS the id; a caller-supplied id in properties is
+ *     hard-rejected.
+ *   • link_nodes creates an edge; rejects endpoint missing (Rule 2), rejects
+ *     an edge type not observed on this namespace (LC-legality-lite), rejects
+ *     a duplicate edge.
+ *   • unlink_nodes removes an edge; enables the manual detach-then-delete
+ *     flow.
+ *   • delete_node deletes an ISOLATED node; rejects (Rule 2 / early Rule-2
+ *     mirror) when incident edges survive; does NOT cascade.
+ *   • Rule 1 (id-immutable) rename-detection FIRES across a delete_node +
+ *     create_node sequence on the same draft (published-reference check).
+ *   • Role matrix per primitive (curator/approver ok; no-role/unknown blocked
+ *     with a `blocked` audit record + no state change + no token).
+ *   • Audit fires on writes (event=apply) AND denials (event=blocked).
+ *   • End-to-end: create chapter node → create lesson node → link them →
+ *     diff_draft shows the whole → publish_draft flips them live atomically.
+ *   • Parity: untouched published reads unchanged.
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

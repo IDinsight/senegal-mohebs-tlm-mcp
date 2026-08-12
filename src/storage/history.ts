@@ -1,10 +1,13 @@
-// ── Module: storage · internal ───────────────────────────────────────────────
-// The history is the cache of record: one entry per (scope, deliverable), keyed
-// by `${scope}:${deliverableKey}`, storing the md5 and the extracted content so a
-// tracked document is never re-parsed. This file owns loading/saving it, upserts
-// (record_document_content / log_generation), and reconcile() — the diff of the
-// bucket against history. Deliverable specs are passed in by the caller so this
-// service never imports the adapters layer.
+/*
+ * Module: storage · internal
+ *
+ * The history is the cache of record: one entry per (scope, deliverable), keyed
+ * by `${scope}:${deliverableKey}`, storing the md5 and the extracted content so a
+ * tracked document is never re-parsed. This file owns loading/saving it, upserts
+ * (record_document_content / log_generation), and reconcile() — the diff of the
+ * bucket against history. Deliverable specs are passed in by the caller so this
+ * service never imports the adapters layer.
+ */
 import { getStorageAdapter, getHistCache, setHistCache } from "./adapter.js";
 import { discoverDocuments } from "./documents.js";
 import type { HistoryFile, HistoryEntry, DeliverableSpec, DocType, DocumentContent } from "../types.js";

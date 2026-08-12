@@ -1,20 +1,23 @@
-// ── Draft/published lifecycle tests (memory backend) ─────────────────────────
-// The memory backend mirrors the Firestore backend's slot + pointer semantics
-// exactly (same interface, same ordering rules), so all lifecycle guarantees
-// this file asserts hold for both. Firestore requires network + credentials, so
-// live coverage lives in the manual `parity-check --live` sweep documented in
-// the README.
-//
-// Guarantees under test:
-//   1. seed → default reads see published.
-//   2. createDraft snapshots published byte-for-byte (ids too).
-//   3. createDraft is idempotent (calling twice is a no-op).
-//   4. publishDraft atomically promotes draft → published; concurrent readers
-//      never observe a partial state.
-//   5. discardDraft leaves published untouched.
-//   6. Ids survive create + publish verbatim.
-//   7. publishDraft errors if no draft exists.
-//   8. Bundle mode is untouched by the lifecycle (no store calls involved).
+/*
+ * Draft/published lifecycle tests (memory backend)
+ *
+ * The memory backend mirrors the Firestore backend's slot + pointer semantics
+ * exactly (same interface, same ordering rules), so all lifecycle guarantees
+ * this file asserts hold for both. Firestore requires network + credentials, so
+ * live coverage lives in the manual `parity-check --live` sweep documented in
+ * the README.
+ *
+ * Guarantees under test:
+ *   1. seed → default reads see published.
+ *   2. createDraft snapshots published byte-for-byte (ids too).
+ *   3. createDraft is idempotent (calling twice is a no-op).
+ *   4. publishDraft atomically promotes draft → published; concurrent readers
+ *      never observe a partial state.
+ *   5. discardDraft leaves published untouched.
+ *   6. Ids survive create + publish verbatim.
+ *   7. publishDraft errors if no draft exists.
+ *   8. Bundle mode is untouched by the lifecycle (no store calls involved).
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

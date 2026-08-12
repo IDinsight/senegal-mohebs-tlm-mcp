@@ -1,21 +1,24 @@
-// ── Graph-mutation framework tests (memory backend) ─────────────────────────
-// One internal test-only mutation (setNodeProperty) drives every acceptance
-// criterion of the framework:
-//   1. dry-run is a pure preview — no state changes; returns envelope + diff +
-//      token; envelope's action string explicitly says "stages a draft edit".
-//   2. confirm with a valid token applies to the DRAFT only; published is
-//      byte-identical before/after.
-//   3. confirm with a stale token (base moved) is rejected — nothing partial.
-//   4. confirm cannot be replayed — the nonce is one-time.
-//   5. If no draft exists at preview time, confirm creates one lazily.
-//   6. args mismatch, mutation mismatch, malformed token, missing token all
-//      surface distinct reasons.
-//   7. Validate hook: errors → no token, blocked result; warnings → token
-//      issued alongside the warnings.
-//   8. Reusability: the same framework runs a second mutation shape without
-//      any changes to the framework.
-//   9. Document tools emit the shared envelope; graph and document `action`
-//      strings state different stakes (draft-staged vs live write).
+/*
+ * Graph-mutation framework tests (memory backend)
+ *
+ * One internal test-only mutation (setNodeProperty) drives every acceptance
+ * criterion of the framework:
+ *   1. dry-run is a pure preview — no state changes; returns envelope + diff +
+ *      token; envelope's action string explicitly says "stages a draft edit".
+ *   2. confirm with a valid token applies to the DRAFT only; published is
+ *      byte-identical before/after.
+ *   3. confirm with a stale token (base moved) is rejected — nothing partial.
+ *   4. confirm cannot be replayed — the nonce is one-time.
+ *   5. If no draft exists at preview time, confirm creates one lazily.
+ *   6. args mismatch, mutation mismatch, malformed token, missing token all
+ *      surface distinct reasons.
+ *   7. Validate hook: errors → no token, blocked result; warnings → token
+ *      issued alongside the warnings.
+ *   8. Reusability: the same framework runs a second mutation shape without
+ *      any changes to the framework.
+ *   9. Document tools emit the shared envelope; graph and document `action`
+ *      strings state different stakes (draft-staged vs live write).
+ */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";

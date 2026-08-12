@@ -1,14 +1,17 @@
-// ── Module: server · tool group: health / liveness ──────────────────────────
-// A trivial `ping` that proves the MCP TRANSPORT is up while touching NO
-// datastore. That separation is the whole point: if `ping` returns ok but the
-// data tools fail, the fault is the store/credentials (Firestore/Storage), not
-// the server; if `ping` itself is unreachable, the process/transport is down.
-// In live testing we couldn't tell those apart — this closes that gap.
-//
-// It is deliberately NOT wrapped in `guarded`: it must answer with or without an
-// active grade/subject, and it never reads the store, so there is nothing to
-// guard. Reading the active context is a pure in-memory session-bag lookup (no
-// I/O); it is wrapped defensively so ping can never itself fail.
+/*
+ * Module: server · tool group: health / liveness
+ *
+ * A trivial `ping` that proves the MCP TRANSPORT is up while touching NO
+ * datastore. That separation is the whole point: if `ping` returns ok but the
+ * data tools fail, the fault is the store/credentials (Firestore/Storage), not
+ * the server; if `ping` itself is unreachable, the process/transport is down.
+ * In live testing we couldn't tell those apart — this closes that gap.
+ *
+ * It is deliberately NOT wrapped in `guarded`: it must answer with or without an
+ * active grade/subject, and it never reads the store, so there is nothing to
+ * guard. Reading the active context is a pure in-memory session-bag lookup (no
+ * I/O); it is wrapped defensively so ping can never itself fail.
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { asJson } from "./shared.js";
 import { kgSource } from "../config.js";

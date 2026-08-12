@@ -1,8 +1,11 @@
-// ── Module: generation · internal ────────────────────────────────────────────
-// Example-domain rotation, a CI maths capability: track which object families
-// (fruits, pirogues, …) each unit used, and suggest a fresh one so chapters
-// don't repeat — while also avoiding domains used by nearby chapters. Composed
-// into the CI maths generation context; adapters without the capability ignore it.
+/*
+ * Module: generation · internal
+ *
+ * Example-domain rotation, a CI maths capability: track which object families
+ * (fruits, pirogues, …) each unit used, and suggest a fresh one so chapters
+ * don't repeat — while also avoiding domains used by nearby chapters. Composed
+ * into the CI maths generation context; adapters without the capability ignore it.
+ */
 import { readFileSync, existsSync } from "node:fs";
 import { CONFIG } from "../config.js";
 import { sourcePath } from "../context/index.js";

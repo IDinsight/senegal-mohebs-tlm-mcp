@@ -1,18 +1,21 @@
-// ── Layer: app · entry point ─────────────────────────────────────────────────
-// Boots the MCP server: apply an optional startup context, reconcile once, serve
-// over stdio. Also the package's public export surface (for tests/embedding).
-//
-// Module layout (imports only ever point DOWN this list — enforced by
-// scripts/check-cycles.mjs; see docs/design-notes/multi-subject-architecture.md):
-//
-//   app       server/* · index.ts · activate.ts
-//   adapters  adapters/*            — one per-subject behavior module
-//   services  storage/* · curriculum/* · generation/* · kg-store/*   — never import adapters
-//   core      config.ts · types.ts · context/{state,shared} · utils/*   — leaves
-//
-// Cross-module imports go through each module's index.ts (barrel); files inside
-// a module import their siblings directly. activate.ts is app-layer glue (it
-// wires context + adapters), so it lives at the root, not inside the leaf context/.
+/*
+ * Layer: app · entry point
+ *
+ * Boots the MCP server: apply an optional startup context, reconcile once, serve
+ * over stdio. Also the package's public export surface (for tests/embedding).
+ *
+ * Module layout (imports only ever point DOWN this list — enforced by
+ * scripts/check-cycles.mjs; see docs/design-notes/multi-subject-architecture.md):
+ *
+ *   app       server/* · index.ts · activate.ts
+ *   adapters  adapters/*            — one per-subject behavior module
+ *   services  storage/* · curriculum/* · generation/* · kg-store/*   — never import adapters
+ *   core      config.ts · types.ts · context/{state,shared} · utils/*   — leaves
+ *
+ * Cross-module imports go through each module's index.ts (barrel); files inside
+ * a module import their siblings directly. activate.ts is app-layer glue (it
+ * wires context + adapters), so it lives at the root, not inside the leaf context/.
+ */
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";

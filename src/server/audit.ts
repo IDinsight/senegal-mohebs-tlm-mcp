@@ -1,27 +1,30 @@
-// ── Module: server · tool group: read_audit (approver-gated audit reader) ────
-// A filtered, paginated, READ-ONLY view over the append-only audit log (#7),
-// gated to APPROVERS via the same authorize() chokepoint that gates publish
-// (#8), and scoped to the caller's current set_context namespace (#3). It is
-// the supported way to review the trail — replacing the manual Firestore-console
-// check — and it CLOSES the audit-readback verification.
-//
-// Design guardrails (see docs/design-notes/read-audit-findings.md):
-//   • READER, NOT ANALYTICS. query → page of records. No dashboards, no
-//     anomaly detection, no aggregations/exports.
-//   • STRICTLY READ-ONLY. It reuses ONLY the store's read/append surface
-//     (listAudit + appendAudit) — there is no update/delete on the interface,
-//     so this tool structurally CANNOT alter, redact, or reorder a record.
-//     The append-only guarantee of #7 is preserved absolutely.
-//   • NAMESPACE-SCOPED, STRICTLY. The namespace is resolved from the active
-//     adapter (like every other tool); there is deliberately NO namespace
-//     argument. To read another namespace an approver must set_context to it.
-//   • LIGHTWEIGHT, NON-RECURSIVE READ-EVENT. Each successful call appends ONE
-//     `read` audit record (actor + query + ts + count) — never a before/after.
-//     It is appended AFTER the query returns, so it triggers no further read;
-//     growth is linear, never recursive, and carries no snapshot to bloat with.
-//
-// The tool body delegates to the exported `readAudit` core so tests drive the
-// real logic directly (same pattern as preview.ts / capabilities.ts).
+/*
+ * Module: server · tool group: read_audit (approver-gated audit reader)
+ *
+ * A filtered, paginated, READ-ONLY view over the append-only audit log (#7),
+ * gated to APPROVERS via the same authorize() chokepoint that gates publish
+ * (#8), and scoped to the caller's current set_context namespace (#3). It is
+ * the supported way to review the trail — replacing the manual Firestore-console
+ * check — and it CLOSES the audit-readback verification.
+ *
+ * Design guardrails (see docs/design-notes/read-audit-findings.md):
+ *   • READER, NOT ANALYTICS. query → page of records. No dashboards, no
+ *     anomaly detection, no aggregations/exports.
+ *   • STRICTLY READ-ONLY. It reuses ONLY the store's read/append surface
+ *     (listAudit + appendAudit) — there is no update/delete on the interface,
+ *     so this tool structurally CANNOT alter, redact, or reorder a record.
+ *     The append-only guarantee of #7 is preserved absolutely.
+ *   • NAMESPACE-SCOPED, STRICTLY. The namespace is resolved from the active
+ *     adapter (like every other tool); there is deliberately NO namespace
+ *     argument. To read another namespace an approver must set_context to it.
+ *   • LIGHTWEIGHT, NON-RECURSIVE READ-EVENT. Each successful call appends ONE
+ *     `read` audit record (actor + query + ts + count) — never a before/after.
+ *     It is appended AFTER the query returns, so it triggers no further read;
+ *     growth is linear, never recursive, and carries no snapshot to bloat with.
+ *
+ * The tool body delegates to the exported `readAudit` core so tests drive the
+ * real logic directly (same pattern as preview.ts / capabilities.ts).
+ */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
