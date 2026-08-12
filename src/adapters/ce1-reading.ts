@@ -44,6 +44,32 @@ const strandOf = (u: CurriculumUnit): string | null => (u.properties.statementTy
 type SessionMeta = { day?: number; order_in_day?: number; session_order?: number; language?: string; duration?: string; session_category?: string };
 const sessionMeta = (u: CurriculumUnit): SessionMeta => (u.properties.metadata as SessionMeta) ?? {};
 
+// ── Content layer (Scope C) — Activity/Material read projections ──────────────
+// An Activity's canonical LC props (grouping/time/use) and a Material's payload
+// live under the raw passthrough (unit.properties === the raw LC properties).
+const materialsUnder = (m: CurriculumModel, parentId: string) =>
+  m.childrenOf(parentId)
+    .filter((c) => c.kind === "material")
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((mat) => ({
+      titre: mat.text,
+      type: (mat.properties.materialType as string) ?? "Core",
+      contenu: (mat.properties.content as string) ?? null,
+    }));
+
+const activitiesUnder = (m: CurriculumModel, lessonId: string) =>
+  m.childrenOf(lessonId)
+    .filter((c) => c.kind === "activity")
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((act) => ({
+      titre: act.text,
+      groupement: (act.properties.studentGroupingType as string) ?? null,
+      duree: (act.properties.timeRequired as string) ?? null,
+      usage: (act.properties.educationalUse as string) ?? null,
+      ordre: act.order ?? null,
+      materials: materialsUnder(m, act.id),
+    }));
+
 // ── Raw envelope → CurriculumModel ──────────────────────────────────────────
 // Post content-layer step (graph-native authoring, Scope B): the week is a
 // content `LessonGrouping` (LABEL) but keeps kind `week` (its natural meaning —
@@ -81,6 +107,24 @@ const READING_PARSE: GraphParseDescriptor = {
       if (supported) keep.add(ex.id);
     }
     for (const u of units) if (u.kind === "component") { const p = byId.get(u.parentId ?? ""); if (p && keep.has(p.id)) keep.add(u.id); }
+    // Content layer (Scope C): keep the Activities/Materials the content tree
+    // hangs off any KEPT node via `hasPart` — an Activity under a session Lesson,
+    // a Material under that Activity, or a Material attached directly to a kept
+    // Lesson/day/week (session- or week-level content, e.g. an opening-scene
+    // image). Closure over childIds adding ONLY content-layer kinds, so a
+    // Material under an Activity (two levels down) is reached once its Activity is
+    // kept. Restricted to activity/material kinds, so nothing else is pulled in.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const u of units) {
+        if (!keep.has(u.id)) continue;
+        for (const cid of u.childIds) {
+          const c = byId.get(cid);
+          if (c && (c.kind === "activity" || c.kind === "material") && !keep.has(cid)) { keep.add(cid); changed = true; }
+        }
+      }
+    }
     return units.filter((u) => keep.has(u.id));
   },
 };
@@ -162,12 +206,21 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
                 components: m.childrenOf(std.id).filter((c) => c.kind === "component").map((c) => ({ identifier: c.id, description: c.text })),
               }
             : null,
+          // Content layer (Scope C): the session's authored Activities (one per
+          // Étape, in order) each with their Material(s), plus any Material
+          // attached to the session itself (e.g. the shared reading text). Empty
+          // until the sessions are authored via add_activity / add_material.
+          activities: activitiesUnder(m, ln.id),
+          materials: materialsUnder(m, ln.id),
         };
       });
     return {
       semaine: wk,
       palier: meta(week).palier ?? null,
       genre: meta(week).genre ?? null,
+      // Week-level Materials (e.g. an opening-scene image for the whole week),
+      // attached to the week grouping via hasPart. Empty until authored.
+      materials: materialsUnder(m, week.id),
       sessions,
     };
   };
@@ -210,6 +263,12 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     wordingAliases: {
       standard: { text: ["text", "raw.description"] },
       component: { text: ["text", "raw.description"] },
+      // Scope C content nodes. Only the TITLE is wording (editable via
+      // upsert_property); a Material's `content` is deliberately NOT here — it is
+      // load-bearing and edited only via add_material / set_material_content (see
+      // MATERIAL_CONTENT_PATH). An Activity carries a title but no content.
+      activity: { text: ["text", "raw.description"] },
+      material: { text: ["text", "raw.description"] },
     },
 
     // ── Recipe surface (Scope C) ──────────────────────────────────────────────
@@ -229,10 +288,13 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
       activityKind: "activity",
       materialKind: "material",
     },
-    availableRecipes: ["move_lesson"], // add_activity / add_material land next
+    availableRecipes: ["move_lesson", "add_activity", "add_material", "set_material_content"],
     structuralAliases: {
       week: { number: ["order", "raw.position"] },
       lesson: { position: ["order", "raw.position"] },
+      // Scope C: an Activity's/Material's within-parent order (canonical LC `position`).
+      activity: { position: ["order", "raw.position"] },
+      material: { position: ["order", "raw.position"] },
     },
     lcNodeTemplate: {
       week: { labels: ["LessonGrouping"], role: "week", normalizedType: "Lesson Grouping", normalizedStatementType: "Standard Grouping" },

@@ -22,6 +22,19 @@ export const W_TITLE_EN = "title_en";
 export const W_TEXT = "text";
 export const W_TEXT_EN = "text_en";
 
+// Scope C content layer. A `Material` node's payload — the reviewable, load-
+// bearing prose/steps/image-brief — lives on the canonical LC `Material.content`
+// property. Its storage path is a CONSTANT here (not an adapter alias) for two
+// reasons: (1) `content` is pure LC ontology, not subject vocabulary, so kg-store
+// naming it directly is no more subject-aware than it naming the `Material`
+// label; (2) keeping it OUT of `wordingAliases` means `upsert_property` — which
+// only edits wording aliases — can't touch load-bearing content. Only the
+// dedicated `add_material` / `set_material_content` recipes write it. Reads pick
+// it up via the parser (`toRawEnvelope` hydrates `properties.raw`, so `raw.content`
+// round-trips), and there is no normalized top-level `content` field on a
+// CurriculumUnit, so — unlike text/order — content is mirrored to `raw` only.
+export const MATERIAL_CONTENT_PATH = "raw.content";
+
 // ── Small pure helpers ───────────────────────────────────────────────────────
 
 export const asNum = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);

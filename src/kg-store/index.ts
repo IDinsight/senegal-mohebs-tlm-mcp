@@ -12,10 +12,12 @@ export { createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId } from "./st
 export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } from "./structural.js";
 export {
   addLesson, addLessonGrouping, moveLesson, splitLessonGrouping, renumber,
+  addActivity, addMaterial, setMaterialContent,
   STRUCTURAL_EDIT_SAFE_PATHS, structuralEditErrors, RECIPES,
 } from "./recipes/index.js";
 export type {
   AddLessonArgs, AddLessonGroupingArgs, MoveLessonArgs, SplitLessonGroupingArgs, RenumberArgs,
+  AddActivityArgs, AddMaterialArgs, SetMaterialContentArgs,
   RecipeDescriptor, RecipeParam,
 } from "./recipes/index.js";
 export type {
