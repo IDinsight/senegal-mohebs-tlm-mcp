@@ -29,9 +29,9 @@ const MATHS: GraphParseDescriptor = {
 // (kept as kind `week`) holding its 22 daily sessions, each a content `Lesson`
 // that `supports` the spine `expectation` it teaches (Remédiation teaches none).
 const READING: GraphParseDescriptor = {
-  roleToKind: { week: "week", expectation: "expectation" },
+  roleToKind: { week: "week", day: "day", expectation: "expectation" },
   labelToKind: { Lesson: "lesson", LearningComponent: "component" },
-  numberFrom: "description",
+  numberFrom: "position",
 };
 
 const kindCounts = (m: CurriculumModel, kinds: string[]) =>
@@ -111,10 +111,12 @@ describe("generic parseGraph — reading (Scope B — daily sessions)", () => {
     expect(w.title).toBe("3");
   });
 
-  it("holds 22 daily sessions per week, all-but-Remédiation aligned to a standard", () => {
+  it("holds Jour 1–5 day groupings, each with its sessions; all-but-Remédiation aligned to a standard", () => {
     const week = m.unitsOfKind("week").find((u) => u.order === 3)!;
-    const lessons = m.childrenOf(week.id).filter((u) => u.kind === "lesson");
-    expect(lessons.length).toBe(22); // the week's full daily timetable
+    const days = m.childrenOf(week.id).filter((u) => u.kind === "day");
+    expect(days.length).toBe(5); // Jour 1–5
+    const lessons = days.flatMap((d) => m.childrenOf(d.id).filter((u) => u.kind === "lesson"));
+    expect(lessons.length).toBe(22); // the week's full daily timetable, across the 5 days
     // session supports its standard ⇒ standard.childIds ∋ the session.
     const stdForSession = new Map<string, string>();
     for (const ex of m.unitsOfKind("expectation")) for (const c of m.childrenOf(ex.id)) if (c.kind === "lesson") stdForSession.set(c.id, ex.id);

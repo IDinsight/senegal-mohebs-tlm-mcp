@@ -85,7 +85,8 @@ function labelFor(n: { id: string; properties: Record<string, unknown> }): strin
 function childWord(kind: string): string {
   switch (kind) {
     case "chapter": return "lessons";
-    case "week": return "standards";
+    case "week": return "days";
+    case "day": return "sessions";
     case "lesson": return "components";
     case "component": return "tasks";
     default: return "children";

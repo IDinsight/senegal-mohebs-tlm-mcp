@@ -22,7 +22,7 @@ const CASES = [
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).
-  { grade: "ce1", subject: "reading", nodes: 1863, edges: 2139 },
+  { grade: "ce1", subject: "reading", nodes: 1968, edges: 2244 },
 ];
 
 const edgeKey = (e: { type: string; start: string; end: string }) => `${e.type}|${e.start}|${e.end}`;

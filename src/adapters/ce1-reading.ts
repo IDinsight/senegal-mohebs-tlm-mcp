@@ -53,9 +53,9 @@ const sessionMeta = (u: CurriculumUnit): SessionMeta => (u.properties.metadata a
 // sessions align to the shared palier-1 combined standards, which live under a
 // separate non-numeric "1 à 8" grouping.
 const READING_PARSE: GraphParseDescriptor = {
-  roleToKind: { week: "week", expectation: "expectation" },
+  roleToKind: { week: "week", day: "day", expectation: "expectation" },
   labelToKind: { Lesson: "lesson", LearningComponent: "component", Activity: "activity", Material: "material" },
-  numberFrom: "position", // canonical LC: week number is the grouping's `position`
+  numberFrom: "position", // canonical LC: week/day number is the grouping's `position`
   // Spine-scope. Keep the weeks (groupings), their session lessons, every
   // expectation those sessions support (all nine teachable types now, not just
   // the six language tools), and their components; drop the rest (orphans). This
@@ -66,7 +66,12 @@ const READING_PARSE: GraphParseDescriptor = {
     for (const g of units) {
       if (g.kind !== "week") continue;
       keep.add(g.id);
-      for (const cid of g.childIds) if (byId.get(cid)?.kind === "lesson") keep.add(cid);
+      // A week holds Jour 1–5 `day` groupings, each holding the session lessons.
+      for (const cid of g.childIds) {
+        const child = byId.get(cid);
+        if (child?.kind === "day") { keep.add(cid); for (const lid of child.childIds) if (byId.get(lid)?.kind === "lesson") keep.add(lid); }
+        else if (child?.kind === "lesson") keep.add(cid); // pre-day-layer fallback
+      }
     }
     // Expectations a kept session supports (session→supports→expectation ⇒
     // expectation.childIds ∋ the session).
@@ -133,8 +138,10 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     const week = weekOf(m, wk);
     if (!week) return null;
     const stdOf = standardOfLesson(m);
+    // Sessions live one level down now: week → Jour(1–5) day grouping → session.
     const sessions = m.childrenOf(week.id)
-      .filter((c) => c.kind === "lesson")
+      .filter((c) => c.kind === "day")
+      .flatMap((d) => m.childrenOf(d.id).filter((c) => c.kind === "lesson"))
       .sort((a, b) => (sessionMeta(a).session_order ?? 0) - (sessionMeta(b).session_order ?? 0))
       .map((ln) => {
         const sm = sessionMeta(ln);
@@ -238,7 +245,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     // reading lesson/component has exactly one parent (unlike a maths lesson,
     // which has a week axis too), so multi-parent applies.
     coverageWarnings: (graph: GraphView): string[] => [
-      ...emptyContainerWarnings(graph, ["week"]),
+      ...emptyContainerWarnings(graph, ["week", "day"]),
       ...multiParentWarnings(graph, ["lesson", "component"]),
     ],
 
