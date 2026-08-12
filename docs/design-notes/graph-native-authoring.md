@@ -14,9 +14,10 @@
 > **Scope C** (activities & materials *inside* a lesson) is **planned, not started** —
 > see the Scope C section below. LC type/edge vocabulary confirmed against
 > the [LC Curriculum reference](https://docs.learningcommons.org/knowledge-graph/graph-reference/curriculum)
-> (Activity, Material, Lesson, LessonGrouping); this project uses the graph's
-> existing serialization (snake_case, `hasChild`/`supports`), not canonical LC —
-> see *Representation convention* below.
+> (Activity, Material, Lesson, LessonGrouping). The project now uses **canonical LC
+> at rest** (camelCase, `hasPart`/`hasEducationalAlignment`); the *Representation
+> convention* section below is superseded — see
+> [canonical-lc-migration.md](canonical-lc-migration.md).
 
 ## Why
 
@@ -39,12 +40,20 @@ Two problems compound this:
   vary across publishers — e.g., Unit, Module, Chapter." A chapter is a renameable,
   removable grouping, not curriculum truth.
 
-## Representation convention (decided)
+## Representation convention (SUPERSEDED — now canonical LC)
 
-New authored content uses **the graph's existing serialization**, not the canonical
-LC schema — internal consistency and a simpler migration, at the cost that "faithful
-re-export" continues to mean "reproduces our simplified serialization." The canonical
-LC names used throughout this note map onto what we actually write as follows:
+> **Superseded.** This section described the original *simplified serialization*. The
+> store, parser, adapters, and re-export now speak **canonical Learning Commons** at rest
+> — see [canonical-lc-migration.md](canonical-lc-migration.md). The mapping table below is
+> kept only to read the pre-migration history; wherever this note says `hasChild` for
+> content containment, `supports` for lesson→standard alignment, `Curriculum`+`normalized_type`,
+> or snake_case, read it as `hasPart`, `hasEducationalAlignment`, real `Activity`/`Course`
+> labels, and camelCase respectively.
+
+New authored content originally used **the graph's existing serialization**, not the
+canonical LC schema — internal consistency and a simpler migration, at the cost that
+"faithful re-export" meant "reproduces our simplified serialization." The canonical
+LC names used throughout this note mapped onto what we then wrote as follows:
 
 | Canonical LC (docs) | What we author (existing convention) |
 |---|---|

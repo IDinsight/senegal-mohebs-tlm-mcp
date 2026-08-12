@@ -1,6 +1,11 @@
 # Canonical LC — make Learning Commons the representation *at rest*
 
-> **Status: Planned; decisions-first (not started).** This **reverses Open Question #1**
+> **Status: Implemented; re-seed pending.** Landed on branch `feat/canonical-lc-migration`
+> (transform `scripts/migrate-to-canonical-lc.mjs` applied to both source graphs; parser,
+> adapters, coverage, recipes, explorer, and force-delete cascade threaded through). Read
+> projections are **byte-identical** (both golden gates green, unchanged); `faithful-reexport`
+> now emits canonical LC. Build + all tests green. **Re-seed `seed:kg-store` + deploy pending.**
+> This **reverses Open Question #1**
 > of [graph-native-authoring.md](graph-native-authoring.md) ("DECIDED: match the existing
 > graph's convention"). The store, parser, adapters, and re-export will speak **canonical
 > Learning Commons** (camelCase props, `hasPart` / `hasEducationalAlignment`, real
