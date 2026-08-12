@@ -329,7 +329,7 @@ function buildIndexes(){
   Object.keys(groupCache).forEach(k => delete groupCache[k]);
   DATA.edges.forEach(e => {
     (outByRel[e.r] = outByRel[e.r] || {});
-    (outByRel[e.r][e.s] = outByRel[e.r][e.s] || []).push({ to:e.t, o:e.o||0 });
+    (outByRel[e.r][e.s] = outByRel[e.r][e.s] || []).push({ to:e.t, o:e.o||0, rel:e.rel||e.r });
     anyIncoming.add(e.t);
     if (e.r === 'hasChild') inHasChild[e.t] = e.s;
     if (e.r === 'buildsTowards'){ (btOut[e.s]=btOut[e.s]||[]).push(e.t); (btIn[e.t]=btIn[e.t]||[]).push(e.s); }
@@ -484,9 +484,12 @@ function viewChildren(id){
   for (const r in outByRel) for (const x of (outByRel[r][id]||[])) if (srcAllowed(x.to)) out.push({ id:x.to, rel:r });
   return out.map(o=>o.id);   // link relation resolved again at render for the tag
 }
-// what relation links `parent`→`childId` in node-type view (for the link tag)
+// The REAL relation linking `parent`→`childId` (for the link badge). `outByRel` is
+// keyed by the traversal type (folded to hasChild), so we read the true type off the
+// stored adjacency entry — a folded supports/hasEducationalAlignment/hasPart, or a
+// metadata-derived "illustrates", reads as itself, not a blanket hasChild.
 function relBetween(parentId, childId){
-  for (const r in outByRel) if ((outByRel[r][parentId]||[]).some(x=>x.to===childId)) return r;
+  for (const r in outByRel){ const hit=(outByRel[r][parentId]||[]).find(x=>x.to===childId); if(hit) return hit.rel||r; }
   return null;
 }
 
@@ -534,7 +537,12 @@ function renderNode(id, parentId){
   const kids = viewChildren(id);
   const hasKids = kids.length>0;
   const wrap = document.createElement('div'); wrap.className='node';
-  const linkRel = (!synthetic && parentId && viewSpec(currentView).shape==='node-type') ? relBetween(parentId, id) : null;
+  // Show the real relation as a badge. In the node-type view every link is a
+  // relation, so badge them all. In the containment hierarchy, badge only the
+  // non-obvious folded edges (hasPart / supports / hasEducationalAlignment /
+  // illustrates / buildsTowards / relatesTo) and leave a genuine hasChild clean.
+  const rawRel = (!synthetic && parentId && !isSynth(parentId)) ? relBetween(parentId, id) : null;
+  const linkRel = rawRel && (viewSpec(currentView).shape==='node-type' || rawRel!=='hasChild') ? rawRel : null;
   const row = document.createElement('div'); row.className='row'+(selected===id?' sel':'')+(linkRel?' linkrow':'');
   const tw = document.createElement('span'); tw.className='tw'; tw.textContent = hasKids ? (expanded.has(id)?'▾':'▸') : '';
   if (hasKids) tw.onclick = (e)=>{ e.stopPropagation(); toggle(id); };

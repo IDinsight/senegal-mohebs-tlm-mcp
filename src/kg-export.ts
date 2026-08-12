@@ -65,7 +65,12 @@ const LABEL_DEFS: TaxonomyEntry[] = [
   { key: "LearningComponent",      label: { fr: "Composant",          en: "Learning component" },   color: "#d4537e" },
 ];
 
-export type DisplayEdge = { s: string; t: string; r: string; o: number };
+// `r` is the TRAVERSAL type (what the containment tree walks — always "hasChild"
+// for folded edges), while `rel` is the REAL LC edge type for the badge, so the UI
+// can tell a genuine hasChild from a folded supports/hasEducationalAlignment/hasPart
+// (or a metadata-derived "illustrates"). Keeping them separate is what makes the
+// tree walkable AND the badges honest.
+export type DisplayEdge = { s: string; t: string; r: string; rel: string; o: number };
 
 export type GroupByLevel = { key: keyof DisplayNode | string; labelFr?: string; labelEn?: string };
 export type ViewSpec =
@@ -193,18 +198,42 @@ function edgeOrder(e: StoredEdge): number {
     : 0;
 }
 
-// One stored edge → its DISPLAY edge(s). The explorer renders a single "hasChild"
-// containment tree, so we normalise canonical LC's edges onto it (display-only —
-// the store keeps the real edges):
-//   • `hasPart` (content containment) → forward display hasChild.
+// Context for the fold: which activities illustrate which component (a metadata
+// link — canonical LC has NO Activity↔LearningComponent edge — see CLAUDE.md), and
+// whether a given node id is present.
+type FoldContext = { illustrates: Map<string, { comp: string; order: number }>; has: (id: string) => boolean };
+
+// One stored edge → its DISPLAY edge(s). The containment tree walks a single
+// TRAVERSAL type (`r: "hasChild"`), so we normalise canonical LC's edges onto it,
+// but each display edge also carries its REAL type in `rel` for an honest badge
+// (display-only — the store keeps the real edges):
+//   • `hasPart` (content containment) → forward; rel "hasPart".
 //   • `supports` (component→SFI) and `hasEducationalAlignment` (lesson/activity→SFI)
 //     are alignment/part-of the standard: fold REVERSED (parent = the supported
-//     end) so components/lessons stay reachable under the standard they align to.
-//   • hasChild / buildsTowards / relatesTo pass through with their own type.
-function toDisplayEdges(e: StoredEdge): DisplayEdge[] {
-  if (e.type === "supports" || e.type === "hasEducationalAlignment") return [{ s: e.to, t: e.from, r: "hasChild", o: edgeOrder(e) }];
-  if (e.type === "hasPart") return [{ s: e.from, t: e.to, r: "hasChild", o: edgeOrder(e) }];
-  return [{ s: e.from, t: e.to, r: e.type, o: edgeOrder(e) }];
+//     end) so components/lessons stay reachable; rel = the real edge type.
+//   • An illustrative `Activity` (hasEducationalAlignment to its standard) is
+//     RE-PARENTED under the LearningComponent it exemplifies — the nesting the LC
+//     graph can't express as an edge — via metadata.illustratesComponent; rel
+//     "illustrates". Falls back to the standard fold if that component is absent.
+//   • That same activity is ALSO held directly by its derived frame via a real
+//     hasChild; we DROP that display edge (only when the component resolves, so the
+//     illustrates fold already gave it a parent) so it nests under the component
+//     alone instead of also hanging off the frame.
+//   • hasChild / buildsTowards / relatesTo otherwise pass through with their own type.
+function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
+  if (e.type === "supports" || e.type === "hasEducationalAlignment") {
+    if (e.type === "hasEducationalAlignment") {
+      const ill = ctx.illustrates.get(e.from);
+      if (ill && ctx.has(ill.comp)) return [{ s: ill.comp, t: e.from, r: "hasChild", rel: "illustrates", o: ill.order }];
+    }
+    return [{ s: e.to, t: e.from, r: "hasChild", rel: e.type, o: edgeOrder(e) }];
+  }
+  if (e.type === "hasPart") return [{ s: e.from, t: e.to, r: "hasChild", rel: "hasPart", o: edgeOrder(e) }];
+  if (e.type === "hasChild") {
+    const ill = ctx.illustrates.get(e.to);       // frame → illustrative activity: drop (it nests under its component)
+    if (ill && ctx.has(ill.comp)) return [];
+  }
+  return [{ s: e.from, t: e.to, r: e.type, rel: e.type, o: edgeOrder(e) }];
 }
 
 // ── viewConfig — Learning-Commons ontology views ONLY ────────────────────────
@@ -241,7 +270,16 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
   ]);
 
   let nodes = storedNodes.map(toDisplayNode);
-  let edges = storedEdges.flatMap(toDisplayEdges);
+  // Map each illustrative Activity → the LearningComponent it exemplifies (from
+  // metadata.illustratesComponent, lifted to `props` by flattenProps), so the fold
+  // can nest it under that component instead of listing it beside its siblings.
+  const illustrates = new Map<string, { comp: string; order: number }>();
+  for (const n of nodes) {
+    const ic = n.props?.illustratesComponent as { id?: string; order?: number } | undefined;
+    if (ic?.id) illustrates.set(n.id, { comp: ic.id, order: typeof ic.order === "number" ? ic.order : 0 });
+  }
+  const nodeIds = new Set(nodes.map((n) => n.id));
+  let edges = storedEdges.flatMap((e) => toDisplayEdges(e, { illustrates, has: (id) => nodeIds.has(id) }));
 
   // The store holds the FULL Learning-Commons graph (spine + framework/derived
   // nodes + supports/relatesTo cross-links); the explorer renders all of it as-is.
