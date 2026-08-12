@@ -21,7 +21,7 @@ type RawRel = { id: string; type: string; start: string; end: string; properties
 
 const CASES = [
   // maths: post-split — +112 Lesson nodes, +112 Lesson→expectation supports edges.
-  { grade: "ci", subject: "maths", nodes: 501, edges: 877 },
+  { grade: "ci", subject: "maths", nodes: 502, edges: 877 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).

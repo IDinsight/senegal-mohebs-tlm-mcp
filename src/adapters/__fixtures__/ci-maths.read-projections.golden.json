@@ -30,127 +30,127 @@
     {
       "chapitreNum": 1,
       "chapitreTitre": "Les ensembles",
-      "domaine": "Arithmétique"
+      "domaine": null
     },
     {
       "chapitreNum": 2,
       "chapitreTitre": "Je me repère avec mon corps",
-      "domaine": "Géométrie"
+      "domaine": null
     },
     {
       "chapitreNum": 3,
       "chapitreTitre": "J'estime et je compare des longueurs et des tailles",
-      "domaine": "Mesure"
+      "domaine": null
     },
     {
       "chapitreNum": 4,
       "chapitreTitre": "Je lis les images",
-      "domaine": "Résolution de problème"
+      "domaine": null
     },
     {
       "chapitreNum": 5,
       "chapitreTitre": "Je compare des ensembles et des sous-ensembles",
-      "domaine": "Arithmétique"
+      "domaine": null
     },
     {
       "chapitreNum": 6,
       "chapitreTitre": "Se situer et situer des objets dans un espace réel ou représenté",
-      "domaine": "Géométrie"
+      "domaine": null
     },
     {
       "chapitreNum": 7,
       "chapitreTitre": "Estimer et comparer des distances",
-      "domaine": "Mesure"
+      "domaine": null
     },
     {
       "chapitreNum": 8,
       "chapitreTitre": "J'applique les règles logiques",
-      "domaine": "Résolution de problème"
+      "domaine": null
     },
     {
       "chapitreNum": 9,
       "chapitreTitre": "Les nombres de 0 à 9",
-      "domaine": "Arithmétique"
+      "domaine": null
     },
     {
       "chapitreNum": 10,
       "chapitreTitre": "Les solides familiers",
-      "domaine": "Géométrie"
+      "domaine": null
     },
     {
       "chapitreNum": 11,
       "chapitreTitre": "Estimer et comparer des masses et des capacités",
-      "domaine": "Mesure"
+      "domaine": null
     },
     {
       "chapitreNum": 12,
       "chapitreTitre": "Reconnaître un problème mathématique",
-      "domaine": "Résolution de problème"
+      "domaine": null
     },
     {
       "chapitreNum": 13,
       "chapitreTitre": "Le nombre 10 et la dizaine",
-      "domaine": "Arithmétique"
+      "domaine": null
     },
     {
       "chapitreNum": 15,
       "chapitreTitre": "Estimer et comparer des durées",
-      "domaine": "Mesure"
+      "domaine": null
     },
     {
       "chapitreNum": 16,
       "chapitreTitre": "Identifier les données et les questions d'un problème",
-      "domaine": "Résolution de problème"
+      "domaine": null
     },
     {
       "chapitreNum": 17,
       "chapitreTitre": "La soustraction, le double et la moitié",
-      "domaine": "Arithmétique"
+      "domaine": null
     },
     {
       "chapitreNum": 18,
       "chapitreTitre": "Les figures planes",
-      "domaine": "Géométrie"
+      "domaine": null
     },
     {
       "chapitreNum": 19,
       "chapitreTitre": "Estimer et comparer des durées (approfondissement)",
-      "domaine": "Mesure"
+      "domaine": null
     },
     {
       "chapitreNum": 20,
       "chapitreTitre": "Trouver les données utiles et inutiles",
-      "domaine": "Résolution de problème"
+      "domaine": null
     },
     {
       "chapitreNum": 21,
       "chapitreTitre": "Les nombres de 11 à 20",
-      "domaine": "Arithmétique"
+      "domaine": null
     },
     {
       "chapitreNum": 22,
       "chapitreTitre": "Les lignes et le quadrillage",
-      "domaine": "Géométrie"
+      "domaine": null
     },
     {
       "chapitreNum": 23,
       "chapitreTitre": "Se repérer dans le temps",
-      "domaine": "Mesure"
+      "domaine": null
     },
     {
       "chapitreNum": 24,
       "chapitreTitre": "Les questions d'un énoncé mathématique",
-      "domaine": "Résolution de problème"
+      "domaine": null
     },
     {
       "chapitreNum": 25,
       "chapitreTitre": "Les nombres de 21 à 39",
-      "domaine": "Arithmétique"
+      "domaine": null
     },
     {
       "chapitreNum": 29,
       "chapitreTitre": "Les nombres de 40 à 50",
-      "domaine": "Arithmétique"
+      "domaine": null
     }
   ],
   "chapters": [
@@ -159,7 +159,7 @@
       "slice": {
         "chapitreNum": 1,
         "chapitreTitre": "Les ensembles",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "1f9bb548-3401-5cdc-b4ad-fb8324cc827e",
@@ -345,7 +345,7 @@
       "slice": {
         "chapitreNum": 2,
         "chapitreTitre": "Je me repère avec mon corps",
-        "domaine": "Géométrie",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "8a14aca6-5ec4-55cf-ac60-ac4d8169408a",
@@ -475,7 +475,7 @@
       "slice": {
         "chapitreNum": 3,
         "chapitreTitre": "J'estime et je compare des longueurs et des tailles",
-        "domaine": "Mesure",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "859998ac-d17f-5939-9bfc-a2b666df8b38",
@@ -592,7 +592,7 @@
       "slice": {
         "chapitreNum": 4,
         "chapitreTitre": "Je lis les images",
-        "domaine": "Résolution de problème",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "dcbb7dda-5213-5cdf-a013-658aa4c3f983",
@@ -738,7 +738,7 @@
       "slice": {
         "chapitreNum": 5,
         "chapitreTitre": "Je compare des ensembles et des sous-ensembles",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "c646249a-92f3-5dfe-8394-988dda4f3e6d",
@@ -882,7 +882,7 @@
       "slice": {
         "chapitreNum": 6,
         "chapitreTitre": "Se situer et situer des objets dans un espace réel ou représenté",
-        "domaine": "Géométrie",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "4e4bcca0-9c76-586e-9225-2b56e2d06608",
@@ -1066,7 +1066,7 @@
       "slice": {
         "chapitreNum": 7,
         "chapitreTitre": "Estimer et comparer des distances",
-        "domaine": "Mesure",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "d0426a4c-77b9-5e8c-a1ab-12cd49e521d8",
@@ -1154,7 +1154,7 @@
       "slice": {
         "chapitreNum": 8,
         "chapitreTitre": "J'applique les règles logiques",
-        "domaine": "Résolution de problème",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "8fcceadc-df33-594c-b117-61c8b3b64b49",
@@ -1286,7 +1286,7 @@
       "slice": {
         "chapitreNum": 9,
         "chapitreTitre": "Les nombres de 0 à 9",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "9f960a30-3fe3-558c-9fc4-5bf0d41d0bce",
@@ -1828,7 +1828,7 @@
       "slice": {
         "chapitreNum": 10,
         "chapitreTitre": "Les solides familiers",
-        "domaine": "Géométrie",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "b7d37d85-c4ae-5195-8998-e69d666e4634",
@@ -1945,7 +1945,7 @@
       "slice": {
         "chapitreNum": 11,
         "chapitreTitre": "Estimer et comparer des masses et des capacités",
-        "domaine": "Mesure",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "bc667763-288c-524e-9f35-6e3c58484848",
@@ -2091,7 +2091,7 @@
       "slice": {
         "chapitreNum": 12,
         "chapitreTitre": "Reconnaître un problème mathématique",
-        "domaine": "Résolution de problème",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "fe50a6b4-0bab-5e12-bab5-9ce45e0f27d8",
@@ -2181,7 +2181,7 @@
       "slice": {
         "chapitreNum": 13,
         "chapitreTitre": "Le nombre 10 et la dizaine",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "752bcbda-97e4-5bb9-ac6f-ba70d131031f",
@@ -2517,7 +2517,7 @@
       "slice": {
         "chapitreNum": 15,
         "chapitreTitre": "Estimer et comparer des durées",
-        "domaine": "Mesure",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "05135c03-35fb-532b-b546-0e025c5dac29",
@@ -2636,7 +2636,7 @@
       "slice": {
         "chapitreNum": 16,
         "chapitreTitre": "Identifier les données et les questions d'un problème",
-        "domaine": "Résolution de problème",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "9b30163c-10ec-5b04-9686-61af577d8671",
@@ -2757,7 +2757,7 @@
       "slice": {
         "chapitreNum": 17,
         "chapitreTitre": "La soustraction, le double et la moitié",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "69695867-b8aa-5a6e-970a-f618dc0fb37d",
@@ -2942,7 +2942,7 @@
       "slice": {
         "chapitreNum": 18,
         "chapitreTitre": "Les figures planes",
-        "domaine": "Géométrie",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "eeb8147d-036e-5349-848a-b3ab953b15ea",
@@ -3082,7 +3082,7 @@
       "slice": {
         "chapitreNum": 19,
         "chapitreTitre": "Estimer et comparer des durées (approfondissement)",
-        "domaine": "Mesure",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "4d8cf7e0-810e-5d30-b27c-6fb40fafbf7f",
@@ -3185,7 +3185,7 @@
       "slice": {
         "chapitreNum": 20,
         "chapitreTitre": "Trouver les données utiles et inutiles",
-        "domaine": "Résolution de problème",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "206dfd0c-ac47-5c9b-9e9f-17031fd5acce",
@@ -3275,7 +3275,7 @@
       "slice": {
         "chapitreNum": 21,
         "chapitreTitre": "Les nombres de 11 à 20",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "8e298a95-5ce5-52d5-a6dd-761b4e890515",
@@ -3493,7 +3493,7 @@
       "slice": {
         "chapitreNum": 22,
         "chapitreTitre": "Les lignes et le quadrillage",
-        "domaine": "Géométrie",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "b411f44e-94cb-5953-9340-074e86ba91a8",
@@ -3639,7 +3639,7 @@
       "slice": {
         "chapitreNum": 23,
         "chapitreTitre": "Se repérer dans le temps",
-        "domaine": "Mesure",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "9db1746b-b14e-56f3-8550-b30727c275db",
@@ -3712,7 +3712,7 @@
       "slice": {
         "chapitreNum": 24,
         "chapitreTitre": "Les questions d'un énoncé mathématique",
-        "domaine": "Résolution de problème",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "5f08e5b7-21ec-5d8d-888a-98815dca7023",
@@ -3826,7 +3826,7 @@
       "slice": {
         "chapitreNum": 25,
         "chapitreTitre": "Les nombres de 21 à 39",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "21822486-a5e7-5f1c-822e-dc086071d44e",
@@ -4076,7 +4076,7 @@
       "slice": {
         "chapitreNum": 29,
         "chapitreTitre": "Les nombres de 40 à 50",
-        "domaine": "Arithmétique",
+        "domaine": null,
         "lessons": [
           {
             "identifier": "c3a16b09-a19d-5d36-8648-d656ab6d67df",
