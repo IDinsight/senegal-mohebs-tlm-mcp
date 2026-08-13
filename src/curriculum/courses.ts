@@ -14,10 +14,13 @@ import type { CurriculumModel, RawGraphSnapshot } from "../types.js";
 type NodeOut = { id: string; labels: string[]; properties: Record<string, unknown> };
 type EdgeOut = { id: string; type: string; start: string; end: string; properties: Record<string, unknown> };
 
-// Containment edges define the "under a course" subtree. hasPart is content
-// nesting, hasChild is the standards hierarchy — a course's descendants are
-// reached through both.
-const CONTAINMENT = new Set(["hasPart", "hasChild"]);
+// The edges the subtree walk follows out from a course. Containment does the
+// bulk of it — `hasPart` (content nesting) + `hasChild` (standards hierarchy).
+// `usesRoutine` is also followed so the InstructionalRoutine a lesson applies —
+// and, through the routine's own `hasPart`, its step routines and Materials — are
+// pulled into the subtree; without it the routine (attached by usesRoutine, not
+// containment) would be invisible in get_course.
+const EXPAND_EDGES = new Set(["hasPart", "hasChild", "usesRoutine"]);
 
 const nodeOut = (n: RawGraphSnapshot["nodes"][number]): NodeOut => ({ id: n.id, labels: n.labels ?? [], properties: n.properties ?? {} });
 const edgeOut = (e: RawGraphSnapshot["relationships"][number]): EdgeOut => ({ id: e.id, type: e.type, start: e.start, end: e.end, properties: e.properties ?? {} });
@@ -30,9 +33,11 @@ export function coursesOf(model: CurriculumModel): NodeOut[] {
   return raw.nodes.filter((n) => (n.labels ?? []).includes("Course")).map(nodeOut);
 }
 
-// The containment subtree rooted at one Course: the course node plus every
-// descendant reached through hasPart/hasChild, and every edge (any type) among
-// those nodes. Returns null if the id isn't a Course node in this graph.
+// The subtree rooted at one Course: the course node plus every descendant
+// reached through hasPart/hasChild AND every InstructionalRoutine a descendant
+// applies via usesRoutine (with the routine's own step routines + Materials), and
+// every edge (any type) among those nodes. Returns null if the id isn't a Course
+// node in this graph.
 export function courseSubgraph(model: CurriculumModel, courseId: string): { course: string; nodes: NodeOut[]; edges: EdgeOut[] } | null {
   const raw = model.rawGraph;
   if (!raw) return null;
@@ -41,7 +46,7 @@ export function courseSubgraph(model: CurriculumModel, courseId: string): { cour
 
   const childrenOf = new Map<string, string[]>();
   for (const e of raw.relationships) {
-    if (!CONTAINMENT.has(e.type)) continue;
+    if (!EXPAND_EDGES.has(e.type)) continue;
     (childrenOf.get(e.start) ?? childrenOf.set(e.start, []).get(e.start)!).push(e.end);
   }
   const inSet = new Set<string>([courseId]);

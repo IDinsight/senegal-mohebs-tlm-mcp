@@ -41,6 +41,17 @@ describe("coursesOf / courseSubgraph — generic Course readers", () => {
     expect(sub.edges.every((e) => ids.has(e.start) && ids.has(e.end))).toBe(true);
   });
 
+  it("pulls in the InstructionalRoutine a lesson applies (usesRoutine) and its step Materials", () => {
+    const model = modelFor("ci", "maths");
+    const student = coursesOf(model).find((c) => c.properties.description === "Outil de l'élève")!;
+    const sub = courseSubgraph(model, student.id)!;
+    // The student book's container lessons usesRoutine the pupil-manual routine,
+    // so its InstructionalRoutine tree + the step Materials come along.
+    expect(sub.nodes.some((n) => n.labels.includes("InstructionalRoutine"))).toBe(true);
+    expect(sub.nodes.some((n) => n.labels.includes("Material"))).toBe(true);
+    expect(sub.edges.some((e) => e.type === "usesRoutine")).toBe(true);
+  });
+
   it("returns null for a non-Course id and an unknown id", () => {
     const model = modelFor("ci", "maths");
     const someLesson = model.rawGraph!.nodes.find((n) => (n.labels ?? []).includes("Lesson"))!;
