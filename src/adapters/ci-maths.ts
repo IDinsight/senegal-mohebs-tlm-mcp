@@ -129,11 +129,10 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
   // Read helpers, all parametrized by the CurriculumModel they read (published via
   // ensure(); a draft-resolved model for preview). Chapter→lesson and week→lesson
   // are followed through the EDGES (childrenOf), not any number.
-  // Authored chapters only. Canonically the RECE task-groupings are also
-  // `LessonGrouping` (kind "chapter"), so filter to the ones stamped statementType
-  // "Chapitre" — task-groupings (contentType "Regroupement de tâches") stay out of
-  // the chapter projection, keeping listUnits/slice byte-identical.
-  const chaptersIn = (m: CurriculumModel) => m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
+  // Authored chapters only — filtered by the canonical LessonGrouping `groupName`
+  // ("Chapitre"), which also keeps weeks (groupName "Semaine", a different kind
+  // anyway) and any other grouping out of the chapter projection.
+  const chaptersIn = (m: CurriculumModel) => m.unitsOfKind("chapter").filter((c) => c.properties.groupName === "Chapitre");
   const chapters = () => chaptersIn(ensure());
   const chapterOf = (m: CurriculumModel, chapNum: number) => chaptersIn(m).find((c) => c.order === chapNum) ?? null;
   const domaineOf = (m: CurriculumModel, chapter: CurriculumUnit) => m.byId.get(chapter.parentId ?? "")?.title ?? null;

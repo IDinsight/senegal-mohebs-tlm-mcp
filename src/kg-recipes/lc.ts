@@ -77,6 +77,11 @@ export function orderPathsOf(n: MutationNode): string[] {
 // Derive the template for `label` from the graph (copy an existing example's
 // skeleton), or fall back to canonical LC defaults when none exists yet.
 export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplate {
+  // Grouping-ness is a property of the LABEL (a LessonGrouping/Course is a grouping),
+  // not of the SFI-only `normalizedStatementType`. That field is copied only when the
+  // example actually has it (standards nodes do; canonical content groupings don't),
+  // and synthesised for a first-of-kind only for standards labels.
+  const isGrouping = GROUPING_LABELS.has(label);
   const example = graph.nodes.find((n) => (n.labels ?? []).includes(label));
   if (example) {
     const raw = rawOf(example);
@@ -84,21 +89,20 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
     return {
       kind: example.type,
       labels: example.labels ?? [label],
-      isGrouping: raw.normalizedStatementType === "Standard Grouping",
+      isGrouping,
       orderPaths: orderPaths.length ? orderPaths : ["raw.position"],
       normalizedType: raw.normalizedType,
       normalizedStatementType: raw.normalizedStatementType,
       role: raw.metadata?.role,
     };
   }
-  const isGrouping = GROUPING_LABELS.has(label);
   return {
     kind: FALLBACK_KIND[label] ?? label.toLowerCase(),
     labels: [label],
     isGrouping,
     orderPaths: ["raw.position"],
     normalizedType: label,
-    normalizedStatementType: isGrouping ? "Standard Grouping" : undefined,
+    normalizedStatementType: STANDARDS_LABELS.has(label) ? "Standard Grouping" : undefined,
   };
 }
 

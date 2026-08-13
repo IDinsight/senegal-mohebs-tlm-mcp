@@ -51,8 +51,8 @@ describe("generic parseGraph — maths (new shape)", () => {
     expect(kindCounts(m, ["week", "chapter", "domaine", "lesson", "expectation"])).toEqual({
       week: 23, chapter: 25, domaine: 4, lesson: 137, expectation: 112,
     });
-    // authored chapters carry statementType "Chapitre".
-    const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
+    // authored chapters carry groupName "Chapitre".
+    const authored = m.unitsOfKind("chapter").filter((c) => c.properties.groupName === "Chapitre");
     expect(authored.length).toBe(25);
     // components/tasks exist (incl. out-of-spine ones, matching legacy parse)
     expect(m.unitsOfKind("component").length).toBeGreaterThan(0);
@@ -64,7 +64,7 @@ describe("generic parseGraph — maths (new shape)", () => {
     // The weekly teaching lessons live in the Teacher's Guide (week→lesson); each
     // chapter holds ONE Student's-Book container Lesson, which holds that
     // chapter's Activities (218 total, 2 per former lesson).
-    const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
+    const authored = m.unitsOfKind("chapter").filter((c) => c.properties.groupName === "Chapitre");
     let chapterLessons = 0, activities = 0;
     for (const c of authored) {
       const lessons = m.childrenOf(c.id).filter((u) => u.kind === "lesson");

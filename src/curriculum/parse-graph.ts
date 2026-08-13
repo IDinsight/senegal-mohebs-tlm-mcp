@@ -51,6 +51,11 @@ export type GraphParseDescriptor = {
 };
 
 const GROUPING = "Standard Grouping";
+// Content grouping labels are groupings by virtue of their LABEL — a LessonGrouping/
+// Course is a grouping without needing the SFI-only `normalizedStatementType` marker.
+// A StandardsFrameworkItem is a grouping only when it says so (Standard Grouping vs
+// a Standard leaf), so it's caught by the `normalizedStatementType` check, not here.
+const GROUPING_LABELS = new Set(["Course", "LessonGrouping", "StandardsFramework"]);
 
 export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumModel {
   const g = (raw ?? {}) as RawGraph;
@@ -86,7 +91,8 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
     const kind = kindOf(n);
     if (!kind) continue;
     const p = n.properties ?? {};
-    const grouping = p.normalizedStatementType === GROUPING;
+    const label = n.labels?.[0];
+    const grouping = (label != null && GROUPING_LABELS.has(label)) || p.normalizedStatementType === GROUPING;
     units.push(unit({
       id: n.id,
       kind,
