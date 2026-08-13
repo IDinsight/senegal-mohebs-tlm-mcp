@@ -117,6 +117,47 @@ The target isn't a zero-intelligence formatter; it's a step that **formats autho
 logic and keeps a book looking like one book**, rather than one that re-derives the
 pedagogy each time.
 
+## How the server-tool surface reflects the split
+
+A/B/C classifies the prompt's *responsibilities*, not tools — but the ~29 non-infra
+MCP tools line up with it cleanly, which is a useful check on the direction. "Which
+bucket's responsibility does this tool serve?":
+
+**A — logic (graph).** The tools that author, curate, and read the logic + content
+held in the graph:
+
+- `add_node`, `move_node`, `reposition`, `set_content`
+- `create_node`, `link_nodes`, `unlink_nodes`, `delete_node`
+- `upsert_property`, `diff_draft`, `publish_draft`, `discard_draft`
+- `list_units`, `get_curriculum`, `get_terminology`, `terminology_sections`
+
+**B — formatting + character/art consistency (generation).** The generation/output
+surface *and* the cast-consistency machinery:
+
+- `get_prompt`, `preview_generation`, `create_preview_upload_url`
+- `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `record_document_content`, `get_document_text`
+- `log_generation` — records the characters used so later documents stay consistent
+- the `establishedCharacters` payload of `get_generation_context` — feeds cast consistency into a run
+
+**C — authoring heuristics (prompt).** C is almost entirely prompt prose ("invent
+misconception distractors", "vary the correct letter") and has essentially **no tool
+footprint**. The only tools that lean C are the *variety* heuristic:
+
+- `suggest_fresh_domain`, `domain_usage` — rotate object families so chapters don't repeat
+
+**Neither (infra/governance):** `ping`, `set_context`, `get_context`,
+`list_workspaces`, `create_workspace`, `add_member`, `remove_member`, `list_members`,
+`get_capabilities`, `read_audit`.
+
+**The seam:** `get_generation_context` pulls A (the curriculum slice, and — after
+Phase 1 — the routine) together with the B character inputs to feed a generation run.
+
+The takeaway: **A is the graph tool surface, B is the generation/output surface plus
+the character-consistency tools, and C barely touches tools at all** — which is
+exactly what this note predicts. C is guidance on *how to author*, so it lives in the
+prompt, not in tools; `suggest_fresh_domain`/`domain_usage` are the lone tools that
+exist purely to serve a Bucket-C heuristic.
+
 ## Related
 
 - [`instructional-routines.md`](instructional-routines.md) — the mechanism that puts a
