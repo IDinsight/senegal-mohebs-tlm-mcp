@@ -11757,7 +11757,7 @@
     {
       "id": "743dfdad-6e5e-523d-a652-0d0cbb034e6d",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11768,13 +11768,16 @@
           "order": 1
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 1
       }
     },
     {
       "id": "60f4b379-b691-521a-8573-76264af2af08",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11785,13 +11788,16 @@
           "order": 2
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 2
       }
     },
     {
       "id": "e755a55a-4084-5196-aec1-bdebb1bb8f4c",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11802,13 +11808,16 @@
           "order": 3
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 3
       }
     },
     {
       "id": "e2fdfd7a-34c5-5e8c-a2e6-44ae5a1d4c69",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11819,13 +11828,16 @@
           "order": 4
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 4
       }
     },
     {
       "id": "fc2bf0f2-97f7-5b02-8325-f05b0aa6cb26",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11836,13 +11848,16 @@
           "order": 5
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 5
       }
     },
     {
       "id": "b00eda84-3a9d-50d2-8591-d3c69836f89d",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11853,13 +11868,16 @@
           "order": 6
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 6
       }
     },
     {
       "id": "2b48d891-f169-5067-9d48-fdbe50334f88",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11870,13 +11888,16 @@
           "order": 7
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 7
       }
     },
     {
       "id": "5e4d49dc-7d32-50f8-8c55-a93f4299fa68",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11887,13 +11908,16 @@
           "order": 8
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 8
       }
     },
     {
       "id": "633f3c6b-af4e-5bf2-b4a2-eccc378f0a28",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11904,13 +11928,16 @@
           "order": 9
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 9
       }
     },
     {
       "id": "8ddef6a5-b289-5aa7-a7d8-023333d073f1",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11921,13 +11948,16 @@
           "order": 11
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 11
       }
     },
     {
       "id": "071c3b6d-26af-58e2-838a-0e97d43cefff",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11938,13 +11968,16 @@
           "order": 12
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 12
       }
     },
     {
       "id": "c5918160-23dd-5300-8a7e-e3dbb7f45022",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11955,13 +11988,16 @@
           "order": 13
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 13
       }
     },
     {
       "id": "66cb6565-26dd-5876-8551-2a8993f0ce2c",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11972,13 +12008,16 @@
           "order": 14
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 14
       }
     },
     {
       "id": "f18de5aa-e2f4-5aca-a014-8c8b24b3720c",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -11989,13 +12028,16 @@
           "order": 15
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 15
       }
     },
     {
       "id": "642dee47-3b8e-5f8d-8d14-0d898fd62f26",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12006,13 +12048,16 @@
           "order": 16
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 16
       }
     },
     {
       "id": "21cb2bdc-9d5f-58ca-aa28-8496677d78a1",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12023,13 +12068,16 @@
           "order": 17
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 17
       }
     },
     {
       "id": "f99b9c42-3a66-5d9b-8ff9-f8a1fa5d5fc0",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12040,13 +12088,16 @@
           "order": 19
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 19
       }
     },
     {
       "id": "0af2fb25-1fa6-57fe-b48c-0a15d26c791b",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12057,13 +12108,16 @@
           "order": 20
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 20
       }
     },
     {
       "id": "6a648d41-330f-5f41-9fa1-2c859247141b",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12074,13 +12128,16 @@
           "order": 21
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 21
       }
     },
     {
       "id": "7a2bd5e4-64e3-5cd9-9268-8e2c011bed1c",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12091,13 +12148,16 @@
           "order": 22
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 22
       }
     },
     {
       "id": "4787efd9-2447-5595-9482-33f5d6b1419b",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12108,13 +12168,16 @@
           "order": 23
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 23
       }
     },
     {
       "id": "e6a6c3ba-b236-5499-af66-5e161ff2f2a5",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12125,13 +12188,16 @@
           "order": 24
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 24
       }
     },
     {
       "id": "6604ccb0-3956-5914-9b70-1c3d2b8d0e2d",
       "labels": [
-        "StandardsFrameworkItem"
+        "LessonGrouping"
       ],
       "properties": {
         "normalizedStatementType": "Standard Grouping",
@@ -12142,7 +12208,10 @@
           "order": 25
         },
         "inLanguage": "fr-FR",
-        "provider": "Learning Commons ontology (generated)"
+        "provider": "Learning Commons ontology (generated)",
+        "groupName": "Semaine",
+        "groupLevel": 1,
+        "position": 25
       }
     },
     {
@@ -33141,1795 +33210,2355 @@
       }
     },
     {
-      "id": "31b8df67-2992-5274-bd6a-e3d2a1c5e17c",
-      "type": "hasChild",
+      "id": "36016a59-10c1-5bbb-a40c-b750c513df5a",
+      "type": "hasPart",
       "start": "743dfdad-6e5e-523d-a652-0d0cbb034e6d",
       "end": "14c6d63e-fec0-5ef0-8865-2eb6206f2ab3",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "36016a59-10c1-5bbb-a40c-b750c513df5a",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f6cad1a9-c1d8-5503-a976-caaeabdf9795",
-      "type": "hasChild",
+      "id": "8dcfe4b8-80c0-5858-9dc7-590fbb0b1186",
+      "type": "hasPart",
       "start": "743dfdad-6e5e-523d-a652-0d0cbb034e6d",
       "end": "934224dc-e12d-526e-b85c-58bc3e98be19",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "8dcfe4b8-80c0-5858-9dc7-590fbb0b1186",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "60a739d4-39c7-582c-8692-3c0b05dc3f9a",
-      "type": "hasChild",
+      "id": "486c02ec-e024-5a28-b3f0-ae1144d5c269",
+      "type": "hasPart",
       "start": "743dfdad-6e5e-523d-a652-0d0cbb034e6d",
       "end": "e40ac3b4-f036-53c2-aac1-980f07ee2659",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "486c02ec-e024-5a28-b3f0-ae1144d5c269",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "0b70c433-0d4d-5691-abc1-71e8b926bae3",
-      "type": "hasChild",
+      "id": "686dff83-5780-59ba-ace1-c3d38d72204d",
+      "type": "hasPart",
       "start": "743dfdad-6e5e-523d-a652-0d0cbb034e6d",
       "end": "b30f6640-aab8-5a30-b07b-08ed66d66b9f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "686dff83-5780-59ba-ace1-c3d38d72204d",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "b4f05734-c0ee-5e62-bddd-9e43652bd5dd",
-      "type": "hasChild",
+      "id": "727a6888-149b-5d1c-801c-252eac0223cc",
+      "type": "hasPart",
       "start": "743dfdad-6e5e-523d-a652-0d0cbb034e6d",
       "end": "ce1a2ee1-dd24-5b13-a253-c743f094bd40",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "727a6888-149b-5d1c-801c-252eac0223cc",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "e69f0dd1-5c2b-5d89-acf5-537db417d196",
-      "type": "hasChild",
+      "id": "bdf2e0ff-31d2-5745-952d-a3cd2b228236",
+      "type": "hasPart",
       "start": "60f4b379-b691-521a-8573-76264af2af08",
       "end": "3a1e8583-f8cc-5981-827a-2cf6315d886f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "bdf2e0ff-31d2-5745-952d-a3cd2b228236",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "2d5f11e0-0061-5b65-9d72-3461ed33ce9c",
-      "type": "hasChild",
+      "id": "50169d19-c58d-5ec3-9898-1404814d7d44",
+      "type": "hasPart",
       "start": "60f4b379-b691-521a-8573-76264af2af08",
       "end": "4341f673-9e50-5403-ba15-c9b992a3b48f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "50169d19-c58d-5ec3-9898-1404814d7d44",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "bdde9aa9-29da-5ec4-8741-c0165ebb74bd",
-      "type": "hasChild",
+      "id": "7457bcb4-5566-5582-a86c-0f5b6507f931",
+      "type": "hasPart",
       "start": "60f4b379-b691-521a-8573-76264af2af08",
       "end": "8a7fa35b-c1ad-53fb-bf9f-830bc495e854",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "7457bcb4-5566-5582-a86c-0f5b6507f931",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "4496ef98-438e-5f9a-9691-6d2d3981c232",
-      "type": "hasChild",
+      "id": "643b7c71-b2a2-5c32-b39b-d5ec867ecbe0",
+      "type": "hasPart",
       "start": "60f4b379-b691-521a-8573-76264af2af08",
       "end": "f09b2bf4-1161-55a3-9682-f9c6fc48a1f8",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "643b7c71-b2a2-5c32-b39b-d5ec867ecbe0",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9845bc0f-c7bb-5f28-a900-5ee9c6fea024",
-      "type": "hasChild",
+      "id": "a943284c-9eb6-51cc-aea6-380806ecfd22",
+      "type": "hasPart",
       "start": "60f4b379-b691-521a-8573-76264af2af08",
       "end": "6ee51bbc-8a49-571d-b357-0a897415db19",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "a943284c-9eb6-51cc-aea6-380806ecfd22",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "e500e788-f1b0-5ad7-a9d8-e01fc856f6b8",
-      "type": "hasChild",
+      "id": "3f659c7b-9de7-5855-a1c1-3f51719ecd2d",
+      "type": "hasPart",
       "start": "e755a55a-4084-5196-aec1-bdebb1bb8f4c",
       "end": "226f304b-b463-54bb-afa8-8c71de566ab0",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "3f659c7b-9de7-5855-a1c1-3f51719ecd2d",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "c09b7a4c-99bf-5e15-8e5f-a69553e972b2",
-      "type": "hasChild",
+      "id": "0b84f555-a67f-5eb0-9442-dce614ed4c8a",
+      "type": "hasPart",
       "start": "e755a55a-4084-5196-aec1-bdebb1bb8f4c",
       "end": "a1279999-3401-5396-b396-a81247b7990f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "0b84f555-a67f-5eb0-9442-dce614ed4c8a",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "5d933a03-2ff3-5949-a7d1-8b6d89cab81e",
-      "type": "hasChild",
+      "id": "d1b18111-f141-590b-99fe-861590c14c52",
+      "type": "hasPart",
       "start": "e755a55a-4084-5196-aec1-bdebb1bb8f4c",
       "end": "c9ea885a-626f-54c3-ba73-e7f928108d28",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "d1b18111-f141-590b-99fe-861590c14c52",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "3f7ec20d-1d23-51d1-a0dc-aad848d1cc7f",
-      "type": "hasChild",
+      "id": "7a03ac8f-2035-59f8-8a33-3407dce286fa",
+      "type": "hasPart",
       "start": "e755a55a-4084-5196-aec1-bdebb1bb8f4c",
       "end": "bd1bcbd8-011e-5d0b-b971-aa7c9540a4a7",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "7a03ac8f-2035-59f8-8a33-3407dce286fa",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "2484f4ce-27a3-573f-9520-b8a1bb496b1e",
-      "type": "hasChild",
+      "id": "29278d1a-5ade-543f-a619-a2cd038a8a84",
+      "type": "hasPart",
       "start": "e755a55a-4084-5196-aec1-bdebb1bb8f4c",
       "end": "537ce946-d029-5b28-b6fb-7927c4451845",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "29278d1a-5ade-543f-a619-a2cd038a8a84",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "85fb9ffb-8671-529f-a8b0-e8d134ea7e2b",
-      "type": "hasChild",
+      "id": "ce9c792c-e938-5ed8-9ecc-3e57354d45aa",
+      "type": "hasPart",
       "start": "e2fdfd7a-34c5-5e8c-a2e6-44ae5a1d4c69",
       "end": "8cccbc2b-5745-55e9-8d98-b2144b1a742f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "ce9c792c-e938-5ed8-9ecc-3e57354d45aa",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "c8504201-2d31-5d0f-9fff-5b6f4e12d6d0",
-      "type": "hasChild",
+      "id": "cdc4482c-824d-51fc-8508-61ce59e0d86f",
+      "type": "hasPart",
       "start": "e2fdfd7a-34c5-5e8c-a2e6-44ae5a1d4c69",
       "end": "90fd0772-d690-5d96-8a75-89b36f190219",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "cdc4482c-824d-51fc-8508-61ce59e0d86f",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "be131515-84f3-5882-929b-d90f25febd58",
-      "type": "hasChild",
+      "id": "bd67ac40-a7ac-5359-bd0c-db4e9f01c3ef",
+      "type": "hasPart",
       "start": "e2fdfd7a-34c5-5e8c-a2e6-44ae5a1d4c69",
       "end": "73d8120d-e1e7-5ea9-abbc-e3d29e0ffe26",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "bd67ac40-a7ac-5359-bd0c-db4e9f01c3ef",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "3fca5b2c-526c-59e0-abbc-5d3447e78746",
-      "type": "hasChild",
+      "id": "c8e93cde-5e32-59d2-b5fb-57b9a96b3773",
+      "type": "hasPart",
       "start": "e2fdfd7a-34c5-5e8c-a2e6-44ae5a1d4c69",
       "end": "67a93098-2599-59e3-8fd8-5cff90e5fd23",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "c8e93cde-5e32-59d2-b5fb-57b9a96b3773",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "39d3e37b-3986-5bf1-aebc-108dfdb8f319",
-      "type": "hasChild",
+      "id": "033552e6-4675-54aa-a9fc-cdea5c95ac15",
+      "type": "hasPart",
       "start": "e2fdfd7a-34c5-5e8c-a2e6-44ae5a1d4c69",
       "end": "5fade055-f480-5327-93eb-b0695ef0ef32",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "033552e6-4675-54aa-a9fc-cdea5c95ac15",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f54323be-13e8-55c4-80a0-33a0ec13cc2a",
-      "type": "hasChild",
+      "id": "9ca40329-388d-535e-bd90-ea71bcd36453",
+      "type": "hasPart",
       "start": "fc2bf0f2-97f7-5b02-8325-f05b0aa6cb26",
       "end": "74f9a7b6-49b3-50b3-aa05-ede813840678",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "9ca40329-388d-535e-bd90-ea71bcd36453",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "43fd1e9b-73fc-5382-9054-d833f80ec669",
-      "type": "hasChild",
+      "id": "36a2e6d2-657d-59b9-adf3-424010c492e0",
+      "type": "hasPart",
       "start": "fc2bf0f2-97f7-5b02-8325-f05b0aa6cb26",
       "end": "db077e00-627f-5399-afb3-e47fa8f94c48",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "36a2e6d2-657d-59b9-adf3-424010c492e0",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "e3f82871-cae2-540a-85d6-24aaf25a9e7a",
-      "type": "hasChild",
+      "id": "37f3a47a-b7fc-53e4-a0c7-1097b5419722",
+      "type": "hasPart",
       "start": "fc2bf0f2-97f7-5b02-8325-f05b0aa6cb26",
       "end": "76b29998-25c2-58ee-b04e-41febb74e7ae",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "37f3a47a-b7fc-53e4-a0c7-1097b5419722",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "76fad018-123a-5b4b-962c-e320758b6388",
-      "type": "hasChild",
+      "id": "6a46f7e7-443f-56fb-97ac-8adb5e60be02",
+      "type": "hasPart",
       "start": "fc2bf0f2-97f7-5b02-8325-f05b0aa6cb26",
       "end": "4bb02b75-8af9-52a4-b15f-e28641f1b15e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "6a46f7e7-443f-56fb-97ac-8adb5e60be02",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "009afeb8-5a59-5997-85ac-408a347c0e25",
-      "type": "hasChild",
+      "id": "6d056833-0254-5240-b112-57094730bdb6",
+      "type": "hasPart",
       "start": "fc2bf0f2-97f7-5b02-8325-f05b0aa6cb26",
       "end": "d495993f-feb0-5cfc-ba06-1389b6b97c57",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "6d056833-0254-5240-b112-57094730bdb6",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "27d0e785-d0a7-5abb-8d32-bbd54fb288f1",
-      "type": "hasChild",
+      "id": "b5d4728f-81d9-57e2-884c-5f6b3dca8810",
+      "type": "hasPart",
       "start": "b00eda84-3a9d-50d2-8591-d3c69836f89d",
       "end": "e5728a78-5fcf-54a8-8019-ddc28dab25dc",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "b5d4728f-81d9-57e2-884c-5f6b3dca8810",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "1cf65d3a-5c64-5e5c-99a0-ed2f021241d4",
-      "type": "hasChild",
+      "id": "cd76bfa3-1356-57a4-8e49-444ad6be6152",
+      "type": "hasPart",
       "start": "b00eda84-3a9d-50d2-8591-d3c69836f89d",
       "end": "5f6bbfd0-e8b0-50d3-a551-171622b9c667",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "cd76bfa3-1356-57a4-8e49-444ad6be6152",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f522b6be-fafd-568a-bb3b-19c6569285e1",
-      "type": "hasChild",
+      "id": "0f5affc4-1e21-5518-b813-56c92c60991d",
+      "type": "hasPart",
       "start": "b00eda84-3a9d-50d2-8591-d3c69836f89d",
       "end": "7c3e9cb3-cd3d-5956-9230-a85eb3ac0076",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "0f5affc4-1e21-5518-b813-56c92c60991d",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "877452e9-34b2-506e-b15e-c1b7762c6542",
-      "type": "hasChild",
+      "id": "63048980-a3c9-5c8f-9755-d61b28ffa5b1",
+      "type": "hasPart",
       "start": "b00eda84-3a9d-50d2-8591-d3c69836f89d",
       "end": "c9814ffe-f413-5ccd-9f1c-6afcc690af89",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "63048980-a3c9-5c8f-9755-d61b28ffa5b1",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "65c4e946-6156-536c-9bff-b3506857278a",
-      "type": "hasChild",
+      "id": "c2ade52d-a8e2-51e3-bd71-9dd56079898c",
+      "type": "hasPart",
       "start": "b00eda84-3a9d-50d2-8591-d3c69836f89d",
       "end": "ad2d2c01-749b-5a38-8c33-8b971b919f8d",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "c2ade52d-a8e2-51e3-bd71-9dd56079898c",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9361a534-d6df-5234-928b-2bca85c893d2",
-      "type": "hasChild",
+      "id": "144d9e7a-b728-556e-a70b-52ed8acc3c86",
+      "type": "hasPart",
       "start": "2b48d891-f169-5067-9d48-fdbe50334f88",
       "end": "c23ce28a-6dd5-5f35-a99d-60853dc67950",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "144d9e7a-b728-556e-a70b-52ed8acc3c86",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "0bd02007-a495-5844-b5f8-5df0c0633e86",
-      "type": "hasChild",
+      "id": "001c53c0-cb92-531c-825f-a2ccfecff69b",
+      "type": "hasPart",
       "start": "2b48d891-f169-5067-9d48-fdbe50334f88",
       "end": "97fa4cfb-e753-5dd5-9ce6-fd70dcee270e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "001c53c0-cb92-531c-825f-a2ccfecff69b",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "bcd3b434-9350-524c-bb7f-d8d4aa973507",
-      "type": "hasChild",
+      "id": "695dbff9-1311-51fb-8a3e-cfe9989ec87a",
+      "type": "hasPart",
       "start": "2b48d891-f169-5067-9d48-fdbe50334f88",
       "end": "8fa1fd43-5d0c-509e-bf1a-f53a0e381a0f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "695dbff9-1311-51fb-8a3e-cfe9989ec87a",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "977ad42c-dc22-53e5-96d1-c168b4e01b75",
-      "type": "hasChild",
+      "id": "0ecc784d-aec6-5fb0-a60f-20833f8aa227",
+      "type": "hasPart",
       "start": "2b48d891-f169-5067-9d48-fdbe50334f88",
       "end": "751d57d9-a82f-55ae-b665-7403fe43768a",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "0ecc784d-aec6-5fb0-a60f-20833f8aa227",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "832306e3-b095-5195-92bf-c14c39fdd4b5",
-      "type": "hasChild",
+      "id": "931ee07d-c13e-5674-9167-f5c234d86323",
+      "type": "hasPart",
       "start": "2b48d891-f169-5067-9d48-fdbe50334f88",
       "end": "81d5baba-c291-537d-a723-f7f4ada31c54",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "931ee07d-c13e-5674-9167-f5c234d86323",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "1935c0bf-2f7c-5535-acc0-022761d26a87",
-      "type": "hasChild",
+      "id": "b9489c9a-c99c-5bf0-90bb-6e7039006e84",
+      "type": "hasPart",
       "start": "5e4d49dc-7d32-50f8-8c55-a93f4299fa68",
       "end": "0243e7a3-2f64-571c-a977-64a42f83ea62",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "b9489c9a-c99c-5bf0-90bb-6e7039006e84",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "7b86af2a-f241-5792-914b-b64a16cec2c3",
-      "type": "hasChild",
+      "id": "db1c0a54-a71c-515b-ac9d-4d22637a37e9",
+      "type": "hasPart",
       "start": "5e4d49dc-7d32-50f8-8c55-a93f4299fa68",
       "end": "b698973e-bd2e-5304-b4ad-8398e98093cd",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "db1c0a54-a71c-515b-ac9d-4d22637a37e9",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "0852057d-5a16-53d7-935d-d6fc6ebe7665",
-      "type": "hasChild",
+      "id": "bcf781a4-c390-514f-abf1-4c70926a2782",
+      "type": "hasPart",
       "start": "5e4d49dc-7d32-50f8-8c55-a93f4299fa68",
       "end": "2c856193-4e20-579d-9388-cddeba242012",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "bcf781a4-c390-514f-abf1-4c70926a2782",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "952703e5-cb09-5117-9643-9c571cedff81",
-      "type": "hasChild",
+      "id": "a3e444d5-36fa-5ddb-8d08-d474a101de33",
+      "type": "hasPart",
       "start": "5e4d49dc-7d32-50f8-8c55-a93f4299fa68",
       "end": "4caaf83e-475e-58df-be53-07f602f56d9e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "a3e444d5-36fa-5ddb-8d08-d474a101de33",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "1fa64133-f712-593e-92fb-aa7d10250ff7",
-      "type": "hasChild",
+      "id": "02bd92c3-2945-586e-976f-f8b5898c2c59",
+      "type": "hasPart",
       "start": "5e4d49dc-7d32-50f8-8c55-a93f4299fa68",
       "end": "08ccc80c-1f80-5a57-9ad9-9599737e4e07",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "02bd92c3-2945-586e-976f-f8b5898c2c59",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "837f5937-c396-5465-a6e7-9d99e5974352",
-      "type": "hasChild",
+      "id": "da958715-26f4-5970-a3ad-ef84e8885a64",
+      "type": "hasPart",
       "start": "633f3c6b-af4e-5bf2-b4a2-eccc378f0a28",
       "end": "2d7268af-94f9-5646-9867-c10b28952291",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "da958715-26f4-5970-a3ad-ef84e8885a64",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "0fb1df3f-b66b-59c6-9faa-b87004d10a68",
-      "type": "hasChild",
+      "id": "fd660b46-951d-532b-be81-47c14a46139f",
+      "type": "hasPart",
       "start": "633f3c6b-af4e-5bf2-b4a2-eccc378f0a28",
       "end": "e3cad5e9-c150-5d9c-90c6-dc97f5b8f49e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "fd660b46-951d-532b-be81-47c14a46139f",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "756a3dba-b46d-5404-927d-60e28cf9d6e6",
-      "type": "hasChild",
+      "id": "c58231db-2507-5617-a16f-a7c23cab9244",
+      "type": "hasPart",
       "start": "633f3c6b-af4e-5bf2-b4a2-eccc378f0a28",
       "end": "ecc40fef-4351-53bf-b309-3fc53a3b2c5e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "c58231db-2507-5617-a16f-a7c23cab9244",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "fca23fc1-055f-5334-890d-c8b80d81e206",
-      "type": "hasChild",
+      "id": "d89b001d-9645-58cb-8beb-25d1f7794ee0",
+      "type": "hasPart",
       "start": "633f3c6b-af4e-5bf2-b4a2-eccc378f0a28",
       "end": "27930bbb-9212-51d6-be6b-8db24a2ea118",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "d89b001d-9645-58cb-8beb-25d1f7794ee0",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "6574adf8-545a-5a04-9beb-cafa92c6099e",
-      "type": "hasChild",
+      "id": "176a443b-1e7f-5cae-9a56-79177270223f",
+      "type": "hasPart",
       "start": "633f3c6b-af4e-5bf2-b4a2-eccc378f0a28",
       "end": "c7cf1715-5808-582a-a18e-181daefeeed7",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "176a443b-1e7f-5cae-9a56-79177270223f",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "1e767f03-0897-5f5d-ad3a-15d1dbf9d5dd",
-      "type": "hasChild",
+      "id": "5c104e27-65cb-55f3-b29d-725048aa50f5",
+      "type": "hasPart",
       "start": "8ddef6a5-b289-5aa7-a7d8-023333d073f1",
       "end": "2280a161-a920-5159-a9fa-c87ef85358b1",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "5c104e27-65cb-55f3-b29d-725048aa50f5",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "6103a3e7-63db-53c3-b1d0-267987b3363d",
-      "type": "hasChild",
+      "id": "988d8887-6bc9-5e23-99f3-e147716a7afb",
+      "type": "hasPart",
       "start": "8ddef6a5-b289-5aa7-a7d8-023333d073f1",
       "end": "e6f59a8e-1161-5e33-b655-669942a3068e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "988d8887-6bc9-5e23-99f3-e147716a7afb",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "b6e89b9f-7724-59c6-bf99-51e84c33c766",
-      "type": "hasChild",
+      "id": "1c546e71-8d79-5f35-80f6-2a745e734e41",
+      "type": "hasPart",
       "start": "8ddef6a5-b289-5aa7-a7d8-023333d073f1",
       "end": "29cb40b8-4fc5-55b9-9499-1ea07d780b3c",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "1c546e71-8d79-5f35-80f6-2a745e734e41",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f9366389-7626-5df4-aece-8704dd24e6e7",
-      "type": "hasChild",
+      "id": "f579098f-45b9-5600-bf19-620008093286",
+      "type": "hasPart",
       "start": "8ddef6a5-b289-5aa7-a7d8-023333d073f1",
       "end": "4246d4a3-5241-5c27-a7c4-36cdb41f1095",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "f579098f-45b9-5600-bf19-620008093286",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "ed231a01-6d84-53d6-b1b5-de3c4e13ff78",
-      "type": "hasChild",
+      "id": "26921c60-0db4-5b2b-aca9-d73d85b892d5",
+      "type": "hasPart",
       "start": "8ddef6a5-b289-5aa7-a7d8-023333d073f1",
       "end": "8bcf3a7b-c46b-5e9f-bf03-dac1f06cc7e4",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "26921c60-0db4-5b2b-aca9-d73d85b892d5",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "c2b7a383-7051-56de-b8d3-61f60e9dc067",
-      "type": "hasChild",
+      "id": "7e5e770c-d710-55d8-9944-eb77ea2c72ed",
+      "type": "hasPart",
       "start": "071c3b6d-26af-58e2-838a-0e97d43cefff",
       "end": "4bd13333-d55e-591e-976e-333adefb109e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "7e5e770c-d710-55d8-9944-eb77ea2c72ed",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "a416810f-104b-53b1-a033-47745f10b618",
-      "type": "hasChild",
+      "id": "27ebbb3a-142f-58fb-98a3-c38e4b2acc51",
+      "type": "hasPart",
       "start": "071c3b6d-26af-58e2-838a-0e97d43cefff",
       "end": "0945a313-3737-533d-9a6a-ee9feaf99a62",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "27ebbb3a-142f-58fb-98a3-c38e4b2acc51",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "ddad08a6-4f2d-5887-b7bc-e11659fddcdd",
-      "type": "hasChild",
+      "id": "33d4495a-bdf8-55bb-b6aa-afdd2debc6f0",
+      "type": "hasPart",
       "start": "071c3b6d-26af-58e2-838a-0e97d43cefff",
       "end": "2cdd1fc0-634d-550e-b939-f235be9bc3aa",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "33d4495a-bdf8-55bb-b6aa-afdd2debc6f0",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "26e4c986-1be3-50c4-bc7f-50768eec9f21",
-      "type": "hasChild",
+      "id": "fb6bdd58-20a4-51cb-94e2-21757d12dd9b",
+      "type": "hasPart",
       "start": "071c3b6d-26af-58e2-838a-0e97d43cefff",
       "end": "1392f5c0-820d-5056-adde-48a139ac0126",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "fb6bdd58-20a4-51cb-94e2-21757d12dd9b",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9d39ffca-3dce-5df7-9620-a0009ea7bc28",
-      "type": "hasChild",
+      "id": "deedbd8b-eca0-5f4b-b7d9-fba63deddda3",
+      "type": "hasPart",
       "start": "071c3b6d-26af-58e2-838a-0e97d43cefff",
       "end": "d7e47561-c875-5ad5-976b-83d1664ffd48",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "deedbd8b-eca0-5f4b-b7d9-fba63deddda3",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "76191dd1-8885-5512-af45-49c8d13969d2",
-      "type": "hasChild",
+      "id": "55be497c-eb9a-57ca-9c9d-d0c3f4829ebc",
+      "type": "hasPart",
       "start": "c5918160-23dd-5300-8a7e-e3dbb7f45022",
       "end": "bc5873df-1919-5dcc-b50e-029595f4fda8",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "55be497c-eb9a-57ca-9c9d-d0c3f4829ebc",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "05159cb8-8513-594d-abe4-e17874a39f43",
-      "type": "hasChild",
+      "id": "efffef77-6def-524f-b2a3-eea9ea77b54f",
+      "type": "hasPart",
       "start": "c5918160-23dd-5300-8a7e-e3dbb7f45022",
       "end": "fc3f01d5-8a34-5fd7-9ad3-ac06e6cb0caa",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "efffef77-6def-524f-b2a3-eea9ea77b54f",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "049661bb-8470-58d5-bb80-cb0c95abb05d",
-      "type": "hasChild",
+      "id": "f9466c2b-8e79-5646-ac50-ba25c7fcaf92",
+      "type": "hasPart",
       "start": "c5918160-23dd-5300-8a7e-e3dbb7f45022",
       "end": "6cc3ff7c-ae43-5d30-a131-e764e02bf23b",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "f9466c2b-8e79-5646-ac50-ba25c7fcaf92",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "a90af72b-d044-5676-94ee-4d4408739958",
-      "type": "hasChild",
+      "id": "f7a96868-9d03-581f-867d-4201c566e102",
+      "type": "hasPart",
       "start": "c5918160-23dd-5300-8a7e-e3dbb7f45022",
       "end": "683ce393-9339-5fd4-9486-61976ea7e98f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "f7a96868-9d03-581f-867d-4201c566e102",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "d48b86dd-7508-57f2-8658-796f50802e1f",
-      "type": "hasChild",
+      "id": "c6ffece1-d9b5-55e6-ad17-468fdd8c5251",
+      "type": "hasPart",
       "start": "c5918160-23dd-5300-8a7e-e3dbb7f45022",
       "end": "1c6b655c-92e9-5105-9f01-67084b352b21",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "c6ffece1-d9b5-55e6-ad17-468fdd8c5251",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f3dbc86b-8bb1-5550-966c-077328a3c7d6",
-      "type": "hasChild",
+      "id": "4d1a6cab-e1d5-5a1e-a515-95ecc1a26b86",
+      "type": "hasPart",
       "start": "66cb6565-26dd-5876-8551-2a8993f0ce2c",
       "end": "7e8e774f-1003-5300-b6f2-b399ad16c467",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "4d1a6cab-e1d5-5a1e-a515-95ecc1a26b86",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "4e8c9e6f-58ad-555a-9069-8911ac5a9268",
-      "type": "hasChild",
+      "id": "676fd1c1-b947-56f9-b0a5-22d647c0b37c",
+      "type": "hasPart",
       "start": "66cb6565-26dd-5876-8551-2a8993f0ce2c",
       "end": "40aad05f-9174-5cb6-85a7-29b14814da87",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "676fd1c1-b947-56f9-b0a5-22d647c0b37c",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "95b5b871-69c1-517e-91a2-c0494921a4ac",
-      "type": "hasChild",
+      "id": "da1339f9-74ba-5eec-8257-eb3ffa3775ed",
+      "type": "hasPart",
       "start": "66cb6565-26dd-5876-8551-2a8993f0ce2c",
       "end": "e44587b5-8d67-59db-a001-78b2621b10ee",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "da1339f9-74ba-5eec-8257-eb3ffa3775ed",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "d4d6b707-ab35-563b-ae78-bc373296b921",
-      "type": "hasChild",
+      "id": "01d520c1-2218-53b4-a38e-32f6fbc0bf1e",
+      "type": "hasPart",
       "start": "66cb6565-26dd-5876-8551-2a8993f0ce2c",
       "end": "d1cd9881-cc21-5bd3-b221-d074afd46ff2",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "01d520c1-2218-53b4-a38e-32f6fbc0bf1e",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "8dc62e64-2708-530b-8dc6-f37b9d474b29",
-      "type": "hasChild",
+      "id": "abdb1962-a29d-504d-aad7-d7e22a37b9ed",
+      "type": "hasPart",
       "start": "66cb6565-26dd-5876-8551-2a8993f0ce2c",
       "end": "e5303228-f89e-5b76-988a-8ee7fc11286a",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "abdb1962-a29d-504d-aad7-d7e22a37b9ed",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "79c8572f-18e7-5bd9-a078-ee93e990653c",
-      "type": "hasChild",
+      "id": "b25a94d7-3fc6-5e11-8833-44967a3477db",
+      "type": "hasPart",
       "start": "f18de5aa-e2f4-5aca-a014-8c8b24b3720c",
       "end": "1bd50d83-3629-5c6f-95ca-22505c78c735",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "b25a94d7-3fc6-5e11-8833-44967a3477db",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "d381765e-1754-57e0-a807-448298dc5d63",
-      "type": "hasChild",
+      "id": "9fe644c7-10d7-5d66-af4b-1c86557d84a3",
+      "type": "hasPart",
       "start": "f18de5aa-e2f4-5aca-a014-8c8b24b3720c",
       "end": "875ba964-6705-5035-8924-4ab9c56e3dd7",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "9fe644c7-10d7-5d66-af4b-1c86557d84a3",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "4296d01f-78cd-56e0-954b-25c72991f121",
-      "type": "hasChild",
+      "id": "025065c3-5dac-5a0d-84ca-79fa339fe6aa",
+      "type": "hasPart",
       "start": "f18de5aa-e2f4-5aca-a014-8c8b24b3720c",
       "end": "e3ab9959-245b-5c74-aa8f-5adaa4c18067",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "025065c3-5dac-5a0d-84ca-79fa339fe6aa",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "d153758e-b6b9-5348-b0ff-d3ee07a5a5bb",
-      "type": "hasChild",
+      "id": "ec87c5d2-eabd-5823-8173-3417c99da522",
+      "type": "hasPart",
       "start": "f18de5aa-e2f4-5aca-a014-8c8b24b3720c",
       "end": "18544209-99c0-589a-a539-7ab02a4cca6e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "ec87c5d2-eabd-5823-8173-3417c99da522",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "dca71994-baa6-5984-b65c-ac7cbb5a775a",
-      "type": "hasChild",
+      "id": "79d0a32d-273a-5616-95a5-2d4b7700f71b",
+      "type": "hasPart",
       "start": "f18de5aa-e2f4-5aca-a014-8c8b24b3720c",
       "end": "475162d9-0018-50bf-8b97-cee34c4f8d47",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "79d0a32d-273a-5616-95a5-2d4b7700f71b",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "e3d2e2dd-d305-5aa1-9711-acb44e9be12d",
-      "type": "hasChild",
+      "id": "4a3260de-4ca1-5628-8b7c-be635dd2b734",
+      "type": "hasPart",
       "start": "642dee47-3b8e-5f8d-8d14-0d898fd62f26",
       "end": "2f0da8b0-9b52-5eb1-9a52-896807f8b3b6",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "4a3260de-4ca1-5628-8b7c-be635dd2b734",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "e9104208-44e7-5c76-8558-c57bdfdd1387",
-      "type": "hasChild",
+      "id": "9f0f644d-69c3-58c1-846c-276b3644a165",
+      "type": "hasPart",
       "start": "642dee47-3b8e-5f8d-8d14-0d898fd62f26",
       "end": "23799eba-0cb1-5218-acaf-910bc42ec16c",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "9f0f644d-69c3-58c1-846c-276b3644a165",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "761f471b-6f96-52ee-880e-8f4f75f19e2e",
-      "type": "hasChild",
+      "id": "083d7dab-e552-574d-8199-6649cbce7227",
+      "type": "hasPart",
       "start": "642dee47-3b8e-5f8d-8d14-0d898fd62f26",
       "end": "508c87bd-f376-545a-bdf6-ce0825d0ea8e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "083d7dab-e552-574d-8199-6649cbce7227",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "11ac77dc-55f0-56d7-a71a-15ce8323df6e",
-      "type": "hasChild",
+      "id": "b000bab2-b2a2-5375-8b1c-1eebffb8ebbc",
+      "type": "hasPart",
       "start": "642dee47-3b8e-5f8d-8d14-0d898fd62f26",
       "end": "4badbe31-3376-540d-8e32-f8d2d93a156c",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "b000bab2-b2a2-5375-8b1c-1eebffb8ebbc",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "b6c9f557-b38b-564b-8a27-29fbe6c61875",
-      "type": "hasChild",
+      "id": "ef944a54-fecb-5d96-8f90-58c256c87a72",
+      "type": "hasPart",
       "start": "642dee47-3b8e-5f8d-8d14-0d898fd62f26",
       "end": "f21c8b5a-bac9-5107-8346-2e1ef3541559",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "ef944a54-fecb-5d96-8f90-58c256c87a72",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "bd223be2-5919-518d-9018-8562806f5ce8",
-      "type": "hasChild",
+      "id": "6deb01a7-eed1-5769-9a17-5e148e4e9534",
+      "type": "hasPart",
       "start": "21cb2bdc-9d5f-58ca-aa28-8496677d78a1",
       "end": "432d66df-741f-557c-a26e-aaa83cbe9da4",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "6deb01a7-eed1-5769-9a17-5e148e4e9534",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "dd1171cc-3c5f-5570-9046-dc321394cf45",
-      "type": "hasChild",
+      "id": "a6d5d775-062c-546a-9283-6c6ba5fde2e1",
+      "type": "hasPart",
       "start": "21cb2bdc-9d5f-58ca-aa28-8496677d78a1",
       "end": "628ff6ee-d5b9-52c9-a7d2-0de71a43ea82",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "a6d5d775-062c-546a-9283-6c6ba5fde2e1",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f2a1ce50-c3dc-5848-8a03-9e8f7484976d",
-      "type": "hasChild",
+      "id": "ef840986-58e9-5eb0-9a93-d0fa9b5df404",
+      "type": "hasPart",
       "start": "21cb2bdc-9d5f-58ca-aa28-8496677d78a1",
       "end": "e51e1943-d53b-5836-9793-029737cc09d2",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "ef840986-58e9-5eb0-9a93-d0fa9b5df404",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "0e6b09de-9935-5084-8c02-692980082945",
-      "type": "hasChild",
+      "id": "0d7b3ebb-c7e8-5045-ae46-0ded6c56358f",
+      "type": "hasPart",
       "start": "21cb2bdc-9d5f-58ca-aa28-8496677d78a1",
       "end": "acc10d25-644c-52d6-8aae-e18fd7d70bb4",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "0d7b3ebb-c7e8-5045-ae46-0ded6c56358f",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "02868e53-3d1a-52e7-b2f9-b09dd7088a70",
-      "type": "hasChild",
+      "id": "2f5e79aa-27c9-5b2f-8a96-899bb7c36e85",
+      "type": "hasPart",
       "start": "21cb2bdc-9d5f-58ca-aa28-8496677d78a1",
       "end": "25e48f7d-df3c-5dc7-ae75-daec44da2d5b",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "2f5e79aa-27c9-5b2f-8a96-899bb7c36e85",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "4cdae244-5033-591c-b90b-38b2c6bf01ab",
-      "type": "hasChild",
+      "id": "7d4a9a12-69af-57d3-a1f3-bcc0298ae12d",
+      "type": "hasPart",
       "start": "f99b9c42-3a66-5d9b-8ff9-f8a1fa5d5fc0",
       "end": "c9c8d5b6-9fbd-5683-9151-4c822dcae209",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "7d4a9a12-69af-57d3-a1f3-bcc0298ae12d",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "3d5fc343-0d44-51d0-93bb-e09564640855",
-      "type": "hasChild",
+      "id": "2b43ca26-aae4-5dda-95ba-b7b2e2a7b6b3",
+      "type": "hasPart",
       "start": "f99b9c42-3a66-5d9b-8ff9-f8a1fa5d5fc0",
       "end": "df25cbdc-87f6-52ba-93c3-9c9cba1146ac",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "2b43ca26-aae4-5dda-95ba-b7b2e2a7b6b3",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "acf46310-a00a-5697-b467-e9af9525627b",
-      "type": "hasChild",
+      "id": "10eb5434-2860-5209-98da-158409cfee37",
+      "type": "hasPart",
       "start": "f99b9c42-3a66-5d9b-8ff9-f8a1fa5d5fc0",
       "end": "52f38a90-8b99-5c1c-a632-79b6c896a2a4",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "10eb5434-2860-5209-98da-158409cfee37",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "d7e4b110-fa93-5c47-a654-435d136fc338",
-      "type": "hasChild",
+      "id": "c11bea42-c755-5b0f-82f4-5878b14c18b2",
+      "type": "hasPart",
       "start": "f99b9c42-3a66-5d9b-8ff9-f8a1fa5d5fc0",
       "end": "7a63f48a-2cf3-5c02-ad59-3582c6fe846f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "c11bea42-c755-5b0f-82f4-5878b14c18b2",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "73734705-7670-5f1b-8413-16c709616320",
-      "type": "hasChild",
+      "id": "f22f10cc-92c6-5958-9bd8-d0ef6f0650b2",
+      "type": "hasPart",
       "start": "f99b9c42-3a66-5d9b-8ff9-f8a1fa5d5fc0",
       "end": "c76798b3-ee3c-5819-8d91-032aab036206",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "f22f10cc-92c6-5958-9bd8-d0ef6f0650b2",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "d4f1641c-cb4c-56bf-b0f1-66cf969a2791",
-      "type": "hasChild",
+      "id": "554e4aa1-c0e0-52ae-adf6-d0fc142ef38c",
+      "type": "hasPart",
       "start": "0af2fb25-1fa6-57fe-b48c-0a15d26c791b",
       "end": "2b702c2e-a080-5581-a7ab-5ee569a0d8cb",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "554e4aa1-c0e0-52ae-adf6-d0fc142ef38c",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f8dd1480-52d3-5137-97e1-5b40fa65aaef",
-      "type": "hasChild",
+      "id": "e65dd413-9d3e-5ebf-bddf-e38ceb434e49",
+      "type": "hasPart",
       "start": "0af2fb25-1fa6-57fe-b48c-0a15d26c791b",
       "end": "e7d6a7e8-477f-5c10-8e24-c21d560127f0",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "e65dd413-9d3e-5ebf-bddf-e38ceb434e49",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "05b6bb63-0aa9-5e32-99eb-5b77116675eb",
-      "type": "hasChild",
+      "id": "394cf2fe-9844-5df2-946b-ab755fb8ebc6",
+      "type": "hasPart",
       "start": "0af2fb25-1fa6-57fe-b48c-0a15d26c791b",
       "end": "1455af2c-6fb2-55e5-8df5-0f6913c7678e",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "394cf2fe-9844-5df2-946b-ab755fb8ebc6",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9555d722-fa76-5056-bafe-70603235bff8",
-      "type": "hasChild",
+      "id": "5e215b99-417b-55dd-b845-87f77c36b931",
+      "type": "hasPart",
       "start": "0af2fb25-1fa6-57fe-b48c-0a15d26c791b",
       "end": "33cbe001-2048-54ec-b054-17a1db2b6c17",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "5e215b99-417b-55dd-b845-87f77c36b931",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "b92b425d-cd80-5398-b75e-5b6f16f6ee66",
-      "type": "hasChild",
+      "id": "38b3d53b-0161-54b3-ab85-2f598c7f0097",
+      "type": "hasPart",
       "start": "0af2fb25-1fa6-57fe-b48c-0a15d26c791b",
       "end": "65cc0722-8e46-5559-bd87-ee32e002222d",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "38b3d53b-0161-54b3-ab85-2f598c7f0097",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "74d46e1b-968a-5191-8580-275ffaae7827",
-      "type": "hasChild",
+      "id": "afd54dbd-7e2a-582d-9a15-27d1bccf5cfa",
+      "type": "hasPart",
       "start": "6a648d41-330f-5f41-9fa1-2c859247141b",
       "end": "2ece8e3f-3141-5d69-aa76-f6256791dfdd",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "afd54dbd-7e2a-582d-9a15-27d1bccf5cfa",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "5d485435-c6e0-52c6-93a6-704e1512a15a",
-      "type": "hasChild",
+      "id": "fdece523-5f1f-5130-a17f-d2949cfa58cd",
+      "type": "hasPart",
       "start": "6a648d41-330f-5f41-9fa1-2c859247141b",
       "end": "4d887821-e5ac-59cf-aae8-8efb17ae11c4",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "fdece523-5f1f-5130-a17f-d2949cfa58cd",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "5229255a-921c-5b5b-bb40-35c0257ca35d",
-      "type": "hasChild",
+      "id": "fb45faa0-6391-59d2-9de9-d982708ab64a",
+      "type": "hasPart",
       "start": "6a648d41-330f-5f41-9fa1-2c859247141b",
       "end": "3cbd22ca-99fd-58c0-a424-bd0773325b39",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "fb45faa0-6391-59d2-9de9-d982708ab64a",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "35ad16c7-5b60-5375-aded-6eacf3a52638",
-      "type": "hasChild",
+      "id": "e8b9d719-f910-55a6-bf0c-0555fed89949",
+      "type": "hasPart",
       "start": "6a648d41-330f-5f41-9fa1-2c859247141b",
       "end": "399aa540-045a-5970-bee3-22877138074c",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "e8b9d719-f910-55a6-bf0c-0555fed89949",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9b476ca9-d52b-5f47-9c7c-0f833189cc47",
-      "type": "hasChild",
+      "id": "96bcc835-2510-5d27-b05a-672ab41dc6dc",
+      "type": "hasPart",
       "start": "6a648d41-330f-5f41-9fa1-2c859247141b",
       "end": "02215fa8-156d-5bf8-9def-351e16b607c3",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "96bcc835-2510-5d27-b05a-672ab41dc6dc",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "c188a3aa-5d18-5d87-ad01-7ab2f5637bd5",
-      "type": "hasChild",
+      "id": "33dbe3f8-37d5-5854-9541-a727f3bfc30e",
+      "type": "hasPart",
       "start": "7a2bd5e4-64e3-5cd9-9268-8e2c011bed1c",
       "end": "f4af1fb5-0eff-5f2e-9398-ce975a545aa3",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "33dbe3f8-37d5-5854-9541-a727f3bfc30e",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "20a28b0f-02e2-57f8-aab6-4c48fcf4a70d",
-      "type": "hasChild",
+      "id": "da313b84-6030-59e2-9604-692ce316d533",
+      "type": "hasPart",
       "start": "7a2bd5e4-64e3-5cd9-9268-8e2c011bed1c",
       "end": "735d1314-8abc-5e4b-b5f4-f830e27bb639",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "da313b84-6030-59e2-9604-692ce316d533",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "2daaa6ca-cb64-58bd-9162-56fd405532a2",
-      "type": "hasChild",
+      "id": "6fa31c69-376f-5502-bdf9-9e145c3e4ea5",
+      "type": "hasPart",
       "start": "7a2bd5e4-64e3-5cd9-9268-8e2c011bed1c",
       "end": "44d8053c-2795-53fc-8f64-ec55f7654fdb",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "6fa31c69-376f-5502-bdf9-9e145c3e4ea5",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "1f206495-f84e-5578-934f-e52f26f4bff3",
-      "type": "hasChild",
+      "id": "ce4b7df3-ab70-5f72-8aab-4954def6254b",
+      "type": "hasPart",
       "start": "7a2bd5e4-64e3-5cd9-9268-8e2c011bed1c",
       "end": "6f808c4e-16f3-5d1f-a2ec-8e3d8a191db3",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "ce4b7df3-ab70-5f72-8aab-4954def6254b",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "f2d5f6e9-1dd4-5c7f-8db1-2ce2456b6646",
-      "type": "hasChild",
+      "id": "0857e6e7-0229-51d6-9d46-e2c51f159c27",
+      "type": "hasPart",
       "start": "7a2bd5e4-64e3-5cd9-9268-8e2c011bed1c",
       "end": "6d4308c1-f3e1-507c-a6b8-eca041d49fc2",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "0857e6e7-0229-51d6-9d46-e2c51f159c27",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "66882cef-8f2f-598e-9068-f4e959e54bd1",
-      "type": "hasChild",
+      "id": "2ae7255a-256a-542f-a651-16ad20d1030a",
+      "type": "hasPart",
       "start": "4787efd9-2447-5595-9482-33f5d6b1419b",
       "end": "f4d12abc-81b0-5dc8-896f-f5fbb4981c2f",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "2ae7255a-256a-542f-a651-16ad20d1030a",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "58ca0821-86f3-53a1-ad8c-a4102a101606",
-      "type": "hasChild",
+      "id": "9f7261d6-ecb2-5749-a9fd-d6c28e3c6741",
+      "type": "hasPart",
       "start": "4787efd9-2447-5595-9482-33f5d6b1419b",
       "end": "f807bcb2-2591-5cb7-a689-9ebafa113d9b",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "9f7261d6-ecb2-5749-a9fd-d6c28e3c6741",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "4ffecc23-88c4-57ab-8980-484f8898cc12",
-      "type": "hasChild",
+      "id": "687e038b-8dae-556e-8d20-605ef4ea2599",
+      "type": "hasPart",
       "start": "4787efd9-2447-5595-9482-33f5d6b1419b",
       "end": "c58b514e-c98a-567b-a0b5-1e8ce2e7a9d9",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "687e038b-8dae-556e-8d20-605ef4ea2599",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9b1344ff-df86-5353-a629-1e18531edd3f",
-      "type": "hasChild",
+      "id": "3f260e10-9465-5a6f-9e60-3c0c1e56d215",
+      "type": "hasPart",
       "start": "4787efd9-2447-5595-9482-33f5d6b1419b",
       "end": "33b2b74a-7353-5272-9229-d94ccaf0f395",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "3f260e10-9465-5a6f-9e60-3c0c1e56d215",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "3e23c386-e157-5c04-8790-b9cb6e2608cb",
-      "type": "hasChild",
+      "id": "b6eae1df-988f-5c45-9320-3e85f4645e16",
+      "type": "hasPart",
       "start": "4787efd9-2447-5595-9482-33f5d6b1419b",
       "end": "251ed572-4d5b-5403-ac3e-d2e4710a8829",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "b6eae1df-988f-5c45-9320-3e85f4645e16",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "fcb78e4a-60c5-56a9-818d-6947ea87714b",
-      "type": "hasChild",
+      "id": "3ec1a42c-0d9c-5283-92c1-74e54e598b70",
+      "type": "hasPart",
       "start": "e6a6c3ba-b236-5499-af66-5e161ff2f2a5",
       "end": "1e6470fe-e16a-5610-950e-2fb0bb95c989",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "3ec1a42c-0d9c-5283-92c1-74e54e598b70",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "3bfb4d57-9079-5c0e-bf5a-23158e83ee3e",
-      "type": "hasChild",
+      "id": "0f42bc93-ddf4-5f1c-bdc1-bb9ab71a88f9",
+      "type": "hasPart",
       "start": "e6a6c3ba-b236-5499-af66-5e161ff2f2a5",
       "end": "555c67ad-964f-55e0-b140-fe59b579a4ce",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "0f42bc93-ddf4-5f1c-bdc1-bb9ab71a88f9",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9d671c32-59ef-5aed-965f-cc345f1744cf",
-      "type": "hasChild",
+      "id": "f56c8314-d209-51c2-9e03-fcafc1bf69cf",
+      "type": "hasPart",
       "start": "e6a6c3ba-b236-5499-af66-5e161ff2f2a5",
       "end": "eb51f5d0-749f-5f1e-adfd-1e0489819498",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 2,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "f56c8314-d209-51c2-9e03-fcafc1bf69cf",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "d5d145f2-6a9a-5c17-b76c-238f3f211013",
-      "type": "hasChild",
+      "id": "04123013-dcce-562c-a600-5102c372c200",
+      "type": "hasPart",
       "start": "e6a6c3ba-b236-5499-af66-5e161ff2f2a5",
       "end": "5e39e928-56fa-51df-acab-86cf6da3121a",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 3,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "04123013-dcce-562c-a600-5102c372c200",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "5316faf1-4ca7-5e0d-b8c9-67d464a92c88",
-      "type": "hasChild",
+      "id": "b827d885-82e7-53a5-97b6-c2a7f7f8a318",
+      "type": "hasPart",
       "start": "e6a6c3ba-b236-5499-af66-5e161ff2f2a5",
       "end": "b527a13d-d224-5dda-8547-ab11fad86755",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 4,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "b827d885-82e7-53a5-97b6-c2a7f7f8a318",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "0358acf4-1431-51c9-858e-bfdf786f6aec",
-      "type": "hasChild",
+      "id": "22490347-2b03-50a9-922c-907bc7285635",
+      "type": "hasPart",
       "start": "6604ccb0-3956-5914-9b70-1c3d2b8d0e2d",
       "end": "01ea5bbc-eecd-593c-bea8-54383dfc5d09",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 0,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "22490347-2b03-50a9-922c-907bc7285635",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
-      "id": "9b36acf1-f0df-5934-94c1-d6272ebc4b1f",
-      "type": "hasChild",
+      "id": "47090685-0755-5610-adfb-82dee1b3b7b8",
+      "type": "hasPart",
       "start": "6604ccb0-3956-5914-9b70-1c3d2b8d0e2d",
       "end": "fb1e5be2-e25d-5ac8-ab83-7489dfcc3f27",
       "properties": {
-        "relationshipType": "hasChild",
+        "relationshipType": "hasPart",
         "axis": "schedule",
         "synthesized": true,
         "orderIndex": 1,
         "targetLabels": [
           "Lesson"
         ],
-        "targetEntity": "Lesson"
+        "targetEntity": "Lesson",
+        "identifier": "47090685-0755-5610-adfb-82dee1b3b7b8",
+        "sourceEntity": "LessonGrouping",
+        "sourceLabels": [
+          "LessonGrouping"
+        ]
       }
     },
     {
@@ -38704,14 +39333,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38727,14 +39356,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38750,14 +39379,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38773,14 +39402,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38796,14 +39425,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38819,14 +39448,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38842,14 +39471,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38865,14 +39494,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38888,14 +39517,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38911,14 +39540,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38934,14 +39563,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38957,14 +39586,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -38980,14 +39609,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39003,14 +39632,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39026,14 +39655,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39049,14 +39678,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39072,14 +39701,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39095,14 +39724,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39118,14 +39747,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39141,14 +39770,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39164,14 +39793,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39187,14 +39816,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
@@ -39210,14 +39839,14 @@
         "provider": "Learning Commons ontology (generated)",
         "sourceEntity": "Course",
         "sourceEntityKey": "identifier",
-        "targetEntity": "StandardsFrameworkItem",
+        "targetEntity": "LessonGrouping",
         "targetEntityKey": "identifier",
         "relationshipType": "hasPart",
         "sourceLabels": [
           "Course"
         ],
         "targetLabels": [
-          "StandardsFrameworkItem"
+          "LessonGrouping"
         ]
       }
     },
