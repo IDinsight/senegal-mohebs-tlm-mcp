@@ -23,7 +23,11 @@ const CASES = [
   // maths: post two-Course split + canonical chapter▸lesson▸activity nesting, weeks
   // as LessonGrouping, and the RECE illustrative activities de-linked from their
   // frame (−104 off-canon SFI→Activity hasChild; they keep hasEducationalAlignment).
-  { workspace: "senegal", grade: "ci", subject: "maths", nodes: 746, edges: 1145 },
+  // +11 nodes / +11 edges: the shared "fiche de leçon" instructional routine
+  // (1 parent + 5 step InstructionalRoutine + 5 Material) attached to the
+  // Teacher's-Guide Course via usesRoutine (see graph-native-authoring.md).
+  // +112 edges: each of the 112 Teacher's-Guide Lessons usesRoutine the parent.
+  { workspace: "senegal", grade: "ci", subject: "maths", nodes: 757, edges: 1268 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).

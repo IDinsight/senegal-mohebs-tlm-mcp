@@ -54,7 +54,8 @@ describe("kg-export — LC ontology (maths)", () => {
     expect(g.meta.counts.byKind.Course).toBe(2);             // two content roots: "Outil de l'élève" (student) + "Guide de l'enseignant" (teacher)
     // every node's legend category IS its LC label — no subject roles/kinds
     expect(g.nodes.every((n) => n.cat === n.label && n.kind === n.label)).toBe(true);
-    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "Course", "LessonGrouping", "Lesson", "Activity", "LearningComponent"]);
+    // + Material and InstructionalRoutine: the shared "fiche de leçon" routine (Phase 1).
+    expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "Course", "LessonGrouping", "Lesson", "Activity", "Material", "LearningComponent", "InstructionalRoutine"]);
     expect(g.meta.taxonomy.every((x) => /^#[0-9a-f]{6}$/i.test(x.color) && x.label.fr && x.label.en)).toBe(true);
   });
 

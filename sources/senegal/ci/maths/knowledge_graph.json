@@ -22017,6 +22017,376 @@
           }
         }
       }
+    },
+    {
+      "id": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "labels": [
+        "InstructionalRoutine"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "Fiche de leçon — enseignement explicite (30 min)",
+        "identifier": "78936410-3db6-5109-aa45-6dca53a4343c",
+        "normalizedType": "Instructional Routine",
+        "position": 1,
+        "metadata": {
+          "role": "instructional-routine",
+          "order": 1,
+          "en": {
+            "description": "Lesson sheet — explicit teaching (30 min)"
+          },
+          "summary": "<p>Structure fixe d'une fiche de leçon en <strong>enseignement explicite</strong> pour le Guide de l'enseignant·e (CI mathématiques). Chaque leçon dure environ <strong>30 minutes</strong> et enchaîne cinq étapes : modelage → pratique guidée → pratique autonome → objectivation.</p>\n<p>Règles transversales : fiches rédigées en français ; <strong>le maître lit toujours les consignes à voix haute</strong> (les élèves ne lisent pas encore) ; les élèves <strong>n'écrivent pas dans le manuel</strong> (cahier ou ardoise) ; démonstration <strong>d'abord au tableau</strong>, du plus concret au moins concret, avec des supports <strong>gratuits</strong> uniquement (craie, tableau, ardoise, doigts, cailloux, cauris) ; aucun matériel acheté.</p>"
+        }
+      }
+    },
+    {
+      "id": "e5eaa82b-ae41-5d3c-b57f-aa60caaba68a",
+      "labels": [
+        "InstructionalRoutine"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "JE FAIS — Déclencheur",
+        "identifier": "e5eaa82b-ae41-5d3c-b57f-aa60caaba68a",
+        "normalizedType": "Instructional Routine",
+        "position": 1,
+        "metadata": {
+          "role": "instructional-routine",
+          "order": 1,
+          "en": {
+            "description": "I DO — Trigger"
+          }
+        },
+        "timeRequired": "PT4M"
+      }
+    },
+    {
+      "id": "4b2e6ce9-d7ba-53cd-a6ac-37fb6004656a",
+      "labels": [
+        "Material"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "JE FAIS — Déclencheur — consigne enseignant·e",
+        "identifier": "4b2e6ce9-d7ba-53cd-a6ac-37fb6004656a",
+        "normalizedType": "Material",
+        "position": 1,
+        "metadata": {
+          "role": "instructional-routine-material",
+          "order": 1,
+          "en": {
+            "description": "I DO — Trigger"
+          }
+        },
+        "name": "JE FAIS — Déclencheur — consigne enseignant·e",
+        "content": "<h3>JE FAIS — Déclencheur (4 minutes)</h3>\n<p><em>But :</em> lancer la leçon et mobiliser les élèves. Le déclencheur s'adapte à la place de la leçon dans le chapitre.</p>\n<ul>\n  <li><strong>1re leçon du chapitre.</strong> Le maître présente la situation d'amorce <strong>avec des mots</strong> (aucune image n'est reproduite dans la fiche) ; il fait observer l'image <strong>dans le manuel de l'élève</strong> — <em>E dit : « Regardez bien l'image de votre manuel… »</em> ; il pose quelques questions orales simples de mise en train ; il rappelle les prérequis ; il annonce l'objectif.</li>\n  <li><strong>Leçons intermédiaires.</strong> Le maître part d'un exemple rapide <strong>esquissé au tableau</strong> à la craie ; il rappelle brièvement la leçon précédente ; il introduit la nouvelle notion.</li>\n  <li><strong>Dernière leçon (Bilan).</strong> Le maître revient explicitement à la situation d'amorce (avec des mots / l'image du manuel) ; il annonce que la leçon est une <strong>révision</strong> des apprentissages du chapitre.</li>\n</ul>\n<p>Terminer par : <em>E dit : « Aujourd'hui, nous allons apprendre à… »</em></p>",
+        "materialType": "Reference",
+        "educationalUse": "Instruction",
+        "audience": [
+          "Teacher"
+        ],
+        "providerDateCreated": "2026-08-13T00:00:00.000Z",
+        "providerDateModified": "2026-08-13T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "8e84da63-f395-5603-844d-2e7f749fd897",
+      "labels": [
+        "InstructionalRoutine"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "JE FAIS — Modelage",
+        "identifier": "8e84da63-f395-5603-844d-2e7f749fd897",
+        "normalizedType": "Instructional Routine",
+        "position": 2,
+        "metadata": {
+          "role": "instructional-routine",
+          "order": 2,
+          "en": {
+            "description": "I DO — Modelling"
+          }
+        },
+        "timeRequired": "PT8M"
+      }
+    },
+    {
+      "id": "b8f686b8-dc54-5dd4-b53c-4f8dd06106cb",
+      "labels": [
+        "Material"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "JE FAIS — Modelage — consigne enseignant·e",
+        "identifier": "b8f686b8-dc54-5dd4-b53c-4f8dd06106cb",
+        "normalizedType": "Material",
+        "position": 2,
+        "metadata": {
+          "role": "instructional-routine-material",
+          "order": 2,
+          "en": {
+            "description": "I DO — Modelling"
+          }
+        },
+        "name": "JE FAIS — Modelage — consigne enseignant·e",
+        "content": "<h3>JE FAIS — Modelage (8 minutes)</h3>\n<p><em>But :</em> le maître montre clairement comment faire <strong>au tableau</strong>. Il dessine la situation à la craie (boucles fermées / « patates » pour les ensembles, points ou marques pour les objets, flèches ou liens un-à-un selon le besoin) ; il <strong>pense à voix haute</strong> ; il montre comment choisir la bonne réponse ; il emploie les mots mathématiques clés ; il donne un exemple <strong>et</strong> un contre-exemple.</p>\n<p>Seuls des supports <strong>gratuits</strong> peuvent compléter le tableau (ardoises, doigts, ou cailloux / cauris que les élèves possèdent déjà). <strong>Aucun matériel acheté</strong> — pas de vrais légumes ni de vrais paniers ; ces objets sont évoqués comme <strong>dessins au tableau</strong>.</p>\n<p>Insérer des prises de parole du type : <em>E dit : « Je dessine d'abord au tableau… »</em> / <em>E dit : « Je choisis cette réponse parce que… »</em> / <em>E dit : « La bonne réponse est… »</em></p>\n<p>Placer ici le repère <span style=\"color:#D4812A\"><strong>Je retiens</strong></span> (étiquette orange en gras, en ligne) : présenter le « Je retiens » de l'outil de l'élève, le lire à voix haute et le faire répéter par les élèves.</p>\n<p><strong>Bilan (Rappel / Modelage).</strong> Modéliser à voix haute la <strong>question 1</strong> : relire les options, écarter les mauvaises en justifiant, puis choisir. Montrer la réponse attendue de la question 1.</p>",
+        "materialType": "Reference",
+        "educationalUse": "Instruction",
+        "audience": [
+          "Teacher"
+        ],
+        "providerDateCreated": "2026-08-13T00:00:00.000Z",
+        "providerDateModified": "2026-08-13T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "9a3c9225-2e74-596c-b63d-806d5fb93e5d",
+      "labels": [
+        "InstructionalRoutine"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "NOUS FAISONS",
+        "identifier": "9a3c9225-2e74-596c-b63d-806d5fb93e5d",
+        "normalizedType": "Instructional Routine",
+        "position": 3,
+        "metadata": {
+          "role": "instructional-routine",
+          "order": 3,
+          "en": {
+            "description": "WE DO"
+          }
+        },
+        "timeRequired": "PT8M"
+      }
+    },
+    {
+      "id": "d25a101c-594a-58fc-a6f4-70423c3cb439",
+      "labels": [
+        "Material"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "NOUS FAISONS — consigne enseignant·e",
+        "identifier": "d25a101c-594a-58fc-a6f4-70423c3cb439",
+        "normalizedType": "Material",
+        "position": 3,
+        "metadata": {
+          "role": "instructional-routine-material",
+          "order": 3,
+          "en": {
+            "description": "WE DO"
+          }
+        },
+        "name": "NOUS FAISONS — consigne enseignant·e",
+        "content": "<h3>NOUS FAISONS (8 minutes)</h3>\n<p><em>But :</em> pratique <strong>guidée et collective</strong>.</p>\n<ul>\n  <li>Nommer <strong>une activité précise du manuel</strong> (par exemple « Activité 1 »).</li>\n  <li>Lire l'instruction à voix haute (les élèves ne savent pas encore lire).</li>\n  <li>Faire réfléchir les élèves <strong>en binômes / sur l'ardoise</strong>.</li>\n  <li>Appeler un élève au tableau ; corriger ensemble ; faire <strong>justifier</strong> la réponse.</li>\n</ul>\n<p>Terminer par : <em>Réponse attendue : …</em></p>\n<p><strong>Bilan.</strong> Traiter ici les <strong>questions 2 et 3</strong>. Afficher les réponses attendues : <em>Réponses attendues : 2 → … ; 3 → …</em></p>",
+        "materialType": "Reference",
+        "educationalUse": "Instruction",
+        "audience": [
+          "Teacher"
+        ],
+        "providerDateCreated": "2026-08-13T00:00:00.000Z",
+        "providerDateModified": "2026-08-13T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "cec1ef8e-aa60-5783-adce-2c51d183e8ce",
+      "labels": [
+        "InstructionalRoutine"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "TU FAIS",
+        "identifier": "cec1ef8e-aa60-5783-adce-2c51d183e8ce",
+        "normalizedType": "Instructional Routine",
+        "position": 4,
+        "metadata": {
+          "role": "instructional-routine",
+          "order": 4,
+          "en": {
+            "description": "YOU DO"
+          }
+        },
+        "timeRequired": "PT10M"
+      }
+    },
+    {
+      "id": "7ef865a0-b3f7-5ac6-879f-0bb98d0dec19",
+      "labels": [
+        "Material"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "TU FAIS — consigne enseignant·e",
+        "identifier": "7ef865a0-b3f7-5ac6-879f-0bb98d0dec19",
+        "normalizedType": "Material",
+        "position": 4,
+        "metadata": {
+          "role": "instructional-routine-material",
+          "order": 4,
+          "en": {
+            "description": "YOU DO"
+          }
+        },
+        "name": "TU FAIS — consigne enseignant·e",
+        "content": "<h3>TU FAIS (10 minutes)</h3>\n<p><em>But :</em> pratique <strong>autonome</strong>.</p>\n<ul>\n  <li>Faire ouvrir le manuel à l'activité cible en précisant laquelle (par exemple « Activités 2 et 3 » ou « questions 4, 5 et 6 du bilan »).</li>\n  <li>Lire l'instruction à voix haute.</li>\n  <li>Rappeler d'écrire <strong>seulement la lettre</strong> de la bonne réponse (A, B ou C), dans le cahier ou sur l'ardoise — <strong>pas dans le manuel</strong>.</li>\n  <li>Laisser les élèves travailler seuls ; <strong>circuler</strong> pour aider <strong>sans donner la réponse</strong>.</li>\n</ul>\n<p>Terminer par : <em>Réponse attendue : …</em></p>\n<p><strong>Bilan.</strong> Laisser les <strong>questions 4, 5 et 6</strong> en travail autonome ; rappeler la réponse de la <strong>question 1</strong> (modélisée au Rappel / Modelage). Afficher : <em>Réponses attendues : 4 → … ; 5 → … ; 6 → …</em></p>",
+        "materialType": "Reference",
+        "educationalUse": "Instruction",
+        "audience": [
+          "Teacher"
+        ],
+        "providerDateCreated": "2026-08-13T00:00:00.000Z",
+        "providerDateModified": "2026-08-13T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "071dbc73-913a-593e-a057-b8a3dc2c17a0",
+      "labels": [
+        "InstructionalRoutine"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "NOUS FAISONS — Objectivation",
+        "identifier": "071dbc73-913a-593e-a057-b8a3dc2c17a0",
+        "normalizedType": "Instructional Routine",
+        "position": 5,
+        "metadata": {
+          "role": "instructional-routine",
+          "order": 5,
+          "en": {
+            "description": "WE DO — Consolidation"
+          }
+        },
+        "timeRequired": "PT5M"
+      }
+    },
+    {
+      "id": "7923323a-fec0-57cf-838e-c92d75194d11",
+      "labels": [
+        "Material"
+      ],
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "provider": "Learning Commons ontology (generated)",
+        "author": "Guide de l'enseignant·e CI mathématiques (TLM)",
+        "inLanguage": "fr-FR",
+        "jurisdiction": "Senegal",
+        "academicSubject": "Mathematics",
+        "gradeLevel": [
+          "CI"
+        ],
+        "description": "NOUS FAISONS — Objectivation — consigne enseignant·e",
+        "identifier": "7923323a-fec0-57cf-838e-c92d75194d11",
+        "normalizedType": "Material",
+        "position": 5,
+        "metadata": {
+          "role": "instructional-routine-material",
+          "order": 5,
+          "en": {
+            "description": "WE DO — Consolidation"
+          }
+        },
+        "name": "NOUS FAISONS — Objectivation — consigne enseignant·e",
+        "content": "<h3>NOUS FAISONS — Objectivation (5 minutes)</h3>\n<p><em>But :</em> consolider les apprentissages.</p>\n<ul>\n  <li>Corriger rapidement.</li>\n  <li>Faire expliquer leurs réponses par un ou deux élèves.</li>\n  <li>Revenir sur la notion clé ; faire <strong>reformuler la règle</strong>.</li>\n</ul>\n<p>Terminer par : <em>E dit : « Aujourd'hui, nous avons appris que… »</em></p>\n<p><strong>Bilan.</strong> Mener une <strong>objectivation globale</strong> du chapitre : ce que les élèves savent désormais faire et pourquoi.</p>",
+        "materialType": "Reference",
+        "educationalUse": "Instruction",
+        "audience": [
+          "Teacher"
+        ],
+        "providerDateCreated": "2026-08-13T00:00:00.000Z",
+        "providerDateModified": "2026-08-13T00:00:00.000Z"
+      }
     }
   ],
   "relationships": [
@@ -47996,6 +48366,2845 @@
         ],
         "targetLabels": [
           "LessonGrouping"
+        ]
+      }
+    },
+    {
+      "id": "20c7b826-b990-56d5-acc0-b75a1c209398",
+      "type": "usesRoutine",
+      "start": "6510819b-90fd-53d3-ada1-3c7d32a18ef0",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "20c7b826-b990-56d5-acc0-b75a1c209398",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Course",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Course"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "b2e95a74-cc19-55aa-864a-f76d12f26cb5",
+      "type": "hasPart",
+      "start": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "end": "e5eaa82b-ae41-5d3c-b57f-aa60caaba68a",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "b2e95a74-cc19-55aa-864a-f76d12f26cb5",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ],
+        "orderIndex": 1
+      }
+    },
+    {
+      "id": "90fd148d-b233-5618-a262-cd3e957ba502",
+      "type": "hasPart",
+      "start": "e5eaa82b-ae41-5d3c-b57f-aa60caaba68a",
+      "end": "4b2e6ce9-d7ba-53cd-a6ac-37fb6004656a",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "90fd148d-b233-5618-a262-cd3e957ba502",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "Material",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "Material"
+        ],
+        "orderIndex": 1
+      }
+    },
+    {
+      "id": "dcd4db7d-58c7-577d-9080-cf930af60418",
+      "type": "hasPart",
+      "start": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "end": "8e84da63-f395-5603-844d-2e7f749fd897",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "dcd4db7d-58c7-577d-9080-cf930af60418",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ],
+        "orderIndex": 2
+      }
+    },
+    {
+      "id": "c33e0aa0-0c4d-51bd-a33a-64d176d264b6",
+      "type": "hasPart",
+      "start": "8e84da63-f395-5603-844d-2e7f749fd897",
+      "end": "b8f686b8-dc54-5dd4-b53c-4f8dd06106cb",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "c33e0aa0-0c4d-51bd-a33a-64d176d264b6",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "Material",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "Material"
+        ],
+        "orderIndex": 1
+      }
+    },
+    {
+      "id": "5c6280be-36f1-5677-bdd4-eea812b45c1d",
+      "type": "hasPart",
+      "start": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "end": "9a3c9225-2e74-596c-b63d-806d5fb93e5d",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "5c6280be-36f1-5677-bdd4-eea812b45c1d",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ],
+        "orderIndex": 3
+      }
+    },
+    {
+      "id": "aca437cc-7870-59fd-8618-694d13225c80",
+      "type": "hasPart",
+      "start": "9a3c9225-2e74-596c-b63d-806d5fb93e5d",
+      "end": "d25a101c-594a-58fc-a6f4-70423c3cb439",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "aca437cc-7870-59fd-8618-694d13225c80",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "Material",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "Material"
+        ],
+        "orderIndex": 1
+      }
+    },
+    {
+      "id": "e33b0025-4b8a-5626-a14c-c45c0e86f452",
+      "type": "hasPart",
+      "start": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "end": "cec1ef8e-aa60-5783-adce-2c51d183e8ce",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "e33b0025-4b8a-5626-a14c-c45c0e86f452",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ],
+        "orderIndex": 4
+      }
+    },
+    {
+      "id": "8ca51132-5335-5362-a5ae-bd0e1f53c01a",
+      "type": "hasPart",
+      "start": "cec1ef8e-aa60-5783-adce-2c51d183e8ce",
+      "end": "7ef865a0-b3f7-5ac6-879f-0bb98d0dec19",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "8ca51132-5335-5362-a5ae-bd0e1f53c01a",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "Material",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "Material"
+        ],
+        "orderIndex": 1
+      }
+    },
+    {
+      "id": "f5e58e96-4b9f-5fd7-90f3-b87fdd516d48",
+      "type": "hasPart",
+      "start": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "end": "071dbc73-913a-593e-a057-b8a3dc2c17a0",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "f5e58e96-4b9f-5fd7-90f3-b87fdd516d48",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ],
+        "orderIndex": 5
+      }
+    },
+    {
+      "id": "95368116-d36c-562d-b1ab-49e26d5298af",
+      "type": "hasPart",
+      "start": "071dbc73-913a-593e-a057-b8a3dc2c17a0",
+      "end": "7923323a-fec0-57cf-838e-c92d75194d11",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
+        "identifier": "95368116-d36c-562d-b1ab-49e26d5298af",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "InstructionalRoutine",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "Material",
+        "targetEntityKey": "identifier",
+        "relationshipType": "hasPart",
+        "sourceLabels": [
+          "InstructionalRoutine"
+        ],
+        "targetLabels": [
+          "Material"
+        ],
+        "orderIndex": 1
+      }
+    },
+    {
+      "id": "f85ad709-5b33-5bd7-a1a6-4a1292e4b4cf",
+      "type": "usesRoutine",
+      "start": "01ea5bbc-eecd-593c-bea8-54383dfc5d09",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "f85ad709-5b33-5bd7-a1a6-4a1292e4b4cf",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "7d03f9bb-448c-5f9c-8866-136a3cb7ba23",
+      "type": "usesRoutine",
+      "start": "02215fa8-156d-5bf8-9def-351e16b607c3",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "7d03f9bb-448c-5f9c-8866-136a3cb7ba23",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "cd0d0f02-6559-5971-b5da-c5164bceccbc",
+      "type": "usesRoutine",
+      "start": "0243e7a3-2f64-571c-a977-64a42f83ea62",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "cd0d0f02-6559-5971-b5da-c5164bceccbc",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "f870f057-8907-53a0-8e8a-700c05aa175b",
+      "type": "usesRoutine",
+      "start": "08ccc80c-1f80-5a57-9ad9-9599737e4e07",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "f870f057-8907-53a0-8e8a-700c05aa175b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "6bf0aeb2-e0dd-5f7d-9e60-7afcf4630723",
+      "type": "usesRoutine",
+      "start": "0945a313-3737-533d-9a6a-ee9feaf99a62",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "6bf0aeb2-e0dd-5f7d-9e60-7afcf4630723",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "408ab9b5-c1d8-592a-b447-c161824d6b9c",
+      "type": "usesRoutine",
+      "start": "1392f5c0-820d-5056-adde-48a139ac0126",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "408ab9b5-c1d8-592a-b447-c161824d6b9c",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "802f216a-9ede-5c6e-b341-023989eb12f4",
+      "type": "usesRoutine",
+      "start": "1455af2c-6fb2-55e5-8df5-0f6913c7678e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "802f216a-9ede-5c6e-b341-023989eb12f4",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "1aa36ed2-739a-5415-9e9c-3900a47823b0",
+      "type": "usesRoutine",
+      "start": "14c6d63e-fec0-5ef0-8865-2eb6206f2ab3",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "1aa36ed2-739a-5415-9e9c-3900a47823b0",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "26e7cc8e-253b-59d6-8938-f7e9210e020b",
+      "type": "usesRoutine",
+      "start": "18544209-99c0-589a-a539-7ab02a4cca6e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "26e7cc8e-253b-59d6-8938-f7e9210e020b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "875c2c25-7c14-5cb2-a1b4-0f313abb434c",
+      "type": "usesRoutine",
+      "start": "1bd50d83-3629-5c6f-95ca-22505c78c735",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "875c2c25-7c14-5cb2-a1b4-0f313abb434c",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "237d18b0-90f7-58dc-8515-90a31e93deda",
+      "type": "usesRoutine",
+      "start": "1c6b655c-92e9-5105-9f01-67084b352b21",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "237d18b0-90f7-58dc-8515-90a31e93deda",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "4777c589-98cf-54ba-8462-6a58ea731077",
+      "type": "usesRoutine",
+      "start": "1e6470fe-e16a-5610-950e-2fb0bb95c989",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "4777c589-98cf-54ba-8462-6a58ea731077",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "5b301d8b-19ed-5e60-a621-78b263e20894",
+      "type": "usesRoutine",
+      "start": "226f304b-b463-54bb-afa8-8c71de566ab0",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "5b301d8b-19ed-5e60-a621-78b263e20894",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "adba4fd4-df8a-554a-8979-87cca6ca78a9",
+      "type": "usesRoutine",
+      "start": "2280a161-a920-5159-a9fa-c87ef85358b1",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "adba4fd4-df8a-554a-8979-87cca6ca78a9",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "71c56a04-e881-506a-864c-eee71a750208",
+      "type": "usesRoutine",
+      "start": "23799eba-0cb1-5218-acaf-910bc42ec16c",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "71c56a04-e881-506a-864c-eee71a750208",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "6c63357f-6d70-5f5e-b41d-3ddbae86f38b",
+      "type": "usesRoutine",
+      "start": "251ed572-4d5b-5403-ac3e-d2e4710a8829",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "6c63357f-6d70-5f5e-b41d-3ddbae86f38b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "c79026b3-8c7a-542e-920f-54584a74f5a2",
+      "type": "usesRoutine",
+      "start": "25e48f7d-df3c-5dc7-ae75-daec44da2d5b",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "c79026b3-8c7a-542e-920f-54584a74f5a2",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "c5f6c3b5-ba6a-5a48-9746-95c7a02e2f79",
+      "type": "usesRoutine",
+      "start": "27930bbb-9212-51d6-be6b-8db24a2ea118",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "c5f6c3b5-ba6a-5a48-9746-95c7a02e2f79",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "a6902bdb-b2b5-55ca-9a22-592480ef5e4d",
+      "type": "usesRoutine",
+      "start": "29cb40b8-4fc5-55b9-9499-1ea07d780b3c",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "a6902bdb-b2b5-55ca-9a22-592480ef5e4d",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "68964b57-9107-56d6-aff1-8d8f30f050dc",
+      "type": "usesRoutine",
+      "start": "2b702c2e-a080-5581-a7ab-5ee569a0d8cb",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "68964b57-9107-56d6-aff1-8d8f30f050dc",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "ee8e3bff-1db0-575a-9d64-ebc02b1a23aa",
+      "type": "usesRoutine",
+      "start": "2c856193-4e20-579d-9388-cddeba242012",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "ee8e3bff-1db0-575a-9d64-ebc02b1a23aa",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "0ead691d-e408-58ee-a39d-6bd1908100ef",
+      "type": "usesRoutine",
+      "start": "2cdd1fc0-634d-550e-b939-f235be9bc3aa",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "0ead691d-e408-58ee-a39d-6bd1908100ef",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "bb2a5af5-f618-5d51-a79e-9167a3f81ab5",
+      "type": "usesRoutine",
+      "start": "2d7268af-94f9-5646-9867-c10b28952291",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "bb2a5af5-f618-5d51-a79e-9167a3f81ab5",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "33c38fce-dcad-5ff0-a043-f6d9f0f61f7c",
+      "type": "usesRoutine",
+      "start": "2ece8e3f-3141-5d69-aa76-f6256791dfdd",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "33c38fce-dcad-5ff0-a043-f6d9f0f61f7c",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "64a0f889-7a99-573a-8fbd-ba3eaba78121",
+      "type": "usesRoutine",
+      "start": "2f0da8b0-9b52-5eb1-9a52-896807f8b3b6",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "64a0f889-7a99-573a-8fbd-ba3eaba78121",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "0ecfc9be-ebeb-568a-86a5-1eaf082de91a",
+      "type": "usesRoutine",
+      "start": "33b2b74a-7353-5272-9229-d94ccaf0f395",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "0ecfc9be-ebeb-568a-86a5-1eaf082de91a",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "50dad78a-e693-575c-a600-052012ecd1a4",
+      "type": "usesRoutine",
+      "start": "33cbe001-2048-54ec-b054-17a1db2b6c17",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "50dad78a-e693-575c-a600-052012ecd1a4",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "05fe639e-5d50-5e2c-8c67-f74eefd3e37c",
+      "type": "usesRoutine",
+      "start": "399aa540-045a-5970-bee3-22877138074c",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "05fe639e-5d50-5e2c-8c67-f74eefd3e37c",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "797c3b68-3756-59a2-ae56-d4a65f7c842e",
+      "type": "usesRoutine",
+      "start": "3a1e8583-f8cc-5981-827a-2cf6315d886f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "797c3b68-3756-59a2-ae56-d4a65f7c842e",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "f7101ca0-2ca9-5d9a-8fb9-7f91f9056a55",
+      "type": "usesRoutine",
+      "start": "3cbd22ca-99fd-58c0-a424-bd0773325b39",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "f7101ca0-2ca9-5d9a-8fb9-7f91f9056a55",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "a1d1bc80-9d26-55a9-aa0a-be6ff5089450",
+      "type": "usesRoutine",
+      "start": "40aad05f-9174-5cb6-85a7-29b14814da87",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "a1d1bc80-9d26-55a9-aa0a-be6ff5089450",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "941c6e43-8361-50b8-a01b-1a56bf15ecf3",
+      "type": "usesRoutine",
+      "start": "4246d4a3-5241-5c27-a7c4-36cdb41f1095",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "941c6e43-8361-50b8-a01b-1a56bf15ecf3",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "86238586-9afa-521b-b1b2-51c43e4d4e36",
+      "type": "usesRoutine",
+      "start": "432d66df-741f-557c-a26e-aaa83cbe9da4",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "86238586-9afa-521b-b1b2-51c43e4d4e36",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "9d593c7c-2655-55b9-8a4a-b6bf9d253f90",
+      "type": "usesRoutine",
+      "start": "4341f673-9e50-5403-ba15-c9b992a3b48f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "9d593c7c-2655-55b9-8a4a-b6bf9d253f90",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "bf116be2-f9b0-566c-a327-2f89e244b883",
+      "type": "usesRoutine",
+      "start": "44d8053c-2795-53fc-8f64-ec55f7654fdb",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "bf116be2-f9b0-566c-a327-2f89e244b883",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "e65e5c39-f1a8-5c11-813d-32db55a601ff",
+      "type": "usesRoutine",
+      "start": "475162d9-0018-50bf-8b97-cee34c4f8d47",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "e65e5c39-f1a8-5c11-813d-32db55a601ff",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "4410fcc8-8526-5f63-859c-84a1d47e86b3",
+      "type": "usesRoutine",
+      "start": "4badbe31-3376-540d-8e32-f8d2d93a156c",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "4410fcc8-8526-5f63-859c-84a1d47e86b3",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "3150297f-789a-5047-9d2b-c1b2a91bfdcf",
+      "type": "usesRoutine",
+      "start": "4bb02b75-8af9-52a4-b15f-e28641f1b15e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "3150297f-789a-5047-9d2b-c1b2a91bfdcf",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "8b84ea01-dcd0-50d5-8b20-6cf6db73dca0",
+      "type": "usesRoutine",
+      "start": "4bd13333-d55e-591e-976e-333adefb109e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "8b84ea01-dcd0-50d5-8b20-6cf6db73dca0",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "df807e79-5e37-51e8-8613-6ad097c28243",
+      "type": "usesRoutine",
+      "start": "4caaf83e-475e-58df-be53-07f602f56d9e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "df807e79-5e37-51e8-8613-6ad097c28243",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "e95db324-affc-5e27-91d4-11119a4fb2ed",
+      "type": "usesRoutine",
+      "start": "4d887821-e5ac-59cf-aae8-8efb17ae11c4",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "e95db324-affc-5e27-91d4-11119a4fb2ed",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "119eff3f-7554-5c0f-bac1-7ed943c25ba6",
+      "type": "usesRoutine",
+      "start": "508c87bd-f376-545a-bdf6-ce0825d0ea8e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "119eff3f-7554-5c0f-bac1-7ed943c25ba6",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "6a6d9780-7dbc-5b3d-bf87-08f12b30e962",
+      "type": "usesRoutine",
+      "start": "52f38a90-8b99-5c1c-a632-79b6c896a2a4",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "6a6d9780-7dbc-5b3d-bf87-08f12b30e962",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "b409ab4b-b4d6-5468-b951-4390adb19256",
+      "type": "usesRoutine",
+      "start": "537ce946-d029-5b28-b6fb-7927c4451845",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "b409ab4b-b4d6-5468-b951-4390adb19256",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "97135e97-ff0c-50ef-b9b0-876d5d5e1c1a",
+      "type": "usesRoutine",
+      "start": "555c67ad-964f-55e0-b140-fe59b579a4ce",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "97135e97-ff0c-50ef-b9b0-876d5d5e1c1a",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "f14b8caa-4b6f-5f9a-a11d-8aa23f5df19a",
+      "type": "usesRoutine",
+      "start": "5e39e928-56fa-51df-acab-86cf6da3121a",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "f14b8caa-4b6f-5f9a-a11d-8aa23f5df19a",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "082c77c6-8330-5850-aa09-c40a0a7a8a1f",
+      "type": "usesRoutine",
+      "start": "5f6bbfd0-e8b0-50d3-a551-171622b9c667",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "082c77c6-8330-5850-aa09-c40a0a7a8a1f",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "e45b5774-155f-5543-aea1-389ccdb3fb14",
+      "type": "usesRoutine",
+      "start": "5fade055-f480-5327-93eb-b0695ef0ef32",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "e45b5774-155f-5543-aea1-389ccdb3fb14",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "833b65d9-2f4d-5558-b0ae-d890d9c001c9",
+      "type": "usesRoutine",
+      "start": "628ff6ee-d5b9-52c9-a7d2-0de71a43ea82",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "833b65d9-2f4d-5558-b0ae-d890d9c001c9",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "3f59f579-312d-5242-bb81-818b10fa9d66",
+      "type": "usesRoutine",
+      "start": "65cc0722-8e46-5559-bd87-ee32e002222d",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "3f59f579-312d-5242-bb81-818b10fa9d66",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "68bc8d24-a7a8-54cc-a087-a94881289345",
+      "type": "usesRoutine",
+      "start": "67a93098-2599-59e3-8fd8-5cff90e5fd23",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "68bc8d24-a7a8-54cc-a087-a94881289345",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "c951f270-8b8c-5123-a413-a432d1fd3db4",
+      "type": "usesRoutine",
+      "start": "683ce393-9339-5fd4-9486-61976ea7e98f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "c951f270-8b8c-5123-a413-a432d1fd3db4",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "2a48f90e-20b2-57fb-b4ed-48a47ec77aae",
+      "type": "usesRoutine",
+      "start": "6cc3ff7c-ae43-5d30-a131-e764e02bf23b",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "2a48f90e-20b2-57fb-b4ed-48a47ec77aae",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "2461a0be-7849-5491-92fa-7ebb1fefe1a3",
+      "type": "usesRoutine",
+      "start": "6d4308c1-f3e1-507c-a6b8-eca041d49fc2",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "2461a0be-7849-5491-92fa-7ebb1fefe1a3",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "9dd3c1ac-aef6-5372-85c3-54829741e483",
+      "type": "usesRoutine",
+      "start": "6ee51bbc-8a49-571d-b357-0a897415db19",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "9dd3c1ac-aef6-5372-85c3-54829741e483",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "39727e95-b68f-52d8-bda6-ddc695d32896",
+      "type": "usesRoutine",
+      "start": "6f808c4e-16f3-5d1f-a2ec-8e3d8a191db3",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "39727e95-b68f-52d8-bda6-ddc695d32896",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "2a03a2ec-b39e-5b32-bcb9-3f8e670959c0",
+      "type": "usesRoutine",
+      "start": "735d1314-8abc-5e4b-b5f4-f830e27bb639",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "2a03a2ec-b39e-5b32-bcb9-3f8e670959c0",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "7cbc8a8a-ad4e-5988-ae69-5cd65e520bd7",
+      "type": "usesRoutine",
+      "start": "73d8120d-e1e7-5ea9-abbc-e3d29e0ffe26",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "7cbc8a8a-ad4e-5988-ae69-5cd65e520bd7",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "cb24e66a-f8c0-5bb8-92ee-907f67193468",
+      "type": "usesRoutine",
+      "start": "74f9a7b6-49b3-50b3-aa05-ede813840678",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "cb24e66a-f8c0-5bb8-92ee-907f67193468",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "8cd61dcb-b94e-5a4c-b6e9-236f730cdb51",
+      "type": "usesRoutine",
+      "start": "751d57d9-a82f-55ae-b665-7403fe43768a",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "8cd61dcb-b94e-5a4c-b6e9-236f730cdb51",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "986f4735-4b81-5d0b-8c77-e2161a7cdb6e",
+      "type": "usesRoutine",
+      "start": "76b29998-25c2-58ee-b04e-41febb74e7ae",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "986f4735-4b81-5d0b-8c77-e2161a7cdb6e",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "f62bc180-c6b3-509d-a7c2-70286fa4772b",
+      "type": "usesRoutine",
+      "start": "7a63f48a-2cf3-5c02-ad59-3582c6fe846f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "f62bc180-c6b3-509d-a7c2-70286fa4772b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "fdff749d-a9cf-5984-807e-ece878db161b",
+      "type": "usesRoutine",
+      "start": "7c3e9cb3-cd3d-5956-9230-a85eb3ac0076",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "fdff749d-a9cf-5984-807e-ece878db161b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "eb372ce5-f14b-56f6-8a62-ab371e64cecd",
+      "type": "usesRoutine",
+      "start": "7e8e774f-1003-5300-b6f2-b399ad16c467",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "eb372ce5-f14b-56f6-8a62-ab371e64cecd",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "db39379f-571e-5384-b875-3b86244e1a86",
+      "type": "usesRoutine",
+      "start": "81d5baba-c291-537d-a723-f7f4ada31c54",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "db39379f-571e-5384-b875-3b86244e1a86",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "2885db67-940d-582a-a226-56a179695e07",
+      "type": "usesRoutine",
+      "start": "875ba964-6705-5035-8924-4ab9c56e3dd7",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "2885db67-940d-582a-a226-56a179695e07",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "0c738156-5125-5182-9804-d046e85c7789",
+      "type": "usesRoutine",
+      "start": "8a7fa35b-c1ad-53fb-bf9f-830bc495e854",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "0c738156-5125-5182-9804-d046e85c7789",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "8e3673f5-1bf4-5812-8b71-83643d30ad7c",
+      "type": "usesRoutine",
+      "start": "8bcf3a7b-c46b-5e9f-bf03-dac1f06cc7e4",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "8e3673f5-1bf4-5812-8b71-83643d30ad7c",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "6b9aeb1f-c68d-52f4-9631-d2fddfa4ce60",
+      "type": "usesRoutine",
+      "start": "8cccbc2b-5745-55e9-8d98-b2144b1a742f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "6b9aeb1f-c68d-52f4-9631-d2fddfa4ce60",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "07033ac4-ee9a-5e5b-923f-03c9853c6cf2",
+      "type": "usesRoutine",
+      "start": "8fa1fd43-5d0c-509e-bf1a-f53a0e381a0f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "07033ac4-ee9a-5e5b-923f-03c9853c6cf2",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "9972a411-fc3c-503d-b283-ad3053cede12",
+      "type": "usesRoutine",
+      "start": "90fd0772-d690-5d96-8a75-89b36f190219",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "9972a411-fc3c-503d-b283-ad3053cede12",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "757e37fc-3b79-5c08-b719-dc846d1eb9e6",
+      "type": "usesRoutine",
+      "start": "934224dc-e12d-526e-b85c-58bc3e98be19",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "757e37fc-3b79-5c08-b719-dc846d1eb9e6",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "5d3aaddc-3b17-5387-a708-1febba909e72",
+      "type": "usesRoutine",
+      "start": "97fa4cfb-e753-5dd5-9ce6-fd70dcee270e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "5d3aaddc-3b17-5387-a708-1febba909e72",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "790fe31a-9007-5cea-9e7a-956712a497e5",
+      "type": "usesRoutine",
+      "start": "a1279999-3401-5396-b396-a81247b7990f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "790fe31a-9007-5cea-9e7a-956712a497e5",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "75bc03ee-cba7-59b6-9684-25c913387d2a",
+      "type": "usesRoutine",
+      "start": "acc10d25-644c-52d6-8aae-e18fd7d70bb4",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "75bc03ee-cba7-59b6-9684-25c913387d2a",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "ff159c87-27a8-5146-960c-008018b221d8",
+      "type": "usesRoutine",
+      "start": "ad2d2c01-749b-5a38-8c33-8b971b919f8d",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "ff159c87-27a8-5146-960c-008018b221d8",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "48bf308f-567b-5991-a420-de257a4749f9",
+      "type": "usesRoutine",
+      "start": "b30f6640-aab8-5a30-b07b-08ed66d66b9f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "48bf308f-567b-5991-a420-de257a4749f9",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "472d1bb7-89f7-577c-a6c0-f97f6bcaf270",
+      "type": "usesRoutine",
+      "start": "b527a13d-d224-5dda-8547-ab11fad86755",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "472d1bb7-89f7-577c-a6c0-f97f6bcaf270",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "85d07fa3-0385-51e2-a49e-304ba2531103",
+      "type": "usesRoutine",
+      "start": "b698973e-bd2e-5304-b4ad-8398e98093cd",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "85d07fa3-0385-51e2-a49e-304ba2531103",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "e1d5e6af-d04a-52ae-8316-8f8f99c8b9d4",
+      "type": "usesRoutine",
+      "start": "bc5873df-1919-5dcc-b50e-029595f4fda8",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "e1d5e6af-d04a-52ae-8316-8f8f99c8b9d4",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "7b78c8a2-c36b-558e-ae7e-22eadbc2913b",
+      "type": "usesRoutine",
+      "start": "bd1bcbd8-011e-5d0b-b971-aa7c9540a4a7",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "7b78c8a2-c36b-558e-ae7e-22eadbc2913b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "dc86ca81-6216-525e-81c9-12a3298216a6",
+      "type": "usesRoutine",
+      "start": "c23ce28a-6dd5-5f35-a99d-60853dc67950",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "dc86ca81-6216-525e-81c9-12a3298216a6",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "f2a878e1-0c9e-5e83-aee7-8a12f168b98b",
+      "type": "usesRoutine",
+      "start": "c58b514e-c98a-567b-a0b5-1e8ce2e7a9d9",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "f2a878e1-0c9e-5e83-aee7-8a12f168b98b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "7a7d0ba4-a3e2-5100-af94-e5a4441c8b7b",
+      "type": "usesRoutine",
+      "start": "c76798b3-ee3c-5819-8d91-032aab036206",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "7a7d0ba4-a3e2-5100-af94-e5a4441c8b7b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "4c7134d9-22f8-5863-bec0-b94230084c86",
+      "type": "usesRoutine",
+      "start": "c7cf1715-5808-582a-a18e-181daefeeed7",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "4c7134d9-22f8-5863-bec0-b94230084c86",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "25423488-8939-5cd4-88ab-6deb4842ae0f",
+      "type": "usesRoutine",
+      "start": "c9814ffe-f413-5ccd-9f1c-6afcc690af89",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "25423488-8939-5cd4-88ab-6deb4842ae0f",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "87c86e7b-6593-5331-8e2b-e3a658b5b740",
+      "type": "usesRoutine",
+      "start": "c9c8d5b6-9fbd-5683-9151-4c822dcae209",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "87c86e7b-6593-5331-8e2b-e3a658b5b740",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "e634275f-51fe-5d1a-ae0b-1ccc4b7d1241",
+      "type": "usesRoutine",
+      "start": "c9ea885a-626f-54c3-ba73-e7f928108d28",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "e634275f-51fe-5d1a-ae0b-1ccc4b7d1241",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "6c1d245d-8ac7-5ff3-9a92-de9e5b46aecd",
+      "type": "usesRoutine",
+      "start": "ce1a2ee1-dd24-5b13-a253-c743f094bd40",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "6c1d245d-8ac7-5ff3-9a92-de9e5b46aecd",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "9c58f779-a4eb-5eb1-a555-ec02eb11dd01",
+      "type": "usesRoutine",
+      "start": "d1cd9881-cc21-5bd3-b221-d074afd46ff2",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "9c58f779-a4eb-5eb1-a555-ec02eb11dd01",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "0ab0ead7-9210-54bf-a820-daa730150759",
+      "type": "usesRoutine",
+      "start": "d495993f-feb0-5cfc-ba06-1389b6b97c57",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "0ab0ead7-9210-54bf-a820-daa730150759",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "627de57f-845e-5e40-8687-938359a67d7c",
+      "type": "usesRoutine",
+      "start": "d7e47561-c875-5ad5-976b-83d1664ffd48",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "627de57f-845e-5e40-8687-938359a67d7c",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "8fc03128-b4b8-5da0-8c7b-d23b2ed85703",
+      "type": "usesRoutine",
+      "start": "db077e00-627f-5399-afb3-e47fa8f94c48",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "8fc03128-b4b8-5da0-8c7b-d23b2ed85703",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "72e83e71-dadf-5499-ad56-97a1c8c9c4e1",
+      "type": "usesRoutine",
+      "start": "df25cbdc-87f6-52ba-93c3-9c9cba1146ac",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "72e83e71-dadf-5499-ad56-97a1c8c9c4e1",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "00056efe-9561-5d7c-abc6-72edb37dcb6e",
+      "type": "usesRoutine",
+      "start": "e3ab9959-245b-5c74-aa8f-5adaa4c18067",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "00056efe-9561-5d7c-abc6-72edb37dcb6e",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "16f0a7b8-c052-589f-86e7-d45c3a7109f1",
+      "type": "usesRoutine",
+      "start": "e3cad5e9-c150-5d9c-90c6-dc97f5b8f49e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "16f0a7b8-c052-589f-86e7-d45c3a7109f1",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "92792d7b-8bb8-5824-9545-902673e47685",
+      "type": "usesRoutine",
+      "start": "e40ac3b4-f036-53c2-aac1-980f07ee2659",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "92792d7b-8bb8-5824-9545-902673e47685",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "f819681a-92d3-5320-bb17-1b76b34aec17",
+      "type": "usesRoutine",
+      "start": "e44587b5-8d67-59db-a001-78b2621b10ee",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "f819681a-92d3-5320-bb17-1b76b34aec17",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "bf09a021-df16-56f3-a84c-80d531e18027",
+      "type": "usesRoutine",
+      "start": "e51e1943-d53b-5836-9793-029737cc09d2",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "bf09a021-df16-56f3-a84c-80d531e18027",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "eca1833f-c951-58bc-9367-b4a5c6bff41a",
+      "type": "usesRoutine",
+      "start": "e5303228-f89e-5b76-988a-8ee7fc11286a",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "eca1833f-c951-58bc-9367-b4a5c6bff41a",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "2329bcb7-367f-5794-8f36-40c3b9a44760",
+      "type": "usesRoutine",
+      "start": "e5728a78-5fcf-54a8-8019-ddc28dab25dc",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "2329bcb7-367f-5794-8f36-40c3b9a44760",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "a548264f-236c-5231-9ece-1b2401f7dcc7",
+      "type": "usesRoutine",
+      "start": "e6f59a8e-1161-5e33-b655-669942a3068e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "a548264f-236c-5231-9ece-1b2401f7dcc7",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "20ad3fbb-715f-5d5c-a348-0aa1c01eb16b",
+      "type": "usesRoutine",
+      "start": "e7d6a7e8-477f-5c10-8e24-c21d560127f0",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "20ad3fbb-715f-5d5c-a348-0aa1c01eb16b",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "4ad6988a-7c03-5896-a8aa-a754e7c49400",
+      "type": "usesRoutine",
+      "start": "eb51f5d0-749f-5f1e-adfd-1e0489819498",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "4ad6988a-7c03-5896-a8aa-a754e7c49400",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "4dc27590-9d8d-52fd-8131-94cdf09e7c0d",
+      "type": "usesRoutine",
+      "start": "ecc40fef-4351-53bf-b309-3fc53a3b2c5e",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "4dc27590-9d8d-52fd-8131-94cdf09e7c0d",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "d8656bd1-a263-506c-bef0-a9d3487d5539",
+      "type": "usesRoutine",
+      "start": "f09b2bf4-1161-55a3-9682-f9c6fc48a1f8",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "d8656bd1-a263-506c-bef0-a9d3487d5539",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "571a048e-f43b-5c29-9e07-5c2c20c903f3",
+      "type": "usesRoutine",
+      "start": "f21c8b5a-bac9-5107-8346-2e1ef3541559",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "571a048e-f43b-5c29-9e07-5c2c20c903f3",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "40e88154-d9b7-5af1-8e60-992ca333f109",
+      "type": "usesRoutine",
+      "start": "f4af1fb5-0eff-5f2e-9398-ce975a545aa3",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "40e88154-d9b7-5af1-8e60-992ca333f109",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "16fa6ed2-5c9d-53c3-a591-36db6b87e8ab",
+      "type": "usesRoutine",
+      "start": "f4d12abc-81b0-5dc8-896f-f5fbb4981c2f",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "16fa6ed2-5c9d-53c3-a591-36db6b87e8ab",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "1793dcc5-141f-58c6-84fb-f4f9dcc637c7",
+      "type": "usesRoutine",
+      "start": "f807bcb2-2591-5cb7-a689-9ebafa113d9b",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "1793dcc5-141f-58c6-84fb-f4f9dcc637c7",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "8c328f1f-4041-559f-81ee-622a452a7936",
+      "type": "usesRoutine",
+      "start": "fb1e5be2-e25d-5ac8-ab83-7489dfcc3f27",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "8c328f1f-4041-559f-81ee-622a452a7936",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
+        ]
+      }
+    },
+    {
+      "id": "4a54e6d8-7a6e-53ba-ac4e-7f6e9722cd86",
+      "type": "usesRoutine",
+      "start": "fc3f01d5-8a34-5fd7-9ad3-ac06e6cb0caa",
+      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
+      "properties": {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Chaque leçon du Guide de l'enseignant·e applique la routine « Fiche de leçon — enseignement explicite » (CI mathématiques, Sénégal, TLM).",
+        "identifier": "4a54e6d8-7a6e-53ba-ac4e-7f6e9722cd86",
+        "provider": "Learning Commons ontology (generated)",
+        "sourceEntity": "Lesson",
+        "sourceEntityKey": "identifier",
+        "targetEntity": "InstructionalRoutine",
+        "targetEntityKey": "identifier",
+        "relationshipType": "usesRoutine",
+        "sourceLabels": [
+          "Lesson"
+        ],
+        "targetLabels": [
+          "InstructionalRoutine"
         ]
       }
     }
