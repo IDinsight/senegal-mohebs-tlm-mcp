@@ -208,15 +208,15 @@ describe("delete_node force cascade", () => {
     for (const id of expectedNodes) expect(nodeIds.has(id)).toBe(false);
   });
 
-  it("force cascade drops a buildsTowards edge to a surviving neighbour but does NOT delete the neighbour", async () => {
+  it("force cascade drops a hasDependency edge to a surviving neighbour but does NOT delete the neighbour", async () => {
     const g = await readPublished(ns);
-    const bt = g.edges.find((e) => e.type === "buildsTowards")!;
+    const bt = g.edges.find((e) => e.type === "hasDependency")!;
     const neighbour = bt.to; // the chapter `from` builds towards
     // Force-delete the `from` chapter.
     const applied = await apply(deleteNode, { nodeId: bt.from, force: true });
     expect(applied).toMatchObject({ ok: true });
     const draft = await readSlot(ns, "b");
-    // Neighbour survives; the buildsTowards edge is gone.
+    // Neighbour survives; the hasDependency edge is gone.
     expect(draft.nodes.some((n) => n.id === neighbour)).toBe(true);
     expect(draft.edges.some((e) => e.id === bt.id)).toBe(false);
   });

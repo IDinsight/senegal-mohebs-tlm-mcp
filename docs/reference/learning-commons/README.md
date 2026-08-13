@@ -86,8 +86,11 @@ Documented so they don't get mistaken for canon:
    illustrative Activity keeps its `hasEducationalAlignment` to its family SFI (the
    canonical content→standard bridge) and its `metadata.illustratesComponent`
    pairing. No `hasChild` targets content anywhere now.
-3. **`buildsTowards` between chapters (`LessonGrouping→LessonGrouping`).** Canonical
-   `buildsTowards` is **`SFI→SFI`**. For content prerequisites LC uses `hasDependency`.
+3. ~~**`buildsTowards` between chapters (`LessonGrouping→LessonGrouping`).**~~
+   **RESOLVED** — converted to canonical **`hasDependency`** (`dependent hasDependency
+   prereq`, i.e. the edges were reversed since `hasDependency` is the opposite
+   direction of `buildsTowards`). The parser reads it reversed into the same
+   `buildsTowards`/`buildsFrom` read model (`parse-graph.ts` `dependencyEdge`).
 4. **Content groupings carry SFI-flavoured fields.** Our chapters and weeks
    (`LessonGrouping`) carry `statementType`/`normalizedStatementType: "Standard
    Grouping"`, which are **`StandardsFrameworkItem`** properties, not `LessonGrouping`

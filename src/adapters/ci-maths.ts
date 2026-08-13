@@ -68,7 +68,9 @@ const MATHS_PARSE: GraphParseDescriptor = {
   // (statementType "Chapitre"); the task-groupings stay out of the chapter view.
   labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Activity: "task" },
   numberFrom: "order",
-  progressionEdge: "buildsTowards",
+  // Chapter progression is the canonical content prerequisite `hasDependency`
+  // (`dependent hasDependency prereq`), read reversed into buildsTowards/buildsFrom.
+  dependencyEdge: "hasDependency",
   // The bilan (end-of-chapter assessment) needs no hook: parseGraph reads it from
   // canonical LC educationalUse === "Assessment" onto isAssessment for every subject.
 };

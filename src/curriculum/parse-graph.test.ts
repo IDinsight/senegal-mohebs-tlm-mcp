@@ -24,7 +24,7 @@ const MATHS: GraphParseDescriptor = {
   },
   labelToKind: { Lesson: "lesson", LessonGrouping: "chapter", LearningComponent: "component", Activity: "task" },
   numberFrom: "order",
-  progressionEdge: "buildsTowards",
+  dependencyEdge: "hasDependency",
 };
 
 // Reading is post content-layer (Scope B): the week is a content LessonGrouping
@@ -101,7 +101,7 @@ describe("generic parseGraph — maths (new shape)", () => {
     expect(lesson.order).toBe(15);
   });
 
-  it("keeps chapter progression from buildsTowards edges", () => {
+  it("keeps chapter progression from hasDependency edges", () => {
     const withProg = m.unitsOfKind("chapter").filter((c) => c.buildsTowards.length > 0);
     expect(withProg.length).toBeGreaterThan(0);
   });

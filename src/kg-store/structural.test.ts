@@ -180,11 +180,11 @@ describe("create_node", () => {
 describe("link_nodes", () => {
   it("adds an edge between two existing nodes", async () => {
     const g = await readPublishedGraph(ns);
-    // Pick two chapters and link them with buildsTowards (a known edge type).
+    // Pick two chapters and link them with hasDependency (a known edge type).
     const chapters = g.nodes.filter((n) => n.type === "chapter");
     const [a, b] = [chapters[0], chapters[chapters.length - 1]];
     // Choose a pair that isn't already linked.
-    const existingId = makeEdgeId("buildsTowards", a.id, b.id);
+    const existingId = makeEdgeId("hasDependency", a.id, b.id);
     const targetPair = g.edges.some((e) => e.id === existingId)
       ? [chapters[1], chapters[chapters.length - 2]]
       : [a, b];
@@ -192,15 +192,15 @@ describe("link_nodes", () => {
 
     const preview = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
-      args: { edgeType: "buildsTowards", fromId: from.id, toId: to.id, properties: {}, namespace: ns },
+      args: { edgeType: "hasDependency", fromId: from.id, toId: to.id, properties: {}, namespace: ns },
     });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
-    const newId = makeEdgeId("buildsTowards", from.id, to.id);
+    const newId = makeEdgeId("hasDependency", from.id, to.id);
     expect(preview.diff.edges.added.map((e) => e.id)).toContain(newId);
 
     const applied = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
-      args: { edgeType: "buildsTowards", fromId: from.id, toId: to.id, properties: {}, namespace: ns },
+      args: { edgeType: "hasDependency", fromId: from.id, toId: to.id, properties: {}, namespace: ns },
       confirm: true, token: preview.confirmationToken,
     });
     expect(applied).toMatchObject({ ok: true });
@@ -247,7 +247,7 @@ describe("link_nodes", () => {
     const node = g.nodes.find((n) => n.type === "chapter")!;
     const blocked = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
-      args: { edgeType: "buildsTowards", fromId: node.id, toId: node.id, properties: {}, namespace: ns },
+      args: { edgeType: "hasDependency", fromId: node.id, toId: node.id, properties: {}, namespace: ns },
     });
     if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
     expect(blocked.errors.some((e) => e.includes("self-loop"))).toBe(true);

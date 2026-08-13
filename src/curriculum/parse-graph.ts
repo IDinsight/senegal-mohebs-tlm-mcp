@@ -38,7 +38,12 @@ export type GraphParseDescriptor = {
   // listed type identically, so both halves fold into the same child links.
   containerEdge?: string | string[];   // parent→child hierarchy, default ["hasChild","hasPart"]
   supportEdge?: string | string[];     // child→parent attachment, default ["supports","hasEducationalAlignment"]
-  progressionEdge?: string; // from→to progression, e.g. "buildsTowards"; omit if the subject has none
+  progressionEdge?: string; // from→to progression, e.g. "buildsTowards" (SFI↔SFI); omit if none
+  // Content prerequisite edge (canonical LC `hasDependency`, LessonGrouping/Lesson/
+  // Activity). Read REVERSED vs progressionEdge — `dependent hasDependency prereq`
+  // means the prereq builds toward the dependent — so both yield the same
+  // buildsTowards/buildsFrom read model. Omit if the subject has none.
+  dependencyEdge?: string;
   // Subject hook run on the flat unit list (childIds/parents already linked)
   // just before buildModel — e.g. flag the bilan, dedup twin weeks. May mutate
   // in place and/or return a replacement list.
@@ -132,6 +137,18 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
       if (!from || !to) continue;
       from.buildsTowards.push(to.id);
       to.buildsFrom.push(from.id);
+    }
+  }
+  // 4b. content prerequisites (dependencyEdge) — REVERSED: `dependent hasDependency
+  //     prereq`, so the prereq builds towards the dependent (same buildsTowards/
+  //     buildsFrom read as a forward progression edge would give).
+  if (d.dependencyEdge) {
+    for (const r of rels) {
+      if (r.type !== d.dependencyEdge) continue;
+      const dependent = byId.get(r.start), prereq = byId.get(r.end);
+      if (!dependent || !prereq) continue;
+      prereq.buildsTowards.push(dependent.id);
+      dependent.buildsFrom.push(prereq.id);
     }
   }
 
