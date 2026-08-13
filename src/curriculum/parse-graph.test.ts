@@ -47,8 +47,9 @@ describe("generic parseGraph — maths (new shape)", () => {
     // The RECE task-groupings were removed (RECE is now a derived-components
     // frame with activities directly under its sub-SFIs), so all 25 groupings are
     // authored chapters.
+    // lesson = 112 weekly (Teacher's Guide) + 25 Student's-Book container lessons.
     expect(kindCounts(m, ["week", "chapter", "domaine", "lesson", "expectation"])).toEqual({
-      week: 23, chapter: 25, domaine: 4, lesson: 112, expectation: 112,
+      week: 23, chapter: 25, domaine: 4, lesson: 137, expectation: 112,
     });
     // authored chapters carry statementType "Chapitre".
     const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
@@ -58,18 +59,25 @@ describe("generic parseGraph — maths (new shape)", () => {
     expect(m.unitsOfKind("task").length).toBeGreaterThan(0);
   });
 
-  it("links chapter→activity via the content edge (not a number join)", () => {
-    // Post two-Course split: the weekly lessons moved to the Teacher's Guide
-    // (schedule axis, week→lesson), and each authored chapter now holds the
-    // Student's Book Activities (2 per former lesson) via the content edge.
+  it("links chapter→lesson→activity via the content tree (not a number join)", () => {
+    // Canonical content nesting: chapter (LessonGrouping) ▸ Lesson ▸ Activity.
+    // The weekly teaching lessons live in the Teacher's Guide (week→lesson); each
+    // chapter holds ONE Student's-Book container Lesson, which holds that
+    // chapter's Activities (218 total, 2 per former lesson).
     const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
+    let chapterLessons = 0, activities = 0;
     for (const c of authored) {
-      expect(m.childrenOf(c.id).filter((u) => u.kind === "lesson").length).toBe(0); // lessons left the chapter tree
-      expect(m.childrenOf(c.id).filter((u) => u.kind === "task").length).toBeGreaterThan(0); // Activities took their place
+      const lessons = m.childrenOf(c.id).filter((u) => u.kind === "lesson");
+      expect(lessons.length).toBe(1);
+      chapterLessons += lessons.length;
+      for (const l of lessons) {
+        const tasks = m.childrenOf(l.id).filter((u) => u.kind === "task");
+        expect(tasks.length).toBeGreaterThan(0);
+        activities += tasks.length;
+      }
     }
-    // total chapter→activity content links = 218 (2 per chapter-bound lesson)
-    const total = authored.reduce((n, c) => n + m.childrenOf(c.id).filter((u) => u.kind === "task").length, 0);
-    expect(total).toBe(218);
+    expect(chapterLessons).toBe(25);
+    expect(activities).toBe(218);
   });
 
   it("links week→lesson via the schedule edge, every lesson in exactly one week", () => {

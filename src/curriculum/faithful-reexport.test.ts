@@ -20,10 +20,10 @@ type RawNode = { id: string; labels?: string[]; properties?: Record<string, unkn
 type RawRel = { id: string; type: string; start: string; end: string; properties?: Record<string, unknown> };
 
 const CASES = [
-  // maths: post two-Course split — a Teacher's Guide Course over the 23 weeks +
-  // 218 placeholder Activities (2 per chapter-bound lesson); lessons moved out of
-  // chapters (−109 chapter→lesson, −3 bilan→domaine).
-  { grade: "ci", subject: "maths", nodes: 721, edges: 1224 },
+  // maths: post two-Course split + canonical chapter▸lesson▸activity nesting — a
+  // Teacher's Guide Course over the 23 weeks + 25 Student's-Book container Lessons
+  // (one per chapter) each holding that chapter's Activities (218 total).
+  { grade: "ci", subject: "maths", nodes: 746, edges: 1249 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).
