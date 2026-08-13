@@ -58,16 +58,18 @@ describe("generic parseGraph — maths (new shape)", () => {
     expect(m.unitsOfKind("task").length).toBeGreaterThan(0);
   });
 
-  it("links chapter→lesson via the content edge (not a number join)", () => {
-    // Only authored chapters hold lessons (task-groupings hold Activities).
+  it("links chapter→activity via the content edge (not a number join)", () => {
+    // Post two-Course split: the weekly lessons moved to the Teacher's Guide
+    // (schedule axis, week→lesson), and each authored chapter now holds the
+    // Student's Book Activities (2 per former lesson) via the content edge.
     const authored = m.unitsOfKind("chapter").filter((c) => c.properties.statementType === "Chapitre");
     for (const c of authored) {
-      const lessons = m.childrenOf(c.id).filter((u) => u.kind === "lesson");
-      expect(lessons.length).toBeGreaterThan(0); // every authored chapter has lessons
+      expect(m.childrenOf(c.id).filter((u) => u.kind === "lesson").length).toBe(0); // lessons left the chapter tree
+      expect(m.childrenOf(c.id).filter((u) => u.kind === "task").length).toBeGreaterThan(0); // Activities took their place
     }
-    // total chapter→lesson content links = 109 (3 palier-integration lessons hang off a domaine)
-    const total = authored.reduce((n, c) => n + m.childrenOf(c.id).filter((u) => u.kind === "lesson").length, 0);
-    expect(total).toBe(109);
+    // total chapter→activity content links = 218 (2 per chapter-bound lesson)
+    const total = authored.reduce((n, c) => n + m.childrenOf(c.id).filter((u) => u.kind === "task").length, 0);
+    expect(total).toBe(218);
   });
 
   it("links week→lesson via the schedule edge, every lesson in exactly one week", () => {

@@ -270,18 +270,17 @@ describe("coverage warnings — inform, never block", () => {
   // real hasChild edge now, so there is no denormalized number that can drift.)
 
   it("lesson linked to two chapters warns (>1 chapter parent), still confirmable", async () => {
-    // Reuse two real chapters, and a real lesson child of the first; link the
-    // same lesson under a second chapter too.
+    // Post two-Course split, lessons no longer live under chapters, so build the
+    // ambiguity explicitly: attach one lesson under a first chapter (applied),
+    // then a second chapter — that's the >1 chapter-parent the rule warns on.
     const g = await readPublished(ns);
-    const parentEdge = g.edges.find((e) => e.type === "hasPart"
-      && g.nodes.find((n) => n.id === e.from)?.type === "chapter"
-      && g.nodes.find((n) => n.id === e.to)?.type === "lesson")!;
-    const lessonId = parentEdge.to;
-    const otherChapter = g.nodes.find((n) => n.type === "chapter" && n.id !== parentEdge.from)!;
+    const lessonId = g.nodes.find((n) => n.type === "lesson")!.id;
+    const [chapA, chapB] = g.nodes.filter((n) => n.type === "chapter");
+    await apply(linkNodes, { edgeType: "hasPart", fromId: chapA.id, toId: lessonId, properties: {}, namespace: ns });
 
     const preview = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
-      args: { edgeType: "hasPart", fromId: otherChapter.id, toId: lessonId, properties: {}, namespace: ns },
+      args: { edgeType: "hasPart", fromId: chapB.id, toId: lessonId, properties: {}, namespace: ns },
       coverage,
     });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);

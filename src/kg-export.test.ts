@@ -47,10 +47,10 @@ describe("kg-export — LC ontology (maths)", () => {
   it("categorizes nodes by LC label; taxonomy lists the present labels in order", async () => {
     const g = (await exportNamespace(mathsNs))!;
     expect(g).toBeTruthy();
-    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, Course: 1, LessonGrouping: 25, Lesson: 112, Activity: 104, LearningComponent: 80 });
+    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, Course: 2, LessonGrouping: 25, Lesson: 112, Activity: 322, LearningComponent: 80 });
     expect(g.meta.counts.byKind.StandardsFrameworkItem).toBeGreaterThan(0);
     expect(g.meta.counts.byKind.Curriculum).toBeUndefined(); // canonical: relabeled to Activity/LessonGrouping
-    expect(g.meta.counts.byKind.Course).toBe(1);             // the "Outil de l'élève" content root the 25 chapters hang under
+    expect(g.meta.counts.byKind.Course).toBe(2);             // two content roots: "Outil de l'élève" (student) + "Guide de l'enseignant" (teacher)
     // every node's legend category IS its LC label — no subject roles/kinds
     expect(g.nodes.every((n) => n.cat === n.label && n.kind === n.label)).toBe(true);
     expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "Course", "LessonGrouping", "Lesson", "Activity", "LearningComponent"]);
@@ -83,7 +83,8 @@ describe("kg-export — LC ontology (maths)", () => {
     expect(g.edges.every((e) => typeof e.rel === "string" && e.rel.length > 0)).toBe(true);
     // Content containment folds to a hasChild TRAVERSAL edge but keeps its real
     // type — so Course→chapter badges as "hasPart", not a blanket "hasChild".
-    const course = g.nodes.find((n) => n.label === "Course")!;
+    // (Two Courses now exist; pin the student book by its title.)
+    const course = g.nodes.find((n) => n.label === "Course" && n.desc === "Outil de l'élève")!;
     const courseEdges = g.edges.filter((e) => e.s === course.id);
     expect(courseEdges.length).toBe(25);
     expect(courseEdges.every((e) => e.r === "hasChild" && e.rel === "hasPart")).toBe(true);

@@ -363,12 +363,14 @@ describe("delete_node — non-cascading", () => {
 
 describe("Rule 1 — disguised rename across delete_node + create_node", () => {
   it("blocks a create_node whose content matches a deleted node's, even with a new id", async () => {
-    // 1. Pick a real chapter and capture its content.
+    // 1. Pick a real low-degree node and capture its content. A task (Activity)
+    // has just two incident edges (its chapter hasPart + its expectation
+    // alignment), so the detach-then-delete stays fast on the full graph — a
+    // chapter now carries ~14 edges (12 Activities + Course + progression), which
+    // times the serial unlink out. Unlink them so delete_node passes Rule 2; Rule
+    // 1 is what we're exercising here, not Rule 2.
     const g = await readPublishedGraph(ns);
-    // Pick a chapter that has incident edges (all seeded chapters do). Unlink
-    // them so delete_node passes Rule 2 for this test; Rule 1 is what we're
-    // exercising here, not Rule 2.
-    const chapter = g.nodes.find((n) => n.type === "chapter")!;
+    const chapter = g.nodes.find((n) => n.type === "task")!;
     const incident = g.edges.filter((e) => e.from === chapter.id || e.to === chapter.id);
     for (const e of incident) {
       const p = await runGraphMutation({ namespace: ns, mutation: unlinkNodes, args: { edgeId: e.id } });
