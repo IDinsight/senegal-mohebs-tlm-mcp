@@ -1,24 +1,28 @@
 /*
  * Module: server · tool group: curriculum (local sources)
  *
- * Read-only views of the active subject's curriculum and terminology. Generic
- * vocabulary: "unit" is the subject's top-level generation unit (a chapter for
- * CI maths; a week for CE1 reading). Values come from the active adapter, so
- * the RETURNED shapes are still subject-specific (CI CI maths returns chapitreNum/
- * leconNum, etc.) even though the tool names/params are neutral.
+ * Read-only access to the active subject's curriculum graph and terminology.
+ *
+ * The two curriculum-read tools — list_courses / get_course — are DELIBERATELY
+ * thin generic graph readers: they surface raw Learning-Commons nodes (labels +
+ * properties) and their edges, and do NO projection — no chapter/week/lesson
+ * vocabulary, no cooked slice. The caller (the LLM) reads the nodes and assembles
+ * materials itself; keeping the logic out of the tool is the point (see
+ * docs/design-notes/logic-in-the-graph.md). A course is a real `Course` node in
+ * the graph — a subject whose graph has none returns []; an expert authors one.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
-import { searchTerminology, terminologySections } from "../curriculum/index.js";
+import { searchTerminology, terminologySections, coursesOf, courseSubgraph } from "../curriculum/index.js";
 
 export function registerCurriculumTools(server: McpServer) {
-  server.registerTool("list_units", { title: "List curriculum units", description: "All top-level curriculum units for the active subject (for CI maths: chapters — number, title, domain). Numbering may skip.", inputSchema: {} },
-    guarded(async () => asJson(getActiveAdapter().listUnits())));
+  server.registerTool("list_courses", { title: "List courses", description: "The `Course` nodes in the active subject's graph — each a top-level content root (for CI maths: 'Outil de l'élève' and 'Guide de l'enseignant'). Returns each course's id, LC labels, and raw properties. A subject whose graph has no Course node returns []. Pass a returned id to get_course.", inputSchema: {} },
+    guarded(async () => asJson({ courses: coursesOf(getActiveAdapter().model()) })));
 
-  server.registerTool("get_curriculum", { title: "Get unit curriculum", description: "The curriculum slice for one unit (for CI maths: a chapter's ordered lessons with components and tasks, the bilan lesson, and cross-unit progression). 'unit' is the unit's scope value (CI maths: the chapter number).", inputSchema: { unit: z.number().int() } },
-    guarded(async (a: { unit: number }) => { const ad = getActiveAdapter(); const s = ad.slice(a.unit); return s ? asJson({ ...(s as object), progression: ad.progression(a.unit) }) : asJson({ error: `Unit ${a.unit} not found.` }); }));
+  server.registerTool("get_course", { title: "Get a course's nodes", description: "Return the containment subtree under one Course as raw graph: every descendant node (reached via hasPart/hasChild) with its LC labels and properties, plus the edges among them. NO projection — read the nodes and assemble the material yourself. 'course' is a Course id from list_courses.", inputSchema: { course: z.string() } },
+    guarded(async (a: { course: string }) => { const sub = courseSubgraph(getActiveAdapter().model(), a.course); return sub ? asJson(sub) : asJson({ error: `Course '${a.course}' not found. Call list_courses for available course ids.` }); }));
 
   server.registerTool("get_terminology", { title: "Get terminology (FR/Wolof)", description: "Search the MOHEBS French/Wolof terminology used as the fallback when the KG lacks a term's wording. Returns [] if nothing matches — then say the wording is missing rather than invent it.", inputSchema: { query: z.string(), limit: z.number().int().optional() } },
     guarded(async (a: { query: string; limit?: number }) => asJson({ query: a.query, results: searchTerminology(a.query, a.limit ?? 20) })));

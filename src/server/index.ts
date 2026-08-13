@@ -26,7 +26,7 @@ export function buildServer(): McpServer {
   registerHealthTools(server);       // ping (no datastore — transport liveness probe)
   registerContextTools(server);      // set_context, get_context
   registerWorkspaceTools(server);    // list_workspaces, create_workspace, add/remove/list_member (tenant admin)
-  registerCurriculumTools(server);   // list_units, get_curriculum, terminology
+  registerCurriculumTools(server);   // list_courses, get_course (generic node readers), terminology
   registerGenerationTools(server);   // get_prompt, get_generation_context
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)
   registerCiMathsTools(server);        // suggest_fresh_domain, domain_usage (CI-CI-maths-specific)

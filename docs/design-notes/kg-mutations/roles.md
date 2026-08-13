@@ -42,7 +42,7 @@ like `grantRole` / `setRole` / etc.
 
 **(d) Dry-run also requires curator.** A non-curator has no legitimate
 reason to preview edits. Reads and generation stay ungated — an unknown
-actor can still call `list_units`, `get_curriculum`,
+actor can still call `list_courses`, `get_course`,
 `get_generation_context`, etc.
 
 ### Denial shape

@@ -30,10 +30,10 @@ You compose the week's reading texts yourself, grounded in the week's genre and 
 `unit` = the week number (Semaine / ÀYUBÉS); `deliverable` = `"teacher_guide"`.
 
 - **`set_context(grade="ce1", subject="reading")`** — call once, first.
-- **`get_generation_context(unit=N, deliverable="teacher_guide")`** — call first for the week: returns the week's curriculum, established characters, a fresh-theme suggestion, terminology guidance, and the coverage map.
-- **`get_curriculum(unit=N)`** — the week's `sessions` (the 22-session daily timetable: day, order, title, language, duration, category, and the `standard` each teaches with its components), the week's palier and genre, plus cross-week progression. This is the authoritative structure — see "Weekly session inventory" below.
+- **`get_generation_context(unit=N, deliverable="teacher_guide")`** — call first for the week. Its **`curriculum`** carries the week's `sessions` (the 22-session daily timetable: day, order, title, language, duration, category, and the `standard` each teaches with its components), the week's palier and genre, plus cross-week progression — **this is the authoritative structure** (see "Weekly session inventory" below). It also returns established characters, a fresh-theme suggestion, terminology guidance, and the coverage map.
 - **`get_terminology(query)`** — official Wolof/French wording for a term. This store is often sparse and may return `[]`. When it does, fall back to the wording used in weeks 1–8 (harvested via `get_document_text`); only if neither has it, use a visible placeholder (see below). Do not invent.
-- **`list_units`**, **`list_documents`**, **`get_document_text(relPath)`**, **`reconcile`** — for the exemplar and history.
+- **`list_courses`** / **`get_course(course)`** — raw graph access if you need it (`list_courses` lists the subject's `Course` nodes; `get_course` returns a course's node subtree). `get_generation_context` already assembles the week for you, so reach for these only to inspect the graph directly.
+- **`list_documents`**, **`get_document_text(relPath)`**, **`reconcile`** — for the exemplar and history.
 - **`create_upload_url` → `log_generation`** — after the `.docx` is finished (both require `confirm:true`; ask the user before writing).
 
 Integration weeks (e.g. Semaine 9 closes Palier 1) use their own instructions, not this prompt.
@@ -93,7 +93,7 @@ If a section would be a single generic line, expand it to the exemplar's grain o
 
 ## Weekly session inventory (timetable) — read it from the graph
 
-The week's session timetable is **graph-native**: `get_curriculum(unit=N)` returns the week's `sessions` — the ordered daily reading sessions, each with its day, order-in-day, bilingual title, language, duration, session category, and the standard it teaches (`standard`, or `null` for Remédiation). **Produce exactly the sessions the tool returns, in `ordre`, with the language and duration it gives.** Do not add, drop, or reorder sessions, and do not fall back to a remembered timetable — the graph is the single source of truth for structure.
+The week's session timetable is **graph-native**: `get_generation_context(unit=N, deliverable="teacher_guide")` returns, under `curriculum`, the week's `sessions` — the ordered daily reading sessions, each with its day, order-in-day, bilingual title, language, duration, session category, and the standard it teaches (`standard`, or `null` for Remédiation). **Produce exactly the sessions it returns, in `ordre`, with the language and duration it gives.** Do not add, drop, or reorder sessions, and do not fall back to a remembered timetable — the graph is the single source of truth for structure.
 
 Each session object carries:
 
@@ -110,7 +110,7 @@ A week has **one** `remediation` session (Remédiation CGP, 60 mn). Several sess
 
 ## Authored content, when the graph carries it (activities & materials)
 
-A session may already carry its **authored, reviewed content** in the graph — the phase-by-phase script, curated and approved, not something to reinvent. `get_curriculum(unit=N)` surfaces this on each session:
+A session may already carry its **authored, reviewed content** in the graph — the phase-by-phase script, curated and approved, not something to reinvent. The `curriculum` from `get_generation_context(unit=N, deliverable="teacher_guide")` surfaces this on each session:
 
 - `session.activities[]` — the session's **phases (Étapes)**, in order. Each activity has a `titre` (the phase name, e.g. *Étape 1 : Découvrir le vocabulaire*), optional `groupement` (individual / pairs / group), `duree`, `usage` (*Instruction* / *Assessment*), and its own `materials[]`.
 - `materials[]` (on an activity, on a session, or on the week itself) — the **load-bearing content**: `titre`, `type` (*Core* / *Supporting* / *Reference*), and `contenu` — the actual scripted prose, steps, questions, or image-brief.
@@ -214,7 +214,7 @@ A clean **Word (.docx)**, named `Guide enseignant - Semaine N - CE1 Lecture.docx
 - [ ] Grammar/ortho/conj: Production attendue + manipulation before rule
 - [ ] CGP fiche: full diagnostic header + spine with a real syllable grid + concours
 - [ ] One autonomous reinvestment per day; 🔁 transfer scripted
-- [ ] Exactly the sessions `get_curriculum` returns, in `ordre`, with its language/duration; none added, dropped, or reordered
+- [ ] Exactly the sessions the `curriculum` (from `get_generation_context`) returns, in `ordre`, with its language/duration; none added, dropped, or reordered
 
 **Formatting & file**
 - [ ] Palette applied; Wolof dark-blue `#1F4E79` style applied to all L1 text (incl. L1 fragments in L2/L1-L2 sessions, as a localization flag); reading text in Andika; rules framed; phase rows shaded

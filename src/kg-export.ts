@@ -10,9 +10,10 @@
  * This is purely additive — it reuses the same store the MCP read/curator tools
  * use (getKgStore + readPointer/listNodes/listEdges), and reuses the same
  * namespace enumeration (listAvailableContexts × a published pointer). It does
- * NOT go through the subject adapters' presenter layer (get_curriculum), because
- * the explorer needs the WHOLE spine graph (every node + edge), not a
- * per-unit slice. It reads the same normalized store those adapters hydrate from.
+ * NOT go through the subject adapters' presenter layer (the cooked slice in
+ * get_generation_context), because the explorer needs the WHOLE spine graph
+ * (every node + edge), not a per-unit slice. It reads the same normalized store
+ * those adapters hydrate from.
  *
  * Data-scope note (see docs/design-notes/kg-explorer-findings.md): the store now holds the
  * FULL Learning-Commons graph — the curriculum spine (for CI maths
