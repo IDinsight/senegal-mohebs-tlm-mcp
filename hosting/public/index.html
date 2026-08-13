@@ -483,16 +483,22 @@ function buildNodeType(){
 // included nodes with no included `expandEdge` parent; children are the included
 // `expandEdge` targets. `pruneToLabel` drops any branch that never reaches that
 // label (so "Learning components" shows only standards that were decomposed).
+// `reverse` walks the edge bottom-up (target becomes parent), so the tree flows
+// from the leaf outward — Learning components reads LC → framework item → framework.
 const byNumThenCode = (a,b) => (N[a].ord??0)-(N[b].ord??0) || String(N[a].code).localeCompare(String(N[b].code),undefined,{numeric:true});
 function buildLabelTree(spec){
   if (groupCache[spec.id]) return groupCache[spec.id];
   const inc = new Set(spec.params.includeLabels);
   const edge = spec.params.expandEdge || 'hasChild';
+  const reverse = !!spec.params.reverse;
   const isInc = (id) => N[id] && inc.has(N[id].kind);
   const childrenOf = {}; const hasIncParent = new Set();
   for (const s in (outByRel[edge]||{})){
     if (!isInc(s)) continue;
-    for (const x of outByRel[edge][s]) if (isInc(x.to)){ (childrenOf[s]=childrenOf[s]||[]).push(x.to); hasIncParent.add(x.to); }
+    for (const x of outByRel[edge][s]) if (isInc(x.to)){
+      const p = reverse ? x.to : s, c = reverse ? s : x.to;   // reverse ⇒ target parents the source
+      (childrenOf[p]=childrenOf[p]||[]).push(c); hasIncParent.add(c);
+    }
   }
   for (const s in childrenOf) childrenOf[s].sort(byNumThenCode);
   const rootKinds = spec.params.rootKinds ? new Set(spec.params.rootKinds) : null;
@@ -560,8 +566,11 @@ function viewChildren(id){
 // keyed by the traversal type (folded to hasChild), so we read the true type off the
 // stored adjacency entry — a folded supports/hasEducationalAlignment/hasPart, or a
 // metadata-derived "illustrates", reads as itself, not a blanket hasChild.
-function relBetween(parentId, childId){
-  for (const r in outByRel){ const hit=(outByRel[r][parentId]||[]).find(x=>x.to===childId); if(hit) return hit.rel||r; }
+function relBetween(parentId, childId, reverse){
+  // In a reversed tree the stored display edge runs child→parent, so look it up
+  // the other way round to badge the real relation (e.g. LC —supports→ item).
+  const [from, to] = reverse ? [childId, parentId] : [parentId, childId];
+  for (const r in outByRel){ const hit=(outByRel[r][from]||[]).find(x=>x.to===to); if(hit) return hit.rel||r; }
   return null;
 }
 
@@ -613,7 +622,9 @@ function renderNode(id, parentId){
   // relation, so badge them all. In the containment hierarchy, badge only the
   // non-obvious folded edges (hasPart / supports / hasEducationalAlignment /
   // illustrates / buildsTowards / relatesTo) and leave a genuine hasChild clean.
-  const rawRel = (!synthetic && parentId && !isSynth(parentId)) ? relBetween(parentId, id) : null;
+  const vspec = viewSpec(currentView);
+  const revView = vspec?.shape==='label-tree' && !!vspec.params.reverse;
+  const rawRel = (!synthetic && parentId && !isSynth(parentId)) ? relBetween(parentId, id, revView) : null;
   const linkRel = rawRel && (viewSpec(currentView).shape==='node-type' || rawRel!=='hasChild') ? rawRel : null;
   const row = document.createElement('div'); row.className='row'+(selected===id?' sel':'')+(linkRel?' linkrow':'');
   const tw = document.createElement('span'); tw.className='tw'; tw.textContent = hasKids ? (expanded.has(id)?'▾':'▸') : '';
