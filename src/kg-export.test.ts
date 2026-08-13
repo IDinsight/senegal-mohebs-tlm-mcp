@@ -58,12 +58,20 @@ describe("kg-export — LC ontology (maths)", () => {
     expect(g.meta.taxonomy.every((x) => /^#[0-9a-f]{6}$/i.test(x.color) && x.label.fr && x.label.en)).toBe(true);
   });
 
-  it("declares LC-ontology views only: hierarchy (containment) + by-label", async () => {
+  it("declares the LC lenses present in the data: standards + components + curriculum + progression, then by-type", async () => {
     const g = (await exportNamespace(mathsNs))!;
-    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["hierarchy", "generic"]);
-    const hier = g.meta.viewConfig.views.find((v) => v.id === "hierarchy") as any;
-    expect(hier.params).toMatchObject({ anchorKind: "StandardsFramework", expandEdge: "hasChild" });
-    expect(hier.params.groupBy).toEqual([]);
+    // Maths has every layer: a standards spine, LearningComponents, the content
+    // tree (Course/Lesson/Activity), and chapter prerequisites (hasDependency →
+    // buildsTowards). So all four LC lenses + the generic view appear.
+    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["standards", "components", "curriculum", "progression", "generic"]);
+    const std = g.meta.viewConfig.views.find((v) => v.id === "standards") as any;
+    expect(std.shape).toBe("label-tree");
+    expect(std.params).toMatchObject({ includeLabels: ["StandardsFramework", "StandardsFrameworkItem"], expandEdge: "hasChild" });
+    const prog = g.meta.viewConfig.views.find((v) => v.id === "progression") as any;
+    expect(prog.params).toMatchObject({ edge: "buildsTowards" });
+    // hasDependency is normalised onto buildsTowards for the progression view.
+    expect(g.edges.some((e) => e.rel === "buildsTowards")).toBe(true);
+    expect(g.edges.some((e) => e.rel === "hasDependency")).toBe(false);
   });
 
   it("containment walks hasChild from the framework; components reachable via the supports fold", async () => {
@@ -114,13 +122,15 @@ describe("kg-export — LC ontology (maths)", () => {
 });
 
 describe("kg-export — LC ontology (reading)", () => {
-  it("same LC labels + views; reading carries no Curriculum tasks", async () => {
+  it("same LC labels; reading has standards + components + curriculum but no progression (no buildsTowards)", async () => {
     const g = (await exportNamespace(readingNs))!;
     expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, LessonGrouping: 127, Lesson: 462, LearningComponent: 1031 });
     expect(g.meta.counts.byKind.StandardsFrameworkItem).toBeGreaterThan(0);
     expect(g.meta.counts.byKind.Curriculum).toBeUndefined();
     expect(g.nodes.every((n) => n.cat === n.label)).toBe(true);
-    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["hierarchy", "generic"]);
+    // Reading has a content layer (LessonGrouping/Lesson) → a curriculum view, but
+    // no chapter prerequisites → no progression view.
+    expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["standards", "components", "curriculum", "generic"]);
     expect(g.meta.taxonomy.map((x) => x.key)).toEqual(["StandardsFramework", "StandardsFrameworkItem", "LessonGrouping", "Lesson", "LearningComponent"]);
   });
 });

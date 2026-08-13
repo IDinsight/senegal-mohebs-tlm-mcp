@@ -78,6 +78,20 @@ export type ViewSpec =
       id: string; label: { fr: string; en: string }; shape: "grouped-spine";
       params: { anchorKind: string; groupBy: GroupByLevel[]; expandEdge: string; stopKind?: string | null; order?: string[] };
     }
+  // A containment tree filtered to a set of LC labels: roots are included nodes
+  // with no included parent, children are `expandEdge` targets whose label is in
+  // `includeLabels`. `rootKinds` (optional) restricts which labels may be a root —
+  // needed for Curriculum, where illustrative Activities are re-parented under
+  // components (excluded here) and would otherwise float up as orphan roots.
+  // `pruneToLabel` hides any branch with no descendant of that label (so the
+  // Learning-components view shows only decomposed standards).
+  | {
+      id: string; label: { fr: string; en: string }; shape: "label-tree";
+      params: { includeLabels: string[]; expandEdge: string; rootKinds?: string[]; pruneToLabel?: string };
+    }
+  // Learning progression: prereq → successor chains over one edge type. Roots are
+  // nodes with an outgoing `edge` and no incoming one (chain starts).
+  | { id: string; label: { fr: string; en: string }; shape: "progression"; params: { edge: string } }
   | { id: string; label: { fr: string; en: string }; shape: "node-type"; params?: Record<string, never> };
 
 export type ViewConfig = { views: ViewSpec[] };
@@ -229,6 +243,13 @@ function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
     return [{ s: e.to, t: e.from, r: "hasChild", rel: e.type, o: edgeOrder(e) }];
   }
   if (e.type === "hasPart") return [{ s: e.from, t: e.to, r: "hasChild", rel: "hasPart", o: edgeOrder(e) }];
+  if (e.type === "hasDependency") {
+    // Canonical LC content prerequisite: `dependent hasDependency prereq`. Normalise
+    // to the progression direction `prereq buildsTowards dependent` (reversed) so the
+    // Learning-progression view reads prereq → successor uniformly, whatever the
+    // source dialect used (mirrors the parser's hasDependency handling).
+    return [{ s: e.to, t: e.from, r: "buildsTowards", rel: "buildsTowards", o: edgeOrder(e) }];
+  }
   if (e.type === "hasChild") {
     const ill = ctx.illustrates.get(e.to);       // frame → illustrative activity: drop (it nests under its component)
     if (ill && ctx.has(ill.comp)) return [];
@@ -237,21 +258,51 @@ function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
 }
 
 // ── viewConfig — Learning-Commons ontology views ONLY ────────────────────────
-// No subject anchors (no domaine/week/strand/palier). Two views:
-//   1. HIERARCHY — the containment tree, anchored on the LC framework root and
-//      expanded via `hasChild` (the LC part-of relation; `supports` folds into it,
-//      see toDisplayEdges), so the whole spine + components render as one tree.
-//   2. BY-LABEL — the generic node-type floor: every node grouped by its LC label,
-//      each showing its outgoing relations. Works for any namespace.
-function buildViewConfig(nodes: DisplayNode[]): ViewConfig {
+// The four LC lenses (https://docs.learningcommons.org — core concepts), each
+// emitted only when the namespace actually holds that layer's data, plus a
+// generic catch-all. No subject vocabulary (no domaine/week/strand/palier).
+//   1. STANDARDS      — the pure standards skeleton (StandardsFramework → items),
+//      hasChild, filtered to standards labels (components/curriculum excluded —
+//      they have their own views).
+//   2. LEARNING COMPONENTS — each standard with its LearningComponents nested
+//      (supports, folded standard→component); branches with no component pruned.
+//   3. CURRICULUM     — the content layer Course → LessonGrouping → Lesson →
+//      Activity → Material (hasPart), anchored on the top content nodes.
+//   4. LEARNING PROGRESSION — prereq → successor chains over buildsTowards
+//      (hasDependency is normalised onto it in toDisplayEdges).
+//   5. BY-TYPE        — the generic node-type floor: every node grouped by its LC
+//      label, each showing its outgoing relations. Works for any namespace.
+const STANDARDS_LABELS = ["StandardsFramework", "StandardsFrameworkItem"];
+const CONTENT_LABELS = ["Course", "LessonGrouping", "Lesson", "Activity", "Material"];
+
+function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig {
+  const present = new Set(nodes.map((n) => n.label));
+  const has = (l: string) => present.has(l);
   const views: ViewSpec[] = [];
-  if (nodes.some((n) => n.label === "StandardsFramework")) {
+
+  if (has("StandardsFramework") || has("StandardsFrameworkItem")) {
     views.push({
-      id: "hierarchy",
-      label: { fr: "Hiérarchie (contenance)", en: "Hierarchy (containment)" },
-      shape: "grouped-spine",
-      params: { anchorKind: "StandardsFramework", groupBy: [], expandEdge: "hasChild" },
+      id: "standards", label: { fr: "Standards", en: "Standards" }, shape: "label-tree",
+      params: { includeLabels: STANDARDS_LABELS, expandEdge: "hasChild", rootKinds: STANDARDS_LABELS },
     });
+  }
+  if (has("LearningComponent")) {
+    views.push({
+      id: "components", label: { fr: "Composants d'apprentissage", en: "Learning components" }, shape: "label-tree",
+      params: { includeLabels: [...STANDARDS_LABELS, "LearningComponent"], expandEdge: "hasChild", rootKinds: STANDARDS_LABELS, pruneToLabel: "LearningComponent" },
+    });
+  }
+  if (CONTENT_LABELS.some(has)) {
+    views.push({
+      id: "curriculum", label: { fr: "Curriculum", en: "Curriculum" }, shape: "label-tree",
+      // Only Course / top LessonGrouping anchor the content tree; Lesson/Activity/
+      // Material never head it (illustrative Activities are exemplars under
+      // components and must not surface here as orphans).
+      params: { includeLabels: CONTENT_LABELS, expandEdge: "hasChild", rootKinds: ["Course", "LessonGrouping"] },
+    });
+  }
+  if (edges.some((e) => e.rel === "buildsTowards")) {
+    views.push({ id: "progression", label: { fr: "Progression", en: "Learning progression" }, shape: "progression", params: { edge: "buildsTowards" } });
   }
   views.push({ id: "generic", label: { fr: "Par type (LC)", en: "By type (LC)" }, shape: "node-type" });
   return { views };
@@ -312,7 +363,7 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
       counts: { nodes: nodes.length, edges: edges.length, byKind: byLabel },
       sources,
       taxonomy,
-      viewConfig: buildViewConfig(nodes),
+      viewConfig: buildViewConfig(nodes, edges),
       generatedAt: new Date().toISOString(),
       note: "Read-only, published slot only (no draft). Full Learning-Commons graph — the curriculum spine plus framework/derived nodes and supports/relatesTo cross-links.",
     },

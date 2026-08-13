@@ -113,7 +113,7 @@ h1{font-size:18px;font-weight:600}
 <header>
   <div class="htext">
     <h1 id="mainTitle">Explorateur — Graphes de connaissances</h1>
-    <div class="sub" id="mainSub">Sénégal · MOHEBS — ontologie Learning Commons · lecture seule (graphe publié)</div>
+    <div class="sub" id="mainSub">Ontologie Learning Commons · lecture seule (graphe publié)</div>
     <div class="stats" id="stats"></div>
   </div>
   <div class="hdr-tools">
@@ -130,7 +130,7 @@ h1{font-size:18px;font-weight:600}
 <div class="loginwrap hidden" id="loginWrap">
   <div class="logincard">
     <h2 id="loginTitle">Connexion</h2>
-    <p id="loginSub">Connectez-vous avec votre compte MOHEBS. <br><small>Sign in with your MOHEBS account.</small></p>
+    <p id="loginSub">Connectez-vous pour continuer. <br><small>Sign in to continue.</small></p>
     <label id="loginEmailLbl" for="loginEmail">Email</label>
     <input id="loginEmail" type="email" autocomplete="username">
     <label id="loginPwLbl" for="loginPw">Mot de passe</label>
@@ -181,7 +181,7 @@ const el = (id) => document.getElementById(id);
 let LANG = 'fr';
 const UI = {
   fr: {
-    sub:"Sénégal · MOHEBS — ontologie Learning Commons · lecture seule (graphe publié)",
+    sub:"Ontologie Learning Commons · lecture seule (graphe publié)",
     filtres:'Filtres', sourcesSub:'Sources — sélection multiple', tout:'Tout', aucune:'Aucune',
     search:'Rechercher un nœud…', expandAll:'Tout déplier', collapseAll:'Tout replier',
     noeuds:'nœuds', relations:'relations', taches:'tâches',
@@ -199,7 +199,7 @@ const UI = {
     outRel:'Relations sortantes', noRel:'Aucune relation supplémentaire.',
   },
   en: {
-    sub:"Senegal · MOHEBS — Learning Commons ontology · read-only (published graph)",
+    sub:"Learning Commons ontology · read-only (published graph)",
     filtres:'Filters', sourcesSub:'Sources — multi-select', tout:'All', aucune:'None',
     search:'Search for a node…', expandAll:'Expand all', collapseAll:'Collapse all',
     noeuds:'nodes', relations:'relationships', taches:'tasks',
@@ -479,15 +479,68 @@ function buildNodeType(){
   return res;
 }
 
+// Label-tree view: a containment tree restricted to a set of LC labels. Roots are
+// included nodes with no included `expandEdge` parent; children are the included
+// `expandEdge` targets. `pruneToLabel` drops any branch that never reaches that
+// label (so "Learning components" shows only standards that were decomposed).
+const byNumThenCode = (a,b) => (N[a].ord??0)-(N[b].ord??0) || String(N[a].code).localeCompare(String(N[b].code),undefined,{numeric:true});
+function buildLabelTree(spec){
+  if (groupCache[spec.id]) return groupCache[spec.id];
+  const inc = new Set(spec.params.includeLabels);
+  const edge = spec.params.expandEdge || 'hasChild';
+  const isInc = (id) => N[id] && inc.has(N[id].kind);
+  const childrenOf = {}; const hasIncParent = new Set();
+  for (const s in (outByRel[edge]||{})){
+    if (!isInc(s)) continue;
+    for (const x of outByRel[edge][s]) if (isInc(x.to)){ (childrenOf[s]=childrenOf[s]||[]).push(x.to); hasIncParent.add(x.to); }
+  }
+  for (const s in childrenOf) childrenOf[s].sort(byNumThenCode);
+  const rootKinds = spec.params.rootKinds ? new Set(spec.params.rootKinds) : null;
+  let roots = DATA.nodes
+    .filter(n => inc.has(n.kind) && !hasIncParent.has(n.id) && (!rootKinds || rootKinds.has(n.kind)))
+    .map(n=>n.id).sort(byNumThenCode);
+  if (spec.params.pruneToLabel){
+    const target = spec.params.pruneToLabel, keep = new Set(), seen = new Set();
+    const dfs = (id) => {
+      if (seen.has(id)) return keep.has(id);
+      seen.add(id);
+      let k = N[id] && N[id].kind === target;
+      for (const c of (childrenOf[id]||[])) if (dfs(c)) k = true;
+      if (k) keep.add(id);
+      return k;
+    };
+    roots.forEach(dfs);
+    roots = roots.filter(id => keep.has(id));
+    for (const s in childrenOf) childrenOf[s] = childrenOf[s].filter(c => keep.has(c));
+  }
+  return (groupCache[spec.id] = { roots, childrenOf });
+}
+
+// Learning-progression view: prereq → successor chains over one edge type. Roots
+// are nodes with an outgoing edge and no incoming one (the start of each chain).
+function buildProgression(spec){
+  if (groupCache[spec.id]) return groupCache[spec.id];
+  const out = outByRel[spec.params.edge] || {};
+  const hasIn = new Set(); const involved = new Set();
+  for (const s in out){ involved.add(s); for (const x of out[s]){ hasIn.add(x.to); involved.add(x.to); } }
+  const childrenOf = {}; for (const s in out) childrenOf[s] = out[s].map(x=>x.to);
+  const roots = [...involved].filter(id => !hasIn.has(id)).sort(byNumThenCode);
+  return (groupCache[spec.id] = { roots, childrenOf });
+}
+
 function viewRoots(){
   const spec = viewSpec(currentView);
   if (!spec) return [];
+  if (spec.shape === 'label-tree') return buildLabelTree(spec).roots;
+  if (spec.shape === 'progression') return buildProgression(spec).roots;
   if (spec.shape === 'grouped-spine') return buildGroupedSpine(spec).roots;
   return buildNodeType().roots;
 }
 function viewChildren(id){
   const spec = viewSpec(currentView);
   if (!spec) return [];
+  if (spec.shape === 'label-tree') return (buildLabelTree(spec).childrenOf[id]||[]).filter(srcAllowed);
+  if (spec.shape === 'progression') return (buildProgression(spec).childrenOf[id]||[]).filter(srcAllowed);
   if (spec.shape === 'grouped-spine'){
     const gs = buildGroupedSpine(spec);
     if (isSynth(id)) return (gs.childrenOf[id]||[]).filter(srcAllowed);
