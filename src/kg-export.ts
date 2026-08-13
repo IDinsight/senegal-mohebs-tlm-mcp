@@ -215,7 +215,7 @@ function edgeOrder(e: StoredEdge): number {
 // Context for the fold: which activities illustrate which component (a metadata
 // link — canonical LC has NO Activity↔LearningComponent edge — see CLAUDE.md), and
 // whether a given node id is present.
-type FoldContext = { illustrates: Map<string, { comp: string; order: number }>; has: (id: string) => boolean };
+type FoldContext = { illustrates: Map<string, { comp: string; order: number }>; has: (id: string) => boolean; labelOf: (id: string) => string | undefined };
 
 // One stored edge → its DISPLAY edge(s). The containment tree walks a single
 // TRAVERSAL type (`r: "hasChild"`), so we normalise canonical LC's edges onto it,
@@ -233,8 +233,17 @@ type FoldContext = { illustrates: Map<string, { comp: string; order: number }>; 
 //     hasChild; we DROP that display edge (only when the component resolves, so the
 //     illustrates fold already gave it a parent) so it nests under the component
 //     alone instead of also hanging off the frame.
+//   • `usesRoutine` (Course/Lesson/Activity → InstructionalRoutine) folds forward to
+//     the tree ONLY from a Course, so the shared routine nests once under the guide
+//     Course; the identical Lesson→routine edges are dropped from the display (they'd
+//     redraw the whole subtree under all 112 lessons) — the real edges stay in the store.
 //   • hasChild / buildsTowards / relatesTo otherwise pass through with their own type.
 function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
+  if (e.type === "usesRoutine") {
+    return ctx.labelOf(e.from) === "Course"
+      ? [{ s: e.from, t: e.to, r: "hasChild", rel: "usesRoutine", o: edgeOrder(e) }]
+      : [];
+  }
   if (e.type === "supports" || e.type === "hasEducationalAlignment") {
     if (e.type === "hasEducationalAlignment") {
       const ill = ctx.illustrates.get(e.from);
@@ -275,7 +284,9 @@ function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
 //   5. BY-TYPE        — the generic node-type floor: every node grouped by its LC
 //      label, each showing its outgoing relations. Works for any namespace.
 const STANDARDS_LABELS = ["StandardsFramework", "StandardsFrameworkItem"];
-const CONTENT_LABELS = ["Course", "LessonGrouping", "Lesson", "Activity", "Material"];
+// InstructionalRoutine + Material carry the shared "fiche de leçon" routine; it folds
+// into the content tree under the Course only (see toDisplayEdges' usesRoutine case).
+const CONTENT_LABELS = ["Course", "LessonGrouping", "Lesson", "Activity", "Material", "InstructionalRoutine"];
 
 function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig {
   const present = new Set(nodes.map((n) => n.label));
@@ -332,7 +343,8 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
     if (ic?.id) illustrates.set(n.id, { comp: ic.id, order: typeof ic.order === "number" ? ic.order : 0 });
   }
   const nodeIds = new Set(nodes.map((n) => n.id));
-  let edges = storedEdges.flatMap((e) => toDisplayEdges(e, { illustrates, has: (id) => nodeIds.has(id) }));
+  const labelById = new Map(nodes.map((n) => [n.id, n.label]));
+  let edges = storedEdges.flatMap((e) => toDisplayEdges(e, { illustrates, has: (id) => nodeIds.has(id), labelOf: (id) => labelById.get(id) }));
 
   // The store holds the FULL Learning-Commons graph (spine + framework/derived
   // nodes + supports/relatesTo cross-links); the explorer renders all of it as-is.
