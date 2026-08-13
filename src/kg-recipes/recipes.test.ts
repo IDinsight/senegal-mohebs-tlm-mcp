@@ -75,11 +75,14 @@ async function runRecipe<A>(mutation: GraphMutation<A>, args: A) {
   return { preview, confirm };
 }
 
-// A chapter + one of its lessons + some expectation, from the published seed.
+// A chapter + some lesson + some expectation, from the published seed. Post
+// two-Course split, lessons live under weeks (schedule axis), not chapters, so
+// take the lesson from a week rather than the chapter.
 function pick(g: MutationGraph) {
   const m = modelOf(g);
   const chapter = m.unitsOfKind("chapter").sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
-  const lesson = m.childrenOf(chapter.id).find((c) => c.kind === "lesson")!;
+  const week = m.unitsOfKind("week").find((w) => m.childrenOf(w.id).some((c) => c.kind === "lesson"))!;
+  const lesson = m.childrenOf(week.id).find((c) => c.kind === "lesson")!;
   const expectation = m.unitsOfKind("expectation")[0];
   return { chapterId: chapter.id, lessonId: lesson.id, expectationId: expectation.id };
 }
@@ -155,21 +158,24 @@ describe("add_node", () => {
 });
 
 describe("move_node + reposition + set_content", () => {
-  it("move_node rehomes a lesson along hasPart, leaving its week (hasChild) axis intact", async () => {
+  it("move_node rehomes an activity along hasPart, leaving its alignment (hasEducationalAlignment) axis intact", async () => {
+    // Post two-Course split, the chapter's hasPart children are Activities (2 per
+    // former lesson), not lessons. Moving one between chapters must leave its
+    // alignment edge (Activity→expectation) untouched.
     const published = await readPublished();
     const m = modelOf(published);
     const chapters = m.unitsOfKind("chapter").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const from = chapters[0], to = chapters[1];
-    const lesson = m.childrenOf(from.id).find((c) => c.kind === "lesson")!;
-    // Its schedule (week) parent, if any, is a hasChild edge — must survive the move.
-    const weekEdges = published.edges.filter((e) => e.type === "hasChild" && e.to === lesson.id).map((e) => e.id);
+    const activity = m.childrenOf(from.id).find((c) => c.kind === "task")!;
+    const alignEdges = published.edges.filter((e) => e.type === "hasEducationalAlignment" && e.from === activity.id).map((e) => e.id);
+    expect(alignEdges.length).toBeGreaterThan(0);
 
-    const { confirm } = await runRecipe(moveNode, { namespace: ns, nodeId: lesson.id, toParentId: to.id });
+    const { confirm } = await runRecipe(moveNode, { namespace: ns, nodeId: activity.id, toParentId: to.id });
     expect(confirm?.phase).toBe("apply");
     const draft = (await readDraft())!;
-    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, to.id, lesson.id))).toBe(true);
-    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, from.id, lesson.id))).toBe(false);
-    for (const id of weekEdges) expect(draft.edges.some((e) => e.id === id)).toBe(true); // week axis untouched
+    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, to.id, activity.id))).toBe(true);
+    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, from.id, activity.id))).toBe(false);
+    for (const id of alignEdges) expect(draft.edges.some((e) => e.id === id)).toBe(true); // alignment axis untouched
   });
 
   it("reposition sets one node's ordinal without touching anything else", async () => {

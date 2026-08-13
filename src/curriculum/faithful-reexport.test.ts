@@ -20,8 +20,10 @@ type RawNode = { id: string; labels?: string[]; properties?: Record<string, unkn
 type RawRel = { id: string; type: string; start: string; end: string; properties?: Record<string, unknown> };
 
 const CASES = [
-  // maths: post-split — +112 Lesson nodes, +112 Lesson→expectation supports edges.
-  { grade: "ci", subject: "maths", nodes: 502, edges: 877 },
+  // maths: post two-Course split — a Teacher's Guide Course over the 23 weeks +
+  // 218 placeholder Activities (2 per chapter-bound lesson); lessons moved out of
+  // chapters (−109 chapter→lesson, −3 bilan→domaine).
+  { grade: "ci", subject: "maths", nodes: 721, edges: 1224 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).
