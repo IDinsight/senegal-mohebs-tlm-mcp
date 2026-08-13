@@ -81,11 +81,11 @@ Documented so they don't get mistaken for canon:
    — weeks are now **`LessonGrouping`** (role `week`) with `Course ─hasPart→ week
    ─hasPart→ Lesson`, all canonical. (The `role "week"` sidecar still distinguishes
    them from chapters, which are `role "subtopic"`.)
-2. **RECE illustrative activities hang off their frame via `SFI ─hasChild→ Activity`**
-   (104 edges). Off-canon — `hasChild` is standards-only; an `Activity` can't be a
-   `hasChild` target. The illustrative Activities are a maths-specific structure; the
-   canonical bridge would be their existing `hasEducationalAlignment` to the SFI (the
-   `hasChild` is the redundant one). Left as-is for now.
+2. ~~**RECE illustrative activities hang off their frame via `SFI ─hasChild→
+   Activity`.**~~ **RESOLVED** — the 104 off-canon `hasChild` edges were dropped; each
+   illustrative Activity keeps its `hasEducationalAlignment` to its family SFI (the
+   canonical content→standard bridge) and its `metadata.illustratesComponent`
+   pairing. No `hasChild` targets content anywhere now.
 3. **`buildsTowards` between chapters (`LessonGrouping→LessonGrouping`).** Canonical
    `buildsTowards` is **`SFI→SFI`**. For content prerequisites LC uses `hasDependency`.
 4. **Content groupings carry SFI-flavoured fields.** Our chapters and weeks

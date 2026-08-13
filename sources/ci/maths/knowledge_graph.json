@@ -27340,29 +27340,6 @@
       }
     },
     {
-      "id": "9ab4d7b9-1c57-57d9-88c5-ea818f1ac951",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "39101565-c83b-53cd-bb26-44b91e575bea",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "9ab4d7b9-1c57-57d9-88c5-ea818f1ac951",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "f9a5fe55-afc5-54d2-9f25-3b1eab4abf99",
       "type": "hasEducationalAlignment",
       "start": "39101565-c83b-53cd-bb26-44b91e575bea",
@@ -27384,29 +27361,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "29c51764-242a-55aa-9770-9d8b9238323a",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "d7d12563-8c95-5968-957d-b12c75e18104",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "29c51764-242a-55aa-9770-9d8b9238323a",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -27436,29 +27390,6 @@
       }
     },
     {
-      "id": "58f3deeb-fb8c-506a-a230-9ca338cab950",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "e98fbd58-f359-5f49-82ff-d05a7becaf89",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "58f3deeb-fb8c-506a-a230-9ca338cab950",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "02ecc730-89d7-5e71-bcbe-53c5ce614220",
       "type": "hasEducationalAlignment",
       "start": "e98fbd58-f359-5f49-82ff-d05a7becaf89",
@@ -27480,29 +27411,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "eed642e9-319b-5dd7-a31c-99417b8a9d50",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "e24a2085-8f9d-582d-853b-b96baba40f76",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "eed642e9-319b-5dd7-a31c-99417b8a9d50",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -27532,29 +27440,6 @@
       }
     },
     {
-      "id": "3a0a3eee-b608-5187-91ff-412d0db8afcc",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "9f66fa4f-a98d-526a-b6b0-6866c4493881",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "3a0a3eee-b608-5187-91ff-412d0db8afcc",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "4e4bbdbd-2876-510b-a160-0e026607f635",
       "type": "hasEducationalAlignment",
       "start": "9f66fa4f-a98d-526a-b6b0-6866c4493881",
@@ -27576,29 +27461,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "105d3449-6198-5406-9ce3-b322cd521739",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "621f5b68-7004-5e2d-b703-57af9f16d996",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "105d3449-6198-5406-9ce3-b322cd521739",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -27628,29 +27490,6 @@
       }
     },
     {
-      "id": "3d2572da-a5a7-512f-92ec-2ffea0916bfc",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "e68aa122-d9ce-5d90-9044-18753a9bf4f2",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "3d2572da-a5a7-512f-92ec-2ffea0916bfc",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "3b699801-885c-56c8-b9e8-fdb6e26f7413",
       "type": "hasEducationalAlignment",
       "start": "e68aa122-d9ce-5d90-9044-18753a9bf4f2",
@@ -27672,29 +27511,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "46264b43-c409-536a-b221-b1db19a1e3af",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "89186b20-41eb-5b13-946b-c95ca9e5b699",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "46264b43-c409-536a-b221-b1db19a1e3af",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -27724,29 +27540,6 @@
       }
     },
     {
-      "id": "517c3907-908c-5e72-b864-08a525780d1b",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "6af85673-1f69-5ea1-8b3a-3612e0ddc9a6",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "517c3907-908c-5e72-b864-08a525780d1b",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "48391327-841c-56d3-9a47-2418affa302a",
       "type": "hasEducationalAlignment",
       "start": "6af85673-1f69-5ea1-8b3a-3612e0ddc9a6",
@@ -27768,29 +27561,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "59ca8e75-1b46-570c-be2c-7222ba9146ce",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "4e808740-d415-584d-a481-4e460674cc3e",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "59ca8e75-1b46-570c-be2c-7222ba9146ce",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -27820,29 +27590,6 @@
       }
     },
     {
-      "id": "b614fbec-accf-5712-8979-cef1ceb27d5b",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "841ebddb-67fe-5068-aaa9-db37a217b36e",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "b614fbec-accf-5712-8979-cef1ceb27d5b",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "eb33da32-950c-5e00-8cfa-4e9045030110",
       "type": "hasEducationalAlignment",
       "start": "841ebddb-67fe-5068-aaa9-db37a217b36e",
@@ -27868,29 +27615,6 @@
       }
     },
     {
-      "id": "3001f82d-9eef-52f0-9a0c-200593a14dfd",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "79ca7c8f-0859-5c2c-873a-50f5ed3965e2",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "3001f82d-9eef-52f0-9a0c-200593a14dfd",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "445cd532-3b1e-5ed8-a503-49b93953f7dd",
       "type": "hasEducationalAlignment",
       "start": "79ca7c8f-0859-5c2c-873a-50f5ed3965e2",
@@ -27912,29 +27636,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "e5a01471-c55c-5334-a0d4-08c2e92d23a5",
-      "type": "hasChild",
-      "start": "8904bcea-a660-5416-8e6c-1091c5914461",
-      "end": "fd708776-4743-5b08-aabe-84732876a3cd",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "e5a01471-c55c-5334-a0d4-08c2e92d23a5",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -28081,29 +27782,6 @@
       }
     },
     {
-      "id": "57706a4f-58d8-5351-8fe1-2268c9327fe0",
-      "type": "hasChild",
-      "start": "eee4aeac-0ebe-5f22-8dfa-ef41e1ad5176",
-      "end": "04c6225f-c9ed-542d-93d7-903dd07c624b",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "57706a4f-58d8-5351-8fe1-2268c9327fe0",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "30ad5478-7dbe-5dc4-86bb-84fc615b51e2",
       "type": "hasEducationalAlignment",
       "start": "04c6225f-c9ed-542d-93d7-903dd07c624b",
@@ -28173,29 +27851,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "7dd07e3a-589a-5bf6-8d68-9bc6de938df7",
-      "type": "hasChild",
-      "start": "eee4aeac-0ebe-5f22-8dfa-ef41e1ad5176",
-      "end": "dfe75fb9-7fad-5a15-b028-d1b5240d94f8",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "7dd07e3a-589a-5bf6-8d68-9bc6de938df7",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -28273,29 +27928,6 @@
       }
     },
     {
-      "id": "e0b8778d-9241-58e3-899a-2e8eaeed648f",
-      "type": "hasChild",
-      "start": "eee4aeac-0ebe-5f22-8dfa-ef41e1ad5176",
-      "end": "e7b41bc5-9279-5f51-98c5-b774b3d2977d",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "e0b8778d-9241-58e3-899a-2e8eaeed648f",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "5979aae8-1aab-5b22-9d1e-24bb237786bf",
       "type": "hasEducationalAlignment",
       "start": "e7b41bc5-9279-5f51-98c5-b774b3d2977d",
@@ -28365,29 +27997,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "145e5e58-99ec-59b4-adad-f77aee13598c",
-      "type": "hasChild",
-      "start": "eee4aeac-0ebe-5f22-8dfa-ef41e1ad5176",
-      "end": "ed398d4a-a332-5299-a512-cbbbef1b3c55",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "145e5e58-99ec-59b4-adad-f77aee13598c",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -28559,29 +28168,6 @@
       }
     },
     {
-      "id": "1abfb610-795a-5c67-a2c4-2cabd3c5b327",
-      "type": "hasChild",
-      "start": "5eefb348-1dbe-5e7b-a000-fd38c25cf44d",
-      "end": "c9e9fc7b-6be5-533b-8ad6-401b3586bf84",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "1abfb610-795a-5c67-a2c4-2cabd3c5b327",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "529507a9-ea36-5671-88ba-bfe118804c6f",
       "type": "hasEducationalAlignment",
       "start": "c9e9fc7b-6be5-533b-8ad6-401b3586bf84",
@@ -28651,29 +28237,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "d490750b-9cd2-5d92-81da-127693df9d71",
-      "type": "hasChild",
-      "start": "5eefb348-1dbe-5e7b-a000-fd38c25cf44d",
-      "end": "cc328600-2d15-5fdf-af97-d858a5c6033e",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "d490750b-9cd2-5d92-81da-127693df9d71",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -28893,29 +28456,6 @@
       }
     },
     {
-      "id": "0c7b11ab-cc8e-52de-8242-742fa9e2c0b3",
-      "type": "hasChild",
-      "start": "3269b428-0991-51d9-8790-ca4ecacaf856",
-      "end": "62efc7de-bc4e-52da-96e4-5df5c0abf29b",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "0c7b11ab-cc8e-52de-8242-742fa9e2c0b3",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "b3a3cf27-24d9-57e6-bd4d-ea5b22494b12",
       "type": "hasEducationalAlignment",
       "start": "62efc7de-bc4e-52da-96e4-5df5c0abf29b",
@@ -29039,29 +28579,6 @@
       }
     },
     {
-      "id": "680bbe46-5ffb-523a-b8b6-f9a6af157082",
-      "type": "hasChild",
-      "start": "3269b428-0991-51d9-8790-ca4ecacaf856",
-      "end": "b80a4ecc-34c1-5095-b2f7-678f069bd844",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "680bbe46-5ffb-523a-b8b6-f9a6af157082",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "8003c90b-cbac-5084-b2c8-a3d9c1b6f055",
       "type": "hasEducationalAlignment",
       "start": "b80a4ecc-34c1-5095-b2f7-678f069bd844",
@@ -29135,29 +28652,6 @@
       }
     },
     {
-      "id": "77e67539-72e5-5dc7-9e83-084bd2560f33",
-      "type": "hasChild",
-      "start": "3269b428-0991-51d9-8790-ca4ecacaf856",
-      "end": "e141c29b-61dc-51b7-adbc-98fd9868e9c1",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "77e67539-72e5-5dc7-9e83-084bd2560f33",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "5d8556a7-7c22-5fb2-9c9b-52abe55d8406",
       "type": "hasEducationalAlignment",
       "start": "e141c29b-61dc-51b7-adbc-98fd9868e9c1",
@@ -29227,29 +28721,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "fec4540b-7597-5b0e-b31f-aacb4f197ed1",
-      "type": "hasChild",
-      "start": "3269b428-0991-51d9-8790-ca4ecacaf856",
-      "end": "5506eed2-e1dd-53cc-af45-dcaf7af81ba7",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "fec4540b-7597-5b0e-b31f-aacb4f197ed1",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -29492,29 +28963,6 @@
       }
     },
     {
-      "id": "dbf9899b-8fb6-55a4-beac-2adbfdcaec0d",
-      "type": "hasChild",
-      "start": "4a589640-a3a2-515d-9937-cbb6fcc50436",
-      "end": "8c4a873e-9443-51c5-8913-9c463088b636",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "dbf9899b-8fb6-55a4-beac-2adbfdcaec0d",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "f1acaf57-a808-5997-9455-70356dad3211",
       "type": "hasEducationalAlignment",
       "start": "8c4a873e-9443-51c5-8913-9c463088b636",
@@ -29613,29 +29061,6 @@
       }
     },
     {
-      "id": "dec79bf2-ea77-5d53-91a3-904a2683376a",
-      "type": "hasChild",
-      "start": "4a589640-a3a2-515d-9937-cbb6fcc50436",
-      "end": "5c1fc681-e79a-5bd0-b0e3-9dfc8bf28c33",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "dec79bf2-ea77-5d53-91a3-904a2683376a",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "dc347c40-7033-538d-8333-31c314685afe",
       "type": "hasEducationalAlignment",
       "start": "5c1fc681-e79a-5bd0-b0e3-9dfc8bf28c33",
@@ -29705,29 +29130,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "3df6d85c-4e8d-5780-a200-a5766e0ccd01",
-      "type": "hasChild",
-      "start": "4a589640-a3a2-515d-9937-cbb6fcc50436",
-      "end": "0d2ed11b-05df-5e12-a573-392ed19d97fe",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "3df6d85c-4e8d-5780-a200-a5766e0ccd01",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -29830,29 +29232,6 @@
       }
     },
     {
-      "id": "af81d1ab-3eb8-5583-aaa7-0e6b16b7b74b",
-      "type": "hasChild",
-      "start": "4a589640-a3a2-515d-9937-cbb6fcc50436",
-      "end": "a3069e58-5a93-594a-9273-72300c1815d1",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "af81d1ab-3eb8-5583-aaa7-0e6b16b7b74b",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "3c24617d-58d7-5094-88c1-4f058efddc7e",
       "type": "hasEducationalAlignment",
       "start": "a3069e58-5a93-594a-9273-72300c1815d1",
@@ -29947,29 +29326,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "3c8b84fc-c318-58ab-8831-51a0d98c79e0",
-      "type": "hasChild",
-      "start": "4a589640-a3a2-515d-9937-cbb6fcc50436",
-      "end": "d06bae6c-a6cc-5c0c-a442-d5e34fc5f1ef",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "3c8b84fc-c318-58ab-8831-51a0d98c79e0",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -30208,29 +29564,6 @@
       }
     },
     {
-      "id": "079d61dd-2af4-5e77-9ca9-b9c142fa2672",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "c90652b7-3b74-562a-ae50-5c93ef70c7b7",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "079d61dd-2af4-5e77-9ca9-b9c142fa2672",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "d37706a0-6848-5ba2-ab6a-82545bce54b7",
       "type": "hasEducationalAlignment",
       "start": "c90652b7-3b74-562a-ae50-5c93ef70c7b7",
@@ -30298,29 +29631,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "157a54a3-4ea6-56fb-aca7-776c239dcd94",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "011aa2a2-b072-55a2-8ade-8a9d83436b9d",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "157a54a3-4ea6-56fb-aca7-776c239dcd94",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -30396,29 +29706,6 @@
       }
     },
     {
-      "id": "e576391f-b124-5a2e-a4f2-830d04ae00d7",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "de5ea181-1332-5681-afb1-a46d3df6b9d8",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "e576391f-b124-5a2e-a4f2-830d04ae00d7",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "12c59f1a-abdb-5b30-81bc-415bb43331ec",
       "type": "hasEducationalAlignment",
       "start": "de5ea181-1332-5681-afb1-a46d3df6b9d8",
@@ -30486,29 +29773,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "919e6bc9-ec9f-576b-be53-71cddc0bf340",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "038f2578-2794-555c-85e3-6b6d2ac62658",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "919e6bc9-ec9f-576b-be53-71cddc0bf340",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -30632,29 +29896,6 @@
       }
     },
     {
-      "id": "123789db-3871-568c-96fc-a30477db5f01",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "65d65daa-7875-5717-a2b2-d8f62a01813b",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "123789db-3871-568c-96fc-a30477db5f01",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "362e8936-6752-5007-a34f-ebdc2dcfd4b2",
       "type": "hasEducationalAlignment",
       "start": "65d65daa-7875-5717-a2b2-d8f62a01813b",
@@ -30722,29 +29963,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "54ebbd9e-fddd-51ea-b304-c1e23ced1601",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "f56dfa68-61b1-5a1f-9780-cd2d71456263",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "54ebbd9e-fddd-51ea-b304-c1e23ced1601",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -30820,29 +30038,6 @@
       }
     },
     {
-      "id": "ad3f3842-899b-5c2a-84e5-937ebe102817",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "7c90b068-aa30-51c7-afd2-401fba0ad087",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "ad3f3842-899b-5c2a-84e5-937ebe102817",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "da6e21e2-5520-5596-b383-89273c8040bd",
       "type": "hasEducationalAlignment",
       "start": "7c90b068-aa30-51c7-afd2-401fba0ad087",
@@ -30910,29 +30105,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "ff5e5243-719d-5d7a-9973-6483b1d3e198",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "f2368d44-28a1-5b36-be23-d18025a805e8",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "ff5e5243-719d-5d7a-9973-6483b1d3e198",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -31008,29 +30180,6 @@
       }
     },
     {
-      "id": "475b748e-091a-5199-a75d-4eac59c4a599",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "99eecd12-396b-59eb-b2a4-03b58bc7e8fa",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "475b748e-091a-5199-a75d-4eac59c4a599",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "4a3672e4-4676-5399-ae15-42534060f4c2",
       "type": "hasEducationalAlignment",
       "start": "99eecd12-396b-59eb-b2a4-03b58bc7e8fa",
@@ -31098,29 +30247,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "cba52816-4f99-5323-966b-e7ef4da9e58f",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "d052410b-de35-5a1d-a01e-d6aaa310f626",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "cba52816-4f99-5323-966b-e7ef4da9e58f",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -31196,29 +30322,6 @@
       }
     },
     {
-      "id": "b1bd1b07-afb1-5663-af78-359df9a7dc29",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "49275369-730f-5bbb-b56e-ba6e5b8413bc",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "b1bd1b07-afb1-5663-af78-359df9a7dc29",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "cd27da8e-a117-55b9-b87c-bb156288f02b",
       "type": "hasEducationalAlignment",
       "start": "49275369-730f-5bbb-b56e-ba6e5b8413bc",
@@ -31286,29 +30389,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "67a4d85d-bb72-55d0-ae31-fa921f808a40",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "b9e10109-86ef-5006-8855-26b2a1b1852a",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "67a4d85d-bb72-55d0-ae31-fa921f808a40",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -31384,29 +30464,6 @@
       }
     },
     {
-      "id": "783b2bdf-3bca-5c00-b6cd-f4a5b6eba8b2",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "90e5dd1b-424d-5b99-b018-9620dca2ae22",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "783b2bdf-3bca-5c00-b6cd-f4a5b6eba8b2",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "8770db19-6f9b-56fd-9579-9571ddd6da84",
       "type": "hasEducationalAlignment",
       "start": "90e5dd1b-424d-5b99-b018-9620dca2ae22",
@@ -31474,29 +30531,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "349fc952-19e1-5d61-9f27-c3ffb31a19d2",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "a64dbb5f-3320-583a-8e72-3b78d6d2d243",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "349fc952-19e1-5d61-9f27-c3ffb31a19d2",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -31572,29 +30606,6 @@
       }
     },
     {
-      "id": "f16d605d-f57f-56be-8386-99753a0fc95f",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "bc75d97a-e6b1-5d17-8146-137d3dde1b0d",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "f16d605d-f57f-56be-8386-99753a0fc95f",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "efd71ae9-8496-57fb-8f5e-357985cacf27",
       "type": "hasEducationalAlignment",
       "start": "bc75d97a-e6b1-5d17-8146-137d3dde1b0d",
@@ -31666,29 +30677,6 @@
       }
     },
     {
-      "id": "648d3b90-70ed-5ed7-be8b-6e2cc48c7077",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "d2aeb01d-86cd-5766-b086-4ec31f7cc49b",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "648d3b90-70ed-5ed7-be8b-6e2cc48c7077",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "dd1eb6c5-0f2f-538b-b0c8-5a5ec388956f",
       "type": "hasEducationalAlignment",
       "start": "d2aeb01d-86cd-5766-b086-4ec31f7cc49b",
@@ -31756,29 +30744,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "dbd5d0e4-f5bc-5888-af66-aafe46d405e1",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "34dada01-f15a-565d-b08e-ae77c6106ea4",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "dbd5d0e4-f5bc-5888-af66-aafe46d405e1",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -31878,29 +30843,6 @@
       }
     },
     {
-      "id": "e98cab4d-d6c3-55bd-8b4f-7d66133b019e",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "1a4b21f6-4845-5c30-b70e-75c33434437a",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "e98cab4d-d6c3-55bd-8b4f-7d66133b019e",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "a5c99c41-ac64-5cce-8fc8-606f75ad69cc",
       "type": "hasEducationalAlignment",
       "start": "1a4b21f6-4845-5c30-b70e-75c33434437a",
@@ -31968,29 +30910,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "a16f0723-05ff-55c1-a97d-cabd8752bb10",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "eaa35b25-5cc7-544a-b647-7273ef12c26b",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "a16f0723-05ff-55c1-a97d-cabd8752bb10",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -32066,29 +30985,6 @@
       }
     },
     {
-      "id": "014f0cf7-e3d7-5b49-88b4-486fde4cf3c9",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "0197b473-1625-5a08-9f3c-033ec7fad0bc",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "014f0cf7-e3d7-5b49-88b4-486fde4cf3c9",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "77b6d0db-5c35-58c6-b705-46813d17e400",
       "type": "hasEducationalAlignment",
       "start": "0197b473-1625-5a08-9f3c-033ec7fad0bc",
@@ -32156,29 +31052,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "39e6483a-2ecb-5c40-8ff5-1f09d95589b7",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "76669401-2fc2-5b15-89b4-9784c696933e",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "39e6483a-2ecb-5c40-8ff5-1f09d95589b7",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -32254,29 +31127,6 @@
       }
     },
     {
-      "id": "54487239-0f12-586c-849d-89a399867dc8",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "4c7031bd-b76d-5c0f-98de-642b8585b306",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "54487239-0f12-586c-849d-89a399867dc8",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "49fa5a74-4496-5ce8-8ad7-0eb25bb0b546",
       "type": "hasEducationalAlignment",
       "start": "4c7031bd-b76d-5c0f-98de-642b8585b306",
@@ -32344,29 +31194,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "b83b4660-fa97-5f6f-9d16-873f37543407",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "ac24be76-d572-5ea1-9e47-ae8fde3e3ff8",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "b83b4660-fa97-5f6f-9d16-873f37543407",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -32466,29 +31293,6 @@
       }
     },
     {
-      "id": "c3befb77-4f8e-558a-9b76-6a0397918624",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "7933335d-90f5-5a57-935c-287ae78536bf",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "c3befb77-4f8e-558a-9b76-6a0397918624",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "048dfdfd-8421-5a65-84da-72c23089264b",
       "type": "hasEducationalAlignment",
       "start": "7933335d-90f5-5a57-935c-287ae78536bf",
@@ -32556,29 +31360,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "d68a77cf-6189-5f78-a421-4301cd48402d",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "69c3933d-dcea-5612-b297-c28d7c6e07d2",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "d68a77cf-6189-5f78-a421-4301cd48402d",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -32678,29 +31459,6 @@
       }
     },
     {
-      "id": "9451fc72-e4ca-5cf4-8926-c471487e6d13",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "08ddb3a4-06cd-5f3f-9038-ee287e7b20e9",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "9451fc72-e4ca-5cf4-8926-c471487e6d13",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
-        ]
-      }
-    },
-    {
       "id": "ad528ecd-5dce-5716-84d5-26570f821d89",
       "type": "hasEducationalAlignment",
       "start": "08ddb3a4-06cd-5f3f-9038-ee287e7b20e9",
@@ -32768,29 +31526,6 @@
         ],
         "targetLabels": [
           "StandardsFrameworkItem"
-        ]
-      }
-    },
-    {
-      "id": "c01dedca-a5d4-511e-b9c9-88bd796e9b34",
-      "type": "hasChild",
-      "start": "1d2b823f-e817-5129-863d-b4c2cb93a523",
-      "end": "2447fbab-e288-51b2-8227-98e298fd7065",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Curriculum content and vocabulary are taken verbatim from source documents: the CI Planification annuelle (authoritative), the NRD Résultats Essentiels en Calcul Élémentaire (Genesis Analytics / NRD, 2025), and the Rwanda REB Mathematics Primary 1 pupil's book (2023, borrowed — tasks and provisional geometry/measurement components only).",
-        "identifier": "c01dedca-a5d4-511e-b9c9-88bd796e9b34",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Curriculum",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "Curriculum",
-        "targetEntityKey": "identifier",
-        "relationshipType": "hasChild",
-        "sourceLabels": [
-          "StandardsFrameworkItem"
-        ],
-        "targetLabels": [
-          "Activity"
         ]
       }
     },
@@ -37910,839 +36645,6 @@
         ],
         "targetEntity": "StandardsFrameworkItem",
         "targetEntityKey": "identifier",
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "f3b3a3c0-fdc6-556d-b53f-a4b5eea1b2d2",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "35307cff-3c49-5843-935a-36100008f372",
-      "properties": {
-        "identifier": "f3b3a3c0-fdc6-556d-b53f-a4b5eea1b2d2",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "fd28d164-bafa-5d13-8082-4eba81a83ece",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "426e867a-4ca6-5c36-8a18-85e42f63e6c4",
-      "properties": {
-        "identifier": "fd28d164-bafa-5d13-8082-4eba81a83ece",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "c8ac5867-36da-5a57-82de-189e6708cbd9",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "e81eb2d2-5a0e-5367-a9d5-26cc1fe274bd",
-      "properties": {
-        "identifier": "c8ac5867-36da-5a57-82de-189e6708cbd9",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "911b3fc7-de11-5114-ac07-e106aced7a51",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "15bee579-6e0b-5535-9925-755f613e33af",
-      "properties": {
-        "identifier": "911b3fc7-de11-5114-ac07-e106aced7a51",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "9e554585-542e-55e7-b293-ed4d43ef85c7",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "24ea1593-6515-5a75-960a-cd17a392a1cb",
-      "properties": {
-        "identifier": "9e554585-542e-55e7-b293-ed4d43ef85c7",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "048bdf4b-6e46-5f5d-8b50-83f13ef6c08c",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "10343191-7b6e-57b0-9d42-e34c4766040d",
-      "properties": {
-        "identifier": "048bdf4b-6e46-5f5d-8b50-83f13ef6c08c",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "0797f603-95a6-52d5-84c7-498906cd4cf7",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "8d2cf224-3077-5916-bb71-3968bf2e68a0",
-      "properties": {
-        "identifier": "0797f603-95a6-52d5-84c7-498906cd4cf7",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "bad2def0-abc3-5ffd-87eb-d3ee17ffb6e6",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "8a116ed3-d6ec-5299-a025-64d89af93f10",
-      "properties": {
-        "identifier": "bad2def0-abc3-5ffd-87eb-d3ee17ffb6e6",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "dc3c497b-df77-5320-8afd-ab8d9d784a86",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "6597cfc5-1007-5675-9eeb-a34759c3b9d0",
-      "properties": {
-        "identifier": "dc3c497b-df77-5320-8afd-ab8d9d784a86",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "6f372750-95d2-56b1-9160-63404b688c27",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "86dd56a0-3692-5f5f-9e19-773fc7d7e1a4",
-      "properties": {
-        "identifier": "6f372750-95d2-56b1-9160-63404b688c27",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "330d4a15-7af7-5f72-8b70-2ada3ede66d0",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "3fae91fc-dd99-5b76-bac5-ea011ab3d71a",
-      "properties": {
-        "identifier": "330d4a15-7af7-5f72-8b70-2ada3ede66d0",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "8f070cd3-21d6-5022-a00a-ea95a0702a3a",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "c5c62e3b-6ca3-539f-aec4-b8d58ab9401e",
-      "properties": {
-        "identifier": "8f070cd3-21d6-5022-a00a-ea95a0702a3a",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "d13baf39-56de-5500-b409-bf7e05e3ef61",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "714ccdc1-ca56-5c3d-889a-86f31b85e69a",
-      "properties": {
-        "identifier": "d13baf39-56de-5500-b409-bf7e05e3ef61",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "34cd7f87-e373-5915-82e0-8b4790b320ab",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "3748f22f-41ad-52c3-bb80-282ad6541507",
-      "properties": {
-        "identifier": "34cd7f87-e373-5915-82e0-8b4790b320ab",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "bc82d9bd-d3d2-54c6-9977-1c2ad4b3b013",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "460e8f59-eaa0-500f-b84b-b0e0e8c1fb9b",
-      "properties": {
-        "identifier": "bc82d9bd-d3d2-54c6-9977-1c2ad4b3b013",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "22ef5d21-a113-50e4-b7f1-5170082ac20e",
-      "type": "hasChild",
-      "start": "cdc3489b-9735-5151-bb43-f1af29300dbf",
-      "end": "335a6ed3-a97a-5367-b393-750f0102f6f2",
-      "properties": {
-        "identifier": "22ef5d21-a113-50e4-b7f1-5170082ac20e",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "dc61d417-0f62-53f4-9e44-45a2b3189669",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "f1b9a446-ea31-5551-b956-ceb503b4164f",
-      "properties": {
-        "identifier": "dc61d417-0f62-53f4-9e44-45a2b3189669",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "c8d6183d-573a-5268-8c9d-20a2bb1b0dea",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "03f0648f-d6d8-5775-9c88-982844481742",
-      "properties": {
-        "identifier": "c8d6183d-573a-5268-8c9d-20a2bb1b0dea",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "31cfda90-11bf-5854-9c1b-e2ea649efa58",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "2229745e-c2f4-5ba5-9de5-4a21f80b9f8f",
-      "properties": {
-        "identifier": "31cfda90-11bf-5854-9c1b-e2ea649efa58",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "f8e14a8a-fe46-5588-98d8-7c2d39d5795e",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "401c33b8-6faa-5058-b2a6-65541fa8e85f",
-      "properties": {
-        "identifier": "f8e14a8a-fe46-5588-98d8-7c2d39d5795e",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "1f176bd2-14a7-5699-8443-cfead1951c96",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "c00e03f9-7e2c-51cd-8ff3-6945cfb9fab3",
-      "properties": {
-        "identifier": "1f176bd2-14a7-5699-8443-cfead1951c96",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "13bdd97c-04a0-5018-92c5-d08044d6606c",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "91b1aed0-efc1-585c-9c4c-3b74b3cc6d33",
-      "properties": {
-        "identifier": "13bdd97c-04a0-5018-92c5-d08044d6606c",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "710bb295-f95f-5b83-9a43-e0bfaeb5a3be",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "89786131-6765-5e6f-bf57-e940d9821f78",
-      "properties": {
-        "identifier": "710bb295-f95f-5b83-9a43-e0bfaeb5a3be",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "8b890e77-b5c9-5682-b4db-3f122f86e5ec",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "53a4782a-da51-56c0-9c6f-31af0f378e3c",
-      "properties": {
-        "identifier": "8b890e77-b5c9-5682-b4db-3f122f86e5ec",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "0ef91df7-9dbe-5378-9f89-59ec447543ab",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "e2f16499-c0c3-559c-a011-a75778f2bfde",
-      "properties": {
-        "identifier": "0ef91df7-9dbe-5378-9f89-59ec447543ab",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "62a92c2c-d877-5609-92a2-75344d86dc70",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "056a48f7-ef54-5051-a2d0-f2d2e088f1bc",
-      "properties": {
-        "identifier": "62a92c2c-d877-5609-92a2-75344d86dc70",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "4742420b-c74a-505d-8a16-38187e8bef2f",
-      "type": "hasChild",
-      "start": "8a3b6c1b-84ab-5a47-bc83-c51cfa53f2b6",
-      "end": "e1a2f658-1a68-53b2-a739-351129db8aa3",
-      "properties": {
-        "identifier": "4742420b-c74a-505d-8a16-38187e8bef2f",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "49f584dd-a91e-50e5-b36e-ad3290c344ce",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "d422b31c-2e23-5537-b063-bbb28377da9e",
-      "properties": {
-        "identifier": "49f584dd-a91e-50e5-b36e-ad3290c344ce",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "a02c5557-7bbb-59f7-bf1f-ff4965e6d129",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "06a7525b-9947-5566-b47d-2f64212844f4",
-      "properties": {
-        "identifier": "a02c5557-7bbb-59f7-bf1f-ff4965e6d129",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "2912188f-2a9f-558b-94b7-28817b70f2b5",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "781665e2-54aa-59fe-b5b8-f7271d72bfaa",
-      "properties": {
-        "identifier": "2912188f-2a9f-558b-94b7-28817b70f2b5",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "431c43a0-e273-579d-ad5e-bb375f93e891",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "bee2497c-af0e-5b22-adcf-967efccba2d0",
-      "properties": {
-        "identifier": "431c43a0-e273-579d-ad5e-bb375f93e891",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "3d5ce312-bb76-5596-b0ea-7563228ce14d",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "92d30ac6-b177-5089-bf3a-be5a1c331573",
-      "properties": {
-        "identifier": "3d5ce312-bb76-5596-b0ea-7563228ce14d",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "a90a8ca0-a322-5cd7-a829-f54d332d6ff7",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "b2c24af1-bcfe-51db-80e9-5d4c94e3266b",
-      "properties": {
-        "identifier": "a90a8ca0-a322-5cd7-a829-f54d332d6ff7",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "071efc9d-32a9-5b80-bb8b-4f13d137d11b",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "6f6d6156-b1f4-5662-8ced-a592c0c3d0f1",
-      "properties": {
-        "identifier": "071efc9d-32a9-5b80-bb8b-4f13d137d11b",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "269825fb-09ab-5d7f-b999-e1ecbbc6dc30",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "087f4522-15eb-5819-8997-e5b71edcb24e",
-      "properties": {
-        "identifier": "269825fb-09ab-5d7f-b999-e1ecbbc6dc30",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "f451deee-0572-5c63-a0c9-aa0d39a55b3e",
-      "type": "hasChild",
-      "start": "8fa82263-9d15-5299-a5af-16c94a57e4bd",
-      "end": "350e0bdb-a4c7-50ed-a9d9-a1ec0dd297a6",
-      "properties": {
-        "identifier": "f451deee-0572-5c63-a0c9-aa0d39a55b3e",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "22ef40ee-3e22-53f8-bd86-fcbf2a2275b9",
-      "type": "hasChild",
-      "start": "24ab9b37-d6cb-518e-8803-9fc897d12a3c",
-      "end": "fb874b6f-aa83-51fe-9a65-3bf5ccfc7c04",
-      "properties": {
-        "identifier": "22ef40ee-3e22-53f8-bd86-fcbf2a2275b9",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "c0936eff-c87d-5a0e-8940-5f2b1d859d25",
-      "type": "hasChild",
-      "start": "24ab9b37-d6cb-518e-8803-9fc897d12a3c",
-      "end": "efa19c4f-50b8-5d7e-9236-5d30844ebcf1",
-      "properties": {
-        "identifier": "c0936eff-c87d-5a0e-8940-5f2b1d859d25",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "1c82ab88-5e85-5e23-880c-e15d926bbd26",
-      "type": "hasChild",
-      "start": "4d8035c6-1580-5535-ab0c-f7c7d985f364",
-      "end": "3ba7cd6b-eea3-5074-9253-816c539db58f",
-      "properties": {
-        "identifier": "1c82ab88-5e85-5e23-880c-e15d926bbd26",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "de11e8b2-aa85-5b76-a2fc-41bea99b5f0b",
-      "type": "hasChild",
-      "start": "4d8035c6-1580-5535-ab0c-f7c7d985f364",
-      "end": "eab7e3ad-1e1c-5ea9-958d-6e84209b6688",
-      "properties": {
-        "identifier": "de11e8b2-aa85-5b76-a2fc-41bea99b5f0b",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "c12400d6-980d-5203-9d17-ea4b019a4175",
-      "type": "hasChild",
-      "start": "4d8035c6-1580-5535-ab0c-f7c7d985f364",
-      "end": "584bbe3b-82c1-5208-95b3-c197b666fa1a",
-      "properties": {
-        "identifier": "c12400d6-980d-5203-9d17-ea4b019a4175",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "9b56ffd3-6e9f-5f91-84c3-66ff1cd26c18",
-      "type": "hasChild",
-      "start": "4d8035c6-1580-5535-ab0c-f7c7d985f364",
-      "end": "0877566e-93d3-5388-9c9b-55b9602d78a2",
-      "properties": {
-        "identifier": "9b56ffd3-6e9f-5f91-84c3-66ff1cd26c18",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "4effa1d8-06ce-549d-a494-42d0431a68f1",
-      "type": "hasChild",
-      "start": "4d8035c6-1580-5535-ab0c-f7c7d985f364",
-      "end": "62a377a5-f7c4-529b-a5d7-203e9392b7d7",
-      "properties": {
-        "identifier": "4effa1d8-06ce-549d-a494-42d0431a68f1",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "6175e309-2f9f-5247-8712-55684dc97037",
-      "type": "hasChild",
-      "start": "4d8035c6-1580-5535-ab0c-f7c7d985f364",
-      "end": "8fddaf0e-2616-5877-a800-47728c246b97",
-      "properties": {
-        "identifier": "6175e309-2f9f-5247-8712-55684dc97037",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "212083d7-dced-53e9-84d0-156b2fdd363b",
-      "type": "hasChild",
-      "start": "e1edd8ea-f6e4-5139-9662-22f5943fb431",
-      "end": "7f505e3f-50ae-5b4e-a453-e834c8f3bbc8",
-      "properties": {
-        "identifier": "212083d7-dced-53e9-84d0-156b2fdd363b",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "e240268e-6d87-5e31-9624-8ba8b077fe45",
-      "type": "hasChild",
-      "start": "e1edd8ea-f6e4-5139-9662-22f5943fb431",
-      "end": "480d979c-0e33-5518-a741-42495e084469",
-      "properties": {
-        "identifier": "e240268e-6d87-5e31-9624-8ba8b077fe45",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "651739d4-fcaa-5f1a-ad2b-f465f6d65be5",
-      "type": "hasChild",
-      "start": "e1edd8ea-f6e4-5139-9662-22f5943fb431",
-      "end": "6de2a422-26db-5da2-853d-bd09d21321f9",
-      "properties": {
-        "identifier": "651739d4-fcaa-5f1a-ad2b-f465f6d65be5",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "a5bb3d39-1c61-5f4e-bea8-2c382d39270c",
-      "type": "hasChild",
-      "start": "e1edd8ea-f6e4-5139-9662-22f5943fb431",
-      "end": "6b0ce856-f486-5d69-aea9-a0db29b19108",
-      "properties": {
-        "identifier": "a5bb3d39-1c61-5f4e-bea8-2c382d39270c",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
-        "license": "https://creativecommons.org/licenses/by/4.0/"
-      }
-    },
-    {
-      "id": "12284ebf-9702-5253-ad84-72abbf5f3fb3",
-      "type": "hasChild",
-      "start": "e1edd8ea-f6e4-5139-9662-22f5943fb431",
-      "end": "df550ff0-0f99-5aee-8d60-0eb7b44c260c",
-      "properties": {
-        "identifier": "12284ebf-9702-5253-ad84-72abbf5f3fb3",
-        "relationship_type": "hasChild",
-        "description": "A hasChild relationship links a derived-frame item to an illustrative activity.",
-        "sourceEntity": "StandardsFrameworkItem",
-        "targetEntity": "Activity",
-        "targetLabels": [
-          "Activity"
-        ],
         "license": "https://creativecommons.org/licenses/by/4.0/"
       }
     },
