@@ -17,6 +17,7 @@ import { registerDocumentTools } from "./documents.js";
 import { registerLifecycleTools } from "./lifecycle.js";
 import { registerStructuralTools } from "./structural.js";
 import { registerRecipeTools } from "./recipes.js";
+import { registerAuthoringTools } from "./authoring.js";
 import { registerCapabilityTools } from "./capabilities.js";
 import { registerAuditTools } from "./audit.js";
 import { registerHealthTools } from "./health.js";
@@ -29,11 +30,12 @@ export function buildServer(): McpServer {
   registerCurriculumTools(server);   // list_courses, get_course (generic node readers), terminology
   registerGenerationTools(server);   // get_prompt, get_generation_context
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)
-  registerCiMathsTools(server);        // suggest_fresh_domain, domain_usage (CI-CI-maths-specific)
+  registerCiMathsTools(server);      // suggest_fresh_domain, domain_usage (CI maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log
   registerLifecycleTools(server);    // diff_draft, upsert_property, publish_draft, discard_draft
-  registerStructuralTools(server);   // create_node, link_nodes, unlink_nodes, delete_node (raw structural verbs)
-  registerRecipeTools(server);       // add_lesson, add_lesson_grouping, move_lesson, split_lesson_grouping, renumber (composite recipes)
+  registerStructuralTools(server);   // create_edge, delete_edges, delete_nodes (raw graph primitives)
+  registerRecipeTools(server);       // reposition, set_content (ordinal + content edits)
+  registerAuthoringTools(server);    // add_course/lesson_grouping/lesson/activity/assessment/material/learning_component/standard_framework_item/instructional_routine (typed LC adds)
   registerCapabilityTools(server);   // get_capabilities (read-only mirror of what the caller can do)
   registerAuditTools(server);        // read_audit (approver-only, read-only reader over the append-only audit log)
   return server;

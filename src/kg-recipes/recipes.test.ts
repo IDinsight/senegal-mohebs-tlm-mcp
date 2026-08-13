@@ -159,6 +159,45 @@ describe("add_node", () => {
   });
 });
 
+describe("typed-add core behaviors (boilerplate, supports direction, root node)", () => {
+  it("copies LC boilerplate from a sibling and stamps raw.identifier", async () => {
+    const published = await readPublished();
+    const { chapterId } = pick(published);
+    const lessonId = mintNodeId();
+    const { confirm } = await runRecipe(addNode, { namespace: ns, parentId: chapterId, label: "Lesson", newNodeId: lessonId, title: "Leçon" });
+    expect(confirm?.phase).toBe("apply");
+    const raw = (await readDraft())!.nodes.find((n) => n.id === lessonId)!.properties.raw as Record<string, any>;
+    // Boilerplate a seeded maths Lesson carries, copied onto the created one.
+    expect(raw.license).toBe("https://creativecommons.org/licenses/by/4.0/");
+    expect(raw.provider).toBe("Learning Commons ontology (generated)");
+    expect(raw.academicSubject).toBe("Mathematics");
+    expect(raw.attributionStatement).toBeTruthy();
+    expect(raw.identifier).toBe(lessonId);
+  });
+
+  it("attaches a LearningComponent to its SFI via `supports` (child→parent direction)", async () => {
+    const published = await readPublished();
+    const sfi = published.nodes.find((n) => (n.labels ?? []).includes("StandardsFrameworkItem"))!.id;
+    const compId = mintNodeId();
+    const { confirm } = await runRecipe(addNode, { namespace: ns, parentId: sfi, label: "LearningComponent", newNodeId: compId, title: "Sait compter" });
+    expect(confirm?.phase).toBe("apply");
+    const draft = (await readDraft())!;
+    // supports points component → SFI (new node is the source), not parent → child.
+    expect(draft.edges.some((e) => e.id === makeEdgeId("supports", compId, sfi))).toBe(true);
+    expect(draft.edges.some((e) => e.id === makeEdgeId("supports", sfi, compId))).toBe(false);
+  });
+
+  it("creates a root Course with NO parentId and NO containment edge", async () => {
+    const courseId = mintNodeId();
+    const { confirm } = await runRecipe(addNode, { namespace: ns, label: "Course", newNodeId: courseId, title: "Cahier d'activités" });
+    expect(confirm?.phase).toBe("apply");
+    const draft = (await readDraft())!;
+    expect(draft.nodes.some((n) => n.id === courseId && (n.labels ?? []).includes("Course"))).toBe(true);
+    // No incoming containment edge — it is a root.
+    expect(draft.edges.some((e) => e.to === courseId && (e.type === "hasPart" || e.type === "hasChild"))).toBe(false);
+  });
+});
+
 describe("move_node + reposition + set_content", () => {
   it("move_node rehomes an activity along hasPart, leaving its alignment (hasEducationalAlignment) axis intact", async () => {
     // Canonical nesting: chapter ▸ Lesson ▸ Activity. Move an activity between two

@@ -57,14 +57,18 @@ const put = (props: Record<string, unknown>, path: string, value: unknown): Reco
 // ordinal, so it re-parses faithfully.
 export function buildCreatedProps(
   t: NodeTemplate,
-  opts: { title?: string; title_en?: string; position: number; isAssessment: boolean; extraRaw?: Record<string, unknown> },
+  opts: { id?: string; title?: string; title_en?: string; position: number; isAssessment: boolean; extraRaw?: Record<string, unknown> },
 ): Record<string, unknown> {
   let props: Record<string, unknown> = { raw: {} };
   // Normalized (top-level) fields the store keeps alongside raw.
   props = put(props, t.isGrouping ? "title" : "text", opts.title);
   props = put(props, POSITION, opts.position);
   if (opts.isAssessment) props = put(props, "isAssessment", true);
-  // Raw passthrough — what the parser reads on re-hydration.
+  // Raw passthrough — what the parser reads on re-hydration. Boilerplate first
+  // (license/provider/… copied from a sibling), so any author-supplied extraRaw
+  // key can still override it.
+  for (const [k, v] of Object.entries(t.boilerplate)) props = put(props, `raw.${k}`, v);
+  props = put(props, "raw.identifier", opts.id);
   props = put(props, "raw.description", opts.title);
   props = put(props, "raw.metadata.en.description", opts.title_en);
   for (const p of t.orderPaths) props = put(props, p, opts.position);

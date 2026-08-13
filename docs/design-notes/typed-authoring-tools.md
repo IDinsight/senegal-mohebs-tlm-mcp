@@ -1,9 +1,12 @@
 # Typed authoring tools — an LC-grounded mutation surface
 
-> **Status: Plan / design.** Not yet implemented. This replaces the four generic
-> graph verbs (`add_node`/`move_node`/`reposition`/`set_content`) and the raw
-> structural verbs (`create_node`/`link_nodes`/`unlink_nodes`/`delete_node`) with a
-> **typed, per-LC-label** authoring surface. It builds on
+> **Status: Implemented.** Replaced the generic `add_node`/`move_node` and the raw
+> `create_node`/`link_nodes`/`unlink_nodes`/`delete_node` tools with a **typed,
+> per-LC-label** authoring surface: 9 typed adds in `src/server/authoring.ts` over
+> the internal `addNode` core, the renamed primitives `create_edge`/`delete_edges`/
+> `delete_nodes` in `src/server/structural.ts`, and `reposition`/`set_content` in
+> `src/server/recipes.ts`. Boilerplate is copied from a sibling node
+> (`kg-recipes/lc.ts`). It builds on
 > [`graph-native-authoring.md`](graph-native-authoring.md) and the direction in
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) (experts author the graph; tools
 > stay thin). Node/edge specifics are grounded in

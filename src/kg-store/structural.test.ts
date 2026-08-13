@@ -11,8 +11,8 @@
  *     a duplicate edge.
  *   • unlink_nodes removes an edge; enables the manual detach-then-delete
  *     flow.
- *   • delete_node deletes an ISOLATED node; rejects (Rule 2 / early Rule-2
- *     mirror) when incident edges survive; does NOT cascade.
+ *   • delete_node deletes an ISOLATED node, and CASCADES a connected node's
+ *     dependent subtree (warning, not block); only a nonexistent node is blocked.
  *   • Rule 1 (id-immutable) rename-detection FIRES across a delete_node +
  *     create_node sequence on the same draft (published-reference check).
  *   • Role matrix per primitive (curator/approver ok; no-role/unknown blocked
@@ -316,15 +316,15 @@ describe("delete_node — non-cascading", () => {
     expect(draft.nodes.some((n) => n.id === newNodeId)).toBe(false);
   });
 
-  it("REFUSES to delete a node that still has incident edges (no cascade)", async () => {
+  it("CASCADES a connected node (no block) and warns with the removed set", async () => {
     const g = await readPublishedGraph(ns);
     // Pick any node with an incident edge — a chapter with lessons will do.
     const targeted = g.edges[0].from;
-    const blocked = await runGraphMutation({
+    const preview = await runGraphMutation({
       namespace: ns, mutation: deleteNode, args: { nodeId: targeted },
     });
-    if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
-    expect(blocked.errors.some((e) => e.includes("incident edge") && e.includes("does not cascade"))).toBe(true);
+    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
+    expect(preview.warnings.some((w) => w.includes("incident edge"))).toBe(true);
   });
 
   it("delete-then-unlink flow works when unlinks come first", async () => {
@@ -499,11 +499,9 @@ describe("audit — apply and blocked records", () => {
   });
 
   it("a validate-blocked delete_node writes a blocked audit record with a reason", async () => {
-    const g = await readPublishedGraph(ns);
-    const targeted = g.edges[0].from;  // has incident edges → will be blocked
     const before = (await store.listAudit({ namespace: ns, eventType: "blocked" })).length;
     const blocked = await runGraphMutation({
-      namespace: ns, mutation: deleteNode, args: { nodeId: targeted },
+      namespace: ns, mutation: deleteNode, args: { nodeId: "iri:ghost" },  // nonexistent → validate-blocked
     });
     expect(blocked.phase).toBe("blocked");
     const after = await store.listAudit({ namespace: ns, eventType: "blocked" });
