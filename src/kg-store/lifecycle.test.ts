@@ -56,13 +56,13 @@ async function seedFreshStore(): Promise<KgNodeStore> {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
-    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
+    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(workspace, grade, subject));
     const meta: StoredMeta = {
       contentHash: "test", seededAt: "1970-01-01T00:00:00Z",
       adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length,
     };
-    await s.writeSlot(kgNamespace(grade, subject), "a", { nodes, edges, meta });
-    await s.ensurePointer(kgNamespace(grade, subject), "a");
+    await s.writeSlot(kgNamespace(workspace, grade, subject), "a", { nodes, edges, meta });
+    await s.ensurePointer(kgNamespace(workspace, grade, subject), "a");
   }
   return s;
 }
@@ -117,7 +117,7 @@ async function rawSlot(store: KgNodeStore, ns: string, slot: "a" | "b") {
 describe("draft/published lifecycle (memory backend)", () => {
   for (const ctx of contexts) {
     const label = `${ctx.grade}/${ctx.subject}`;
-    const ns = kgNamespace(ctx.grade, ctx.subject);
+    const ns = kgNamespace(ctx.workspace, ctx.grade, ctx.subject);
 
     it(`${label}: default reads resolve to published`, async () => {
       const pointer = await store.readPointer(ns);
@@ -190,7 +190,7 @@ describe("draft/published lifecycle (memory backend)", () => {
   // internally consistent.
   it("publish is observed atomically by concurrent readers", async () => {
     const ctx = contexts[0];
-    const ns = kgNamespace(ctx.grade, ctx.subject);
+    const ns = kgNamespace(ctx.workspace, ctx.grade, ctx.subject);
     await store.createDraft(ns);
     // Kick off many pointer reads interleaved with the publish. Each
     // observation is one of the two valid states; the harness fails if any

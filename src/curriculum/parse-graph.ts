@@ -24,13 +24,22 @@ export type GraphParseDescriptor = {
   // A node's `metadata.role` → CurriculumUnit.kind (weeks/chapters/domaines/leaves).
   // Roles not listed here are ignored (scaffolding: paliers, sections, frameworks).
   roleToKind: Record<string, string>;
-  // A node's first label → kind, used only when no mapped role applies
-  // (components/tasks carry a label but no metadata.role).
+  // A node's canonical LC `statementType` → kind, tried AFTER role and BEFORE
+  // label. This is the signal for LC-native exports (e.g. the NERDC/EIDU spine)
+  // that carry no `metadata.role` sidecar and use a single StandardsFrameworkItem
+  // label for every level — Grade/Theme/Sub-Theme/Topic/Performance Objective are
+  // distinguished only here. Opt-in per descriptor: subjects that key on role
+  // (senegal) simply omit it, so there is no interaction with their parse.
+  statementTypeToKind?: Record<string, string>;
+  // A node's first label → kind, used only when no mapped role/statementType
+  // applies (components/tasks carry a label but no metadata.role).
   labelToKind?: Record<string, string>;
   // Where a unit's ordinal comes from: "order" = metadata.order (maths);
   // "position" = the canonical LC `position` prop (reading, post canonical-LC);
-  // "description" = a bare-number description (legacy reading weeks).
-  numberFrom: "order" | "position" | "description";
+  // "description" = a bare-number description (legacy reading weeks). Omit when
+  // the source carries no ordinal (e.g. the NERDC spine) — every unit's `order`
+  // is then null and the adapter reads sequence from source/traversal order.
+  numberFrom?: "order" | "position" | "description";
   // Edge types. Defaults match canonical LC. Each accepts one type or several:
   // canonical LC splits containment across `hasChild` (standards hierarchy) and
   // `hasPart` (content tree), and attachment across `supports` (component→SFI)
@@ -67,11 +76,14 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
   const kindOf = (n: RawNode): string | null => {
     const role = n.properties?.metadata?.role;
     if (role != null && d.roleToKind[role] != null) return d.roleToKind[role];
+    const stype = n.properties?.statementType;
+    if (stype != null && d.statementTypeToKind?.[stype] != null) return d.statementTypeToKind[stype];
     const label = n.labels?.[0];
     if (label != null && d.labelToKind?.[label] != null) return d.labelToKind[label];
     return null;
   };
   const orderOf = (n: RawNode): number | null => {
+    if (d.numberFrom == null) return null;
     if (d.numberFrom === "order") {
       const o = n.properties?.metadata?.order;
       return typeof o === "number" ? o : null;

@@ -20,6 +20,7 @@ import type { SubjectAdapter } from "../types.js";
 import { ContextNotSetError, listAvailableContexts, sessionState } from "../context/index.js";
 import { buildCiMathsAdapter } from "./ci-maths.js";
 import { buildCe1ReadingAdapter } from "./ce1-reading.js";
+import { buildNigeriaMathsAdapter } from "./nigeria-maths.js";
 
 // Registry: (grade/subject) → adapter builder. Add a subject by registering
 // its builder here. A subject with sources on disk but no entry here is
@@ -34,6 +35,9 @@ export type AdapterBuilder = (grade: string, subject: string) => SubjectAdapter;
 const REGISTRY: Record<string, AdapterBuilder> = {
   "ci/maths": buildCiMathsAdapter,
   "ce1/reading": buildCe1ReadingAdapter,
+  // Nigeria NERDC maths spans Primary 1–3 in one framework, so its grade segment
+  // is the combined "primary-1-3" (see sources/nigeria/). Standards-only graph.
+  "primary-1-3/maths": buildNigeriaMathsAdapter,
 };
 
 export function resolveAdapter(grade: string, subject: string): SubjectAdapter | null {
