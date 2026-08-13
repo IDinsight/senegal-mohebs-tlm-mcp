@@ -20,9 +20,9 @@ same look and feel**.
 
 ## What I will give you (inputs)
 
-1. **The curriculum, via the memory-server tools** — you do **not** receive raw JSON files.
-   The curriculum (the **source of record**) and the official **French/Wolof terminology** are
-   queried through **MCP tools**; see "Getting the curriculum from the memory server" below.
+1. **The curriculum, from the graph** — you do **not** receive raw JSON files. The curriculum
+   (the **source of record**) and the official **French/Wolof terminology** are read from the
+   knowledge graph through **MCP tools**; see "Getting the curriculum from the graph" below.
 
 2. **The pupil's manual for the chapter** ("l'outil de l'élève") — the document already
    generated for this chapter. It contains: the **opening situation** ("situation d'amorce")
@@ -44,43 +44,50 @@ same look and feel**.
 
 ---
 
-## Getting the curriculum from the memory server (tools)
+## Getting the curriculum from the graph (tools)
 
-You query the curriculum through **MCP tools** rather than parsing a file.
+You read the curriculum from a **knowledge graph** through **MCP tools**, in canonical
+Learning-Commons form (a **content tree** — Course → grouping → lesson — and a **standards
+spine** each lesson *teaches*). Read the graph directly; never work from memory.
 
-> **Tool vocabulary.** The tools use neutral names: `unit` is the **chapter number**, and `deliverable` is `"lessons"` (the teacher guide you are writing here). Pass those argument names exactly.
-
-- **`get_generation_context(unit, deliverable="lessons")`** — call this **first**. In one payload it
-  returns the chapter's **`curriculum`** — the chapter's lessons as **OS** items ordered by
-  `leconNum`, each with its **components** and their **tasks**, with the **bilan** lesson marked and
-  cross-chapter progression included — plus the **pupil manual already tracked for this chapter**
-  (the document your lessons build on), the characters established across the book, and terminology
-  guidance.
+- **`list_courses`** — call this **first**. The teacher guide is the course **"Guide de
+  l'enseignant"**. Take its `id`.
+- **`get_course(course)`** — the teacher-guide subtree as raw LC nodes + edges: its
+  **groupings** and their **lessons** (`Lesson`, in `position` order), plus the shared
+  **"Fiche de leçon — enseignement explicite"** `InstructionalRoutine` (the fixed five-step
+  structure — Déclencheur → Modelage → Nous faisons → Tu fais → Objectivation — with a per-step
+  `Material` spec and its `timeRequired`). Read the routine: it is the authored version of the
+  step structure and timings below.
+- **`get_standards(nodeId)`** — for **each lesson**, the standards it teaches: the aligned
+  `StandardsFrameworkItem` (its `description` is the objective, the **OS**), that OS's
+  **`LearningComponent`s**, and the **illustrative `Activity`s** — as raw nodes + edges. This is
+  where the OS text, components, and tasks come from. *(Empty `nodes` ⇒ that lesson is not yet
+  wired to the spine; say the OS is missing rather than invent it.)*
 - **`get_terminology(query)`** — the official French/Wolof wording for a term (ensemble,
-  appartient à, dizaine…). Use it for the key vocabulary; if it returns nothing, say the wording
-  is missing rather than invent it.
+  appartient à, dizaine…). Take the **French** only; if it returns nothing, say the wording is
+  missing rather than invent it.
+- **`list_documents`** / **`get_document_text(relPath)`** — read the **pupil manual** already
+  produced for this chapter (the document your lessons build on) and earlier sheets, for
+  continuity and the established characters.
 
-**What the returned curriculum gives you, for a chapter N** (the tool has already done the graph
-work — you consume the result):
+**How to assemble a lesson from the graph:**
 
-1. The chapter's **lessons, ordered by `leconNum`**. Each lesson carries its **OS** (`osTexte`).
-2. The **last** lesson is the **Bilan** (review): it is flagged for you. All the others are
-   ordinary lessons.
-3. Each lesson's **components** and their **tasks**, already attached — use these to feed the
-   **modelling** step, the **examples**, and the choice of the key mathematical vocabulary.
-4. **One sheet = one lesson = one OS** (at most two OS if the notions are very closely
-   linked). Note: several lessons may share the **same** `osTexte` (e.g. "découvrir le
-   nombre 10 et la dizaine" spread over 2–3 sessions); in that case, **differentiate** the
-   sheets by treating **distinct facets** of the objective (discovery, manipulation,
+1. From `get_course`, take the grouping's **lessons in `position` order**. The **Bilan**
+   (review) lesson is the one whose `educationalUse` is `Assessment`; the rest are ordinary
+   lessons.
+2. For each lesson, `get_standards(lesson)` gives its **OS** (the aligned SFI's `description`),
+   its **components**, and their **tasks** — use these to feed the **modelling** step, the
+   **examples**, and the choice of key mathematical vocabulary.
+3. **One sheet = one lesson = one OS** (at most two if very closely linked). Several lessons may
+   teach the **same** OS (e.g. "découvrir le nombre 10 et la dizaine" over 2–3 sessions); if so,
+   **differentiate** the sheets by distinct facets of the objective (discovery, manipulation,
    consolidation…) — do not make them identical.
-5. **Map each lesson to the pupil's-manual activity (or activities)** that target the same
-   OS / component: follow the provided mapping if there is one, otherwise follow the order
-   of the manual's activities. The **last lesson (Bilan)** uses the **bilan questions** of
-   the manual.
+4. **Map each lesson to the pupil's-manual activity (or activities)** targeting the same OS /
+   component (read the manual via `get_document_text`); follow the manual's activity order. The
+   **Bilan** lesson uses the manual's **bilan questions**.
 
-> **Note on numbering.** Chapter numbers follow the curriculum; the sequence may skip
-> a number (for example there is no Chapter 14 — the curriculum runs 13 → 15). Produce
-> exactly the chapters that exist; never invent a missing chapter.
+> **Note on numbering.** Chapter/lesson numbers come from each node's `position`; the sequence
+> may skip a number. Produce exactly the groupings and lessons the graph returns; never invent one.
 
 ---
 
@@ -166,7 +173,7 @@ to every chapter. (Sizes are given in points; treat them as targets, not pixel-e
 - Header row: **green fill**, **white bold** text, ≈ 9 pt.
 - Body rows: ≈ 9 pt; the **Leçon** cell in **green bold**.
 - **Type** values are exactly: `1re leçon` / `Intermédiaire` / `Bilan`.
-- One row per lesson, in `leconNum` order, **bilan included**.
+- One row per lesson, in lesson order (`position`), **bilan included**.
 
 **Each lesson sheet** (insert a **page break before each lesson**, so every lesson starts on
 its own page):
@@ -276,7 +283,7 @@ with a **global objectivation** of the chapter.
 ## What you must produce
 
 1. **First**, the **distribution table** of the chapter's lessons (exact columns and `Type`
-   values as in the formatting specification). One row per lesson, in `leconNum` order,
+   values as in the formatting specification). One row per lesson, in lesson order (`position`),
    **bilan included**.
 
 2. **Then**, **all the lesson sheets** for the chapter, in order, each following the
