@@ -23,6 +23,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
+import { activeWorkspace } from "../context/index.js";
 import { runGraphMutation, kgNamespace, mintNodeId, type MutationGraph } from "../kg-store/index.js";
 import { addNode, moveNode, reposition, setContent } from "../kg-recipes/index.js";
 import type { SubjectAdapter } from "../types.js";
@@ -31,7 +32,7 @@ import type { SubjectAdapter } from "../types.js";
 // calls this first. No profile to resolve — the verbs are generic.
 function bind(adapter: SubjectAdapter): { namespace: string; coverage: (g: MutationGraph) => string[] } {
   return {
-    namespace: kgNamespace(adapter.grade, adapter.subject),
+    namespace: kgNamespace(activeWorkspace(), adapter.grade, adapter.subject),
     coverage: (g) => adapter.coverageWarnings?.(g as never) ?? [],
   };
 }

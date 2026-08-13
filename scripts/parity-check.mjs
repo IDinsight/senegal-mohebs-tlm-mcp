@@ -52,26 +52,26 @@ __setKgStoreForTest(store);
 // Populate the memory store from the bundles when running offline; --live
 // trusts whatever the seed script wrote to real Firestore.
 if (!live) {
-  for (const { grade, subject } of listAvailableContexts()) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of listAvailableContexts()) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const model = adapter.parse(raw);
-    const { nodes, edges } = serializeModel(model, kgNamespace(grade, subject));
-    await store.writeSlot(kgNamespace(grade, subject), "a", {
+    const { nodes, edges } = serializeModel(model, kgNamespace(workspace, grade, subject));
+    await store.writeSlot(kgNamespace(workspace, grade, subject), "a", {
       nodes, edges,
       meta: { contentHash: "cli", seededAt: new Date(0).toISOString(), adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
     });
-    await store.ensurePointer(kgNamespace(grade, subject), "a");
+    await store.ensurePointer(kgNamespace(workspace, grade, subject), "a");
   }
 }
 
-async function collect(source, grade, subject) {
+async function collect(source, workspace, grade, subject) {
   process.env.KG_SOURCE = source;
   const state = newSessionState();
   return runInSession(state, async () => {
-    const r = await activateContext(grade, subject);
-    if (!r.ok) throw new Error(`activate ${grade}/${subject} @ ${source}: ${r.error}`);
+    const r = await activateContext(workspace, grade, subject);
+    if (!r.ok) throw new Error(`activate ${workspace}/${grade}/${subject} @ ${source}: ${r.error}`);
     const adapter = resolveAdapter(grade, subject);
     const perUnit = [];
     for (const scope of adapter.scopeValues()) {
@@ -90,11 +90,11 @@ async function collect(source, grade, subject) {
 }
 
 let failures = 0;
-for (const { grade, subject } of listAvailableContexts()) {
-  const label = `${grade}/${subject}`;
+for (const { workspace, grade, subject } of listAvailableContexts()) {
+  const label = `${workspace}/${grade}/${subject}`;
   try {
-    const bundleReads = await collect("bundle", grade, subject);
-    const storeReads = await collect("firestore", grade, subject);
+    const bundleReads = await collect("bundle", workspace, grade, subject);
+    const storeReads = await collect("firestore", workspace, grade, subject);
     // Deep-strict-equal is the parity oracle. Parsed JSON, not raw strings,
     // so field-ordering differences on the way in don't produce false diffs.
     deepStrictEqual(storeReads, bundleReads);

@@ -37,6 +37,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
+import { activeWorkspace } from "../context/index.js";
 import {
   runGraphMutation,
   kgNamespace,
@@ -51,7 +52,7 @@ import {
 // every other tool in this codebase — no explicit namespace argument.
 function activeNamespace(): string {
   const a = getActiveAdapter();
-  return kgNamespace(a.grade, a.subject);
+  return kgNamespace(activeWorkspace(), a.grade, a.subject);
 }
 
 // The active adapter's coverage hook (#13) as a callback for the framework —
@@ -84,7 +85,7 @@ export function registerStructuralTools(server: McpServer) {
     },
     guarded(async (a: { kind: string; properties?: Record<string, unknown>; mintedNodeId?: string; confirm?: boolean; confirmationToken?: string }) => {
       const adapter = getActiveAdapter();
-      const namespace = kgNamespace(adapter.grade, adapter.subject);
+      const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
       // Dry-run: mint the id here. Confirm: the caller must supply the same
       // minted id from the dry-run response (so the framework's args-hash
       // matches). If they don't, argsMismatch fires cleanly.

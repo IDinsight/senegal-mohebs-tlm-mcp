@@ -37,11 +37,11 @@ describe("guarded — structured typed errors", () => {
   });
 
   it("does NOT treat a missing context as an error — it prompts for one", async () => {
-    const h = guarded(async () => { throw new ContextNotSetError([{ grade: "ci", subject: "maths" }]); });
+    const h = guarded(async () => { throw new ContextNotSetError([{ workspace: "senegal", grade: "ci", subject: "maths" }]); });
     const res = await h({});
     expect(res.isError).toBeFalsy();
     expect(body(res)).toMatchObject({ needsContext: true });
-    expect(body(res).available).toEqual([{ grade: "ci", subject: "maths" }]);
+    expect(body(res).available).toEqual([{ workspace: "senegal", grade: "ci", subject: "maths" }]);
   });
 
   it("includes a stack only in debug mode", async () => {

@@ -32,9 +32,27 @@ export const CONFIG = {
   firebaseBucket: env.FIREBASE_STORAGE_BUCKET ?? "",
   bucketPrefix: (env.TLM_BUCKET_PREFIX ?? "").replace(/\/+$/, ""), // optional, no trailing slash
   // Optional startup defaults for the active teaching context.
+  defaultWorkspace: (env.TLM_WORKSPACE ?? "").trim(),
   defaultGrade: (env.TLM_GRADE ?? "").trim(),
   defaultSubject: (env.TLM_SUBJECT ?? "").trim(),
 };
+
+// The single tenant every graph belonged to before workspaces existed, and the
+// default for the 2-arg kgNamespace() convenience + a source folder that has no
+// workspace segment yet. Production paths always pass a workspace explicitly;
+// this only backstops single-tenant/legacy call sites (tests, un-migrated
+// sources). See docs/design-notes/workspaces.md.
+export const DEFAULT_WORKSPACE = "senegal";
+
+// Root of trust for super admins: comma-separated JWT `sub`s or emails. Env-only
+// in v1 (not stored, not grantable at runtime) so the first super admin exists
+// before any workspace or membership does — see docs/design-notes/workspaces.md.
+export function superAdmins(): string[] {
+  return (process.env.TLM_SUPER_ADMINS ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
 
 // Where curriculum + KG reads pull from. "bundle" keeps the legacy behavior
 // (readFileSync from sources/); "firestore" hydrates the normalized

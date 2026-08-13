@@ -41,6 +41,7 @@ export function toAuditActor(actor: Actor): AuditActor {
     email: actor.email ?? null,
     tokenIssuer: actor.tokenIssuer ?? null,
     role: actor.role ?? null,
+    superAdmin: !!actor.superAdmin,
     unknown: actor.unknown,
   };
 }

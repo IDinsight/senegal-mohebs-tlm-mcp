@@ -64,8 +64,8 @@ const aliases = () => resolveAdapter(targetCtx.grade, targetCtx.subject)!.wordin
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
@@ -398,7 +398,7 @@ describe("parity — coverage/force work does not leak into published reads", ()
       const state = newSessionState();
       return runInSession(state, async () => {
         const { activateContext } = await import("../activate.js");
-        const r = await activateContext(targetCtx.grade, targetCtx.subject);
+        const r = await activateContext(targetCtx.workspace, targetCtx.grade, targetCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
         return { units: adapter.listUnits(), scopes: adapter.scopeValues() };

@@ -29,7 +29,7 @@ const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..", "src");
 const LAYERS = {
   server: 3, "index.ts": 3, "activate.ts": 3, "http.ts": 3, "consent.ts": 3, "kg-export.ts": 3, "kg-export.test.ts": 3,
   adapters: 2,
-  storage: 1, curriculum: 1, generation: 1, "kg-store": 1, "kg-recipes": 1,
+  storage: 1, curriculum: 1, generation: 1, "kg-store": 1, "kg-recipes": 1, workspaces: 1,
   config: 0, "config.ts": 0, types: 0, "types.ts": 0, context: 0, utils: 0, "actor.ts": 0, "actor.test.ts": 0, "authz.ts": 0, "authz.test.ts": 0,
 };
 

@@ -8,6 +8,7 @@
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerContextTools } from "./context.js";
+import { registerWorkspaceTools } from "./workspaces.js";
 import { registerCurriculumTools } from "./curriculum.js";
 import { registerGenerationTools } from "./generation.js";
 import { registerPreviewTools } from "./preview.js";
@@ -24,6 +25,7 @@ export function buildServer(): McpServer {
   const server = new McpServer({ name: "senegal-mohebs-tlm-server", version: "0.4.0" });
   registerHealthTools(server);       // ping (no datastore — transport liveness probe)
   registerContextTools(server);      // set_context, get_context
+  registerWorkspaceTools(server);    // list_workspaces, create_workspace, add/remove/list_member (tenant admin)
   registerCurriculumTools(server);   // list_units, get_curriculum, terminology
   registerGenerationTools(server);   // get_prompt, get_generation_context
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)

@@ -27,11 +27,11 @@ export type ActivateResult =
   | { ok: true; context: ActiveContext }
   | { ok: false; error: string; available: ActiveContext[] };
 
-export async function activateContext(grade: string, subject: string): Promise<ActivateResult> {
-  const g = slug(grade), s = slug(subject);
+export async function activateContext(workspace: string, grade: string, subject: string): Promise<ActivateResult> {
+  const w = slug(workspace), g = slug(grade), s = slug(subject);
   const available = listAvailableContexts();
-  const match = available.find((c) => c.grade === g && c.subject === s);
-  if (!match) return { ok: false, error: `No sources installed for grade '${grade}' / subject '${subject}'.`, available };
+  const match = available.find((c) => c.workspace === w && c.grade === g && c.subject === s);
+  if (!match) return { ok: false, error: `No sources installed for workspace '${workspace}' / grade '${grade}' / subject '${subject}'.`, available };
 
   const adapter = resolveAdapter(match.grade, match.subject);
   if (!adapter) return { ok: false, error: `Sources exist for '${match.grade}/${match.subject}', but no subject adapter is registered for it. This grade/subject is not supported yet.`, available };
@@ -44,7 +44,7 @@ export async function activateContext(grade: string, subject: string): Promise<A
   // paper over an unseeded namespace, so we refuse instead.
   let preloadedModel: CurriculumModel | null = null;
   if (kgSource() === "firestore") {
-    const ns = kgNamespace(match.grade, match.subject);
+    const ns = kgNamespace(match.workspace, match.grade, match.subject);
     // Resolve the *published* slot first, then read from it. Generation MUST
     // read published — draft-targeted reads live behind the internal lifecycle
     // API and are not exposed to tools in this step (see roadmap #15).
@@ -70,7 +70,7 @@ export async function activateContext(grade: string, subject: string): Promise<A
   } else {
     let raw: unknown;
     try {
-      raw = JSON.parse(readFileSync(resolve(subjectDir(match.grade, match.subject), CONFIG.kgFile), "utf8"));
+      raw = JSON.parse(readFileSync(resolve(subjectDir(match.workspace, match.grade, match.subject), CONFIG.kgFile), "utf8"));
     } catch (e) {
       return { ok: false, error: `Could not read the knowledge graph for '${match.grade}/${match.subject}': ${(e as Error).message}`, available };
     }
@@ -79,7 +79,7 @@ export async function activateContext(grade: string, subject: string): Promise<A
     }
   }
 
-  const bound = setActiveContext(match.grade, match.subject); // clears the session bag
+  const bound = setActiveContext(match.workspace, match.grade, match.subject); // clears the session bag
   if (!bound.ok) return bound;
   // The bag is now clean — install the preloaded model AFTER binding so the
   // just-run bag.clear() doesn't wipe it. Bundle-mode leaves the bag untouched.

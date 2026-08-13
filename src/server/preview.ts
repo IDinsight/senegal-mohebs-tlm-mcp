@@ -29,6 +29,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
+import { activeWorkspace } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor } from "../kg-store/index.js";
 import { toRawEnvelope } from "../curriculum/index.js";
 import { getStorageAdapter } from "../storage/index.js";
@@ -92,7 +93,7 @@ async function denyIfNotDraftReader(ns: string): Promise<Record<string, unknown>
 // only; no graph write. Exported so tests drive the real logic.
 export async function previewGeneration(unit: number, deliverable: string): Promise<Record<string, unknown>> {
   const adapter = getActiveAdapter();
-  const ns = kgNamespace(adapter.grade, adapter.subject);
+  const ns = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
   // Scope guard: an unknown deliverable is rejected before any draft read, the
   // same way get_generation_context validates it. No implicit whole-curriculum
@@ -154,7 +155,7 @@ export async function previewGeneration(unit: number, deliverable: string): Prom
 // flow. Role-gated to the same tier as previewGeneration.
 export async function createPreviewUploadUrl(relPath: string): Promise<Record<string, unknown>> {
   const adapter = getActiveAdapter();
-  const ns = kgNamespace(adapter.grade, adapter.subject);
+  const ns = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
   const denied = await denyIfNotDraftReader(ns);
   if (denied) return denied;

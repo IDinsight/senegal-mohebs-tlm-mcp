@@ -20,8 +20,8 @@ const contexts = listAvailableContexts();
 
 async function seed(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const a = resolveAdapter(grade, subject);
     if (!a) continue;
     const ns = kgNamespace(grade, subject);

@@ -22,8 +22,9 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
+import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
-import { authorize, type AuthAction } from "../authz.js";
+import { authorize, effectiveRole, type AuthAction } from "../authz.js";
 import {
   kgNamespace, getKgStore, UPSERT_PROPERTY_SAFE_PATHS, STRUCTURAL_RULES,
 } from "../kg-store/index.js";
@@ -59,7 +60,7 @@ const CAPABILITY_TO_AUTHZ: Record<Exclude<typeof CAPABILITY_ACTIONS[number], "ca
 // envelope.
 export async function buildCapabilitiesReport(): Promise<Record<string, unknown>> {
   const adapter = getActiveAdapter();
-  const namespace = kgNamespace(adapter.grade, adapter.subject);
+  const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
   const actor = currentActor();
 
   // ── actions: one call per gated action to authorize(). Reads are
@@ -170,9 +171,12 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     actor: {
       id: actor.id,
       isKnown: !actor.unknown,
-      role: actor.role ?? null,
+      role: actor.role ?? null,          // legacy global claim (may be null)
+      superAdmin: !!actor.superAdmin,
+      effectiveRole: effectiveRole(actor, activeWorkspace()) ?? null, // role in THIS workspace
     },
     context: {
+      workspace: activeWorkspace(),
       grade: adapter.grade,
       subject: adapter.subject,
       namespace,

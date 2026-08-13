@@ -60,8 +60,8 @@ const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
@@ -78,16 +78,16 @@ async function seedFreshStore(): Promise<KgNodeStore> {
 // Run inside an active context as a given actor — exactly what a real tool
 // invocation runs (minus the JSON envelope), the same pattern as
 // capabilities.test.ts::withActiveContext.
-async function withCtx<T>(grade: string, subject: string, actor: Actor | null, fn: () => Promise<T>): Promise<T> {
+async function withCtx<T>(workspace: string, grade: string, subject: string, actor: Actor | null, fn: () => Promise<T>): Promise<T> {
   const state = newSessionState();
   return runInSession(state, async () => {
     __setActorForTest(actor);
-    const r = await activateContext(grade, subject);
-    if (!r.ok) throw new Error(`activate ${grade}/${subject}: ${r.error}`);
+    const r = await activateContext(workspace, grade, subject);
+    if (!r.ok) throw new Error(`activate ${workspace}/${grade}/${subject}: ${r.error}`);
     return fn();
   });
 }
-const inTarget = <T>(actor: Actor | null, fn: () => Promise<T>) => withCtx(targetCtx.grade, targetCtx.subject, actor, fn);
+const inTarget = <T>(actor: Actor | null, fn: () => Promise<T>) => withCtx(targetCtx.workspace, targetCtx.grade, targetCtx.subject, actor, fn);
 
 // Build a plausible audit record for the seeding-based filter/pagination tests.
 function rec(partial: Partial<AuditRecord> & Pick<AuditRecord, "id" | "ts" | "eventType">): AuditRecord {
@@ -157,7 +157,7 @@ describe("namespace scoping: strict — current context only, no namespace argum
     expect(ids).not.toContain("in-other");
 
     if (otherCtx) {
-      const there = await withCtx(otherCtx.grade, otherCtx.subject, APPROVER, () => readAudit({ action: "apply", mode: "detail" }));
+      const there = await withCtx(otherCtx.workspace, otherCtx.grade, otherCtx.subject, APPROVER, () => readAudit({ action: "apply", mode: "detail" }));
       const otherIds = (there.records as AuditRecord[]).map((r) => r.id);
       expect(otherIds).toContain("in-other");
       expect(otherIds).not.toContain("in-target");

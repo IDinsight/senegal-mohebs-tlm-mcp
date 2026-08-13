@@ -27,38 +27,45 @@ import { sessionState } from "./session.js";
 
 const isDir = (p: string) => { try { return statSync(p).isDirectory(); } catch { return false; } };
 
-// Discover installed grade/subject sets by scanning sources/<grade>/<subject>/.
+// Discover installed contexts by scanning sources/<workspace>/<grade>/<subject>/.
+// The workspace is the new top folder level (see docs/design-notes/workspaces.md).
 export function listAvailableContexts(): ActiveContext[] {
   const root = CONFIG.sourcesDir;
   if (!existsSync(root)) return [];
   const out: ActiveContext[] = [];
-  for (const grade of readdirSync(root)) {
-    const gradePath = resolve(root, grade);
-    if (!isDir(gradePath)) continue;
-    for (const subject of readdirSync(gradePath)) {
-      if (isDir(resolve(gradePath, subject))) out.push({ grade, subject });
+  for (const workspace of readdirSync(root)) {
+    const wsPath = resolve(root, workspace);
+    if (!isDir(wsPath)) continue;
+    for (const grade of readdirSync(wsPath)) {
+      const gradePath = resolve(wsPath, grade);
+      if (!isDir(gradePath)) continue;
+      for (const subject of readdirSync(gradePath)) {
+        if (isDir(resolve(gradePath, subject))) out.push({ workspace, grade, subject });
+      }
     }
   }
-  return out.sort((a, b) => a.grade.localeCompare(b.grade) || a.subject.localeCompare(b.subject));
+  return out.sort((a, b) =>
+    a.workspace.localeCompare(b.workspace) || a.grade.localeCompare(b.grade) || a.subject.localeCompare(b.subject));
 }
 
 export function getActiveContext(): ActiveContext | null { return sessionState().active; }
 
-export const subjectDir = (grade: string, subject: string) => resolve(CONFIG.sourcesDir, grade, subject);
+export const subjectDir = (workspace: string, grade: string, subject: string) =>
+  resolve(CONFIG.sourcesDir, workspace, grade, subject);
 
 // Low-level bind: slugify, validate against installed sources, set the active
 // context, and drop the session's context-derived caches. Adapter resolution
 // and the schema guard live in activateContext() (root activate.ts) to avoid an
 // import cycle; call that, not this, from tools and startup.
-export function setActiveContext(grade: string, subject: string):
+export function setActiveContext(workspace: string, grade: string, subject: string):
   | { ok: true; context: ActiveContext }
   | { ok: false; error: string; available: ActiveContext[] } {
-  const g = slug(grade), s = slug(subject);
+  const w = slug(workspace), g = slug(grade), s = slug(subject);
   const available = listAvailableContexts();
-  const match = available.find((c) => c.grade === g && c.subject === s);
-  if (!match) return { ok: false, error: `No sources installed for grade '${grade}' / subject '${subject}'.`, available };
+  const match = available.find((c) => c.workspace === w && c.grade === g && c.subject === s);
+  if (!match) return { ok: false, error: `No sources installed for workspace '${workspace}' / grade '${grade}' / subject '${subject}'.`, available };
   const st = sessionState();
-  const changed = !st.active || st.active.grade !== match.grade || st.active.subject !== match.subject;
+  const changed = !st.active || st.active.workspace !== match.workspace || st.active.grade !== match.grade || st.active.subject !== match.subject;
   st.active = match;
   if (changed) st.bag.clear();
   return { ok: true, context: match };
@@ -72,12 +79,16 @@ export function requireContext(): ActiveContext {
 
 // -- Context-scoped path + object-key helpers --------------------------------
 export function activeSubjectDir(): string {
-  const { grade, subject } = requireContext();
-  return resolve(CONFIG.sourcesDir, grade, subject);
+  const { workspace, grade, subject } = requireContext();
+  return resolve(CONFIG.sourcesDir, workspace, grade, subject);
 }
 export const sourcePath = (name: string) => resolve(activeSubjectDir(), name);
 
-const scope = () => { const { grade, subject } = requireContext(); return `${grade}/${subject}/`; };
+// The active workspace — the tenant segment production namespace/storage keys
+// hang off. Throws (via requireContext) if no context is set.
+export const activeWorkspace = (): string => requireContext().workspace;
+
+const scope = () => { const { workspace, grade, subject } = requireContext(); return `${workspace}/${grade}/${subject}/`; };
 export const docsPrefix = () => basePrefix() + scope() + "documents/";
 export const historyKey = () => basePrefix() + scope() + "history.json";
 export const docKey = (relPath: string) => docsPrefix() + relPath;

@@ -49,8 +49,8 @@ const priorEnv = process.env.KG_SOURCE;
 beforeAll(async () => {
   __setKgStoreForTest(memStore);
   __setStorageForTest(fakeStorage);
-  for (const { grade, subject } of listAvailableContexts()) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of listAvailableContexts()) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const model = adapter.parse(raw);
@@ -73,11 +73,11 @@ afterAll(() => {
 // Run the same read sequence against both backends inside its own session, so
 // no cache leaks across the flag flip. Returns the collected output — deep-
 // equal on the two sides is the parity assertion.
-async function collectReads(source: "bundle" | "firestore", grade: string, subject: string) {
+async function collectReads(source: "bundle" | "firestore", workspace: string, grade: string, subject: string) {
   process.env.KG_SOURCE = source;
   const state = newSessionState();
   return runInSession(state, async () => {
-    const r = await activateContext(grade, subject);
+    const r = await activateContext(workspace, grade, subject);
     if (!r.ok) throw new Error(`activate ${grade}/${subject} @ ${source} failed: ${r.error}`);
     // Re-resolve the adapter here so the same-session bag wiring picks up the
     // preloaded model (firestore) or the bundle read (bundle). Each call
@@ -102,10 +102,10 @@ async function collectReads(source: "bundle" | "firestore", grade: string, subje
 }
 
 describe("parity: KG_SOURCE=bundle vs KG_SOURCE=firestore", () => {
-  for (const { grade, subject } of listAvailableContexts()) {
+  for (const { workspace, grade, subject } of listAvailableContexts()) {
     it(`produces identical read output for ${grade}/${subject}`, async () => {
-      const fromBundle = await collectReads("bundle", grade, subject);
-      const fromStore = await collectReads("firestore", grade, subject);
+      const fromBundle = await collectReads("bundle", workspace, grade, subject);
+      const fromStore = await collectReads("firestore", workspace, grade, subject);
       // Deep-equal on parsed JSON: key ordering / whitespace can differ across
       // internal codepaths, but the semantic shape must not.
       expect(fromStore).toEqual(fromBundle);
