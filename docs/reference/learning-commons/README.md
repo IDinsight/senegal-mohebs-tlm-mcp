@@ -77,23 +77,26 @@ provenance, reading's palier/genre, `metadata.role`, `metadata.en.*` translation
 These are places our CI/maths graph is deliberately or historically **off-canon**.
 Documented so they don't get mistaken for canon:
 
-1. **Weeks are modelled as `StandardsFrameworkItem` (role `week`).** Canonically a
-   week is scheduling/content, so `week(SFI) ─hasChild→ Lesson` is off-canon
-   (`hasChild` is standards-only; a Lesson can't be a `hasChild` target), and
-   `Course ─hasPart→ week(SFI)` is off-canon (`Course.hasPart` accepts only
-   `LessonGrouping`/`Material`). Canonical shape: weeks as **`LessonGrouping`** with
-   `week ─hasPart→ Lesson`.
-2. **`buildsTowards` between chapters (`LessonGrouping→LessonGrouping`).** Canonical
+1. ~~**Weeks are modelled as `StandardsFrameworkItem` (role `week`).**~~ **RESOLVED**
+   — weeks are now **`LessonGrouping`** (role `week`) with `Course ─hasPart→ week
+   ─hasPart→ Lesson`, all canonical. (The `role "week"` sidecar still distinguishes
+   them from chapters, which are `role "subtopic"`.)
+2. **RECE illustrative activities hang off their frame via `SFI ─hasChild→ Activity`**
+   (104 edges). Off-canon — `hasChild` is standards-only; an `Activity` can't be a
+   `hasChild` target. The illustrative Activities are a maths-specific structure; the
+   canonical bridge would be their existing `hasEducationalAlignment` to the SFI (the
+   `hasChild` is the redundant one). Left as-is for now.
+3. **`buildsTowards` between chapters (`LessonGrouping→LessonGrouping`).** Canonical
    `buildsTowards` is **`SFI→SFI`**. For content prerequisites LC uses `hasDependency`.
-3. **Content groupings carry SFI-flavoured fields.** Our chapters (`LessonGrouping`)
-   carry `statementType`/`normalizedStatementType: "Standard Grouping"`, which are
-   **`StandardsFrameworkItem`** properties, not `LessonGrouping` ones. The parser
-   keys grouping-ness off `normalizedStatementType`, so this is load-bearing but
-   non-canonical placement.
-4. **Bilan via `educationalUse: "Assessment"` on a `Lesson`** rather than a dedicated
+4. **Content groupings carry SFI-flavoured fields.** Our chapters and weeks
+   (`LessonGrouping`) carry `statementType`/`normalizedStatementType: "Standard
+   Grouping"`, which are **`StandardsFrameworkItem`** properties, not `LessonGrouping`
+   ones. The parser keys grouping-ness off `normalizedStatementType`, so this is
+   load-bearing but non-canonical placement.
+5. **Bilan via `educationalUse: "Assessment"` on a `Lesson`** rather than a dedicated
    **`Assessment`** node. `educationalUse` does allow `Assessment` (it's in
    `EducationalUseENUM`), so this is valid-ish, but LC also has a first-class
    `Assessment` label we don't use.
-5. **`metadata.illustratesComponent`** encodes an Activity→LearningComponent link
+6. **`metadata.illustratesComponent`** encodes an Activity→LearningComponent link
    that **has no canonical edge** (LC defines none). This is an intentional sidecar
    extension, surfaced display-only by the explorer.
