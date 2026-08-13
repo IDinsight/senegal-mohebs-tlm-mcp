@@ -82,7 +82,16 @@ function supabaseVerifier(): OAuthTokenVerifier {
 //   GET /kg?ns=<ns>     — auth-gated. Published display-JSON for one namespace.
 // CORS is allow-listed to the hosting origin(s); auth requires a valid Supabase
 // Bearer JWT whenever auth is enabled (mirrors /mcp). All read-only, published-only.
+//
+// KG_EXPLORER_PUBLIC=1 opens the read-only explorer to anyone (no Supabase
+// login): it ungates the /kg read routes and reports authRequired:false so the
+// static page skips its login gate. This affects ONLY the /kg read surface — the
+// /mcp authoring endpoint stays JWT-gated regardless. Default (unset) keeps the
+// explorer gated. NOTE: making it public exposes every seeded namespace's
+// published graph to anyone with the URL (CORS does not restrict non-browser
+// clients), so set it only when public read access is intended.
 function registerKgRoutes(app: express.Express, authEnabled: boolean, verifier: OAuthTokenVerifier | null): void {
+  const explorerPublic = process.env.KG_EXPLORER_PUBLIC === "1";
   const allowed = (process.env.KG_ALLOWED_ORIGINS
     ?? "https://senegal-ci-maths.web.app,https://senegal-ci-maths.firebaseapp.com")
     .split(",").map((s) => s.trim()).filter(Boolean);
@@ -103,9 +112,10 @@ function registerKgRoutes(app: express.Express, authEnabled: boolean, verifier: 
   };
 
   // Auth: require a verifiable Supabase Bearer JWT when auth is on. In
-  // ALLOW_UNAUTHENTICATED mode (local only) it is a pass-through.
+  // ALLOW_UNAUTHENTICATED mode (local only) or when the explorer is public it is
+  // a pass-through.
   const requireJwt: express.RequestHandler = async (req, res, next) => {
-    if (!authEnabled) return next();
+    if (!authEnabled || explorerPublic) return next();
     const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
     if (!m) { res.status(401).json({ error: "missing_bearer_token" }); return; }
     try { await verifier!.verifyAccessToken(m[1]); next(); }
@@ -118,7 +128,7 @@ function registerKgRoutes(app: express.Express, authEnabled: boolean, verifier: 
     res.json({
       supabaseUrl: SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? "",
-      authRequired: authEnabled,
+      authRequired: authEnabled && !explorerPublic,
     });
   });
 
