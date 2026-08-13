@@ -20,10 +20,10 @@ type RawNode = { id: string; labels?: string[]; properties?: Record<string, unkn
 type RawRel = { id: string; type: string; start: string; end: string; properties?: Record<string, unknown> };
 
 const CASES = [
-  // maths: post two-Course split + canonical chapter▸lesson▸activity nesting — a
-  // Teacher's Guide Course over the 23 weeks + 25 Student's-Book container Lessons
-  // (one per chapter) each holding that chapter's Activities (218 total).
-  { grade: "ci", subject: "maths", nodes: 746, edges: 1249 },
+  // maths: post two-Course split + canonical chapter▸lesson▸activity nesting, weeks
+  // as LessonGrouping, and the RECE illustrative activities de-linked from their
+  // frame (−104 off-canon SFI→Activity hasChild; they keep hasEducationalAlignment).
+  { grade: "ci", subject: "maths", nodes: 746, edges: 1145 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).
