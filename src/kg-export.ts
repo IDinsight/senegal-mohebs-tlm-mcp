@@ -261,9 +261,11 @@ function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
 // The four LC lenses (https://docs.learningcommons.org — core concepts), each
 // emitted only when the namespace actually holds that layer's data, plus a
 // generic catch-all. No subject vocabulary (no domaine/week/strand/palier).
-//   1. STANDARDS      — the pure standards skeleton (StandardsFramework → items),
-//      hasChild, filtered to standards labels (components/curriculum excluded —
-//      they have their own views).
+//   1. STANDARDS      — the full containment tree (the former "Hierarchy"):
+//      anchored on the framework root and expanded via hasChild, so
+//      LearningComponents (supports, folded) and the curriculum content (hasPart /
+//      hasEducationalAlignment, folded) all nest in with honest rel badges. The
+//      other tabs below are focused lenses over the same graph.
 //   2. LEARNING COMPONENTS — each standard with its LearningComponents nested
 //      (supports, folded standard→component); branches with no component pruned.
 //   3. CURRICULUM     — the content layer Course → LessonGrouping → Lesson →
@@ -280,10 +282,10 @@ function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig
   const has = (l: string) => present.has(l);
   const views: ViewSpec[] = [];
 
-  if (has("StandardsFramework") || has("StandardsFrameworkItem")) {
+  if (has("StandardsFramework")) {
     views.push({
-      id: "standards", label: { fr: "Standards", en: "Standards" }, shape: "label-tree",
-      params: { includeLabels: STANDARDS_LABELS, expandEdge: "hasChild", rootKinds: STANDARDS_LABELS },
+      id: "standards", label: { fr: "Standards", en: "Standards" }, shape: "grouped-spine",
+      params: { anchorKind: "StandardsFramework", groupBy: [], expandEdge: "hasChild" },
     });
   }
   if (has("LearningComponent")) {

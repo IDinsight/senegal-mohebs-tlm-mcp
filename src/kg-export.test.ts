@@ -64,9 +64,12 @@ describe("kg-export — LC ontology (maths)", () => {
     // tree (Course/Lesson/Activity), and chapter prerequisites (hasDependency →
     // buildsTowards). So all four LC lenses + the generic view appear.
     expect(g.meta.viewConfig.views.map((v) => v.id)).toEqual(["standards", "components", "curriculum", "progression", "generic"]);
+    // Standards is the full containment tree (former "Hierarchy") — components and
+    // curriculum fold in via hasChild, so it stays a grouped-spine on the framework.
     const std = g.meta.viewConfig.views.find((v) => v.id === "standards") as any;
-    expect(std.shape).toBe("label-tree");
-    expect(std.params).toMatchObject({ includeLabels: ["StandardsFramework", "StandardsFrameworkItem"], expandEdge: "hasChild" });
+    expect(std.shape).toBe("grouped-spine");
+    expect(std.params).toMatchObject({ anchorKind: "StandardsFramework", expandEdge: "hasChild" });
+    expect(std.params.groupBy).toEqual([]);
     const prog = g.meta.viewConfig.views.find((v) => v.id === "progression") as any;
     expect(prog.params).toMatchObject({ edge: "buildsTowards" });
     // hasDependency is normalised onto buildsTowards for the progression view.
