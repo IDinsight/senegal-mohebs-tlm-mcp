@@ -48370,29 +48370,6 @@
       }
     },
     {
-      "id": "20c7b826-b990-56d5-acc0-b75a1c209398",
-      "type": "usesRoutine",
-      "start": "6510819b-90fd-53d3-ada1-3c7d32a18ef0",
-      "end": "78936410-3db6-5109-aa45-6dca53a4343c",
-      "properties": {
-        "license": "https://creativecommons.org/licenses/by/4.0/",
-        "attributionStatement": "Node/edge types follow the Learning Commons ontology (CC BY-4.0). Routine d'enseignement explicite (déclencheur / modelage / pratique guidée / pratique autonome / objectivation) rédigée pour le Guide de l'enseignant·e CI mathématiques, Sénégal (TLM).",
-        "identifier": "20c7b826-b990-56d5-acc0-b75a1c209398",
-        "provider": "Learning Commons ontology (generated)",
-        "sourceEntity": "Course",
-        "sourceEntityKey": "identifier",
-        "targetEntity": "InstructionalRoutine",
-        "targetEntityKey": "identifier",
-        "relationshipType": "usesRoutine",
-        "sourceLabels": [
-          "Course"
-        ],
-        "targetLabels": [
-          "InstructionalRoutine"
-        ]
-      }
-    },
-    {
       "id": "b2e95a74-cc19-55aa-864a-f76d12f26cb5",
       "type": "hasPart",
       "start": "78936410-3db6-5109-aa45-6dca53a4343c",
