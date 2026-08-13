@@ -63,8 +63,8 @@ const ns = kgNamespace(firstCtx.grade, firstCtx.subject);
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
@@ -288,7 +288,8 @@ describe("actor fidelity", () => {
       await runGraphMutation({ namespace: ns, mutation: setNodeProperty, args: { nodeId: target.id, key: "k", value: 1 }, confirm: true, token: p.confirmationToken });
     });
     const applies = await store.listAudit({ namespace: ns, eventType: "apply" });
-    expect(applies[0].actor).toEqual(actor);
+    // The audit snapshot adds superAdmin (false here); identity fields intact.
+    expect(applies[0].actor).toEqual({ ...actor, superAdmin: false });
   });
 });
 
@@ -348,7 +349,7 @@ describe("append-only surface", () => {
   it("appendAudit persists a record that listAudit returns", async () => {
     const record: AuditRecord = {
       id: randomUUID(), ts: "2026-07-30T12:00:00Z",
-      actor: { id: "u1", email: null, tokenIssuer: null, role: null, unknown: false },
+      actor: { id: "u1", email: null, tokenIssuer: null, role: null, superAdmin: false, unknown: false },
       namespace: ns, eventType: "blocked",
       mutation: "test/mut", reason: "manual",
     };
@@ -365,9 +366,9 @@ describe("listAudit filters", () => {
     const now = "2026-07-30T10:00:00Z";
     const later = "2026-07-30T11:00:00Z";
     const records: AuditRecord[] = [
-      { id: "1", ts: now,   actor: { id: "alice", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: ns, eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
-      { id: "2", ts: later, actor: { id: "bob", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: ns, eventType: "blocked", mutation: "m", reason: "r" },
-      { id: "3", ts: now,   actor: { id: "alice", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: "other-ns", eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
+      { id: "1", ts: now,   actor: { id: "alice", email: null, tokenIssuer: null, role: null, superAdmin: false, unknown: false }, namespace: ns, eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
+      { id: "2", ts: later, actor: { id: "bob", email: null, tokenIssuer: null, role: null, superAdmin: false, unknown: false }, namespace: ns, eventType: "blocked", mutation: "m", reason: "r" },
+      { id: "3", ts: now,   actor: { id: "alice", email: null, tokenIssuer: null, role: null, superAdmin: false, unknown: false }, namespace: "other-ns", eventType: "apply", mutation: "m", baseVersion: "v0", resultingVersion: "v1" },
     ];
     for (const r of records) await store.appendAudit(r);
 
@@ -402,14 +403,14 @@ describe("listAudit filters", () => {
     expect(Object.values(unknown)).not.toContain(undefined);
     // Fully-populated actor.
     const curator = toAuditActor({ id: "c", email: "c@x", tokenIssuer: "iss", role: "curator", unknown: false });
-    expect(curator).toEqual({ id: "c", email: "c@x", tokenIssuer: "iss", role: "curator", unknown: false });
+    expect(curator).toEqual({ id: "c", email: "c@x", tokenIssuer: "iss", role: "curator", superAdmin: false, unknown: false });
   });
 
   it("limit caps the result count", async () => {
     for (const i of [1, 2, 3, 4, 5]) {
       await store.appendAudit({
         id: `q${i}`, ts: `2026-07-30T10:0${i}:00Z`,
-        actor: { id: "a", email: null, tokenIssuer: null, role: null, unknown: false }, namespace: ns, eventType: "blocked",
+        actor: { id: "a", email: null, tokenIssuer: null, role: null, superAdmin: false, unknown: false }, namespace: ns, eventType: "blocked",
         mutation: "m", reason: "r",
       });
     }
@@ -425,7 +426,7 @@ describe("parity oracle: published reads stay identical after audit-producing op
       const state = newSessionState();
       return runInSession(state, async () => {
         const { activateContext } = await import("../activate.js");
-        const r = await activateContext(firstCtx.grade, firstCtx.subject);
+        const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
         return { units: adapter.listUnits(), scopes: adapter.scopeValues() };

@@ -29,12 +29,13 @@ import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/p
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
 import { listExportNamespaces, exportNamespace } from "./kg-export.js";
-import { CONFIG, basePrefix, kgSource } from "./config.js";
+import { CONFIG, basePrefix, kgSource, DEFAULT_WORKSPACE } from "./config.js";
 import { newSessionState, runInSession, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
 import { activateContext } from "./activate.js";
 import { consentPage } from "./consent.js";
-import { resolveActor, runAsActor, type Actor } from "./actor.js";
+import { resolveActor, withMemberships, runAsActor, type Actor } from "./actor.js";
+import { resolveMemberships } from "./workspaces/index.js";
 import { installProcessGuards } from "./utils/index.js";
 
 const LOG = "[senegal-mohebs-tlm:http]";
@@ -160,10 +161,13 @@ async function restoreUserContext(sub: string): Promise<void> {
   try {
     const raw = await readGlobalObject(userStateKey(sub));
     if (!raw) return;
-    const { grade, subject } = JSON.parse(raw);
+    // `workspace` is new; a legacy 2-field state (pre-workspaces) defaults to
+    // the single tenant everything used to live in.
+    const { workspace, grade, subject } = JSON.parse(raw);
+    const ws = workspace || DEFAULT_WORKSPACE;
     if (grade && subject) {
-      const r = await activateContext(grade, subject);
-      if (!r.ok) console.error(`${LOG} could not restore ${sub}'s context ${grade}/${subject}: ${r.error}`);
+      const r = await activateContext(ws, grade, subject);
+      if (!r.ok) console.error(`${LOG} could not restore ${sub}'s context ${ws}/${grade}/${subject}: ${r.error}`);
     }
   } catch (e) { console.error(`${LOG} context restore failed for ${sub}:`, (e as Error).message); }
 }
@@ -171,7 +175,7 @@ async function restoreUserContext(sub: string): Promise<void> {
 function persistUserContext(sub: string, state: SessionState): void {
   const a = state.active;
   if (!a) return;
-  writeGlobalObject(userStateKey(sub), JSON.stringify({ grade: a.grade, subject: a.subject }))
+  writeGlobalObject(userStateKey(sub), JSON.stringify({ workspace: a.workspace, grade: a.grade, subject: a.subject }))
     .catch((e) => console.error(`${LOG} context persist failed for ${sub}:`, (e as Error).message));
 }
 
@@ -190,8 +194,9 @@ function newSession(): Session {
   // against startup activation and see `active === null`.
   let readyPromise: Promise<void> = Promise.resolve();
   if (CONFIG.defaultGrade && CONFIG.defaultSubject) {
+    const ws = CONFIG.defaultWorkspace || DEFAULT_WORKSPACE;
     readyPromise = runInSession(state, async () => {
-      const r = await activateContext(CONFIG.defaultGrade, CONFIG.defaultSubject);
+      const r = await activateContext(ws, CONFIG.defaultGrade, CONFIG.defaultSubject);
       if (!r.ok) console.error(`${LOG} startup context not activated: ${r.error}`);
     });
   }
@@ -279,7 +284,18 @@ async function main() {
     // Resolve the caller's identity from the verified auth layer ONLY. Never
     // from tool arguments, request body, or client-settable headers — those
     // are spoofable. `resolveActor` is the single writer for actor state.
-    const actor: Actor = resolveActor((req as any).auth);
+    let actor: Actor = resolveActor((req as any).auth);
+    // Attach per-workspace memberships (the authoritative authz source) with ONE
+    // registry read per request. Identity stays sync + spoof-proof; only this
+    // app-layer step touches the store. Fail-closed: a read error leaves
+    // memberships empty (super-admin, from env, still stands).
+    if (!actor.unknown) {
+      try {
+        actor = withMemberships(actor, await resolveMemberships(actor.id));
+      } catch (e) {
+        console.error(`${LOG} membership read failed for ${actor.id}:`, (e as Error).message);
+      }
+    }
 
     // ── unknown-actor policy (DEFAULTED — flip here when roles land) ─────────
     // Today: unknown actors proceed (no roles are enforced anywhere yet).

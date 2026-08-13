@@ -27,7 +27,7 @@ import { activateContext } from "../activate.js";
 import type { KgNodeStore, StoredMeta } from "../kg-store/index.js";
 import type { StorageAdapter, HistoryFile, SubjectAdapter } from "../types.js";
 
-const GRADE = "ce1", SUBJECT = "reading";
+const WORKSPACE = "senegal", GRADE = "ce1", SUBJECT = "reading";
 const READER: Actor = { id: "reader-uid", email: "reader@test", unknown: false };
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GOLDEN_PATH = resolve(HERE, "__fixtures__", "ce1-reading.read-projections.golden.json");
@@ -50,7 +50,7 @@ let store: KgNodeStore;
 
 async function seedStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  const raw = JSON.parse(readFileSync(resolve(subjectDir(GRADE, SUBJECT), CONFIG.kgFile), "utf8"));
+  const raw = JSON.parse(readFileSync(resolve(subjectDir(WORKSPACE, GRADE, SUBJECT), CONFIG.kgFile), "utf8"));
   const adapter = resolveAdapter(GRADE, SUBJECT)!;
   const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(GRADE, SUBJECT));
   const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length };
@@ -62,7 +62,7 @@ async function seedStore(): Promise<KgNodeStore> {
 async function withCtx<T>(fn: () => Promise<T>): Promise<T> {
   return runInSession(newSessionState(), async () => {
     __setActorForTest(READER);
-    const r = await activateContext(GRADE, SUBJECT);
+    const r = await activateContext(WORKSPACE, GRADE, SUBJECT);
     if (!r.ok) throw new Error(`activate: ${r.error}`);
     return fn();
   });

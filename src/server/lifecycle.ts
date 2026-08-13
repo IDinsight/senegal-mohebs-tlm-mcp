@@ -23,6 +23,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
+import { activeWorkspace } from "../context/index.js";
 import {
   diffDraft,
   publishDraftWithConfirm,
@@ -41,7 +42,7 @@ import { randomUUID } from "node:crypto";
 // this the same way.
 function activeNamespace(): string {
   const a = getActiveAdapter();
-  return kgNamespace(a.grade, a.subject);
+  return kgNamespace(activeWorkspace(), a.grade, a.subject);
 }
 
 // The active adapter's coverage hook (#13) as a plain callback for the
@@ -112,7 +113,7 @@ export function registerLifecycleTools(server: McpServer) {
     },
     guarded(async (a: { nodeId: string; key: string; value: string; confirm?: boolean; confirmationToken?: string; idempotencyKey?: string }) => {
       const adapter = getActiveAdapter();
-      const ns = kgNamespace(adapter.grade, adapter.subject);
+      const ns = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
       const result = await runGraphMutation({
         namespace: ns,
         mutation: upsertProperty,

@@ -150,16 +150,20 @@ export type AuditActor = {
   email: string | null;
   tokenIssuer: string | null;
   /**
-   * The actor's role at the time of the event, snapshot from the verified
-   * JWT claim (see #8). Preserved on the record so an audit review sees
-   * WHO WAS a curator/approver when this happened, not who is one now.
-   * `null` = signed in with no role, or unknown actor.
+   * The actor's LEGACY global role at the time of the event, snapshot from the
+   * verified `app_role` JWT claim (see #8). Preserved so an audit review sees
+   * WHO WAS a curator/approver when this happened, not who is one now. `null` =
+   * no legacy role (a membership-based user, no role, or unknown actor). The
+   * per-workspace effective role is derivable from the record's `namespace` +
+   * the membership registry; only the legacy claim is snapshot inline.
    */
-  role: "curator" | "approver" | null;
+  role: "curator" | "approver" | "admin" | "super_admin" | null;
+  /** Whether the actor was a super admin at the time of the event. */
+  superAdmin: boolean;
   unknown: boolean;
 };
 
-export type AuditEventType = "apply" | "createDraft" | "publish" | "discard" | "blocked" | "preview" | "read";
+export type AuditEventType = "apply" | "createDraft" | "publish" | "discard" | "blocked" | "preview" | "read" | "membership" | "workspace";
 
 // One flat shape covers every event type. Fields are populated per event;
 // which ones apply is discriminated by `eventType`. Kept flat (rather than a

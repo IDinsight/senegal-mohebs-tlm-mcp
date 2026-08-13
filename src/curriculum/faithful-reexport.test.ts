@@ -23,11 +23,11 @@ const CASES = [
   // maths: post two-Course split + canonical chapter▸lesson▸activity nesting, weeks
   // as LessonGrouping, and the RECE illustrative activities de-linked from their
   // frame (−104 off-canon SFI→Activity hasChild; they keep hasEducationalAlignment).
-  { grade: "ci", subject: "maths", nodes: 746, edges: 1145 },
+  { workspace: "senegal", grade: "ci", subject: "maths", nodes: 746, edges: 1145 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).
-  { grade: "ce1", subject: "reading", nodes: 1968, edges: 2244 },
+  { workspace: "senegal", grade: "ce1", subject: "reading", nodes: 1968, edges: 2244 },
 ];
 
 const edgeKey = (e: { type: string; start: string; end: string }) => `${e.type}|${e.start}|${e.end}`;
@@ -36,7 +36,7 @@ const bag = (keys: string[]) => { const m = new Map<string, number>(); for (cons
 describe("faithful re-export — the store reproduces the source LC graph", () => {
   for (const c of CASES) {
     it(`${c.grade}/${c.subject}: every node + edge round-trips (${c.nodes} nodes, ${c.edges} edges)`, () => {
-      const raw = JSON.parse(readFileSync(resolve(subjectDir(c.grade, c.subject), CONFIG.kgFile), "utf8")) as { nodes: RawNode[]; relationships: RawRel[] };
+      const raw = JSON.parse(readFileSync(resolve(subjectDir(c.workspace, c.grade, c.subject), CONFIG.kgFile), "utf8")) as { nodes: RawNode[]; relationships: RawRel[] };
       const adapter = resolveAdapter(c.grade, c.subject)!;
       const stored = serializeModel(adapter.parse(raw), kgNamespace(c.grade, c.subject));
       const out = toRawEnvelope(stored);

@@ -66,8 +66,8 @@ const ns = kgNamespace(firstCtx.grade, firstCtx.subject);
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
@@ -417,7 +417,7 @@ describe("reads and generation remain ungated for unknown actors", () => {
     const state = newSessionState();
     const output = await runInSession(state, async () => {
       const { activateContext } = await import("../activate.js");
-      const r = await activateContext(firstCtx.grade, firstCtx.subject);
+      const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
       expect(r.ok).toBe(true);
       const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
       return { units: adapter.listUnits(), scopes: adapter.scopeValues() };
@@ -451,7 +451,7 @@ describe("parity: reads are unaffected by #8", () => {
       const state = newSessionState();
       return runInSession(state, async () => {
         const { activateContext } = await import("../activate.js");
-        const r = await activateContext(firstCtx.grade, firstCtx.subject);
+        const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
         return { units: adapter.listUnits(), scopes: adapter.scopeValues() };

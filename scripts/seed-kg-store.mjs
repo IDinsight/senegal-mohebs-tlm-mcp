@@ -53,19 +53,25 @@ const { kgNamespace, createMemoryKgStore, createFirestoreKgStore } = await impor
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const positional = args.filter((a) => !a.startsWith("--"));
-const targetPair = positional.length === 2 ? { grade: positional[0], subject: positional[1] } : null;
-if (positional.length !== 0 && positional.length !== 2) {
-  console.error("seed-kg-store: expected either no positional args or `<grade> <subject>`.");
+// Accept: no args (all), `<grade> <subject>` (match across workspaces — legacy),
+// or `<workspace> <grade> <subject>` (fully qualified).
+let target = null;
+if (positional.length === 3) target = { workspace: positional[0], grade: positional[1], subject: positional[2] };
+else if (positional.length === 2) target = { grade: positional[0], subject: positional[1] };
+else if (positional.length !== 0) {
+  console.error("seed-kg-store: expected no positional args, `<grade> <subject>`, or `<workspace> <grade> <subject>`.");
   process.exit(1);
 }
 
 const available = listAvailableContexts();
-const pairs = targetPair
-  ? available.filter((c) => c.grade === targetPair.grade && c.subject === targetPair.subject)
+const pairs = target
+  ? available.filter((c) =>
+      c.grade === target.grade && c.subject === target.subject &&
+      (target.workspace === undefined || c.workspace === target.workspace))
   : available;
 
 if (pairs.length === 0) {
-  console.error(`seed-kg-store: no matching grade/subject sources under ${CONFIG.sourcesDir}.`);
+  console.error(`seed-kg-store: no matching workspace/grade/subject sources under ${CONFIG.sourcesDir}.`);
   process.exit(1);
 }
 
@@ -73,9 +79,9 @@ const store = dryRun ? createMemoryKgStore() : createFirestoreKgStore();
 console.error(`seed-kg-store: backend=${store.kind}, sources=${CONFIG.sourcesDir}, ${pairs.length} pair(s).`);
 
 let failures = 0;
-for (const { grade, subject } of pairs) {
-  const label = `${grade}/${subject}`;
-  const bundlePath = resolve(subjectDir(grade, subject), CONFIG.kgFile);
+for (const { workspace, grade, subject } of pairs) {
+  const label = `${workspace}/${grade}/${subject}`;
+  const bundlePath = resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile);
   if (!existsSync(bundlePath)) {
     console.error(`seed-kg-store: ${label}: no ${CONFIG.kgFile} at ${bundlePath} — skipped.`);
     failures++;
@@ -101,7 +107,7 @@ for (const { grade, subject } of pairs) {
   }
 
   const model = adapter.parse(parsed);
-  const namespace = kgNamespace(grade, subject);
+  const namespace = kgNamespace(workspace, grade, subject);
   const { nodes, edges } = serializeModel(model, namespace);
   const meta = {
     contentHash,

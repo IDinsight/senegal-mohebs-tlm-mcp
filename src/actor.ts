@@ -13,17 +13,26 @@
  * add spoofable inputs here.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
+import { superAdmins } from "./config.js";
 
 /**
- * Server-side authorization roles. Delivered as the `app_role` claim on the
- * verified Supabase JWT (see the Custom Access Token Hook in
- * scripts/supabase-user-roles.sql). NEVER read from tool args or a
- * client-set header — only from the JWT payload the auth middleware
- * verified. See src/authz.ts for the check policy.
- *
- * `curator`  — may apply / dry-run mutations, may discard a draft.
- * `approver` — superset of curator; may also publish a draft to published.
+ * Roles a user can hold *inside a workspace*, stored in the Firestore membership
+ * registry (see src/workspaces/ + docs/design-notes/workspaces.md). Each is a
+ * strict superset of the one before it:
+ *   curator  — apply / dry-run mutations, discard a draft.
+ *   approver — superset of curator; may also publish.
+ *   admin    — superset of approver; may also manage the workspace's members.
  */
+export type MembershipRole = "curator" | "approver" | "admin";
+
+/**
+ * The role that actually decides an action: a workspace membership role, or the
+ * cross-workspace `super_admin` tier (env-rooted, see config.superAdmins()).
+ */
+export type EffectiveRole = MembershipRole | "super_admin";
+
+/** @deprecated Legacy single-tenant role from the Supabase `app_role` claim.
+ *  Kept as a migration bridge; see `Actor.role`. */
 export type Role = "curator" | "approver";
 
 export interface Actor {
@@ -34,17 +43,31 @@ export interface Actor {
   /** Verified issuer that produced this identity (JWT `iss`). */
   readonly tokenIssuer?: string;
   /**
-   * Authorization role from the verified `app_role` JWT claim. `undefined`
-   * for signed-in users who don't have a `user_roles` row in Supabase yet
-   * — they can read/generate but not mutate/publish. Never populated from
-   * anything but the verified token.
+   * LEGACY global role from the verified `app_role` JWT claim. Authoritative
+   * authorization now comes from `memberships`; this only grants the named role
+   * in the DEFAULT_WORKSPACE, as a migration bridge for users whose Supabase
+   * role hasn't been copied into the membership registry yet. Never populated
+   * from anything but the verified token.
    */
   readonly role?: Role;
+  /**
+   * True iff this verified identity is listed in TLM_SUPER_ADMINS (by `sub` or
+   * `email`). Universal rights across every workspace. Set in resolveActor from
+   * env (not spoofable — the id/email come from the verified token).
+   */
+  readonly superAdmin?: boolean;
+  /**
+   * Per-workspace roles from the Firestore membership registry, keyed by
+   * workspace id. Empty from resolveActor (identity is sync + I/O-free); the
+   * app layer fills it via withMemberships() after one membership read. Absent
+   * ⇒ no memberships (fail-closed). Never from tool args/headers.
+   */
+  readonly memberships?: Readonly<Record<string, MembershipRole>>;
   /** True when no verified identity could be established for this request. */
   readonly unknown: boolean;
 }
 
-export const UNKNOWN_ACTOR: Actor = Object.freeze({ id: "unknown", unknown: true });
+export const UNKNOWN_ACTOR: Actor = Object.freeze({ id: "unknown", unknown: true, superAdmin: false, memberships: {} });
 
 const als = new AsyncLocalStorage<Actor>();
 
@@ -93,5 +116,19 @@ export function resolveActor(
   // `auth.extra` is only populated by the signature-verified middleware.
   const rawRole = auth?.extra?.app_role;
   const role: Role | undefined = rawRole === "curator" || rawRole === "approver" ? rawRole : undefined;
-  return { id: sub, email, tokenIssuer, role, unknown: false };
+  // Super-admin is env-rooted (config.superAdmins()) and matched against the
+  // VERIFIED id/email only — reading env is I/O-free, so identity stays sync.
+  const admins = superAdmins();
+  const superAdmin = admins.includes(sub.toLowerCase()) || (email ? admins.includes(email.toLowerCase()) : false);
+  return { id: sub, email, tokenIssuer, role, superAdmin, memberships: {}, unknown: false };
+}
+
+/**
+ * Attach the caller's per-workspace memberships to an already-resolved identity.
+ * Pure — the app layer reads the membership registry (async I/O) and calls this,
+ * keeping resolveActor + authz free of any store dependency. Super-admin status
+ * is preserved from the base actor.
+ */
+export function withMemberships(base: Actor, memberships: Readonly<Record<string, MembershipRole>>): Actor {
+  return { ...base, memberships };
 }

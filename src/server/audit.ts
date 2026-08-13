@@ -30,6 +30,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
+import { activeWorkspace } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor } from "../kg-store/index.js";
 import type { AuditEventType, AuditQuery, AuditRecord } from "../kg-store/index.js";
 import { authorize } from "../authz.js";
@@ -160,6 +161,11 @@ function describeTarget(r: AuditRecord): string {
       return truncate(r.reason ?? "preview");
     case "read":
       return truncate(`returned ${r.readCount ?? 0} record(s)${r.readQuery ? ` · ${r.readQuery}` : ""}`);
+    case "membership":
+    case "workspace":
+      // Tenant-admin events (add/remove member, create workspace) — the human
+      // descriptor is the reason string the tool wrote.
+      return truncate(r.reason ?? r.eventType);
   }
 }
 
@@ -200,7 +206,7 @@ async function denyIfNotAuditReader(ns: string): Promise<Record<string, unknown>
 // ── Core: read_audit ──────────────────────────────────────────────────────────
 export async function readAudit(args: ReadAuditArgs): Promise<Record<string, unknown>> {
   const adapter = getActiveAdapter();
-  const ns = kgNamespace(adapter.grade, adapter.subject);
+  const ns = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
   // 1. Approver-only gate (blocked reads are audited).
   const denied = await denyIfNotAuditReader(ns);

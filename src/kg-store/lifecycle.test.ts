@@ -52,8 +52,8 @@ const contexts = listAvailableContexts();
 // leak across tests. Recreating the store from scratch is the simplest reset.
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
@@ -85,10 +85,10 @@ afterAll(() => {
 
 // Collect a snapshot of what published reads produce for a namespace — this is
 // the oracle every round-trip test compares against.
-async function readPublished(grade: string, subject: string) {
+async function readPublished(workspace: string, grade: string, subject: string) {
   const state = newSessionState();
   return runInSession(state, async () => {
-    const r = await activateContext(grade, subject);
+    const r = await activateContext(workspace, grade, subject);
     if (!r.ok) throw new Error(`activate ${grade}/${subject}: ${r.error}`);
     const adapter = resolveAdapter(grade, subject)!;
     return {
@@ -122,7 +122,7 @@ describe("draft/published lifecycle (memory backend)", () => {
     it(`${label}: default reads resolve to published`, async () => {
       const pointer = await store.readPointer(ns);
       expect(pointer).toEqual({ publishedSlot: "a", draftSlot: null });
-      const snap = await readPublished(ctx.grade, ctx.subject);
+      const snap = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
       expect(snap.units.length).toBeGreaterThan(0);
     });
 
@@ -152,22 +152,22 @@ describe("draft/published lifecycle (memory backend)", () => {
     });
 
     it(`${label}: create → publish → default reads unchanged`, async () => {
-      const before = await readPublished(ctx.grade, ctx.subject);
+      const before = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
       await store.createDraft(ns);
       await store.publishDraft(ns);
       // Pointer flipped, but with an unedited draft, generation must see the
       // same graph — this is the acceptance criterion for the whole step.
       expect(await store.readPointer(ns)).toEqual({ publishedSlot: "b", draftSlot: null });
-      const after = await readPublished(ctx.grade, ctx.subject);
+      const after = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
       expect(after).toEqual(before);
     });
 
     it(`${label}: create → discard → published untouched`, async () => {
-      const before = await readPublished(ctx.grade, ctx.subject);
+      const before = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
       await store.createDraft(ns);
       await store.discardDraft(ns);
       expect(await store.readPointer(ns)).toEqual({ publishedSlot: "a", draftSlot: null });
-      const after = await readPublished(ctx.grade, ctx.subject);
+      const after = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
       expect(after).toEqual(before);
     });
 
@@ -232,7 +232,7 @@ describe("bundle mode is untouched by the lifecycle", () => {
     const state = newSessionState();
     await runInSession(state, async () => {
       const ctx = contexts[0];
-      const r = await activateContext(ctx.grade, ctx.subject);
+      const r = await activateContext(ctx.workspace, ctx.grade, ctx.subject);
       expect(r.ok).toBe(true);
     });
   });

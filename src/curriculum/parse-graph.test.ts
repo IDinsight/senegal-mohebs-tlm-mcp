@@ -40,7 +40,7 @@ const kindCounts = (m: CurriculumModel, kinds: string[]) =>
   Object.fromEntries(kinds.map((k) => [k, m.unitsOfKind(k).length]));
 
 describe("generic parseGraph — maths (new shape)", () => {
-  const m = parseGraph(load("sources/ci/maths/knowledge_graph.json"), MATHS);
+  const m = parseGraph(load("sources/senegal/ci/maths/knowledge_graph.json"), MATHS);
 
   it("classifies the maths spine by metadata.role + label", () => {
     // Canonical LC: all content groupings are `LessonGrouping` → kind "chapter".
@@ -108,7 +108,7 @@ describe("generic parseGraph — maths (new shape)", () => {
 });
 
 describe("generic parseGraph — reading (Scope B — daily sessions)", () => {
-  const m = parseGraph(load("sources/ce1/reading/knowledge_graph.json"), READING);
+  const m = parseGraph(load("sources/senegal/ce1/reading/knowledge_graph.json"), READING);
 
   it("classifies weeks, lessons, expectation leaves", () => {
     expect(m.unitsOfKind("week").length).toBeGreaterThan(0);

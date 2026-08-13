@@ -65,8 +65,8 @@ const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));

@@ -115,15 +115,15 @@ function nsLabel(grade: string, subject: string): { fr: string; en: string } {
 
 // ── Enumerate available namespaces (only those with a published pointer) ──────
 export async function listExportNamespaces(): Promise<
-  Array<{ ns: string; grade: string; subject: string; label: { fr: string; en: string } }>
+  Array<{ ns: string; workspace: string; grade: string; subject: string; label: { fr: string; en: string } }>
 > {
   const store = getKgStore();
-  const out: Array<{ ns: string; grade: string; subject: string; label: { fr: string; en: string } }> = [];
-  for (const { grade, subject } of listAvailableContexts()) {
-    const ns = kgNamespace(grade, subject);
+  const out: Array<{ ns: string; workspace: string; grade: string; subject: string; label: { fr: string; en: string } }> = [];
+  for (const { workspace, grade, subject } of listAvailableContexts()) {
+    const ns = kgNamespace(workspace, grade, subject);
     const pointer = await store.readPointer(ns).catch(() => null);
     if (!pointer) continue; // never seeded → not selectable
-    out.push({ ns, grade, subject, label: nsLabel(grade, subject) });
+    out.push({ ns, workspace, grade, subject, label: nsLabel(grade, subject) });
   }
   return out;
 }
@@ -299,7 +299,7 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
   ];
 
   // Label from the installed context list (so we get the pretty per-subject name).
-  const ctx = listAvailableContexts().find((c) => kgNamespace(c.grade, c.subject) === ns);
+  const ctx = listAvailableContexts().find((c) => kgNamespace(c.workspace, c.grade, c.subject) === ns);
   const label = ctx ? nsLabel(ctx.grade, ctx.subject) : { fr: ns, en: ns };
 
   return {

@@ -7,7 +7,7 @@
  * rather than in state.ts — that keeps those callers from importing the whole
  * state module just to reference the error.
  */
-export type ActiveContext = { grade: string; subject: string };
+export type ActiveContext = { workspace: string; grade: string; subject: string };
 
 export class ContextNotSetError extends Error {
   readonly available: ActiveContext[];

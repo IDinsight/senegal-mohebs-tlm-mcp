@@ -58,8 +58,8 @@ const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
-  for (const { grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(grade, subject), CONFIG.kgFile), "utf8"));
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
@@ -88,7 +88,7 @@ async function withActiveContext<T>(actor: Actor | null, fn: () => Promise<T>): 
   return runInSession(state, async () => {
     if (actor) __setActorForTest(actor);
     else __setActorForTest(null);
-    const r = await activateContext(targetCtx.grade, targetCtx.subject);
+    const r = await activateContext(targetCtx.workspace, targetCtx.grade, targetCtx.subject);
     if (!r.ok) throw new Error(`activate ${targetCtx.grade}/${targetCtx.subject}: ${r.error}`);
     return fn();
   });

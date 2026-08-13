@@ -287,6 +287,11 @@ async function apiGet(path){
 }
 
 // ── Namespaces + selector ────────────────────────────────────────────────────
+// Pretty workspace name from its id slug: "burkina-faso" → "Burkina Faso".
+function wsDisplay(id){
+  return String(id||'').split(/[-_]/).filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ') || String(id||'');
+}
 async function loadNamespaces(){
   try {
     const { namespaces } = await apiGet("/kg/namespaces");
@@ -295,7 +300,21 @@ async function loadNamespaces(){
   if (!NAMESPACES.length){ showFatal(t('empty')); return; }
   const sel = el('kgSelect');
   sel.innerHTML = "";
-  NAMESPACES.forEach(ns => { const o=document.createElement('option'); o.value=ns.ns; o.textContent=L(ns.label); sel.appendChild(o); });
+  // Group graphs by workspace (the tenant that owns them) so two workspaces
+  // sharing a grade/subject stay distinguishable. Native <optgroup> — one
+  // header per workspace, in the order the API returns (workspace, grade, subject).
+  const groups = new Map();
+  NAMESPACES.forEach(ns => {
+    const ws = ns.workspace || '—';
+    if (!groups.has(ws)) groups.set(ws, []);
+    groups.get(ws).push(ns);
+  });
+  groups.forEach((list, ws) => {
+    const og = document.createElement('optgroup');
+    og.label = wsDisplay(ws);
+    list.forEach(ns => { const o=document.createElement('option'); o.value=ns.ns; o.textContent=L(ns.label); og.appendChild(o); });
+    sel.appendChild(og);
+  });
   sel.classList.remove('hidden');
   el('refreshBtn').classList.remove('hidden');
   sel.onchange = () => loadGraph(sel.value);
