@@ -194,6 +194,7 @@ export function buildNigeriaMathsAdapter(grade: string, subject: string): Subjec
     },
 
     detect: detectEnvelope, parse,
+    model: ensure,
 
     listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),

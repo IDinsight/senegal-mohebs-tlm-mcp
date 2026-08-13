@@ -14,7 +14,7 @@
  *   discard_draft    — curator or approver. Two-phase.
  *
  * All four use the active grade/subject via getActiveAdapter() (same
- * convention as list_units, get_curriculum, etc.) — no explicit namespace
+ * convention as list_courses, get_course, etc.) — no explicit namespace
  * arg. authorize() runs inside each underlying function, so denials never
  * leak the diff and never issue tokens.
  */

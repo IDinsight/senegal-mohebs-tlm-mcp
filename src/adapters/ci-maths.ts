@@ -249,6 +249,7 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
     coverageWarnings: ciMathsCoverageWarnings,
 
     detect: detectEnvelope, parse,
+    model: ensure,
 
     listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),

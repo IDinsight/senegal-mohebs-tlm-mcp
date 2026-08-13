@@ -243,6 +243,12 @@ export interface SubjectAdapter {
   detect(raw: unknown): boolean;
   parse(raw: unknown): CurriculumModel;
 
+  // The active CurriculumModel (memoized; published slot in firestore mode, the
+  // on-disk bundle in dev). Generic — it carries the echoed `rawGraph`, so the
+  // tool layer can read raw LC nodes/edges without a subject projection (the
+  // list_courses / get_course generic graph readers use this).
+  model(): CurriculumModel;
+
   // LC → friendly projection. Return shapes are subject-specific.
   listUnits(): unknown[];
   slice(scope: number | string): unknown | null;

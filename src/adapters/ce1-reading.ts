@@ -246,6 +246,7 @@ export function buildCe1ReadingAdapter(grade: string, subject: string): SubjectA
     ],
 
     detect: detectEnvelope, parse,
+    model: ensure,
 
     listUnits: () => listUnitsIn(ensure()),
     slice: (scope) => buildSlice(Number(scope)),

@@ -18,15 +18,14 @@ You do **not** receive raw JSON files. The full CI mathematics curriculum (112 l
 
 > **Tool vocabulary.** The tools use neutral names: `unit` is the **chapter number**, and `deliverable` is `"manual"` (the pupil manual you are writing here). Pass those argument names exactly.
 
-- **`get_generation_context(unit, deliverable="manual")`** — call this **first**. One payload gives you: the chapter's curriculum (see below), the characters already established in earlier chapters (reuse them), a **fresh example-domain suggestion** for variety (so this chapter's objects differ from recent chapters — fruits, then legumes, etc.), terminology guidance, and coverage so far.
-- **`get_curriculum(unit)`** — the chapter slice on its own: the chapter's ordered lessons (each an OS with its `osTexte`), and for each lesson its **learning components** and their **illustrative tasks**, already assembled as the mapping **lesson → component(s) → task(s)**. It also marks which lesson is the **bilan** and gives cross-chapter progression. Use this mapping directly — you need at least one activity per non-bilan lesson (ideally two), so keep track of which lesson each component and task belongs to.
+- **`get_generation_context(unit, deliverable="manual")`** — call this **first**. One payload gives you the chapter's **`curriculum`** — the chapter's ordered lessons (each an OS with its `osTexte`), and for each lesson its **learning components** and their **illustrative tasks**, already assembled as the mapping **lesson → component(s) → task(s)**, with the **bilan** lesson marked and cross-chapter progression. It also gives the characters already established in earlier chapters (reuse them), a **fresh example-domain suggestion** for variety (so this chapter's objects differ from recent chapters — fruits, then legumes, etc.), terminology guidance, and coverage so far. Use the `curriculum` mapping directly — you need at least one activity per non-bilan lesson (ideally two), so keep track of which lesson each component and task belongs to.
 - **`get_terminology(query)`** — look up the official French/Wolof wording for a term. Use it whenever you need the exact mathematical vocabulary; **take only the French wording — never the Wolof** (chapters are French only). If it returns nothing, say the wording is missing rather than invent it.
-- **`list_units`** — the list of chapters (numbering may skip; produce only chapters that exist).
+- **`list_courses`** / **`get_course(course)`** — raw graph access if you need it: `list_courses` lists the subject's `Course` nodes; `get_course` returns a course's node subtree (chapters/lessons/components/tasks as raw Learning-Commons nodes). `get_generation_context` already assembles what you need for a chapter, so reach for these only to inspect the graph directly.
 - **`log_generation(unit, deliverable="manual", relPath, content)`** — after the chapter `.docx` is finished, record what you produced (characters used, example domain used, concepts covered) so future chapters stay consistent and varied.
 
 ### How to build a chapter's content
 
-1. Call `get_generation_context(unit=N, deliverable="manual")` (or at minimum `get_curriculum(unit=N)`).
+1. Call `get_generation_context(unit=N, deliverable="manual")`.
 2. Use the returned **lesson → component(s) → task(s)** mapping to plan activities — ideally two per non-bilan lesson (at least one).
 3. Reuse the **established characters** from the context, and adopt the **suggested example domain** for this chapter's objects.
 4. Pull exact vocabulary with `get_terminology` as needed.
@@ -276,7 +275,7 @@ MCQ questions on the opening scene that, together, cover **all the chapter's lea
 
 **Pass 1 (build):**
 - [ ] Full chapter written with all sections and activities
-- [ ] Every OS text and component taken from the tools (`get_curriculum` / `get_generation_context`), not from memory
+- [ ] Every OS text and component taken from the tools (`get_generation_context`), not from memory
 - [ ] Vocabulary faithful to the curriculum: OS wording and key mathematical terms mirror `osTexte` and `get_terminology` exactly in the title / "Je retiens" / metadata — not paraphrased or synonym-substituted (child-facing stems may be simplified per principle #7)
 - [ ] French only — no Wolof words anywhere in the chapter (only the French side of `get_terminology` was used)
 - [ ] **Every activity is answerable by LOOKING at its own image alone** — no activity requires recalling the amorce or another page

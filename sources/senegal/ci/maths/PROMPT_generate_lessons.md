@@ -51,12 +51,11 @@ You query the curriculum through **MCP tools** rather than parsing a file.
 > **Tool vocabulary.** The tools use neutral names: `unit` is the **chapter number**, and `deliverable` is `"lessons"` (the teacher guide you are writing here). Pass those argument names exactly.
 
 - **`get_generation_context(unit, deliverable="lessons")`** — call this **first**. In one payload it
-  returns the chapter's curriculum, the **pupil manual already tracked for this chapter** (the
-  document your lessons build on), the characters established across the book, and terminology
+  returns the chapter's **`curriculum`** — the chapter's lessons as **OS** items ordered by
+  `leconNum`, each with its **components** and their **tasks**, with the **bilan** lesson marked and
+  cross-chapter progression included — plus the **pupil manual already tracked for this chapter**
+  (the document your lessons build on), the characters established across the book, and terminology
   guidance.
-- **`get_curriculum(unit)`** — the chapter slice on its own: the chapter's lessons as **OS**
-  items ordered by `leconNum`, each with its **components** and their **tasks**, with the
-  **bilan** lesson marked and cross-chapter progression included.
 - **`get_terminology(query)`** — the official French/Wolof wording for a term (ensemble,
   appartient à, dizaine…). Use it for the key vocabulary; if it returns nothing, say the wording
   is missing rather than invent it.

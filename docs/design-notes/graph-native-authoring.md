@@ -12,7 +12,7 @@
 > sessions were later nested under **`Jour 1–5` day `LessonGrouping`s**
 > (`scripts/migrate-reading-day-groupings.mjs`; ce1/reading now **1968 nodes / 2244 edges**).
 > The read projection is a per-week session
-> list and the generation prompt reads it from `get_curriculum` instead of a hardcoded
+> list and the generation prompt reads it from `get_generation_context` instead of a hardcoded
 > table. **Scope B merged** (PR #34), re-seeded, and deployed to Cloud Run.
 > **Scope C** (activities & materials *inside* a lesson) is **in progress** — Increment 1
 > (reading's scoped recipe surface + per-recipe availability) merged (PR #36); Increment 2
@@ -316,7 +316,7 @@ optional. End state: both subjects share the same content-layer shape.
 >    No per-day grouping layer.
 > 3. *Prompt scope* — sessions + alignment move into the graph; the pedagogy (phase
 >    spines, density floor, bilingual conventions, formatting) stays in the prompt. The
->    prompt now reads `sessions` from `get_curriculum` and produces exactly those.
+>    prompt now reads `sessions` from `get_generation_context` and produces exactly those.
 >
 > **Outcome:** 462 session Lessons (22 × 21 guide weeks), 441 `supports` alignments,
 > 0 unresolved. Read projection replaced `languageToolStandards` with a `sessions`
@@ -333,7 +333,7 @@ graph-native; Scope A surfaces only the 6 language-tool objectives.
 
 **Goal.** Move the sessions into the graph as content `Lesson` nodes (one per
 session) so the graph is the single source of truth, and rewrite the prompt to read
-sessions from `get_curriculum` instead of hardcoding them.
+sessions from `get_generation_context` instead of hardcoding them.
 
 **This is deliberately NOT byte-identical** (unlike Scope A / the maths split): it
 **changes reading's read projection** (from `languageToolStandards` to a per-week
@@ -350,7 +350,7 @@ remediation); it `hasEducationalAlignment`s the standard it teaches where one ex
 > and the sessions hang under their day (`week → day → session`;
 > `scripts/migrate-reading-day-groupings.mjs`). The read projection is unchanged —
 > `buildSlice` gathers sessions across the days and sorts by `session_order` — so the
-> golden gate stayed green; `get_curriculum`'s session list is still flat (each session
+> golden gate stayed green; `get_generation_context`'s session list is still flat (each session
 > carries its `jour`).
 
 **It's an authoring/extraction task, not a mechanical migration.** The session
@@ -367,7 +367,7 @@ teachable sessions vs. deeper scaffolding.
 sessions; (2) session node schema in the existing convention (day/language/duration/type
 as raw metadata + normalized order; `timeRequired`/`educational_use`); (3) day as a Lesson
 attribute vs. a nested per-day grouping; (4) the new `buildSlice` session shape; (5) how
-much of the prompt's table moves to `get_curriculum` (the riskiest part — the guide is
+much of the prompt's table moves to `get_generation_context` (the riskiest part — the guide is
 finely tuned); (6) integration/evaluation weeks (9/17/24/25).
 
 **Method:** same pattern — deterministic authoring script; a golden gate **regenerated to
