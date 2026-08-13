@@ -47,7 +47,7 @@ describe("kg-export — LC ontology (maths)", () => {
   it("categorizes nodes by LC label; taxonomy lists the present labels in order", async () => {
     const g = (await exportNamespace(mathsNs))!;
     expect(g).toBeTruthy();
-    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, Course: 2, LessonGrouping: 25, Lesson: 112, Activity: 322, LearningComponent: 80 });
+    expect(g.meta.counts.byKind).toMatchObject({ StandardsFramework: 1, Course: 2, LessonGrouping: 25, Lesson: 137, Activity: 322, LearningComponent: 80 });
     expect(g.meta.counts.byKind.StandardsFrameworkItem).toBeGreaterThan(0);
     expect(g.meta.counts.byKind.Curriculum).toBeUndefined(); // canonical: relabeled to Activity/LessonGrouping
     expect(g.meta.counts.byKind.Course).toBe(2);             // two content roots: "Outil de l'élève" (student) + "Guide de l'enseignant" (teacher)

@@ -160,14 +160,31 @@
         "chapitreNum": 1,
         "chapitreTitre": "Les ensembles",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "3e7345fa-39da-5a10-bf8b-4a066c488c6f",
+            "leconNum": 1,
+            "osTexte": "Les ensembles",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
         "buildsTowards": [],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les ensembles"
+        }
+      ]
     },
     {
       "num": 2,
@@ -175,7 +192,19 @@
         "chapitreNum": 2,
         "chapitreTitre": "Je me repère avec mon corps",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "96f24bd8-d8b3-5db3-a33f-ebf9cb4f9eda",
+            "leconNum": 1,
+            "osTexte": "Je me repère avec mon corps",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -184,7 +213,12 @@
         ],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Je me repère avec mon corps"
+        }
+      ]
     },
     {
       "num": 3,
@@ -192,7 +226,19 @@
         "chapitreNum": 3,
         "chapitreTitre": "J'estime et je compare des longueurs et des tailles",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "33b5dc56-cb10-537b-bc26-2a3797f3ca48",
+            "leconNum": 1,
+            "osTexte": "J'estime et je compare des longueurs et des tailles",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -201,7 +247,12 @@
         ],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "J'estime et je compare des longueurs et des tailles"
+        }
+      ]
     },
     {
       "num": 4,
@@ -209,7 +260,19 @@
         "chapitreNum": 4,
         "chapitreTitre": "Je lis les images",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "b1e3f169-3e0a-5b6d-9269-40040f35c346",
+            "leconNum": 1,
+            "osTexte": "Je lis les images",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -218,7 +281,12 @@
         ],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Je lis les images"
+        }
+      ]
     },
     {
       "num": 5,
@@ -226,14 +294,31 @@
         "chapitreNum": 5,
         "chapitreTitre": "Je compare des ensembles et des sous-ensembles",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "b7ed6443-6ac1-5bee-b6d1-e5ab30e9cbec",
+            "leconNum": 1,
+            "osTexte": "Je compare des ensembles et des sous-ensembles",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
         "buildsTowards": [],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Je compare des ensembles et des sous-ensembles"
+        }
+      ]
     },
     {
       "num": 6,
@@ -241,7 +326,19 @@
         "chapitreNum": 6,
         "chapitreTitre": "Se situer et situer des objets dans un espace réel ou représenté",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "d7758a17-317a-574a-9a27-f539f264e64b",
+            "leconNum": 1,
+            "osTexte": "Se situer et situer des objets dans un espace réel ou représenté",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -252,7 +349,12 @@
           2
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Se situer et situer des objets dans un espace réel ou représenté"
+        }
+      ]
     },
     {
       "num": 7,
@@ -260,7 +362,19 @@
         "chapitreNum": 7,
         "chapitreTitre": "Estimer et comparer des distances",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "dafe3def-e1ce-57b1-a786-a6c01bf3d7cb",
+            "leconNum": 1,
+            "osTexte": "Estimer et comparer des distances",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -269,7 +383,12 @@
           3
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Estimer et comparer des distances"
+        }
+      ]
     },
     {
       "num": 8,
@@ -277,7 +396,19 @@
         "chapitreNum": 8,
         "chapitreTitre": "J'applique les règles logiques",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "5e781aaa-d3e5-589c-bc56-18b3ae8681b2",
+            "leconNum": 1,
+            "osTexte": "J'applique les règles logiques",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -288,7 +419,12 @@
           4
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "J'applique les règles logiques"
+        }
+      ]
     },
     {
       "num": 9,
@@ -296,7 +432,19 @@
         "chapitreNum": 9,
         "chapitreTitre": "Les nombres de 0 à 9",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "3e187973-86fc-594c-ba4c-60ec69ed88d4",
+            "leconNum": 1,
+            "osTexte": "Les nombres de 0 à 9",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -305,7 +453,12 @@
         ],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les nombres de 0 à 9"
+        }
+      ]
     },
     {
       "num": 10,
@@ -313,7 +466,19 @@
         "chapitreNum": 10,
         "chapitreTitre": "Les solides familiers",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "19269c6d-6a67-5acf-9470-0c713647ef1d",
+            "leconNum": 1,
+            "osTexte": "Les solides familiers",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -322,7 +487,12 @@
         ],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les solides familiers"
+        }
+      ]
     },
     {
       "num": 11,
@@ -330,7 +500,19 @@
         "chapitreNum": 11,
         "chapitreTitre": "Estimer et comparer des masses et des capacités",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "78b3c14c-215c-5740-8dba-114bc8b03035",
+            "leconNum": 1,
+            "osTexte": "Estimer et comparer des masses et des capacités",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -339,7 +521,12 @@
         ],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Estimer et comparer des masses et des capacités"
+        }
+      ]
     },
     {
       "num": 12,
@@ -347,7 +534,19 @@
         "chapitreNum": 12,
         "chapitreTitre": "Reconnaître un problème mathématique",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "c9951df5-f1ca-5f5e-bb34-7caf0582774e",
+            "leconNum": 1,
+            "osTexte": "Reconnaître un problème mathématique",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -358,7 +557,12 @@
           8
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Reconnaître un problème mathématique"
+        }
+      ]
     },
     {
       "num": 13,
@@ -366,7 +570,19 @@
         "chapitreNum": 13,
         "chapitreTitre": "Le nombre 10 et la dizaine",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "3f2386c3-ede2-5d43-9f6b-c8a2f90059d4",
+            "leconNum": 1,
+            "osTexte": "Le nombre 10 et la dizaine",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -377,7 +593,12 @@
           9
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Le nombre 10 et la dizaine"
+        }
+      ]
     },
     {
       "num": 15,
@@ -385,7 +606,19 @@
         "chapitreNum": 15,
         "chapitreTitre": "Estimer et comparer des durées",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "3ab3e3a0-fee3-597c-a7c3-0d378a8e7359",
+            "leconNum": 1,
+            "osTexte": "Estimer et comparer des durées",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -396,7 +629,12 @@
           11
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Estimer et comparer des durées"
+        }
+      ]
     },
     {
       "num": 16,
@@ -404,7 +642,19 @@
         "chapitreNum": 16,
         "chapitreTitre": "Identifier les données et les questions d'un problème",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "9c52a03b-77f8-51c9-ab44-4b61fb777d87",
+            "leconNum": 1,
+            "osTexte": "Identifier les données et les questions d'un problème",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -415,7 +665,12 @@
           12
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Identifier les données et les questions d'un problème"
+        }
+      ]
     },
     {
       "num": 17,
@@ -423,7 +678,19 @@
         "chapitreNum": 17,
         "chapitreTitre": "La soustraction, le double et la moitié",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "3a5467d7-d0dd-59c8-882f-d1a736420f7d",
+            "leconNum": 1,
+            "osTexte": "La soustraction, le double et la moitié",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -432,7 +699,12 @@
         ],
         "buildsFrom": []
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "La soustraction, le double et la moitié"
+        }
+      ]
     },
     {
       "num": 18,
@@ -440,7 +712,19 @@
         "chapitreNum": 18,
         "chapitreTitre": "Les figures planes",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "68100845-467d-5069-928a-233dd4d848d1",
+            "leconNum": 1,
+            "osTexte": "Les figures planes",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -449,7 +733,12 @@
           10
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les figures planes"
+        }
+      ]
     },
     {
       "num": 19,
@@ -457,7 +746,19 @@
         "chapitreNum": 19,
         "chapitreTitre": "Estimer et comparer des durées (approfondissement)",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "28e7ff4a-0c6f-5e26-a613-d9f2f7d19795",
+            "leconNum": 1,
+            "osTexte": "Estimer et comparer des durées (approfondissement)",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -468,7 +769,12 @@
           15
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Estimer et comparer des durées (approfondissement)"
+        }
+      ]
     },
     {
       "num": 20,
@@ -476,7 +782,19 @@
         "chapitreNum": 20,
         "chapitreTitre": "Trouver les données utiles et inutiles",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "4bd4c7ca-3e52-5434-895d-4a6e4bc14834",
+            "leconNum": 1,
+            "osTexte": "Trouver les données utiles et inutiles",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -487,7 +805,12 @@
           16
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Trouver les données utiles et inutiles"
+        }
+      ]
     },
     {
       "num": 21,
@@ -495,7 +818,19 @@
         "chapitreNum": 21,
         "chapitreTitre": "Les nombres de 11 à 20",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "6bf0c0ca-62ff-52c5-902b-c835c06ee4f7",
+            "leconNum": 1,
+            "osTexte": "Les nombres de 11 à 20",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -506,7 +841,12 @@
           13
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les nombres de 11 à 20"
+        }
+      ]
     },
     {
       "num": 22,
@@ -514,7 +854,19 @@
         "chapitreNum": 22,
         "chapitreTitre": "Les lignes et le quadrillage",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "24c4a350-808f-5839-b1c9-1484d90e8161",
+            "leconNum": 1,
+            "osTexte": "Les lignes et le quadrillage",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -523,7 +875,12 @@
           6
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les lignes et le quadrillage"
+        }
+      ]
     },
     {
       "num": 23,
@@ -531,7 +888,19 @@
         "chapitreNum": 23,
         "chapitreTitre": "Se repérer dans le temps",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "0250026d-d513-5683-bf76-1576dfeb6b8e",
+            "leconNum": 1,
+            "osTexte": "Se repérer dans le temps",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -540,7 +909,12 @@
           19
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Se repérer dans le temps"
+        }
+      ]
     },
     {
       "num": 24,
@@ -548,7 +922,19 @@
         "chapitreNum": 24,
         "chapitreTitre": "Les questions d'un énoncé mathématique",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "5040d618-492a-5ee8-98af-6a4ff2614ae0",
+            "leconNum": 1,
+            "osTexte": "Les questions d'un énoncé mathématique",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -557,7 +943,12 @@
           20
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les questions d'un énoncé mathématique"
+        }
+      ]
     },
     {
       "num": 25,
@@ -565,7 +956,19 @@
         "chapitreNum": 25,
         "chapitreTitre": "Les nombres de 21 à 39",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "2a3d7a6c-a969-571e-a1aa-980cb8fc89ce",
+            "leconNum": 1,
+            "osTexte": "Les nombres de 21 à 39",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -576,7 +979,12 @@
           21
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les nombres de 21 à 39"
+        }
+      ]
     },
     {
       "num": 29,
@@ -584,7 +992,19 @@
         "chapitreNum": 29,
         "chapitreTitre": "Les nombres de 40 à 50",
         "domaine": null,
-        "lessons": [],
+        "lessons": [
+          {
+            "identifier": "3e845fc1-0810-50ed-bd3a-faf3397029a2",
+            "leconNum": 1,
+            "osTexte": "Les nombres de 40 à 50",
+            "statementType": "studentBookLesson",
+            "statementCode": null,
+            "semaine": null,
+            "palier": null,
+            "isBilan": false,
+            "components": []
+          }
+        ],
         "bilanLessonId": null
       },
       "progression": {
@@ -594,7 +1014,12 @@
           17
         ]
       },
-      "requiredCoverage": []
+      "requiredCoverage": [
+        {
+          "leconNum": 1,
+          "osTexte": "Les nombres de 40 à 50"
+        }
+      ]
     }
   ]
 }

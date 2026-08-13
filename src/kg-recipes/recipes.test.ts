@@ -159,22 +159,22 @@ describe("add_node", () => {
 
 describe("move_node + reposition + set_content", () => {
   it("move_node rehomes an activity along hasPart, leaving its alignment (hasEducationalAlignment) axis intact", async () => {
-    // Post two-Course split, the chapter's hasPart children are Activities (2 per
-    // former lesson), not lessons. Moving one between chapters must leave its
-    // alignment edge (Activity→expectation) untouched.
+    // Canonical nesting: chapter ▸ Lesson ▸ Activity. Move an activity between two
+    // chapters' Student's-Book lessons; its alignment edge (Activity→expectation)
+    // must survive.
     const published = await readPublished();
     const m = modelOf(published);
-    const chapters = m.unitsOfKind("chapter").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    const from = chapters[0], to = chapters[1];
-    const activity = m.childrenOf(from.id).find((c) => c.kind === "task")!;
+    const lessons = m.unitsOfKind("lesson").filter((l) => m.childrenOf(l.id).some((c) => c.kind === "task"));
+    const fromL = lessons[0], toL = lessons[1];
+    const activity = m.childrenOf(fromL.id).find((c) => c.kind === "task")!;
     const alignEdges = published.edges.filter((e) => e.type === "hasEducationalAlignment" && e.from === activity.id).map((e) => e.id);
     expect(alignEdges.length).toBeGreaterThan(0);
 
-    const { confirm } = await runRecipe(moveNode, { namespace: ns, nodeId: activity.id, toParentId: to.id });
+    const { confirm } = await runRecipe(moveNode, { namespace: ns, nodeId: activity.id, toParentId: toL.id });
     expect(confirm?.phase).toBe("apply");
     const draft = (await readDraft())!;
-    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, to.id, activity.id))).toBe(true);
-    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, from.id, activity.id))).toBe(false);
+    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, toL.id, activity.id))).toBe(true);
+    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, fromL.id, activity.id))).toBe(false);
     for (const id of alignEdges) expect(draft.edges.some((e) => e.id === id)).toBe(true); // alignment axis untouched
   });
 
