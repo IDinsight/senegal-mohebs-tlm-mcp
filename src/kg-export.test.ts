@@ -90,6 +90,41 @@ describe("kg-export — LC ontology (maths)", () => {
     expect(components.every((c) => hasChildTargets.has(c.id))).toBe(true);
   });
 
+  it("the components view flows LC → item → framework (reversed hasChild tree)", async () => {
+    const g = (await exportNamespace(mathsNs))!;
+    const view = g.meta.viewConfig.views.find((v) => v.id === "components") as any;
+    expect(view.shape).toBe("label-tree");
+    expect(view.params).toMatchObject({ reverse: true, rootKinds: ["LearningComponent"], expandEdge: "hasChild" });
+
+    // Reproduce the client's reversed label-tree walk: among included labels, each
+    // hasChild edge target parents its source, so a LearningComponent heads its own
+    // branch and we walk OUT to the framework.
+    const inc = new Set(view.params.includeLabels as string[]);
+    const byId = new Map(g.nodes.map((n) => [n.id, n]));
+    const isInc = (id: string) => inc.has(byId.get(id)?.label ?? "");
+    const childrenOf = new Map<string, string[]>();
+    for (const e of g.edges) {
+      if (e.r !== "hasChild" || !isInc(e.s) || !isInc(e.t)) continue;
+      (childrenOf.get(e.t) ?? childrenOf.set(e.t, []).get(e.t)!).push(e.s); // reversed: target parents source
+    }
+    const components = g.nodes.filter((n) => n.label === "LearningComponent");
+    expect(components.length).toBeGreaterThan(0);
+    // Every component reaches a StandardsFramework by walking outward from itself.
+    const reachesFramework = (start: string) => {
+      const seen = new Set<string>();
+      const stack = [start];
+      while (stack.length) {
+        const id = stack.pop()!;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        if (byId.get(id)?.label === "StandardsFramework") return true;
+        for (const c of childrenOf.get(id) ?? []) stack.push(c);
+      }
+      return false;
+    };
+    expect(components.every((c) => reachesFramework(c.id))).toBe(true);
+  });
+
   it("display edges carry the real relation (honest badge); illustrative tasks nest under their component", async () => {
     const g = (await exportNamespace(mathsNs))!;
     // Every edge has a traversal type AND a real type for the badge.

@@ -85,9 +85,12 @@ export type ViewSpec =
   // components (excluded here) and would otherwise float up as orphan roots.
   // `pruneToLabel` hides any branch with no descendant of that label (so the
   // Learning-components view shows only decomposed standards).
+  // `reverse` walks `expandEdge` bottom-up (target→source), so the tree flows from
+  // the leaf outward — the Learning-components view reads LearningComponent →
+  // (supports) → framework item → framework, not the framework down.
   | {
       id: string; label: { fr: string; en: string }; shape: "label-tree";
-      params: { includeLabels: string[]; expandEdge: string; rootKinds?: string[]; pruneToLabel?: string };
+      params: { includeLabels: string[]; expandEdge: string; rootKinds?: string[]; pruneToLabel?: string; reverse?: boolean };
     }
   // Learning progression: prereq → successor chains over one edge type. Roots are
   // nodes with an outgoing `edge` and no incoming one (chain starts).
@@ -273,8 +276,8 @@ function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
 //      LearningComponents (supports, folded) and the curriculum content (hasPart /
 //      hasEducationalAlignment, folded) all nest in with honest rel badges. The
 //      other tabs below are focused lenses over the same graph.
-//   2. LEARNING COMPONENTS — each standard with its LearningComponents nested
-//      (supports, folded standard→component); branches with no component pruned.
+//   2. LEARNING COMPONENTS — flows outward from each LearningComponent: LC →
+//      (supports) framework item → framework, reversing the folded hasChild tree.
 //   3. CURRICULUM     — the content layer Course → LessonGrouping → Lesson →
 //      Activity → Material (hasPart), anchored on the top content nodes.
 //   4. LEARNING PROGRESSION — prereq → successor chains over buildsTowards
@@ -300,7 +303,12 @@ function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig
   if (has("LearningComponent")) {
     views.push({
       id: "components", label: { fr: "Composants d'apprentissage", en: "Learning components" }, shape: "label-tree",
-      params: { includeLabels: [...STANDARDS_LABELS, "LearningComponent"], expandEdge: "hasChild", rootKinds: STANDARDS_LABELS, pruneToLabel: "LearningComponent" },
+      // Flows FROM the LearningComponent outward: LC → (supports) → framework item →
+      // framework. We reverse the same hasChild tree (which already folds `supports`
+      // reversed), so each component heads its own branch up to the framework root.
+      // Roots are the LearningComponents only (rootKinds), so a framework item with
+      // no supporting component never floats up as an orphan root.
+      params: { includeLabels: [...STANDARDS_LABELS, "LearningComponent"], expandEdge: "hasChild", rootKinds: ["LearningComponent"], reverse: true },
     });
   }
   if (CONTENT_LABELS.some(has)) {
