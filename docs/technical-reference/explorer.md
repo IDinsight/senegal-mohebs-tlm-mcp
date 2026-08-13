@@ -41,6 +41,13 @@ require a valid Supabase Bearer JWT — the same trust channel as `/mcp`. The st
 small `supabase-js` email/password login (mirroring `/oauth/consent`) and sends the token. In
 `ALLOW_UNAUTHENTICATED=1` (local only) the routes are open.
 
+**Public explorer** (`KG_EXPLORER_PUBLIC=1`). Opens the read-only explorer to anyone: the `/kg`
+read routes stop requiring a JWT and `/kg/config` reports `authRequired:false`, so the static
+page skips its login gate. Affects **only** the `/kg` read surface — `/mcp` stays JWT-gated. This
+exposes every seeded namespace's published graph to anyone with the URL (CORS does not restrict
+non-browser clients), so set it only when public read access is intended. Unset (the default)
+keeps the explorer login-gated.
+
 **CORS.** Allow-listed to the Firebase Hosting origin(s); override with `KG_ALLOWED_ORIGINS`
 (comma-separated). `localhost`/`127.0.0.1` are always allowed for local dev. The deployed page
 does not actually need CORS — Firebase Hosting **rewrites** `/kg/**` → the Cloud Run service
