@@ -193,13 +193,12 @@ its own page):
     `STEP — Name  (N minutes)`.
   - **Body row** — white background, prose paragraphs ≈ 11 pt (one short paragraph per idea).
 
-**Fixed step order, names and timings** (identical every time):
-1. `JE FAIS — Déclencheur  (4 minutes)`
-2. `JE FAIS — Modelage  (8 minutes)`  — **for the Bilan only**, this box is
-   `JE FAIS — Rappel / Modelage  (8 minutes)`
-3. `NOUS FAISONS  (8 minutes)`
-4. `TU FAIS  (10 minutes)`
-5. `NOUS FAISONS — Objectivation  (5 minutes)`
+**Step order, names and timings — from the routine.** The five step boxes, their order, names
+and timings come from the **"Fiche de leçon — enseignement explicite" `InstructionalRoutine`**
+(read via `get_course`): its five ordered step routines ARE the boxes — each step's
+`description` is the box name and its `timeRequired` (e.g. `PT4M` = 4 minutes) the duration.
+Render each header as `STEP — Name  (N minutes)`. (For the Bilan lesson the second box reads
+`JE FAIS — Rappel / Modelage`, per that step's spec.) Do not restate the structure from memory.
 
 **Writing voice and inline conventions** (identical every time):
 - **Third-person narration**: "Le maître présente / pose / lit…", "Les élèves ouvrent /
@@ -217,49 +216,19 @@ its own page):
 
 ---
 
-## Content of each step (what to write in each box)
+## Content of each step — read it from the routine
 
-1. **JE FAIS — Déclencheur (4 minutes)** — launch the lesson.
-   - *Chapter's Lesson 1*: present the opening situation **in words**; have pupils look at
-     the picture **in their manual**; ask a few simple oral warm-up questions; recall prior
-     knowledge; announce the objective.
-   - *Intermediate lessons*: start from a quick example **sketched on the blackboard**;
-     quickly recall the previous lesson; introduce the new notion.
-   - *Last lesson (Bilan)*: explicitly return to the opening situation (in words / manual
-     picture); announce that the lesson is a review of the learning.
-   - End with: `E dit : « Aujourd'hui, nous allons apprendre à… »`
+**What to write in each box is the step's authored spec — each step routine's `Material.content`
+in the "Fiche de leçon" routine (`get_course`).** Follow it: each step's `Material.content`
+carries that step's teacher-facing spec, including the **lesson-type variants** (first lesson of
+the chapter / intermediate lesson / Bilan) and, for the Bilan, the **question split** across the
+boxes (question 1 modelled in Rappel/Modelage, 2–3 in Nous faisons, the rest in Tu fais). Do not
+restate these specs from memory — the routine is the source.
 
-2. **JE FAIS — Modelage (8 minutes)** — the teacher clearly shows how to do it **on the
-   blackboard**: draw the situation with chalk (closed loops for the ensembles, dots / marks
-   for the objects, arrows or one-to-one links as needed); **think aloud**; show how to
-   choose the correct answer; use the key mathematical words; give an example **and** a
-   counter-example. Only free supports may supplement the board (slates, fingers, or
-   pebbles / cowries pupils already have) — **no purchased props such as real vegetables or
-   baskets**.
-   - Insert lines such as: `E dit : « Je dessine d'abord au tableau… »` /
-     `E dit : « Je choisis cette réponse parce que… »` / `E dit : « La bonne réponse est… »`
-   - Include the **`Je retiens`** cue as specified above (orange bold label, inline).
-
-3. **NOUS FAISONS (8 minutes)** — **guided, collective** practice: name **one specific
-   manual activity** (e.g. "Activité 1"); read the instruction; have pupils think in pairs /
-   on the slate; call a pupil to the board; correct together; have them **justify**; end with
-   `Réponse attendue : …`.
-
-4. **TU FAIS (10 minutes)** — **independent** practice: have pupils open the manual to the
-   target activity (state which, e.g. "Activités 2 et 3" or "questions 4, 5 et 6 du bilan");
-   read the instruction; remind them to write **only the letter** of the correct answer; let
-   them work alone; **circulate** to help **without giving the answer**; end with
-   `Réponse attendue : …`.
-
-5. **NOUS FAISONS — Objectivation (5 minutes)** — consolidate: correct quickly; have one or
-   two pupils explain their answers; return to the key notion; have the rule reworded; end
-   with `E dit : « Aujourd'hui, nous avons appris que… »`.
-
-**Bilan specifics.** In the **Rappel / Modelage** box, model **question 1** aloud (relit the
-options, discard the wrong ones, justify, then choose). Treat **questions 2 and 3** in
-**Nous faisons**. Leave **questions 4, 5 and 6** for **Tu fais**. Show the expected answers
-per box (`Réponses attendues : 2 → … ; 3 → …`, etc.), and recall question 1's answer in the
-Tu fais box.
+Fill each box by combining that step's `Material.content` with **this lesson's** OS, components
+and tasks (`get_standards`) and the mapped pupil-manual activities — and render it in the fixed
+visual style + inline conventions above (the `E dit : « … »` cue, the inline `Je retiens`, the
+`Réponse attendue :` line, blackboard-first supports).
 
 ---
 

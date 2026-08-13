@@ -212,51 +212,37 @@ After these three elements, add **teacher-facing metadata only** (small grey ita
 
 ---
 
-## CHAPTER STRUCTURE
+## CHAPTER STRUCTURE — read it from the routine, don't restate it
 
-### 1. TITRE DU CHAPITRE
-Child-friendly title in French. Optional domain subtitle.
+**The chapter's sections, their order, and each section's spec live in the graph** as the
+**"Manuel de l'élève — structure d'un chapitre" `InstructionalRoutine`** — read it via
+`get_course`. Its ordered step routines ARE the chapter's sections — **Titre → Situation
+d'amorce → Je retiens → Consigne générale → Activités → Bilan** — and **each step's
+`Material.content` is that section's authored spec** (the routine's `summary` carries the
+cross-cutting rules: French only, answer-by-looking, MCQ A/B/C in the image, non-consumable).
+Produce the sections **in that order, each following its `Material.content`.** Do not
+re-derive the structure from memory — the graph is the source.
 
-### 2. SITUATION D'AMORCE
-The amorce is the master scene that sets the art style, characters, palette, and object vocabulary for the chapter. It is also the reference the bilan points back to, so it must show the relevant set(s) clearly, with **small, countable quantities**.
+What follows is only the **scene / image / design detail** the routine's specs don't carry.
+Apply it on top of each section's spec:
 
-**Root the amorce in day-to-day Senegalese life, and avoid classroom scenes as much as possible.** Draw on everyday settings — market, home and compound, village, schoolyard, fields and gardens, river, well, roadside, workshop, mosque forecourt. School topics are welcome and important, but even then favour the **schoolyard, playground or garden** over the **interior of a classroom**; reserve a classroom interior only for the rare objective that genuinely needs it (e.g. a board / ten-frame demonstration) with no natural everyday alternative.  This setting preference carries into the "Je retiens" and activity images too, since they share the amorce's world.
+### Situation d'amorce — scene authoring
+- **Everyday Senegalese life; avoid classroom interiors** — market, home/compound, village, schoolyard, fields/garden, river, well, roadside, workshop. Even school topics favour the schoolyard/garden over a classroom interior; reserve a classroom only when the objective genuinely needs it (a board / ten-frame demo) with no everyday alternative. This setting preference carries into the "Je retiens" and activity images too.
+- Characters: Senegalese names (Awa, Moussa, Binta, Samba, Abdou, Fatou, Ibrahima, Rama…). Objects: mangues, oranges, bananes, tam-tams, pirogues, cordes, paniers, calebasses, ballons, ardoises.
+- Before writing it, review ALL the chapter's components (from `get_standards`) and pick a scene rich enough to inspire every activity image. It is the reference the Bilan points back to, so show the relevant set(s) with **small, countable quantities**.
+- The warm-up questions must be **decidable from the drawn scene and not self-answering** (see SELF-CONTAINED ACTIVITY IMAGES), one idea per question.
 
-Before writing the amorce, review ALL the chapter's components and choose a scene whose characters and objects are rich enough to inspire every activity image.
-
-Requirements:
-- Setting: prefer **everyday Senegalese life** — market, home/compound, village, schoolyard, fields/garden, river, well, roadside, workshop. **Avoid classroom scenes as much as possible**: even for school topics, favour the schoolyard, playground or garden over a classroom interior, and use a classroom only when the objective genuinely requires it with no natural everyday alternative
-- Characters: Senegalese names (Awa, Moussa, Binta, Samba, Abdou, Fatou, Ibrahima, Rama…)
-- Objects: mangues, oranges, bananes, tam-tams, pirogues, cordes, paniers, calebasses, ballons, ardoises
-- Narrative: 2–3 sentences, simple vocabulary
-- Questions orales d'amorce: 3–4 warm-up questions that, taken together, touch on the range of the chapter's learning objectives (not just one lesson), so the opening scene previews what the whole chapter will teach. **Each must be genuinely decidable from the drawn scene and must not be self-answering** (see SELF-CONTAINED ACTIVITY IMAGES → "Questions must be genuinely decidable"). One idea per question.
-
-### 3. JE RETIENS
-Boxed concept summary in first person ("Je…"), 3–5 bullets, key terms bold. Concept image using the same objects/style as the amorce.
-
-### 4. CONSIGNE GÉNÉRALE
-Always: **"Observe bien les images. Écris seulement la lettre de la bonne réponse dans ton cahier."**
-
-### 5. ACTIVITÉS (aim for two per non-bilan lesson; minimum one)
-Each activity targets a specific lesson (OS) of the chapter through its learning component(s) from the KG. Each activity image is an independent, **self-contained** composition in the shared style (see SELF-CONTAINED ACTIVITY IMAGES and IMAGE RELATIONSHIP RULE).
-
-**Lesson coverage (required):** every lesson that belongs to the chapter — i.e. every OS lesson except the bilan lesson — must be targeted by at least one activity. Coverage is judged **per lesson, not per component**: several lessons often map to the same learning component (e.g. inclusion, partition and réunion can all share one "comparer des ensembles" component), and each of those lessons still needs its own dedicated activity built around that lesson's specific OS. Count the non-bilan lessons first (the `Lesson` nodes under the chapter's `LessonGrouping` in `get_course`, excluding the one whose `educationalUse` is `Assessment`) and make sure each one has at least one activity; then, wherever the OS supports it, give each lesson a **second** activity (see design rules) before considering the chapter's practice complete.
-
-Design rules:
-- **Answerable by looking, not remembering** (golden rule): the activity's image contains everything needed. Reference-based lessons (inclusion, partition, réunion, compare-to-a-set) use the left/right layout with a drawn stimulus in the left quarter and the three options in a row across the right 3/4; self-contained comparisons use the single-row layout. Both are `21:9`.
-- **No self-answering questions**: inclusion pits a separate candidate against a drawn reference; never "identify this subset that is already inside, is it inside?". One idea per question. (See SELF-CONTAINED ACTIVITY IMAGES.)
+### Activités — image & design detail
+Each activity targets a specific lesson (OS) through its component(s) (from `get_standards`); each image is an independent, **self-contained** composition (see SELF-CONTAINED ACTIVITY IMAGES and IMAGE RELATIONSHIP RULE).
+- **Answerable by looking, not remembering** (golden rule): the image contains everything needed. Reference-based lessons (inclusion, partition, réunion, compare-to-a-set) use the left/right layout (drawn stimulus in the left quarter, three options in a row across the right 3/4); self-contained comparisons use the single-row layout. Both `21:9`.
+- **No self-answering questions**: inclusion pits a separate candidate against a drawn reference; never "identify this subset that is already inside, is it inside?". One idea per question.
 - **CI calibration**: quantities ≤ ~5; the correct option decidable by direct visual matching against the stimulus; distractors are visible misconceptions.
-- Progressive: concrete/simple → abstract/complex.
-- **Aim for two activities per non-bilan lesson** wherever the OS supports it (one per lesson is the hard minimum). The two must be genuinely different — e.g. a simpler/more concrete one and a harder/more abstract one, or two distinct facets of the same OS — never near-duplicates. So the total is typically about twice the number of non-bilan lessons; no lesson may be left without an activity, and don't drop a lesson to a single activity just to shorten the chapter.
-- MCQ only: A / B / C, student writes the letter. **The three choices are shown ONLY in the image** (large A/B/C badges + the objects that make up each choice); they are NOT written out as text in the document.
-- Because the choices live only in the picture, each activity image must make all three options clear and distinguishable on its own.
-- Child-facing stem stays concrete; the mathematical key term appears in the title, "Je retiens" and teacher metadata (fidelity preserved — see PEDAGOGICAL PRINCIPLES #7).
-- Non-consumable: no circling, colouring, or writing in the book.
-- Prior knowledge: can draw on earlier chapters.
-- Distractors: reflect real misconceptions.
+- Progressive: concrete/simple → abstract/complex. Prior knowledge may draw on earlier chapters.
+- MCQ only: A / B / C, student writes the letter. **The three choices are shown ONLY in the image** (large A/B/C badges + the objects making up each choice); never written as text. Each image must make all three options clear on its own.
+- Child-facing stem stays concrete; the mathematical key term appears in the title, "Je retiens" and teacher metadata (see PEDAGOGICAL PRINCIPLES #7).
 
-### 6. BILAN — Retour à la situation d'amorce
-MCQ questions on the opening scene that, together, cover **all the chapter's learning objectives** — every non-bilan lesson's OS is exercised by at least one bilan question. Each question must be decidable from the amorce image alone and must not be self-answering. Typically 5–6, but add more if the chapter has more objectives, so no OS is left out. Teacher answer key. **No image of its own** — it points students back to the amorce image already at the top of the chapter (in words).
+### Bilan — image detail
+**No image of its own** — it points students back (in words) to the amorce image already at the top of the chapter; so the amorce must actually depict what the Bilan asks about.
 
 ---
 
