@@ -91,11 +91,12 @@ Documented so they don't get mistaken for canon:
    prereq`, i.e. the edges were reversed since `hasDependency` is the opposite
    direction of `buildsTowards`). The parser reads it reversed into the same
    `buildsTowards`/`buildsFrom` read model (`parse-graph.ts` `dependencyEdge`).
-4. **Content groupings carry SFI-flavoured fields.** Our chapters and weeks
-   (`LessonGrouping`) carry `statementType`/`normalizedStatementType: "Standard
-   Grouping"`, which are **`StandardsFrameworkItem`** properties, not `LessonGrouping`
-   ones. The parser keys grouping-ness off `normalizedStatementType`, so this is
-   load-bearing but non-canonical placement.
+4. ~~**Content groupings carry SFI-flavoured fields.**~~ **RESOLVED (ci/maths)** —
+   `statementType`/`normalizedStatementType` stripped from the 48 maths content
+   `LessonGrouping`s; grouping-ness is now label-driven (`parse-graph.ts`
+   `GROUPING_LABELS`, `deriveTemplate`) and chapters are keyed off the canonical
+   `groupName`. (CE1 reading's content groupings still carry them — the parser is
+   backward-compatible, so it's a safe follow-up when reading is next re-seeded.)
 5. **Bilan via `educationalUse: "Assessment"` on a `Lesson`** rather than a dedicated
    **`Assessment`** node. `educationalUse` does allow `Assessment` (it's in
    `EducationalUseENUM`), so this is valid-ish, but LC also has a first-class

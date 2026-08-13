@@ -138,13 +138,15 @@ describe("add_node", () => {
     // non-spine node, so it isn't in the parsed model; find it by LC label.
     const root = published.nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
     const groupingId = mintNodeId();
-    const { confirm } = await runRecipe(addNode, { namespace: ns, parentId: root, label: "LessonGrouping", newNodeId: groupingId, title: "Chapitre neuf", properties: { statementType: "Chapitre", groupName: "Chapitre" } });
+    const { confirm } = await runRecipe(addNode, { namespace: ns, parentId: root, label: "LessonGrouping", newNodeId: groupingId, title: "Chapitre neuf", properties: { groupName: "Chapitre" } });
     expect(confirm?.phase).toBe("apply");
 
     const node = (await readDraft())!.nodes.find((n) => n.id === groupingId)!;
     expect(node.labels).toContain("LessonGrouping");
-    expect((node.properties.raw as any).normalizedStatementType).toBe("Standard Grouping");
-    expect(node.properties.title).toBe("Chapitre neuf"); // groupings keep their name in `title`
+    // Grouping-ness is label-driven now — no borrowed SFI `normalizedStatementType`.
+    expect((node.properties.raw as any).normalizedStatementType).toBeUndefined();
+    expect((node.properties.raw as any).groupName).toBe("Chapitre");
+    expect(node.properties.title).toBe("Chapitre neuf"); // parsed as a grouping ⇒ name in `title`
   });
 
   it("blocks a nonexistent parent and a non-SFI alignTo", async () => {
