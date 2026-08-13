@@ -1,9 +1,3 @@
-# Technical reference — senegal-mohebs-tlm-server
-
-The deep operational + design reference. The [README](../README.md) is the short overview; this doc holds the KG store & curator loop, the explorer, generation/storage, and deployment. For the current architecture summary see [CLAUDE.md](../CLAUDE.md).
-
-> **Note (maths↔reading convergence).** Both subjects now share the `{ nodes, relationships }` envelope + LC metadata scheme and parse through one generic `curriculum/parse-graph.ts`. Chapter↔lesson membership is the `hasChild` **edge** — the old denormalized `chapitreNum` join is gone, so move/split rewire the edge and renumber changes only the chapter's own number (no cascade, no drift). The sections below have been updated where it matters, but if any deeper design prose still says "chapitreNum join" / "regime-B", read it as historical — CLAUDE.md is the current source of truth.
-
 ## KG node/edge store
 
 Curriculum + KG data can live in a generic node/edge store on Firestore, so
@@ -49,18 +43,18 @@ These lifecycle functions live on the internal `KgNodeStore` interface — **no 
 
 ### Graph-mutation framework (draft-only apply)
 
-Sits on top of the draft/published split. A **graph mutation** is a pure function over `{nodes, edges}` — e.g. "set property X on node Y", "delete node Z". The framework in [`src/kg-store/mutations.ts`](src/kg-store/mutations.ts) gives every new mutation the same two-phase confirm plumbing for free:
+Sits on top of the draft/published split. A **graph mutation** is a pure function over `{nodes, edges}` — e.g. "set property X on node Y", "delete node Z". The framework in [`src/kg-store/mutations.ts`](../../src/kg-store/mutations.ts) gives every new mutation the same two-phase confirm plumbing for free:
 
 - **preview** (no `confirm`) → runs `validate` (empty seam today; #6 fills it), computes a per-mutation `diff` keyed by stable id, and returns the shared confirmation envelope extended with `diff`, `warnings`, and a `confirmationToken`. Changes NO state.
 - **confirm** (with the `confirmationToken`) → verifies the token matches the mutation + args + base-version + is unused, lazily creates a draft if none exists (byte-for-byte from published), then applies the mutation to the **draft slot only** via `writeSlot`. Published is unaffected — publish is a separate step (#10).
 
-The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(type, from, to)` for edges) — friendly properties like `chapitreNum` live in `properties.raw` and are NEVER used as identity. A stale token (base moved between preview and confirm) or a replayed token is rejected cleanly with no partial apply. See [`docs/design-notes/kg-mutations-framework.md`](design-notes/kg-mutations-framework.md) for the full design note, decisions, and the mutation interface.
+The framework uses only stable ids (LC IRIs for nodes; deterministic `edgeId(type, from, to)` for edges) — friendly properties like `chapitreNum` live in `properties.raw` and are NEVER used as identity. A stale token (base moved between preview and confirm) or a replayed token is rejected cleanly with no partial apply. See [`docs/design-notes/kg-mutations/`](../design-notes/kg-mutations/README.md) for the full design note, decisions, and the mutation interface.
 
 **No user-facing graph edit tool ships in this step.** The framework has exactly one test-only mutation, wired inside `mutations.test.ts` — real edit tools (`upsert_property` / `create_node` / `delete_node` / `link_nodes`) land in #11/#12.
 
 ### Write-safety rules (structural only)
 
-Every graph mutation goes through two shared structural rules in [`src/kg-store/validate.ts`](src/kg-store/validate.ts) before the human review gate. Errors from either rule **block confirmation** — no token is issued, so there's nothing to replay.
+Every graph mutation goes through two shared structural rules in [`src/kg-store/validate.ts`](../../src/kg-store/validate.ts) before the human review gate. Errors from either rule **block confirmation** — no token is issued, so there's nothing to replay.
 
 - **Rule 1 (id-immutable).** A node's id is the LC IRI verbatim (or, for a `create_node`-minted node, a randomUUID); an edge's id is `edgeId(type, from, to)`. Every reference in the graph points at these ids, so a silent rename would orphan everything the reviewer can't easily see in a diff. The rule compares the proposed state to the **currently-published** graph (not just the pre-mutation state) — a removed-since-publish node and an added-since-publish node with matching content are treated as a rename attempt and rejected, whether the pair occurs inside one mutation OR across a delete+create sequence on the same open draft. Legitimate delete-then-create (genuinely different content) passes.
 - **Rule 2 (no-orphan).** After the edit, every edge's `from` and `to` must resolve to a node in the graph. This subsumes "no removed node has surviving edges targeting it." Load-bearing since #12: a plain `delete_node` is REFUSED if any incident edge survives. A `force:true` delete cascades the dependent subtree and all incident edges in one atomic mutation, and Rule 2 re-runs on the *result* to prove the cascade itself left nothing dangling — so even the forced path can't produce a broken graph.
@@ -75,11 +69,11 @@ A mutation may still add its own `validate(base, after, args)` on top of the sha
 
 The integrity layer draws one line, applied consistently:
 
-- **BLOCK (error, no token)** — anything that would leave the graph **referentially broken**: a dangling edge, a reference pointing at a node that won't exist post-edit, a disguised rename (Rule 1). This is corruption a reviewer can't see in a diff, so the machine refuses it outright. These are the shared, subject-agnostic rules in [`validate.ts`](src/kg-store/validate.ts).
+- **BLOCK (error, no token)** — anything that would leave the graph **referentially broken**: a dangling edge, a reference pointing at a node that won't exist post-edit, a disguised rename (Rule 1). This is corruption a reviewer can't see in a diff, so the machine refuses it outright. These are the shared, subject-agnostic rules in [`validate.ts`](../../src/kg-store/validate.ts).
 - **WARN (informational, still confirmable)** — structural **incompleteness that is valid-but-suspect**: a chapter with no lessons, a chapter missing its bilan, a lesson linked to more than one *chapter* (its week parent is a separate axis and expected). A curator may legitimately be mid-edit, so these never block; the approver decides. Warnings ride the dry-run response and `diff_draft`, and are recorded on the publish audit (`warningsAtPublish`) for traceability — but publish proceeds.
 - **CASCADE only on explicit `force`** — never silent, and the dry-run diff shows the full set that will vanish (see `delete_node` below).
 
-**Where the two live.** The BLOCK rules are universal — they know only nodes and edges, never "chapter" or "bilan" — so they sit in the shared `kg-store` layer. The WARN rules are *unit-shaped* — they depend on what a unit IS for a given subject — so they live behind an optional adapter hook, `SubjectAdapter.coverageWarnings(graph)`. Subject-neutral shapes (empty container, a child with two parents) are reusable helpers in [`curriculum/coverage.ts`](src/curriculum/coverage.ts) that any adapter calls with its own kind names; genuinely subject-specific rules (the CI maths bilan; a lesson with more than one *chapter* parent) are written in the CI maths adapter. CE1 reading uses the generic helpers only. Nothing subject-specific leaks into the shared layer.
+**Where the two live.** The BLOCK rules are universal — they know only nodes and edges, never "chapter" or "bilan" — so they sit in the shared `kg-store` layer. The WARN rules are *unit-shaped* — they depend on what a unit IS for a given subject — so they live behind an optional adapter hook, `SubjectAdapter.coverageWarnings(graph)`. Subject-neutral shapes (empty container, a child with two parents) are reusable helpers in [`curriculum/coverage.ts`](../../src/curriculum/coverage.ts) that any adapter calls with its own kind names; genuinely subject-specific rules (the CI maths bilan; a lesson with more than one *chapter* parent) are written in the CI maths adapter. CE1 reading uses the generic helpers only. Nothing subject-specific leaks into the shared layer.
 
 **The reference regime.** Every cross-entity link in the store is an **id-based edge** (`hasChild`, `buildsTowards`) — Rule 2 covers them all. Grouping↔lesson membership is the `hasChild` edge, so renumbering a grouping or moving a lesson is a pure edge/attribute operation with nothing to keep in sync. (CI maths lessons carry a second `hasChild` axis — a `week → lesson` schedule edge alongside the `LessonGrouping → lesson` content edge — so a lesson has two parents by design; the multi-parent coverage rule is scoped to *grouping* parents.)
 
@@ -113,7 +107,7 @@ Two server-side authorization roles gate every graph state change:
 - **`approver`** — superset: everything a curator can, plus publish (promote a draft to published).
 - **No role** — signed-in but no `user_roles` row: can read and generate; cannot mutate. **Unknown actor** — same treatment. Reads and generation are never gated by role.
 
-**Authorization derives ONLY from the verified Supabase identity.** The role is delivered as an `app_role` claim on the Supabase JWT — same trust channel as `sub` / `email`. No tool argument, header, or client-settable field can influence the decision. See [`src/authz.ts`](src/authz.ts) and [`src/actor.ts`](src/actor.ts).
+**Authorization derives ONLY from the verified Supabase identity.** The role is delivered as an `app_role` claim on the Supabase JWT — same trust channel as `sub` / `email`. No tool argument, header, or client-settable field can influence the decision. See [`src/authz.ts`](../../src/authz.ts) and [`src/actor.ts`](../../src/actor.ts).
 
 **Where roles live.** The `public.user_roles` table in Supabase is the source of truth. A **Custom Access Token Hook** (Supabase → Authentication → Hooks) reads it and injects `app_role` into the JWT at token-mint time — zero extra I/O at request time; the MCP just reads the already-verified claim. Setup SQL: [`scripts/supabase-user-roles.sql`](scripts/supabase-user-roles.sql).
 
@@ -121,7 +115,7 @@ Two server-side authorization roles gate every graph state change:
 
 **Separation of duties.** By default an approver may publish a draft they authored edits in (`TLM_ALLOW_SELF_APPROVE` env, default `"1"`). To require a second reviewer, set `TLM_ALLOW_SELF_APPROVE=0` — publish is then denied if any promoted `apply` record was authored by the same approver. **Regardless of the flag**, every `publish` audit record carries `selfAuthored: boolean` so a reviewer can spot self-approval even when permitted.
 
-**Enforcement point.** Role checks live in the MCP server at the Firestore write chokepoint (`runGraphMutation`, `publishDraft`, `discardDraft` in [`src/kg-store/mutations.ts`](src/kg-store/mutations.ts)). Supabase Row Level Security guards direct Postgres access to `user_roles`, but the graph write itself lands in Firestore — RLS doesn't cover that, so the MCP is where enforcement has to be.
+**Enforcement point.** Role checks live in the MCP server at the Firestore write chokepoint (`runGraphMutation`, `publishDraft`, `discardDraft` in [`src/kg-store/mutations.ts`](../../src/kg-store/mutations.ts)). Supabase Row Level Security guards direct Postgres access to `user_roles`, but the graph write itself lands in Firestore — RLS doesn't cover that, so the MCP is where enforcement has to be.
 
 **Denial shape.** A denied mutation returns `phase: "unauthorized"` (distinct from `phase: "blocked"` for validation errors and `phase: "apply" ok:false` for stale-token errors). No confirmation token is issued, no state changes, and a `blocked` audit record is written with `reason` starting `"unauthorized: ..."`.
 
@@ -266,340 +260,3 @@ npm test                                 # includes src/kg-store/parity.test.ts
 ```
 
 Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering doesn't cause false diffs, but the response shape itself must not change. A secondary manual check (regenerating a manual and a lessons deliverable with the flag flipped and confirming the pre-LLM generation context is identical) is documented in the roadmap; the LLM output itself is not byte-stable and is not the parity oracle.
-
-## KG explorer (read-only live viewer)
-
-A hosted static page that lets a CI maths/CE1 reading expert pick a knowledge graph and explore it
-**live** — sourced from Firestore's PUBLISHED slot, not a baked snapshot. It is **read-only**:
-it never writes, never sees drafts, and does not touch the MCP tools or their auth. Editing
-stays in the MCP curator tools. See `docs/design-notes/kg-explorer-findings.md` for the design rationale and
-the data-scope finding.
-
-Two pieces: a read-only **export endpoint** (companion routes on the same Cloud Run service,
-`src/kg-export.ts` + routes in `src/http.ts`) and the **hosted explorer** (`hosting/public/index.html`,
-a fork of the original single-file explorer — same look and interactions, live data).
-
-### Endpoint contract
-
-All routes are additive; the MCP `/mcp` surface is unchanged. Reads resolve to the pointer's
-`publishedSlot` only (a curator's draft never leaks here until they publish).
-
-- `GET /kg/config` — **public**. `{ supabaseUrl, supabaseAnonKey, authRequired }` so the static
-  page can drive its own Supabase login without baking deployment config into the HTML.
-- `GET /kg/namespaces` — **auth-gated**. `{ namespaces: [{ ns, grade, subject, label:{fr,en} }] }`.
-  Lists every installed context that has a published pointer, so a newly seeded KG appears in the
-  selector automatically.
-- `GET /kg?ns=<namespace>` — **auth-gated**. The published **display-JSON** for one namespace:
-
-  ```jsonc
-  {
-    "nodes": [ { "id", "label", "kind", "nt", "st","st_en", "code", "desc","desc_en",
-                 "dom","pal","sem","chapN","chapT", "src","ref","statut", "srcKey", ... } ],
-    "edges": [ { "s", "t", "r", "o" } ],           // r ∈ {hasChild, buildsTowards}; o = sibling order
-    "meta": {
-      "ns", "label", "publishedSlot", "generatedAt",
-      "counts": { "nodes", "edges", "byKind" },
-      "sources": ["RECE","Rwanda P1", ...],        // distinct srcKeys present → source-filter chips
-      "viewConfig": { "views": [ { "id","label","shape","params" } ] }
-    }
-  }
-  ```
-
-**Auth** (decision: Supabase login). When `SUPABASE_URL` is set, `/kg/namespaces` and `/kg`
-require a valid Supabase Bearer JWT — the same trust channel as `/mcp`. The static page runs a
-small `supabase-js` email/password login (mirroring `/oauth/consent`) and sends the token. In
-`ALLOW_UNAUTHENTICATED=1` (local only) the routes are open.
-
-**CORS.** Allow-listed to the Firebase Hosting origin(s); override with `KG_ALLOWED_ORIGINS`
-(comma-separated). `localhost`/`127.0.0.1` are always allowed for local dev. The deployed page
-does not actually need CORS — Firebase Hosting **rewrites** `/kg/**` → the Cloud Run service
-(`firebase.json`), so the browser calls same-origin and Hosting proxies to Cloud Run (the JWT
-passes through). CORS covers direct/local access.
-
-### The raw-LC → display transform
-
-The store holds a NORMALIZED graph (generic `{type, properties:{code,title,text,order,isAssessment,raw}}`)
-in the converged snake_case LC metadata scheme. `toDisplayNode` maps each stored node to the
-explorer's display schema:
-
-| display field | source | display field | source |
-|---|---|---|---|
-| `label` | derived from `kind` | `dom` | domaine node's name, **propagated** to its content-axis descendants server-side |
-| `kind` | store `type` (`domaine`/`chapter`/`week`/`lesson`/`standard`/`component`/`task`) | `pal` | `raw.palier` / `raw.metadata.palier` (weeks) |
-| `code` | `properties.code` (`raw.statementCode`) | `ord` | `properties.order` / `raw.metadata.order` (domaine: canonical index) |
-| `desc`/`desc_en` | `properties.text`/`title` · `raw.description`/`raw.osTexte` · `_en` from `raw.metadata.en.*` | `os`/`os_en` | `raw.osTexte` / `raw.metadata.en.os_texte` |
-| `st`/`st_en` | `raw.statementType` (category) / `raw.metadata.en.statement_type` | `src`/`ref`/`statut` | `raw.source`/`reference`/`statut` |
-| `nt` | `raw.normalizedType` / `raw.normalizedStatementType` / `raw.contentType` | `srcKey` | `raw.sourceKey` |
-| `ex`/`ex_en`, `apt`, `comm` | `raw.examples` / `raw.aptitude_ci` / `raw.commentaire_progression` (`_en` under `raw.metadata.en`) | `strand`,`genre` | `raw.statement_type` (reading standards only), `raw.metadata.genre` (weeks) |
-
-Edges are the stored `hasChild` + `buildsTowards` as `{s,t,r,o}`. Domaine / Semaine / Chapitre are now
-**real nodes** joined by `hasChild` edges (two axes: `domaine → LessonGrouping → lesson` content,
-`week → lesson` schedule; the lesson then `supports` its spine `expectation`/OS) — no client-side
-grouping synthesis; the views walk the actual node hierarchy.
-
-### Data-driven views (`meta.viewConfig`)
-
-The frontend is generic and renders whatever views `meta.viewConfig` declares — no per-namespace
-`if` anywhere. Two view **shapes**:
-
-- `grouped-spine` — anchors on `anchorKind` nodes (optionally bucketed by `groupBy` props; empty
-  `groupBy` = the anchors ARE the roots), then walks the `expandEdge` (`hasChild`) subtree.
-- `node-type` — the generic floor, works for ANY namespace: each node type → its nodes → their
-  outgoing relations.
-
-Both subjects declare the same three tabs: **thematic**, **planification**, **generic**.
-
-- **Thematic** — by the subject's thematic categories. Maths anchors on the real `domaine` node and
-  walks `hasChild` (Domaine → Chapitre → OS → composant → tâche). Reading has no seeded grouping nodes,
-  so it groups standards by their language-tool **strand** (`groupBy: [strand]`, `order` = the six
-  outils de langue) → the standards → their components.
-- **Planification** — `Palier → Semaine → …`: anchor `week`, `groupBy: [palier]`, expand `hasChild`.
-  Reading weeks carry their palier; maths weeks borrow it from a scheduled lesson (derived in
-  `exportNamespace`, see below).
-- **Generic** — `node-type`.
-
-`buildViewConfig` picks the thematic anchor by which kinds are present (`domaine` → maths hierarchy;
-else `standard` → reading strand grouping). The backend is covered by `src/kg-export.test.ts`; the
-static frontend (`hosting/public/index.html`) is data-driven and adapts — **re-verify in-browser after
-`gcloud run deploy` (the /kg endpoint) + `firebase deploy --only hosting`.**
-
-**Explorer post-processing** (`exportNamespace`, display-only — never touches the store): (1) domaine
-**colour** is propagated down the content axis so a whole subtree shares its domaine's colour; (2) a
-maths **week palier** is derived from its scheduled lessons; (3) a **navigable-spine filter** keeps
-only nodes reachable from a root (`week`/`domaine`) via `hasChild`. Reading's parse is now
-spine-scoped (its `postParse` keeps only the six language-tool week-standards + their components), so
-this filter is a no-op there; it still trims maths's few borrowed-framework component/task leftovers
-(pre-existing — the maths parse maps every `LearningComponent`/`Curriculum` node). A safety net that
-de-noises the explorer without a re-seed.
-
-### Adding a new KG
-
-Seed it into Firestore (see [Seed](#seed)). It then appears in the selector automatically. If its
-data has the CI maths-shaped fields it gets the rich views; otherwise it renders via the generic
-`node-type` view — no frontend change. To give a differently-shaped KG its own rich views, extend
-`buildViewConfig` in `src/kg-export.ts` with a new detection + a new view `shape` in the frontend.
-
-### Data-scope finding (what's in the graph)
-
-**The store now holds the FULL Learning-Commons graph** (superseding the earlier spine-only
-design). The seed pipeline still runs each adapter's `parse()`, but `parseGraph` echoes the raw
-graph onto the model (`CurriculumModel.rawGraph`), and `serializeModel` persists EVERY raw node and
-EVERY raw edge verbatim (`ci/maths`: 501 nodes / 877 edges; `ce1/reading`: 1968 / 2244):
-
-- **Spine nodes** (the ones `parse()` keeps — `ci/maths` domaine→chapter→lesson (+aligned
-  expectation)→component, `ce1/reading` week→day(Jour 1–5)→session-lesson→standard→component)
-  carry `spine: true` plus their normalized fields.
-- **Non-spine nodes** (the RECE + six other "Composants dérivés" frame SFIs, their derived
-  `LearningComponent`s, and the illustrative `Activity`s hanging off them) carry `spine: false`
-  and only `properties.raw` — kept purely for faithful re-export.
-- **Edges** keep their real canonical LC type — `hasChild` (standards hierarchy), `hasPart`
-  (content containment), `supports` (component→SFI), `hasEducationalAlignment` (content→SFI),
-  `relatesTo`, `buildsTowards` — with a `seq` recording raw order. In the explorer, both
-  `supports` and `hasEducationalAlignment` fold (reversed) into the display containment tree.
-
-**Reads are unchanged.** Hydration rebuilds the raw envelope (`toRawEnvelope`) and re-runs the same
-`adapter.parse`, so the read model is the identical spine — guarded byte-for-byte by
-`parity:kg-store`. Non-spine nodes are dropped by `parse` at read time exactly as in a bundle read.
-
-**Re-export.** Because the store IS the raw graph, `toRawEnvelope(storedNodes, storedEdges)`
-reproduces the source `knowledge_graph.json` (guarded by `src/curriculum/faithful-reexport.test.ts`)
-— the store can replace the bundle. The explorer surfaces the whole graph: spine categories plus a
-neutral `framework` legend bucket for non-spine nodes and the `supports`/`relatesTo` cross-links.
-See `docs/design-notes/kg-explorer-findings.md` §1 for the original spine-only analysis (superseded).
-
-### Deploy the explorer
-
-```bash
-firebase deploy --only hosting --project senegal-ci-maths    # → https://senegal-ci-maths.web.app
-```
-
-`firebase.json` rewrites `/kg/**` to the `senegal-mohebs-tlm` Cloud Run service (region
-`europe-west1`). Local dev: run the server (`node dist/http.js` with `ALLOW_UNAUTHENTICATED=1`)
-and open the page with `?api=http://localhost:<port>` so it hits the local endpoint directly.
-
-## Bucket layout
-
-```
-gs://<FIREBASE_STORAGE_BUCKET>/
-  _state/<user-id>.json        # per-user active grade/subject (HTTP mode)
-  <grade>/<subject>/
-    documents/
-      chapitre_05/<Manuel …>.docx
-      chapitre_05/<Fiches de leçons …>.docx
-    previews/                    # throwaway preview .docx (draft-resolved); NOT canonical
-      chapitre_05/<Manuel …>.docx
-    history.json
-```
-`previews/` is a **sibling** of `documents/`, never inside it — reconciliation only scans `documents/`, so a preview object can never enter the tracked history (see *Preview generation* below).
-Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within a grade/subject**; the scope is the first integer in the subfolder name, and the active subject's adapter classifies the filename into a deliverable (for CI maths: a file named "Fiches de leçons …" is the lesson-sheets doc, anything else is the manual).
-
-## The generation flow (cross-host, no shared disk)
-
-0. `set_context(grade, subject)` — pick what you're working on. `get_context` lists the installed pairs and the current selection.
-1. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology guidance, coverage, and (for the teacher guide) the manual to build on. `unit` is the scope value (for CI maths, the chapter number) and `deliverable` is a deliverable key (`manual`/`lessons`). For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
-2. Generate the `.docx`.
-3. `create_upload_url(relPath, confirm)` → the server returns a short-lived **signed URL**. Upload the file with an HTTP `PUT` (Content-Type `application/vnd.openxmlformats-officedocument.wordprocessingml.document`). No large payloads go through the MCP channel. **Requires confirmation** — see below.
-4. `log_generation(unit, deliverable, relPath, content, confirm)` — the server reads the uploaded object's md5 from storage and records what you produced. History updated; no local file needed. **Requires confirmation** — see below.
-
-> **Confirmation gate.** The three tools that write outward — `create_upload_url` (gates the upload), `log_generation`, and `record_document_content` — never act without approval, using the strongest gate the client supports:
-> - **Client supports MCP elicitation** → the server asks the **user** directly via an elicitation dialog. This is a hard gate: the agent cannot bypass it (even passing `confirm: true` won't skip it — a declined dialog blocks the action).
-> - **Otherwise** → an agent-mediated two-step: the first call performs no side effect and returns the shared confirmation envelope `{ needsConfirmation: true, action, message }` (`action` states the stakes; `message` tells the agent to re-call with `confirm: true`); the agent asks the user, then re-calls with `confirm: true`.
->
-> Input validation (e.g. unknown deliverable) runs before the gate, so bad calls fail first. All read-only tools are ungated. Note: in a fully headless run (no user, no elicitation) these tools cannot get approval by design — drive them only where a human is reachable.
->
-> **Two lifecycles share only the envelope shape.** Document tools write **live** to the bucket / history — the confirm is the ONLY gate, and the `action` field says "writes NOW … no draft, no undo". Graph mutations (see below) **stage a draft edit** — the same envelope, but the `action` says "STAGES a draft edit … nothing reaches generation until you separately publish". Uniform mechanics; deliberately different stakes.
-
-## Preview generation (draft-resolved, isolated from published)
-
-An expert who has staged a draft edit can generate a **preview** of the teaching material that edit would produce — reading the **draft** instead of published — **without touching published, the canonical documents bucket, or the canonical generation history.** This closes the editing loop: the dry-run (per-mutation diff) and `diff_draft` show the **graph change**; preview shows the **result** — the material that change yields.
-
-- **`preview_generation(unit, deliverable)`** — the draft-resolved analog of `get_generation_context`. It resolves the unit's curriculum from the **draft slot** (the same slot `diff_draft` reads) via the store-bridge and the subject adapter, then runs the adapter's *own* `buildGenerationContext` on that model. Same inputs and same output shape as the published path, but the returned context is **tagged `preview`** and carries the label *"PREVIEW — generated from an unpublished draft, not a published deliverable."* Read-only on the draft — it does **not** mutate the graph.
-- **`create_preview_upload_url(relPath)`** — the preview **output** path. Signs short-lived (10 min) write + read URLs for a throwaway `.docx` under the **segregated `previews/` prefix**. Never the canonical `documents/` bucket, never `log_generation`, never `list_documents`/`reconcile`. `PUT` the generated file to `uploadUrl`, hand the human `downloadUrl`.
-
-**Isolation guarantees** (all covered by `src/server/preview.test.ts`):
-- A preview reflects a staged-but-unpublished edit, while published generation still reflects the old wording.
-- After a preview run, the published slot, the pointer, the canonical bucket, `history.json`, and `log_generation` records are **byte-for-byte unaffected**; the only audit added is a distinct **`preview`** event (never an `apply`/`publish`/real-generation record).
-- Preview output lives under `previews/` — structurally invisible to the tracked document history.
-
-**No draft?** `preview_generation` returns a clear *"no draft to preview"* notice (and no output) rather than silently previewing published — which would be misleading.
-
-**Who?** Same trust tier as `diff_draft`: **curators and approvers** may preview; unknown / no-role callers are blocked (and the denial is audited). It is read-like, so there is no two-phase confirm and no token.
-
-**Scope.** A preview always targets **one unit + one deliverable** — there is no implicit whole-curriculum preview (generation is LLM-driven and costly).
-
-**Deferred.** A draft-vs-published output *comparison* (previewing both for the same scope so the expert sees exactly what changes in the material) is a follow-on — it doubles LLM cost, and the graph-level change is already available via `diff_draft`.
-
-`get_capabilities` advertises this under a `preview` block, so an agent can offer "want to see what this generates before publishing?".
-
-## Ingesting a doc authored elsewhere (e.g. an expert wrote chapter 2)
-
-1. The file is in the bucket (uploaded any way you like), under the grade/subject's `documents/`.
-2. `reconcile` surfaces it as untracked.
-3. `get_document_text(relPath)` returns its plain text (server downloads from the bucket and extracts via mammoth — it never calls an LLM).
-4. Extract the structured content and call `record_document_content(...)` (**requires confirmation** — call with `confirm: true` after the user approves). Tracked from then on.
-
-## Reconciliation
-
-Run on startup (when a context is active) and via the `reconcile` tool: present + md5 matches history → tracked (skipped); new/changed md5 → untracked (needs ingestion); in history but gone from the bucket → dropped; duplicates for one identity → the object matching the tracked md5 wins, else most-recently-updated.
-
-
-## Deployment & hosting
-
-### Production deployment (current state)
-
-The server is **live on Cloud Run**: project `senegal-ci-maths`, region `europe-west1`,
-service `senegal-mohebs-tlm`, capped at one instance.
-
-- **Users connect** via a Claude custom connector pointing at
-  `https://senegal-mohebs-tlm-148764688487.europe-west1.run.app/mcp`. First use runs an
-  OAuth login (Supabase project `senegal-tlm-auth`, IDinsight org) on a consent page this
-  server hosts at `/oauth/consent`.
-- **Accounts** are created in the Supabase dashboard (Authentication → Users → *Create new
-  user*, auto-confirm on). The invite-email flow is **not** supported yet — its link expects
-  a password-setup page that hasn't been built.
-- **A user's grade/subject selection is sticky per person** (persisted at
-  `_state/<user-id>.json` in the bucket) because web clients open a fresh MCP session per
-  tool call.
-- **Merging to `main` does NOT deploy.** CI builds and tests only. To ship an update, from
-  the repo root on `main`:
-
-  ```bash
-  gcloud run deploy senegal-mohebs-tlm --source . --region europe-west1 --project senegal-ci-maths
-  ```
-
-  Existing env vars and public-access settings are preserved. Full runbook incl. first-time
-  setup, Supabase dashboard config, and post-deploy smoke checks: [`DEPLOY.md`](DEPLOY.md).
-
-### Remote (HTTP) mode — central hosting
-
-`npm run start:http` starts a Streamable HTTP server (for e.g. Cloud Run) instead of stdio.
-Each MCP session gets its own active context and caches, so concurrent users can work on
-different grades/subjects without interfering. Stdio mode (`npm start`) is unchanged.
-
-| Env | Meaning |
-|---|---|
-| `PORT` | Listen port (default 8080) |
-| `PUBLIC_URL` | This server's public base URL (required when auth is on) |
-| `SUPABASE_URL` | `https://<ref>.supabase.co` — enables OAuth (Supabase Auth is the authorization server; this server only validates its JWTs) |
-| `ALLOW_UNAUTHENTICATED` | `1` to run without auth — local testing only |
-
-With auth on, unauthenticated calls get a 401 pointing at `/.well-known/oauth-protected-resource`,
-which advertises the Supabase authorization server — MCP clients (e.g. Claude connectors)
-discover the login flow from there. Every tool call is logged with the caller's identity.
-`GET /healthz` is unauthenticated.
-
-#### Per-request actor identity
-
-Every MCP request is bound to a request-scoped `Actor` derived **only** from the
-verified Supabase JWT (`sub`, `email`, `iss`) — see [`src/actor.ts`](src/actor.ts).
-Tool handlers read the caller via `currentActor()` (nested inside the existing
-`runInSession` context); tool arguments, request bodies, and client-settable
-headers are never trusted for identity. Each non-GET request emits one
-structured JSON audit line to stderr — `{ actor, tool, grade, subject, … }` —
-as the seed for the audit store planned in a later phase.
-
-**Defaulted decision — unknown-actor policy.** With `SUPABASE_URL` set the
-bearer middleware 401s any unverified caller before we resolve an actor, so
-`actor.unknown` is only reachable via `ALLOW_UNAUTHENTICATED=1` (local
-testing). In that mode, unknown actors currently proceed since no roles are
-enforced yet. Flip this by editing the `unknown-actor policy` block in
-[`src/http.ts`](src/http.ts) — it is the one place to change.
-
-### Wiring into a host (e.g. Claude Desktop)
-
-```jsonc
-{
-  "mcpServers": {
-    "senegal-mohebs-tlm": {
-      "command": "node",
-      "args": ["/absolute/path/to/dist/index.js"],
-      "env": {
-        "SERVICE_ACCOUNT_KEY_PATH": "/absolute/path/to/serviceAccount.json",
-        "FIREBASE_STORAGE_BUCKET": "your-project.appspot.com",
-        "TLM_SOURCES_DIR": "/absolute/path/to/sources",
-        "TLM_GRADE": "ci",
-        "TLM_SUBJECT": "maths"
-      }
-    }
-  }
-}
-```
-
-`TLM_GRADE`/`TLM_SUBJECT` are optional — omit them and the agent picks a pair with `set_context` at the start of a session.
-
-
-## Architecture
-
-The architecture summary lives in [CLAUDE.md](../CLAUDE.md) — the converged `{ nodes, relationships }` envelope + LC metadata scheme, the one-adapter-per-subject model (`detect`/`parse` + the LC→friendly projection + `buildGenerationContext`, behavior only — no schema on the adapter), and the enforced module layering (imports point **down**; service modules never import `adapters`; the generic `CurriculumModel ⇄ nodes/edges` round-trip lives in `curriculum/store-bridge.ts`). The full design rationale is in [`docs/design-notes/multi-subject-architecture.md`](design-notes/multi-subject-architecture.md). The operational how-to for wiring a new subject follows.
-
-## Adding a new grade/subject
-
-Adding a subject takes its **sources** (data) and an **adapter** (code). If the knowledge-graph shape matches one that's already registered, you can point a new `(grade, subject)` key at that adapter's builder — the registry is many-to-one on purpose.
-
-1. **Drop in the sources** under `sources/<grade>/<subject>/`: `knowledge_graph.json`, `terminology.json`, the generation prompt(s), and optionally `example_domains.json`.
-
-2. **Reuse or write an adapter** (`src/adapters/`):
-   - *Same graph shape as an existing subject* → register the new `(grade, subject)` key against that subject's builder in `src/adapters/index.ts`. That's the many-to-one case.
-   - *Different shape* → add `src/adapters/<subject>.ts` exporting a `buildXxxAdapter(grade, subject): SubjectAdapter`. The adapter carries everything: raw-envelope `detect`/`parse`, the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), the `deliverables` list (`key`, `label`, `scopeKind`, `classify(filename)`, `dependsOn`, `promptFile` — one per document kind), the `capabilities` flags (`exampleDomainRotation`, `characterConsistency`), and `buildGenerationContext(scope, deliverableKey)`. Optional CI maths-style helpers (`suggestFreshDomain`, `domainUsage`) are only added when the subject enables the matching capability.
-
-3. **Register it** in `src/adapters/index.ts` under the `"<grade>/<subject>"` key (in the `REGISTRY` object). Grade × subject: e.g. `"ci/maths"` and `"cp/maths"` may point at the same builder or different ones — that's a per-pair choice, not an assumption.
-
-4. **Build and select it:** `npm run build`, then `set_context("<grade>", "<subject>")`. The guard runs your adapter's `detect()` against the KG; on a mismatch it refuses to activate and says why — nothing is silently mis-parsed.
-
-**No schema.** Adapters carry behavior only. If your subject needs write-safety rules (uniqueness, required properties, edge-type constraints), those will live in the write tools when they land — not on the adapter. The stored `id` for every node/edge is the raw LC IRI, verbatim; friendly properties (`chapitreNum`, `semaine`, `statementCode`) live inside `properties.raw` and must NOT be used as write-target identities.
-
-**Rules the build enforces:** imports point *down* the layers above; **service modules (`storage`/`curriculum`/`generation`/`kg-store`) must not import `adapters`** — pass what they need in as arguments (as `reconcile(deliverables)` and `discoverDocuments(deliverables)` do); cross-module imports go through the module's `index.ts`. `npm run check:cycles` fails the build on any import cycle.
-
-> **CE1 reading** is wired as a worked second subject (scope: one teacher guide **per week**), registered as `ce1/reading` — its adapter parses a `nodes`/`relationships` + `hasChild` graph. See `docs/design-notes/multi-subject-architecture.md` §11 phase 4 for what its KG needed and the open follow-ups (no `terminology.json` yet; evaluation grids pending).
-
-## Testing note
-
-The storage layer sits behind a small `StorageAdapter` interface. The reconcile / history / variety / ingest logic is verified against an in-memory fake (no credentials needed). Unit tests run with `npm test` (Vitest); the example-domain neighborhood/suggestion logic is covered in `src/generation/domains.test.ts`. `npm run build` runs the import-cycle check (`npm run check:cycles`) before `tsc`, so a broken layer boundary fails the build. The **Firebase implementation is compile-checked but not live-tested here** — validating real bucket calls (list, signed URL, download, history read/write) needs your service-account credentials and network access, so do a first run against your own project.
-
-## Assumptions still baked in (tell me to change any)
-
-- One grade/subject is active at a time; switching drops the KG, terminology, and history caches so the next call reloads for the new context.
-- Deliverable classification is per-subject (a profile's `DeliverableSpec.classify`). For CI maths: within a chapter subfolder, anything not "Fiches de leçons …" is the pupil manual.
-- Glossary derives from the KG, with the FR/Wolof file as fallback; characters are derived from what you log/ingest.
-- "Latest" among duplicates is the object whose md5 matches history, else the most recently updated.
-

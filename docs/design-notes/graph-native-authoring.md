@@ -394,7 +394,7 @@ piece — the guide's pedagogical quality is the acceptance bar beyond the tests
 > read projection, alignment default-off) is unchanged — only the *tool surface* generalized.
 > Reading a session's authored content: `add_node` with `label:"Activity"` / `"Material"`
 > (+ `properties.content`) and `set_content`; `buildSlice` surfacing is identical. See the
-> `kg-recipes/` module + `docs/design-notes/kg-mutations-framework.md`.
+> `kg-recipes/` module + `docs/design-notes/kg-mutations/`.
 >
 > **Decisions confirmed:** (1) **grain = phase-grained** — one `Activity` per phase
 > (Étape), its scripted teacher/pupil content stored as that activity's `Material.content`;

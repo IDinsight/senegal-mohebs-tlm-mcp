@@ -42,7 +42,7 @@ Never print or commit the service-account key. (On Cloud Run there is no key pat
    ```
 
 4. **Read the seed output** and confirm both:
-   - **No stale-slot `WARNING`** — if present, the published pointer isn't `a`; reconcile deliberately before trusting the seed (see `docs/technical-reference.md`).
+   - **No stale-slot `WARNING`** — if present, the published pointer isn't `a`; reconcile deliberately before trusting the seed (see `docs/technical-reference/generation-and-storage.md`).
    - **Node/edge counts match the source graph.** The counts should equal the raw `sources/<grade>/<subject>/knowledge_graph.json` totals — the *full* graph, not a spine subset. Current values:
 
      | context | nodes | edges |

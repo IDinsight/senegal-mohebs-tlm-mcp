@@ -4,7 +4,7 @@ An MCP server that gives the Senegalese **MOHEBS** teaching-materials pipeline a
 
 It works on one **grade + subject** at a time (e.g. `ci` / `maths`); you pick the pair with `set_context`. **Sources** (knowledge graph, terminology, prompts) are **local**, read-only inputs you edit in place. Generated `.docx` files and their history live in **Firebase Storage** (the shared source of truth, so the generating agent, the server, and you never need a shared disk). Curriculum data can additionally live in a **Firestore node/edge store** with a draft → review → publish curator loop. Auth is a Supabase JWT.
 
-> **Going deeper:** the full operational manual is [`docs/technical-reference.md`](docs/technical-reference.md); the architecture summary + working conventions are in [`CLAUDE.md`](CLAUDE.md); the production runbook is [`DEPLOY.md`](DEPLOY.md).
+> **Going deeper:** the full operational manual is [`docs/technical-reference/`](docs/technical-reference/); the architecture summary + working conventions are in [`CLAUDE.md`](CLAUDE.md); the production runbook is [`DEPLOY.md`](DEPLOY.md).
 
 ## What lives where
 
@@ -29,7 +29,7 @@ sources/ci/maths/
   example_domains.json          # optional; falls back to a built-in pool
 ```
 
-`get_context` discovers installed pairs by scanning the tree. Dropping in a folder provides the *data*; making the tools work also needs a registered **adapter** (`src/adapters/`, one behavior module per subject) — a folder with no adapter is rejected by `set_context`. See [Adding a grade/subject](docs/technical-reference.md#adding-a-new-gradesubject).
+`get_context` discovers installed pairs by scanning the tree. Dropping in a folder provides the *data*; making the tools work also needs a registered **adapter** (`src/adapters/`, one behavior module per subject) — a folder with no adapter is rejected by `set_context`. See [Adding a grade/subject](docs/technical-reference/architecture-and-extending.md#adding-a-new-gradesubject).
 
 ## Quickstart
 
@@ -43,7 +43,7 @@ npm run start:http     # HTTP MCP server (dist/http.js) — remote / Cloud Run
 
 **Required env:** `SERVICE_ACCOUNT_KEY_PATH` (Firebase service-account JSON) · `FIREBASE_STORAGE_BUCKET`.
 
-**Common optional env:** `TLM_GRADE` / `TLM_SUBJECT` (pre-select a pair at startup) · `TLM_BUCKET_PREFIX` (namespace everything under a prefix) · `TLM_SOURCES_DIR` · `KG_SOURCE` (`bundle` default | `firestore`) · `TLM_DOMAIN_NEIGHBORHOOD_K`. Full list and semantics: [technical reference → Configuration](docs/technical-reference.md).
+**Common optional env:** `TLM_GRADE` / `TLM_SUBJECT` (pre-select a pair at startup) · `TLM_BUCKET_PREFIX` (namespace everything under a prefix) · `TLM_SOURCES_DIR` · `KG_SOURCE` (`bundle` default | `firestore`) · `TLM_DOMAIN_NEIGHBORHOOD_K`. Full list and semantics: [technical reference → Configuration](docs/technical-reference/).
 
 ## Firestore KG store + curator loop (optional)
 
@@ -54,7 +54,7 @@ KG_SOURCE=firestore npm run seed:kg-store       # seed Firestore from sources/
 KG_SOURCE=firestore npm run parity:kg-store     # assert firestore reads == bundle reads
 ```
 
-Full lifecycle, roles, recipes, integrity rules, and audit: [technical reference → KG node/edge store](docs/technical-reference.md#kg-nodeedge-store).
+Full lifecycle, roles, recipes, integrity rules, and audit: [technical reference → KG node/edge store](docs/technical-reference/store.md).
 
 ## The generation flow (in brief)
 
@@ -64,7 +64,7 @@ Full lifecycle, roles, recipes, integrity rules, and audit: [technical reference
 4. `create_upload_url(relPath)` → `PUT` the file to the signed URL (no large payloads through MCP).
 5. `log_generation(unit, deliverable, relPath, content)` — records what you produced (md5 read from storage).
 
-The outward-writing tools (`create_upload_url`, `log_generation`, `record_document_content`) are gated by a confirmation step. Details, preview generation, ingestion, and reconciliation: [technical reference](docs/technical-reference.md#the-generation-flow-cross-host-no-shared-disk).
+The outward-writing tools (`create_upload_url`, `log_generation`, `record_document_content`) are gated by a confirmation step. Details, preview generation, ingestion, and reconciliation: [technical reference](docs/technical-reference/generation-and-storage.md#the-generation-flow-cross-host-no-shared-disk).
 
 ## Tools
 
@@ -76,6 +76,6 @@ The outward-writing tools (`create_upload_url`, `log_generation`, `record_docume
 ## Documentation
 
 - [`CLAUDE.md`](CLAUDE.md) — architecture summary, module layering, conventions (the working guide).
-- [`docs/technical-reference.md`](docs/technical-reference.md) — the full operational manual: KG store & curator loop, integrity/audit, the read-only KG explorer, buckets, generation/preview flow, deployment & hosting.
+- [`docs/technical-reference/`](docs/technical-reference/) — the full operational manual: KG store & curator loop, integrity/audit, the read-only KG explorer, buckets, generation/preview flow, deployment & hosting.
 - [`DEPLOY.md`](DEPLOY.md) — production deployment runbook.
-- Design notes ([`docs/design-notes/`](docs/design-notes/) — the *why* behind each subsystem): [multi-subject architecture](docs/design-notes/multi-subject-architecture.md) · [KG mutations framework](docs/design-notes/kg-mutations-framework.md) · [preview generation](docs/design-notes/preview-generation-findings.md) · [KG explorer findings](docs/design-notes/kg-explorer-findings.md) · [read-audit findings](docs/design-notes/read-audit-findings.md).
+- Design notes ([`docs/design-notes/`](docs/design-notes/) — the *why* behind each subsystem): [multi-subject architecture](docs/design-notes/multi-subject-architecture.md) · [KG mutations framework](docs/design-notes/kg-mutations/) · [preview generation](docs/design-notes/preview-generation-findings.md) · [KG explorer findings](docs/design-notes/kg-explorer-findings.md) · [read-audit findings](docs/design-notes/read-audit-findings.md).
