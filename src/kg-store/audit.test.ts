@@ -58,8 +58,11 @@ const setNodeProperty: GraphMutation<SetPropArgs> = {
 const priorEnv = process.env.KG_SOURCE;
 let store: KgNodeStore;
 const contexts = listAvailableContexts();
-const firstCtx = contexts[0];
-const ns = kgNamespace(firstCtx.grade, firstCtx.subject);
+// Pinned to the senegal workspace: this harness's curator/approver actor
+// holds a role only there (legacy app_role bridge), and its mutations are
+// tuned to that graph. A second workspace (nigeria) must not hijack it.
+const firstCtx = contexts.find((c) => c.workspace === "senegal")!;
+const ns = kgNamespace(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
@@ -67,7 +70,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
-    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
+    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(workspace, grade, subject));
     const meta: StoredMeta = {
       contentHash: "test", seededAt: "1970-01-01T00:00:00Z",
       adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length,
@@ -75,8 +78,8 @@ async function seedFreshStore(): Promise<KgNodeStore> {
     // Seed does not carry an audit — the seed is out of scope for #7 (it's
     // an operator step, not a runtime state change). writeSlot without an
     // audit is legitimate here.
-    await s.writeSlot(kgNamespace(grade, subject), "a", { nodes, edges, meta });
-    await s.ensurePointer(kgNamespace(grade, subject), "a");
+    await s.writeSlot(kgNamespace(workspace, grade, subject), "a", { nodes, edges, meta });
+    await s.ensurePointer(kgNamespace(workspace, grade, subject), "a");
   }
   return s;
 }

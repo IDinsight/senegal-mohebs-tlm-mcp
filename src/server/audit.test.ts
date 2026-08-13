@@ -55,8 +55,11 @@ const priorEnv = process.env.KG_SOURCE;
 let store: KgNodeStore;
 const contexts = listAvailableContexts();
 const targetCtx = contexts.find((c) => c.grade === "ci" && c.subject === "maths")!;
-const otherCtx = contexts.find((c) => !(c.grade === "ci" && c.subject === "maths"));
-const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
+// The "other" namespace stays within senegal: the APPROVER actor holds a role
+// only there (legacy app_role bridge), so a second workspace (nigeria) can't be
+// the cross-context target this scope test reads audit from.
+const otherCtx = contexts.find((c) => c.workspace === "senegal" && !(c.grade === "ci" && c.subject === "maths"));
+const ns = kgNamespace(targetCtx.workspace, targetCtx.grade, targetCtx.subject);
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
@@ -64,13 +67,13 @@ async function seedFreshStore(): Promise<KgNodeStore> {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
-    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
+    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(workspace, grade, subject));
     const meta: StoredMeta = {
       contentHash: "test", seededAt: "1970-01-01T00:00:00Z",
       adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length,
     };
-    await s.writeSlot(kgNamespace(grade, subject), "a", { nodes, edges, meta });
-    await s.ensurePointer(kgNamespace(grade, subject), "a");
+    await s.writeSlot(kgNamespace(workspace, grade, subject), "a", { nodes, edges, meta });
+    await s.ensurePointer(kgNamespace(workspace, grade, subject), "a");
   }
   return s;
 }
@@ -147,7 +150,7 @@ describe("namespace scoping: strict — current context only, no namespace argum
     // Seed one record under the target ns and one under another real ns.
     await store.appendAudit(rec({ id: "in-target", ts: "2026-07-20T00:00:00Z", eventType: "apply", mutation: "m", diff: emptyDiff(), namespace: ns }));
     if (otherCtx) {
-      const otherNs = kgNamespace(otherCtx.grade, otherCtx.subject);
+      const otherNs = kgNamespace(otherCtx.workspace, otherCtx.grade, otherCtx.subject);
       await store.appendAudit(rec({ id: "in-other", ts: "2026-07-20T00:00:00Z", eventType: "apply", mutation: "m", diff: emptyDiff(), namespace: otherNs }));
     }
 
@@ -161,7 +164,7 @@ describe("namespace scoping: strict — current context only, no namespace argum
       const otherIds = (there.records as AuditRecord[]).map((r) => r.id);
       expect(otherIds).toContain("in-other");
       expect(otherIds).not.toContain("in-target");
-      expect(there.namespace).toBe(kgNamespace(otherCtx.grade, otherCtx.subject));
+      expect(there.namespace).toBe(kgNamespace(otherCtx.workspace, otherCtx.grade, otherCtx.subject));
     }
   });
 });
