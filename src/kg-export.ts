@@ -215,7 +215,7 @@ function edgeOrder(e: StoredEdge): number {
 // Context for the fold: which activities illustrate which component (a metadata
 // link — canonical LC has NO Activity↔LearningComponent edge — see CLAUDE.md), and
 // whether a given node id is present.
-type FoldContext = { illustrates: Map<string, { comp: string; order: number }>; has: (id: string) => boolean; labelOf: (id: string) => string | undefined };
+type FoldContext = { illustrates: Map<string, { comp: string; order: number }>; has: (id: string) => boolean };
 
 // One stored edge → its DISPLAY edge(s). The containment tree walks a single
 // TRAVERSAL type (`r: "hasChild"`), so we normalise canonical LC's edges onto it,
@@ -234,15 +234,13 @@ type FoldContext = { illustrates: Map<string, { comp: string; order: number }>; 
 //     illustrates fold already gave it a parent) so it nests under the component
 //     alone instead of also hanging off the frame.
 //   • `usesRoutine` (Course/Lesson/Activity → InstructionalRoutine) folds forward to
-//     the tree ONLY from a Course, so the shared routine nests once under the guide
-//     Course; the identical Lesson→routine edges are dropped from the display (they'd
-//     redraw the whole subtree under all 112 lessons) — the real edges stay in the store.
+//     the tree so the shared routine nests under EVERY node that uses it — the guide
+//     Course and each of its lessons — each showing a collapsed routine child with an
+//     honest `usesRoutine` badge (rel). The real edges are unchanged in the store.
 //   • hasChild / buildsTowards / relatesTo otherwise pass through with their own type.
 function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
   if (e.type === "usesRoutine") {
-    return ctx.labelOf(e.from) === "Course"
-      ? [{ s: e.from, t: e.to, r: "hasChild", rel: "usesRoutine", o: edgeOrder(e) }]
-      : [];
+    return [{ s: e.from, t: e.to, r: "hasChild", rel: "usesRoutine", o: edgeOrder(e) }];
   }
   if (e.type === "supports" || e.type === "hasEducationalAlignment") {
     if (e.type === "hasEducationalAlignment") {
@@ -343,8 +341,7 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
     if (ic?.id) illustrates.set(n.id, { comp: ic.id, order: typeof ic.order === "number" ? ic.order : 0 });
   }
   const nodeIds = new Set(nodes.map((n) => n.id));
-  const labelById = new Map(nodes.map((n) => [n.id, n.label]));
-  let edges = storedEdges.flatMap((e) => toDisplayEdges(e, { illustrates, has: (id) => nodeIds.has(id), labelOf: (id) => labelById.get(id) }));
+  let edges = storedEdges.flatMap((e) => toDisplayEdges(e, { illustrates, has: (id) => nodeIds.has(id) }));
 
   // The store holds the FULL Learning-Commons graph (spine + framework/derived
   // nodes + supports/relatesTo cross-links); the explorer renders all of it as-is.
