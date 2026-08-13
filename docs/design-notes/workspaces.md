@@ -164,19 +164,43 @@ the same `authorize()` it mirrors — no copied policy.
 
 ## Migration (breaking — code + data ship together)
 
-Namespace paths change, so this cannot be a data-only reseed; the deployed code
-must change in lockstep with the reseed (see the rollout note in memory).
+Namespace paths change **in two stores** — the Firestore KG *and* the Storage
+bucket (documents + history are workspace-scoped too, `<ws>/<grade>/<subject>/…`).
+The deployed code must change in lockstep with the reseed. Order is **additive
+first** (new paths alongside old, so the running old server stays up), then
+deploy, then verify, then delete the old paths.
 
 1. **Reorg sources:** `git mv sources/ci sources/senegal/ci`,
    `git mv sources/ce1 sources/senegal/ce1`.
-2. **Seed script** gains the workspace level; reseed under `senegal/ci/maths` and
-   `senegal/ce1/reading` (via the seed-and-deploy skill). Delete the old
-   `ci/maths` / `ce1/reading` namespace docs after verifying the new ones.
-3. **Create the `senegal` workspace** row; migrate existing Supabase `user_roles`
-   → `workspace_members` rows under `senegal` (curator→curator, approver→approver).
-4. **Set `TLM_SUPER_ADMINS`** to the initial super admin (karimou).
-5. **Deploy Cloud Run + reseed together**; verify against the live MCP server, not
-   just `parity --live`.
+2. **Reseed the KG** under `senegal/ci/maths` + `senegal/ce1/reading` (via the
+   seed-and-deploy skill). These are new namespaces, so it's additive — the old
+   `ci/maths` / `ce1/reading` docs are untouched.
+3. **Move the Storage artifacts** — copy the generated `.docx` + `history.json`
+   from the old prefixes to the new (additive; keep old as rollback):
+   `gcloud storage cp -r gs://<bucket>/ci  gs://<bucket>/senegal/` and
+   `…/ce1 …/senegal/`. `_state/` is *not* workspace-scoped and needs no move
+   (legacy 2-field state files default to `senegal` on restore). Skip `previews/`.
+4. **Set `TLM_SUPER_ADMINS`** to the initial super admin (an email or JWT `sub`),
+   passed as a Cloud Run env var.
+5. **Deploy Cloud Run** with the new code + the env var
+   (`--update-env-vars TLM_SUPER_ADMINS=…` merges, preserving existing env).
+6. **Deploy the explorer** (Firebase Hosting) so its selector groups by workspace:
+   `firebase deploy --only hosting`.
+7. **Verify against the live MCP server** (not just `parity --live`): `set_context`
+   into the workspace, `list_units` (KG reads), `list_documents` / `reconcile`
+   (Storage reads), `get_capabilities` (super-admin + workspace echo). Check the
+   explorer selector shows the workspace group.
+8. **Optional — populate the registry:** `create_workspace senegal` +
+   `add_member` for each user, to retire the legacy `app_role` bridge. Until then,
+   existing Supabase-role users keep working in `senegal` via the bridge.
+9. **Cleanup (only after verification):** delete the old KG namespaces
+   (`node scripts/delete-namespace.mjs --confirm`, which leaves `kg_audit`) and the
+   old Storage prefixes (`gcloud storage rm -r gs://<bucket>/ci gs://<bucket>/ce1`).
+
+**Gotcha this migration surfaced:** the Storage document/history move (step 3) is
+easy to forget because the *reseed* (step 2) only touches Firestore. Miss it and
+`list_documents` / `reconcile` read empty on the new paths even though generation
+works — the artifacts are just orphaned under the old prefix.
 
 ## Open decisions folded in (defaults chosen)
 
