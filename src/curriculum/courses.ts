@@ -58,3 +58,40 @@ export function courseSubgraph(model: CurriculumModel, courseId: string): { cour
   const edges = raw.relationships.filter((e) => inSet.has(e.start) && inSet.has(e.end)).map(edgeOut);
   return { course: courseId, nodes, edges };
 }
+
+// The standards-spine neighborhood a content node (e.g. a Lesson) teaches. A
+// content node reaches the spine by `hasEducationalAlignment` → SFI; the SFI's
+// substance (the OS text) is on the SFI itself, its skills are the
+// `LearningComponent`s that `supports` it (or are its `hasChild` children), and
+// its illustrative tasks are the `Activity`s that align to it. This is the ONE
+// hop `get_course` deliberately does not take (following alignment from a course
+// pulls ~3/4 of the graph), so it is a separate per-node reader. Returns the
+// origin + its aligned SFI(s) + that 1-hop neighborhood as raw nodes + edges.
+// Empty `nodes` when the node aligns to nothing (e.g. a placeholder not yet wired
+// to the spine). Returns null if the node id isn't in the graph.
+export function standardsFor(model: CurriculumModel, nodeId: string): { node: string; nodes: NodeOut[]; edges: EdgeOut[] } | null {
+  const raw = model.rawGraph;
+  if (!raw) return null;
+  if (!raw.nodes.some((n) => n.id === nodeId)) return null;
+  const isSfi = (id: string) => (raw.nodes.find((n) => n.id === id)?.labels ?? []).includes("StandardsFrameworkItem");
+
+  const aligned = raw.relationships
+    .filter((e) => e.type === "hasEducationalAlignment" && e.start === nodeId && isSfi(e.end))
+    .map((e) => e.end);
+  // Aligns to no standard (e.g. a placeholder not yet wired to the spine) — return
+  // empty rather than the lone origin node, so "no standards" reads unambiguously.
+  if (aligned.length === 0) return { node: nodeId, nodes: [], edges: [] };
+  const inSet = new Set<string>([nodeId, ...aligned]);
+  // 1-hop standards neighborhood of each aligned SFI: its components (supports
+  // reverse / hasChild children), the tasks aligning to it (alignment reverse),
+  // and its parent SFI for context (hasChild reverse).
+  for (const e of raw.relationships) {
+    if (e.type === "supports" && aligned.includes(e.end)) inSet.add(e.start);
+    else if (e.type === "hasChild" && aligned.includes(e.start)) inSet.add(e.end);
+    else if (e.type === "hasChild" && aligned.includes(e.end)) inSet.add(e.start);
+    else if (e.type === "hasEducationalAlignment" && aligned.includes(e.end)) inSet.add(e.start);
+  }
+  const nodes = raw.nodes.filter((n) => inSet.has(n.id)).map(nodeOut);
+  const edges = raw.relationships.filter((e) => inSet.has(e.start) && inSet.has(e.end)).map(edgeOut);
+  return { node: nodeId, nodes, edges };
+}
