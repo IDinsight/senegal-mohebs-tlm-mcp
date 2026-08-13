@@ -2,22 +2,28 @@
  * Module: adapters · Nigeria maths (Primary 1–3)
  *
  * The per-subject adapter for the NERDC "9-Year Basic Education Mathematics
- * Curriculum for Primary 1-3" — an EIDU/Learning-Commons export. Unlike the
- * senegal graphs this is a PURE STANDARDS SPINE: no content layer (no
- * Lesson/Activity/Material), no documents to generate. It exists to be browsed.
+ * Curriculum for Primary 1-3" — an EIDU/Learning-Commons export. It is a
+ * standards graph (no Lesson/Activity/Material, no documents to generate); it
+ * exists to be browsed.
  *
- * The source is an LC-native dialect: every level is a single
- * `StandardsFrameworkItem` label with NO `metadata.role` sidecar and NO ordinal,
- * so the level is read from the canonical `statementType`
- * (Grade/Theme/Sub-Theme/Topic/Performance Objective) via the generic parser's
- * `statementTypeToKind`. Sequence comes from source/traversal order (there is no
- * number to sort on). The framework root has no statementType, so it is dropped
- * as scaffolding and the three Grade nodes become the model roots.
+ * Two layers, both read straight from canonical LC fields:
+ *   - the SPINE: Grade → Theme → Sub-Theme → Topic → { Performance Objective,
+ *     Content }, distinguished by `statementType` (this dialect has no
+ *     `metadata.role` sidecar and a single StandardsFrameworkItem label). Each
+ *     Topic carries TWO kinds of leaf standard — the objectives and the content
+ *     descriptors that sit beside them in the NERDC tables.
+ *   - the COMPONENT layer: `LearningComponent` nodes attached to a leaf standard
+ *     via `supports` (the parser's default supportEdge), surfaced under that leaf.
  *
- * Read projection: a browsable "unit" is a THEME (15 across the three grades).
- * `slice(themeNum)` walks the theme's Sub-Theme → Topic → Performance Objective
- * subtree. There are no deliverables, no progression, and no coverage rules — a
- * reference framework has nothing to generate or complete.
+ * There is no ordinal field, so `numberFrom` is omitted and sequence is a
+ * deterministic text sort (storage-independent — see `cmp`). The framework root
+ * has no statementType and is dropped as scaffolding, leaving the three Grade
+ * nodes as the model roots.
+ *
+ * Read projection: a browsable "unit" is a THEME (15 across the three grades);
+ * `slice(themeNum)` walks its Sub-Theme → Topic → {objectives, content} subtree,
+ * each leaf carrying its components. No deliverables, progression, or coverage —
+ * a reference framework has nothing to generate or complete.
  */
 import { parseGraph, type GraphParseDescriptor } from "../curriculum/index.js";
 import { makeEnsure, detectEnvelope } from "./engine.js";
@@ -26,15 +32,15 @@ import type {
   CurriculumModel, CurriculumUnit,
 } from "../types.js";
 
-const ADAPTER_ID = "nigeria-maths/lc-spine-v1";
+const ADAPTER_ID = "nigeria-maths/lc-graph-v2";
 
-// No documents are produced from a standards-only framework.
+// No documents are produced from a standards reference framework.
 const DELIVERABLES: DeliverableSpec[] = [];
 
-// LC-native parse: level comes from `statementType` (no roles, one label), and
-// there is no ordinal field, so `numberFrom` is omitted (order stays null and we
-// read sequence from traversal order). Containment is all `hasChild`, covered by
-// the parser's default containerEdge — no attachment/progression edges exist.
+// LC-native parse. Level comes from `statementType`; the LearningComponent layer
+// has no statementType, so it is keyed by its LC label. `supports` (component →
+// leaf) is the parser's default supportEdge, so components fold in as children of
+// the leaf they support. No ordinal field → `numberFrom` omitted.
 const NIGERIA_PARSE: GraphParseDescriptor = {
   roleToKind: {},
   statementTypeToKind: {
@@ -43,23 +49,34 @@ const NIGERIA_PARSE: GraphParseDescriptor = {
     "Sub-Theme": "subtheme",
     Topic: "topic",
     "Performance Objective": "objective",
+    Content: "content",
   },
+  labelToKind: { LearningComponent: "component" },
 };
 
 function parse(raw: unknown): CurriculumModel {
   return parseGraph(raw, NIGERIA_PARSE);
 }
 
-// gradeLevel is stored as a JSON-string array, e.g. `["2"]`. Read the first
-// entry as a number; NaN when absent/unparseable (sorts stably to the end).
-function gradeLevelOf(u: CurriculumUnit | undefined): number {
-  try {
-    const arr = JSON.parse(String(u?.properties?.gradeLevel ?? "[]"));
-    const n = Number(Array.isArray(arr) ? arr[0] : arr);
-    return Number.isFinite(n) ? n : NaN;
-  } catch {
-    return NaN;
-  }
+// gradeLevel is inconsistent across this export: a real array (`["primary two"]`),
+// a legacy JSON-string (`"[\"2\"]"`), mixed case, stray punctuation
+// (`["PRIMARY: THREE"]`), or empty. Extract 1/2/3 from a leading digit or the
+// words one/two/three; NaN when absent (sorts stably to the end).
+function gradeLevelOf(u?: CurriculumUnit): number {
+  const raw = u?.properties?.gradeLevel as unknown;
+  let first: unknown;
+  if (Array.isArray(raw)) first = raw[0];
+  else if (typeof raw === "string") {
+    try { const p = JSON.parse(raw); first = Array.isArray(p) ? p[0] : p; } catch { first = raw; }
+  } else first = raw;
+  if (first == null) return NaN;
+  const s = String(first).toLowerCase();
+  const digit = s.match(/\d+/);
+  if (digit) return Number(digit[0]);
+  if (/\bone\b/.test(s)) return 1;
+  if (/\btwo\b/.test(s)) return 2;
+  if (/\bthree\b/.test(s)) return 3;
+  return NaN;
 }
 
 export function buildNigeriaMathsAdapter(grade: string, subject: string): SubjectAdapter {
@@ -73,12 +90,19 @@ export function buildNigeriaMathsAdapter(grade: string, subject: string): Subjec
   const cmp = (a: CurriculumUnit, b: CurriculumUnit) =>
     (a.title ?? a.text ?? "").localeCompare(b.title ?? b.text ?? "") || a.id.localeCompare(b.id);
 
+  // A theme's grade level: read from its parent Grade node, falling back to the
+  // theme's own gradeLevel when the parent's is missing/unparseable.
+  const themeGradeLevel = (m: CurriculumModel, theme: CurriculumUnit): number => {
+    const viaParent = gradeLevelOf(m.byId.get(theme.parentId ?? ""));
+    return Number.isNaN(viaParent) ? gradeLevelOf(theme) : viaParent;
+  };
+
   // Themes ordered by grade level first (Primary 1 → 3), then by the shared
   // comparator within a grade. The 1-based index into this list is the theme's
   // scope value, since the source carries no theme number of its own.
   const orderedThemes = (m: CurriculumModel): CurriculumUnit[] =>
     [...m.unitsOfKind("theme")].sort((a, b) => {
-      const ga = gradeLevelOf(m.byId.get(a.parentId ?? "")), gb = gradeLevelOf(m.byId.get(b.parentId ?? ""));
+      const ga = themeGradeLevel(m, a), gb = themeGradeLevel(m, b);
       const ka = Number.isNaN(ga) ? Infinity : ga, kb = Number.isNaN(gb) ? Infinity : gb;
       return ka - kb || cmp(a, b);
     });
@@ -88,38 +112,53 @@ export function buildNigeriaMathsAdapter(grade: string, subject: string): Subjec
   const childrenOfKind = (m: CurriculumModel, id: string, kind: string) =>
     m.childrenOf(id).filter((u) => u.kind === kind).sort(cmp);
 
-  // All Performance Objectives beneath a theme, however deep — used for the count
-  // in listUnits without assuming the exact nesting depth.
-  const objectivesUnder = (m: CurriculumModel, rootId: string): CurriculumUnit[] => {
-    const out: CurriculumUnit[] = [];
-    const stack = [...m.childrenOf(rootId)];
+  // Tally distinct descendants of a theme by kind. A LearningComponent may support
+  // more than one leaf (so appear under two parents); a visited set keeps the
+  // count honest.
+  const descendantCounts = (m: CurriculumModel, rootId: string) => {
+    const counts = { objective: 0, content: 0, component: 0 } as Record<string, number>;
+    const seen = new Set<string>();
+    const stack = m.childrenOf(rootId).map((u) => u.id);
     while (stack.length) {
-      const u = stack.pop()!;
-      if (u.kind === "objective") out.push(u);
-      else stack.push(...m.childrenOf(u.id));
+      const id = stack.pop()!;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const u = m.byId.get(id);
+      if (!u) continue;
+      if (u.kind in counts) counts[u.kind]++;
+      stack.push(...u.childIds);
     }
-    return out;
+    return counts;
   };
 
-  const gradeFacts = (m: CurriculumModel, theme: CurriculumUnit) => {
-    const g = gradeUnitOf(m, theme);
-    return { grade: g?.title ?? null, gradeLevel: gradeLevelOf(g ?? theme) || null };
-  };
+  const componentsOf = (m: CurriculumModel, leaf: CurriculumUnit) =>
+    childrenOfKind(m, leaf.id, "component").map((c) => ({ identifier: c.id, text: c.text }));
+
+  const gradeFacts = (m: CurriculumModel, theme: CurriculumUnit) => ({
+    grade: gradeUnitOf(m, theme)?.title ?? null,
+    gradeLevel: themeGradeLevel(m, theme) || null,
+  });
 
   const listUnitsIn = (m: CurriculumModel) =>
-    orderedThemes(m).map((t, i) => ({
-      themeNum: i + 1,
-      ...gradeFacts(m, t),
-      theme: t.title,
-      subThemes: childrenOfKind(m, t.id, "subtheme").length,
-      objectives: objectivesUnder(m, t.id).length,
-    }));
+    orderedThemes(m).map((t, i) => {
+      const c = descendantCounts(m, t.id);
+      return {
+        themeNum: i + 1,
+        ...gradeFacts(m, t),
+        theme: t.title,
+        subThemes: childrenOfKind(m, t.id, "subtheme").length,
+        objectives: c.objective,
+        content: c.content,
+        components: c.component,
+      };
+    });
 
-  // A theme's full Sub-Theme → Topic → Performance Objective subtree. The nesting
-  // is canonical (verified in the source), so the walk follows it level by level.
+  // A theme's Sub-Theme → Topic subtree. Each Topic carries both its Performance
+  // Objectives and its Content descriptors; each leaf carries its components.
   const buildSlice = (themeNum: number, m: CurriculumModel = ensure()) => {
     const theme = themeByNum(m, themeNum);
     if (!theme) return null;
+    const leaf = (l: CurriculumUnit) => ({ identifier: l.id, text: l.text, components: componentsOf(m, l) });
     return {
       themeNum,
       ...gradeFacts(m, theme),
@@ -128,7 +167,8 @@ export function buildNigeriaMathsAdapter(grade: string, subject: string): Subjec
         subTheme: st.title,
         topics: childrenOfKind(m, st.id, "topic").map((tp) => ({
           topic: tp.title,
-          objectives: childrenOfKind(m, tp.id, "objective").map((o) => ({ identifier: o.id, text: o.text })),
+          objectives: childrenOfKind(m, tp.id, "objective").map(leaf),
+          content: childrenOfKind(m, tp.id, "content").map(leaf),
         })),
       })),
     };
@@ -140,11 +180,13 @@ export function buildNigeriaMathsAdapter(grade: string, subject: string): Subjec
     deliverables: DELIVERABLES,
     capabilities: { exampleDomainRotation: false, characterConsistency: false },
 
-    // Curators may correct wording: a leaf objective's statement `text`, or any
-    // grouping's `title`. Each edits the normalized field and its raw LC mirror
-    // (`raw.description`) atomically. This dialect is English-only — no `_en`.
+    // Curators may correct wording: a leaf's statement `text` (objective, content,
+    // or component) or any grouping's `title`. Each edits the normalized field and
+    // its raw LC mirror (`raw.description`) atomically. English-only — no `_en`.
     wordingAliases: {
       objective: { text: ["text", "raw.description"] },
+      content: { text: ["text", "raw.description"] },
+      component: { text: ["text", "raw.description"] },
       grade: { title: ["title", "raw.description"] },
       theme: { title: ["title", "raw.description"] },
       subtheme: { title: ["title", "raw.description"] },
@@ -161,8 +203,8 @@ export function buildNigeriaMathsAdapter(grade: string, subject: string): Subjec
     requiredCoverage: () => [],
     scopeValues: () => orderedThemes(ensure()).map((_, i) => i + 1),
 
-    // A standards-only framework generates no documents; return the curriculum
-    // slice with an explicit note rather than pretend there is a deliverable.
+    // A standards reference framework generates no documents; return the
+    // curriculum slice with an explicit note rather than pretend there is one.
     async buildGenerationContext(scope, deliverableKey, model) {
       const m = model ?? ensure();
       const theme = Number(scope);

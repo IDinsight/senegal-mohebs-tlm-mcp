@@ -106,12 +106,13 @@ describe("Nigeria-maths read projections — golden gate", () => {
     expect(actual).toEqual(golden);
   });
 
-  it("covers the whole framework: 15 themes, 155 objectives", async () => {
+  it("covers the whole framework: 15 themes, 149 objectives + 118 content leaves", async () => {
     const { scopeValues, listUnits } = await withCtx(async () => {
       const a = resolveAdapter(GRADE, SUBJECT)!;
-      return { scopeValues: a.scopeValues(), listUnits: a.listUnits() as Array<{ objectives: number }> };
+      return { scopeValues: a.scopeValues(), listUnits: a.listUnits() as Array<{ objectives: number; content: number }> };
     });
     expect(scopeValues).toHaveLength(15);
-    expect(listUnits.reduce((n, t) => n + t.objectives, 0)).toBe(155);
+    expect(listUnits.reduce((n, t) => n + t.objectives, 0)).toBe(149);
+    expect(listUnits.reduce((n, t) => n + t.content, 0)).toBe(118);
   });
 });
