@@ -288,31 +288,21 @@ export const unlinkNodes: GraphMutation<UnlinkNodesArgs> = {
 };
 
 // ── delete_node ──────────────────────────────────────────────────────────────
-// Removes one node. Two modes, chosen by the EXPLICIT `force` flag — cascade
-// never happens implicitly (#13):
+// Removes one node together with its dependent subtree in ONE atomic mutation —
+// there is NO force flag. The dry-run always computes the full cascade, WARNS
+// with what will vanish, and leaves the graph untouched; the caller sees the set
+// and then confirms. Seeing the cascade before confirming is the safety.
 //
-//   force=false (default): the safe, raw verb. Rejected if any incident edge
-//     would survive (Rule 2 would catch it; validate() surfaces exactly which
-//     edges to unlink first). The caller's manual flow stays: unlink each
-//     incident edge, then delete.
-//
-//   force=true: cascade the hasChild SUBTREE in ONE atomic mutation. Removes
-//     the target, every hasChild-descendant whose parents are ALL in the
-//     removed set (a shared child survives — only its edge to the removed
-//     parent drops), and every edge incident to any removed node (this also
-//     drops buildsTowards edges touching the target). Siblings and progression
-//     neighbours survive. The dry-run diff shows the FULL removed set, and the
-//     framework re-runs Rule 1/2 on the result — a correct cascade leaves the
-//     graph referentially clean (no new dangling edge).
-//
-// Dependent-node cascade follows the hasChild edge — the id-based referential
-// backbone that is now the SOLE chapter↔lesson membership (the old CI maths
-// chapitreNum number-join is gone), so there is no number-only-attached child to
-// miss.
+// The cascade removes the target, every containment-descendant whose parents are
+// ALL in the removed set (a shared child survives — only its edge to the removed
+// parent drops), and every edge incident to any removed node (so buildsTowards /
+// alignment edges touching a removed node drop too). Siblings and progression
+// neighbours survive. The framework re-runs the referential-integrity pass on the
+// result, so a cascade always leaves the graph clean (no new dangling edge). To
+// keep a subtree instead of deleting it, detach it first with delete_edges.
 
 export type DeleteNodeArgs = {
   nodeId: string;
-  force?: boolean;
 };
 
 // Canonical LC containment spans `hasChild` (standards hierarchy) and `hasPart`
@@ -357,40 +347,28 @@ function cascadeRemovedNodeIds(base: MutationGraph, rootId: string): Set<string>
 
 export const deleteNode: GraphMutation<DeleteNodeArgs> = {
   name: "deleteNode",
-  describe: ({ nodeId, force }) => (force ? `force-delete node '${nodeId}' and its dependent subtree` : `delete node '${nodeId}'`),
+  describe: ({ nodeId }) => `delete node '${nodeId}' and its dependent subtree`,
   validate: (base, _after, args) => {
-    const errors: string[] = [];
     if (!base.nodes.some((n) => n.id === args.nodeId)) {
-      errors.push(`delete_node: node '${args.nodeId}' does not exist in the draft.`);
-      return { errors, warnings: [] };
+      return { errors: [`delete_nodes: node '${args.nodeId}' does not exist in the draft.`], warnings: [] };
     }
-    if (!args.force) {
-      // Safe mode: refuse a connected node. Rule 2 would also catch it, but a
-      // targeted error tells the caller EXACTLY what to unlink first — or to
-      // pass force:true to cascade.
-      const incident = base.edges.filter((e) => e.from === args.nodeId || e.to === args.nodeId);
-      if (incident.length > 0) {
-        errors.push(
-          `delete_node: node '${args.nodeId}' still has ${incident.length} incident edge(s): ` +
-          `${incident.slice(0, 5).map((e) => e.id).join(", ")}${incident.length > 5 ? ", …" : ""}. ` +
-          `delete_node does not cascade by default — either unlink the edges first, or pass force:true to cascade-delete the node and its dependent subtree.`,
-        );
-      }
+    // No error for a connected node — always cascade. WARN with what will vanish
+    // so the caller sees the full set before confirming.
+    const removed = cascadeRemovedNodeIds(base, args.nodeId);
+    const incident = base.edges.filter((e) => removed.has(e.from) || removed.has(e.to));
+    const warnings: string[] = [];
+    if (removed.size > 1 || incident.length > 0) {
+      const extra = removed.size > 1 ? ` and ${removed.size - 1} dependent node(s)` : "";
+      warnings.push(
+        `delete_nodes: removing '${args.nodeId}'${extra} will also drop ${incident.length} incident edge(s). ` +
+        `Removed nodes: ${[...removed].slice(0, 8).join(", ")}${removed.size > 8 ? ", …" : ""}. ` +
+        `Confirm only if this whole set should go.`,
+      );
     }
-    // force=true: no incident-edge error; apply() prunes the whole subtree, and
-    // the framework's Rule 1/2 pass proves the result is clean.
-    return { errors, warnings: [] };
+    return { errors: [], warnings };
   },
   apply: (base, args) => {
-    if (!args.force) {
-      // Safe mode: remove only the node (edges untouched). If it was connected,
-      // validate() already blocked; if isolated, this is clean.
-      return {
-        nodes: base.nodes.filter((n) => n.id !== args.nodeId),
-        edges: base.edges,
-      };
-    }
-    // Force mode: prune the dependent subtree + every incident edge.
+    // Always cascade: prune the dependent subtree + every incident edge.
     const removed = cascadeRemovedNodeIds(base, args.nodeId);
     return {
       nodes: base.nodes.filter((n) => !removed.has(n.id)),

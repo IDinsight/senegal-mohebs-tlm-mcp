@@ -242,12 +242,19 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.rules.structural).toEqual([...STRUCTURAL_RULES]);
   });
 
-  it("editable.structural reports the four verbs and explicit-force-only cascade (#13)", async () => {
+  it("editable.structural reports the graph primitives and always-with-warning cascade", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.editable.structural.verbs).toEqual(["create_node", "link_nodes", "unlink_nodes", "delete_node"]);
-    // delete cascades ONLY on explicit force — the report must not read as a
-    // plain boolean 'false' (which pre-#13 meant 'never cascades').
-    expect(caps.editable.structural.cascade).toBe("explicit-force-only");
+    expect(caps.editable.structural.verbs).toEqual(["create_edge", "delete_edges", "delete_nodes"]);
+    // delete_nodes always cascades the dependent subtree; the dry-run warns.
+    expect(caps.editable.structural.cascade).toBe("always-with-warning");
+  });
+
+  it("editable.typedAdds lists the 9 typed authoring tools", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    expect(caps.editable.typedAdds).toEqual([
+      "add_course", "add_lesson_grouping", "add_lesson", "add_activity", "add_assessment",
+      "add_material", "add_learning_component", "add_standard_framework_item", "add_instructional_routine",
+    ]);
   });
 
   it("editable.coverageWarnings.enabled mirrors whether the adapter has a coverage hook (#13)", async () => {
@@ -264,8 +271,8 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.recipes.available).toBe(true);
     expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(RECIPES.map((r) => r.name));
     expect(caps.editable.recipes.list).toEqual(RECIPES.map((r) => ({ name: r.name, summary: r.summary, params: r.params })));
-    // The four generic verbs, in order.
-    expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(["add_node", "move_node", "reposition", "set_content"]);
+    // The two generic verbs, in order (node creation is the typed adds).
+    expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(["reposition", "set_content"]);
   });
 });
 

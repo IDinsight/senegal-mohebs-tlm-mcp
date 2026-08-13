@@ -46,9 +46,26 @@ const FALLBACK_KIND: Record<string, string> = {
   LessonGrouping: "grouping", Course: "course",
 };
 
+// LC "boilerplate" — the constant provenance/licensing fields every node of a
+// graph shares (as opposed to node-specific content/identity/ordinal fields). A
+// created node COPIES whichever of these its siblings actually carry, so it looks
+// exactly like a seeded node of the same label (some sources carry all, some only
+// a few — see the per-node variation in sources/*/knowledge_graph.json).
+const BOILERPLATE_KEYS = [
+  "license", "provider", "attributionStatement", "author",
+  "inLanguage", "jurisdiction", "academicSubject", "gradeLevel",
+] as const;
+
+// Canonical fallback when the graph has no example of this label to copy from.
+const FALLBACK_BOILERPLATE: Record<string, unknown> = {
+  license: "https://creativecommons.org/licenses/by/4.0/",
+  provider: "Learning Commons ontology (generated)",
+  attributionStatement: "Node/edge types follow the Learning Commons ontology (CC BY-4.0).",
+};
+
 // The identity skeleton for a created node — enough to make it survive a
 // re-parse: internal kind, LC labels, grouping-ness (title vs text), the raw
-// ordinal path(s), and the raw identity fields.
+// ordinal path(s), the raw identity fields, and the shared boilerplate.
 export type NodeTemplate = {
   kind: string;
   labels: string[];
@@ -57,7 +74,16 @@ export type NodeTemplate = {
   normalizedType?: string;
   normalizedStatementType?: string;
   role?: string;
+  boilerplate: Record<string, unknown>; // license/provider/attribution/… copied from an example (or canonical fallback)
 };
+
+// The subset of BOILERPLATE_KEYS an example node actually carries in its raw props.
+function boilerplateOf(example: MutationNode): Record<string, unknown> {
+  const raw = rawOf(example);
+  const out: Record<string, unknown> = {};
+  for (const k of BOILERPLATE_KEYS) if (raw[k] !== undefined) out[k] = raw[k];
+  return out;
+}
 
 const rawOf = (n: MutationNode): Record<string, any> => (n.properties?.raw as Record<string, any>) ?? {};
 
@@ -94,6 +120,7 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
       normalizedType: raw.normalizedType,
       normalizedStatementType: raw.normalizedStatementType,
       role: raw.metadata?.role,
+      boilerplate: boilerplateOf(example),
     };
   }
   return {
@@ -103,6 +130,7 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
     orderPaths: ["raw.position"],
     normalizedType: label,
     normalizedStatementType: STANDARDS_LABELS.has(label) ? "Standard Grouping" : undefined,
+    boilerplate: { ...FALLBACK_BOILERPLATE },
   };
 }
 

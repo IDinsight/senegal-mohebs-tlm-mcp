@@ -97,35 +97,42 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   // the JSON is stable. `structural` describes the four raw verbs a
   // curator has for growing / connecting / detaching / pruning the graph;
   // they observe the current graph's vocabulary rather than a schema.
-  // ── recipes: a MIRROR of the recipe registry. Rendered straight from RECIPES
-  // so what Claude discovers cannot drift from what is built. The verbs are
-  // GENERIC and subject-agnostic (add_node / move_node / reposition /
-  // set_content), so they are available on EVERY subject — validity is
-  // structural, not a per-subject allowlist.
+  // ── recipes: a MIRROR of the generic recipe registry (reposition / set_content).
+  // Rendered straight from RECIPES so what Claude discovers cannot drift from what
+  // is built. Node CREATION is the typed authoring tools (see `typedAdds`).
   const recipes = {
     available: true,
-    note: "Recipes are GENERIC COMPOSITE mutations over canonical LC: one intent → one whole-composite diff → one confirmation token → one atomic draft write → one audit event. They speak pure LC (hasPart/hasChild/hasEducationalAlignment/position) and derive a created node's identity from the graph itself — there is no per-subject profile. Containment membership is the edge, so move/reposition rewire edges rather than cascading a number.",
+    note: "Generic composite mutations over canonical LC: one intent → one diff → one confirmation token → one atomic draft write → one audit event. reposition sets a node's ordinal; set_content rewrites a Material's load-bearing content. Node creation is the typed authoring tools (see editable.typedAdds).",
     list: RECIPES.map((r) => ({ name: r.name, summary: r.summary, params: r.params })),
   };
 
+  // The typed, LC-grounded node-creation tools — one per node type. Each attaches
+  // via its canonical LC edge and copies boilerplate from a sibling; content adds
+  // take an optional alignTo (hasEducationalAlignment). See server/authoring.ts.
+  const typedAdds = [
+    "add_course", "add_lesson_grouping", "add_lesson", "add_activity", "add_assessment",
+    "add_material", "add_learning_component", "add_standard_framework_item", "add_instructional_routine",
+  ];
+
   const editable = {
-    scope: "term-wording + structural verbs + composite recipes",
+    scope: "term-wording + graph primitives + typed adds + generic recipes",
     note:
       "Wording (titles, objectives, component/task descriptions) is editable via upsert_property. " +
-      "The graph structure is editable via four raw primitives (see `structural.verbs`) AND via the generic composite recipes (see `recipes`). " +
+      "Nodes are created via the TYPED authoring tools (see `typedAdds`); edges and deletions via the raw primitives (see `structural.verbs`); ordinal and content via the generic recipes (see `recipes`). " +
       "A node's POSITION (ordinal) and load-bearing content are edited only THROUGH the recipes (reposition / set_content), never by upsert_property.",
     keysByNodeKind: adapter.wordingAliases,
     safePaths: [...UPSERT_PROPERTY_SAFE_PATHS].sort(),
+    typedAdds,
     structural: {
-      verbs: ["create_node", "link_nodes", "unlink_nodes", "delete_node"],
-      // delete_node cascades ONLY on an explicit force:true — never implicitly.
-      cascade: "explicit-force-only",
+      verbs: ["create_edge", "delete_edges", "delete_nodes"],
+      // delete_nodes ALWAYS cascades the dependent subtree; the dry-run warns
+      // with the full set and nothing is removed until confirm — no force flag.
+      cascade: "always-with-warning",
       note:
-        "create_node mints a server-side id and sets properties at BIRTH (missing wording surfaces as a WARNING, not a block). " +
-        "link_nodes adds an edge; edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across kinds is not enforced (deferred to human review at publish). " +
-        "unlink_nodes removes an edge by id. " +
-        "delete_node by default REFUSES to remove a node with incident edges (detach with unlink_nodes first); pass force:true to cascade-delete the node AND its dependent subtree (children, their children, …) plus every incident edge in one atomic mutation — the dry-run diff shows the full set that will vanish. Cascade never happens without explicit force. " +
-        "For curriculum-meaningful edits (add a node, move it, reposition it, set its content) prefer the generic composite `recipes` over hand-sequencing these verbs.",
+        "create_edge adds an edge (usesRoutine / buildsTowards / relatesTo / hasDependency / an extra hasEducationalAlignment); edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across labels is not enforced (deferred to human review at publish). " +
+        "delete_edges removes an edge by id. " +
+        "delete_nodes removes a node AND its dependent subtree (children, their children, …) plus every incident edge in one atomic mutation; the dry-run diff shows the full set that will vanish and WARNS with it — nothing is removed until you confirm, so seeing the cascade is the safety (no force flag). " +
+        "To CREATE a node, use the typed authoring tools (see `typedAdds`), not create_edge.",
     },
     recipes,
     coverageWarnings: {

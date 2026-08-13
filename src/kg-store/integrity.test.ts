@@ -3,12 +3,11 @@
  *
  * The block-vs-warn split, the explicit-force cascade, and coverage warnings.
  *
- *   • BLOCK (error, no token): a delete that would dangle an edge; a link to a
- *     missing node. (Rule 2, extended coverage.)
- *   • FORCE cascade: force=false refuses a connected node; force=true removes
- *     the node + its dependent subtree + all incident edges in ONE mutation,
- *     the dry-run diff shows the FULL set, and the result is integrity-clean.
- *     Cascade never happens without explicit force.
+ *   • BLOCK (error, no token): a link to a missing node; a delete of a
+ *     nonexistent node. (Rule 2, extended coverage.)
+ *   • CASCADE delete (no force flag): delete_nodes always removes the node + its
+ *     dependent subtree + all incident edges in ONE mutation; the dry-run WARNS
+ *     with the full set, the diff shows it, and the result is integrity-clean.
  *   • WARN (never blocks): coverage warnings fire on dry-run AND diff_draft for
  *     the real CI maths rules (empty chapter, missing bilan, lesson >1 parent,
  *     chapitreNum drift), but the edit stays confirmable and publishable.
@@ -127,36 +126,34 @@ describe("block: referential corruption is refused (error, no token)", () => {
     expect("confirmationToken" in blocked).toBe(false);
   });
 
-  it("plain delete of a connected node is blocked (Rule 2 / targeted error), no token", async () => {
-    const g = await readPublished(ns);
-    const connected = g.edges[0].from;
+  it("delete of a nonexistent node is blocked (error, no token, no state change)", async () => {
     const blocked = await runGraphMutation({
-      namespace: ns, mutation: deleteNode, args: { nodeId: connected },
+      namespace: ns, mutation: deleteNode, args: { nodeId: "iri:ghost" },
       coverage,
     });
     if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
-    expect(blocked.errors.some((e) => e.includes("incident edge"))).toBe(true);
+    expect(blocked.errors.some((e) => e.includes("does not exist"))).toBe(true);
     expect("confirmationToken" in blocked).toBe(false);
     // No state change: no draft was created.
     expect((await store.readPointer(ns))?.draftSlot).toBe(null);
   });
 });
 
-// ── FORCE cascade ────────────────────────────────────────────────────────────
+// ── Cascade delete (no force flag: always cascade + warn) ────────────────────
 
-describe("delete_node force cascade", () => {
-  it("force=false still refuses a connected node; error mentions the force option", async () => {
+describe("delete_nodes cascade", () => {
+  it("a connected node is NOT blocked — it cascades, and the dry-run warns with the removed set", async () => {
     const g = await readPublished(ns);
     const connected = g.edges[0].from;
-    const blocked = await runGraphMutation({
-      namespace: ns, mutation: deleteNode, args: { nodeId: connected, force: false },
+    const preview = await runGraphMutation({
+      namespace: ns, mutation: deleteNode, args: { nodeId: connected },
       coverage,
     });
-    if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
-    expect(blocked.errors.some((e) => e.includes("force:true"))).toBe(true);
+    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
+    expect(preview.warnings.some((w) => w.includes("incident edge"))).toBe(true);
   });
 
-  it("force=true cascades the whole dependent subtree + all incident edges atomically; dry-run shows the full set", async () => {
+  it("cascades the whole dependent subtree + all incident edges atomically; dry-run shows the full set", async () => {
     const g = await readPublished(ns);
     // Canonical LC containment spans hasChild (standards) + hasPart (content).
     const isContainment = (t: string) => t === "hasChild" || t === "hasPart";
@@ -180,7 +177,7 @@ describe("delete_node force cascade", () => {
     const expectedEdges = g.edges.filter((e) => expectedNodes.has(e.from) || expectedNodes.has(e.to)).map((e) => e.id);
 
     const preview = await runGraphMutation({
-      namespace: ns, mutation: deleteNode, args: { nodeId: chapterWithChildren.id, force: true },
+      namespace: ns, mutation: deleteNode, args: { nodeId: chapterWithChildren.id },
       coverage,
     });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
@@ -192,7 +189,7 @@ describe("delete_node force cascade", () => {
     expect(expectedEdges.every((id) => removedEdgeIds.has(id))).toBe(true);
 
     const applied = await runGraphMutation({
-      namespace: ns, mutation: deleteNode, args: { nodeId: chapterWithChildren.id, force: true },
+      namespace: ns, mutation: deleteNode, args: { nodeId: chapterWithChildren.id },
       confirm: true, token: preview.confirmationToken, coverage,
     });
     expect(applied).toMatchObject({ ok: true });
@@ -213,7 +210,7 @@ describe("delete_node force cascade", () => {
     const bt = g.edges.find((e) => e.type === "hasDependency")!;
     const neighbour = bt.to; // the chapter `from` builds towards
     // Force-delete the `from` chapter.
-    const applied = await apply(deleteNode, { nodeId: bt.from, force: true });
+    const applied = await apply(deleteNode, { nodeId: bt.from });
     expect(applied).toMatchObject({ ok: true });
     const draft = await readSlot(ns, "b");
     // Neighbour survives; the hasDependency edge is gone.
@@ -366,7 +363,7 @@ describe("force-delete respects the role gate + audit", () => {
     const before = (await store.listAudit({ namespace: ns })).length;
     const pointerBefore = await store.readPointer(ns);
     const result = await runAsActor(SIGNED_IN_NO_ROLE, () =>
-      runGraphMutation({ namespace: ns, mutation: deleteNode, args: { nodeId: chapter.id, force: true }, coverage }),
+      runGraphMutation({ namespace: ns, mutation: deleteNode, args: { nodeId: chapter.id }, coverage }),
     );
     expect(result).toMatchObject({ phase: "unauthorized" });
     expect(await store.readPointer(ns)).toEqual(pointerBefore);
@@ -382,7 +379,7 @@ describe("force-delete respects the role gate + audit", () => {
     // it alone (Course --hasPart--> chapter). (A chapter would NOT — its lessons
     // also hang off a week, so deleting the chapter leaves them, cascade == 1.)
     const course = g.nodes.find((n) => n.type === "Course")!;
-    await apply(deleteNode, { nodeId: course.id, force: true });
+    await apply(deleteNode, { nodeId: course.id });
     const [rec] = await store.listAudit({ namespace: ns, eventType: "apply", limit: 1 });
     expect(rec.mutation).toBe("deleteNode");
     expect(rec.diff!.nodes.removed.some((n) => n.id === course.id)).toBe(true);
@@ -407,7 +404,7 @@ describe("parity — coverage/force work does not leak into published reads", ()
     const before = await reads();
     const g = await readPublished(ns);
     const chapter = g.nodes.find((n) => n.type === "chapter" && g.edges.some((e) => e.type === "hasPart" && e.from === n.id))!;
-    await apply(deleteNode, { nodeId: chapter.id, force: true }); // draft only
+    await apply(deleteNode, { nodeId: chapter.id }); // draft only
     const after = await reads();
     expect(after).toEqual(before);
   });

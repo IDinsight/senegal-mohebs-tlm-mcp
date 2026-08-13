@@ -16,7 +16,7 @@ import { RecipeCommon, buildCreatedProps, nextPosition, nodeById } from "./share
 import { ALIGNMENT_EDGE, containmentEdgeFor, deriveTemplate, isKnownLabel } from "./lc.js";
 
 export type AddNodeArgs = RecipeCommon & {
-  parentId: string;                       // the container to attach under
+  parentId?: string;                      // the container to attach under; omitted for a ROOT node (Course/StandardsFramework)
   label: string;                          // LC label of the new node (Activity / Material / Lesson / LessonGrouping / …)
   newNodeId: string;                      // minted by the tool layer
   title?: string;
@@ -36,7 +36,7 @@ export const addNode: GraphMutation<AddNodeArgs> = {
     const errors: string[] = [];
     if (typeof a.label !== "string" || a.label.length === 0) errors.push(`add_node: 'label' (the LC node label) is required.`);
     else if (!isKnownLabel(base, a.label)) errors.push(`add_node: '${a.label}' is not a known LC label on this namespace (and none exists to copy). Known content labels: Course, LessonGrouping, Lesson, Activity, Material.`);
-    if (!nodeById(base, a.parentId)) errors.push(`add_node: parent '${a.parentId}' does not exist in the draft.`);
+    if (a.parentId && !nodeById(base, a.parentId)) errors.push(`add_node: parent '${a.parentId}' does not exist in the draft.`);
     if (base.nodes.some((n) => n.id === a.newNodeId)) errors.push(`add_node: minted id '${a.newNodeId}' already exists (retry).`);
     if (a.alignTo) {
       const target = nodeById(base, a.alignTo);
@@ -48,15 +48,21 @@ export const addNode: GraphMutation<AddNodeArgs> = {
   apply: (base, a) => {
     // apply() runs before validate() on the dry-run, so a bad parent id must
     // return base (→ clean "blocked" from validate) rather than throw here.
-    const parent = nodeById(base, a.parentId);
-    if (!parent) return base;
+    if (a.parentId && !nodeById(base, a.parentId)) return base;
     const template = deriveTemplate(base, a.label);
     const edge = a.via ?? containmentEdgeFor(a.label);
-    const position = a.position ?? nextPosition(base, a.parentId, edge);
+    const position = a.position ?? (a.parentId ? nextPosition(base, a.parentId, edge) : 1);
     const isAssessment = a.properties?.educationalUse === "Assessment";
-    const props = buildCreatedProps(template, { title: a.title, title_en: a.title_en, position, isAssessment, extraRaw: a.properties });
+    const props = buildCreatedProps(template, { id: a.newNodeId, title: a.title, title_en: a.title_en, position, isAssessment, extraRaw: a.properties });
     let g = createNode.apply(base, { kind: template.kind, properties: props, namespace: a.namespace, aliases: {}, newNodeId: a.newNodeId, labels: template.labels });
-    g = linkNodes.apply(g, { edgeType: edge, fromId: a.parentId, toId: a.newNodeId, properties: { orderInParent: position }, namespace: a.namespace });
+    // Root node (no parentId, e.g. Course) — no containment edge. Otherwise:
+    // containment (hasPart/hasChild) points parent→child; `supports`
+    // (LearningComponent→SFI) points child→parent, so the new node is the source.
+    if (a.parentId) {
+      g = edge === "supports"
+        ? linkNodes.apply(g, { edgeType: edge, fromId: a.newNodeId, toId: a.parentId, properties: {}, namespace: a.namespace })
+        : linkNodes.apply(g, { edgeType: edge, fromId: a.parentId, toId: a.newNodeId, properties: { orderInParent: position }, namespace: a.namespace });
+    }
     if (a.alignTo && nodeById(base, a.alignTo)) {
       g = linkNodes.apply(g, { edgeType: ALIGNMENT_EDGE, fromId: a.newNodeId, toId: a.alignTo, properties: {}, namespace: a.namespace });
     }
