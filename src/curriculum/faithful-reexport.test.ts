@@ -28,7 +28,11 @@ const CASES = [
   // via hasPart — see graph-native-authoring.md).
   // +112 edges: each of the 112 Teacher's-Guide Lessons usesRoutine the parent
   // (the routine is NOT linked from the Course — only lessons use it).
-  { workspace: "senegal", grade: "ci", subject: "maths", nodes: 757, edges: 1267 },
+  // +13 nodes / +37 edges: the pupil-manual "structure d'un chapitre" routine
+  // (1 parent + 6 step InstructionalRoutine + 6 Material; parent→steps→Material
+  // via 12 hasPart) + 25 usesRoutine from each Student's-Book container Lesson
+  // (metadata.role studentBookLesson) — the manual template is per-lesson, canonical.
+  { workspace: "senegal", grade: "ci", subject: "maths", nodes: 770, edges: 1304 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).
