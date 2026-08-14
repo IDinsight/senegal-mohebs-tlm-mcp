@@ -26,7 +26,7 @@ import { listAvailableContexts, subjectDir, newSessionState, runInSession } from
 import { resolveAdapter } from "../adapters/index.js";
 import { serializeModel } from "../curriculum/index.js";
 import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, upsertProperty, STRUCTURAL_RULES, UPSERT_PROPERTY_SAFE_PATHS, __resetMutationsForTest } from "../kg-store/index.js";
-import { RECIPES } from "../kg-recipes/index.js";
+import { RECIPES, CATALOG_NAMESPACE } from "../kg-recipes/index.js";
 import { __setStorageForTest } from "../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../actor.js";
 import { authorize } from "../authz.js";
@@ -182,6 +182,8 @@ describe("actor block reports the verified identity, not client-supplied fields"
     expect(caps.actor.isKnown).toBe(true);
     // A signed-in user without a role still can't edit — authorize() denies.
     expect(caps.actions.canEditDraft).toBe(false);
+    // …and the catalog's canUse mirrors that same gate: no role → cannot copy a routine.
+    expect(caps.catalog.canUse).toBe(false);
   });
 });
 
@@ -273,6 +275,15 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.recipes.list).toEqual(RECIPES.map((r) => ({ name: r.name, summary: r.summary, params: r.params })));
     // The two generic verbs, in order (node creation is the typed adds).
     expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(["reposition", "set_content"]);
+  });
+
+  it("catalog advertises the two tools; canUse mirrors the apply gate", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    expect(caps.catalog.browse).toBe(true);   // list_catalog is an ungated read
+    expect(caps.catalog.tools).toEqual(["list_catalog", "use_routine"]);
+    expect(caps.catalog.namespace).toBe(CATALOG_NAMESPACE);
+    // use_routine copies onto the draft — same gate as any edit, no drift.
+    expect(caps.catalog.canUse).toBe(caps.actions.canEditDraft);
   });
 });
 

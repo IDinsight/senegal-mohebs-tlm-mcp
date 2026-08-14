@@ -14,6 +14,7 @@
     "test": "vitest run",
     "start:http": "node dist/http.js",
     "seed:kg-store": "npm run build && node scripts/seed-kg-store.mjs",
+    "seed:catalog": "npm run build && node scripts/seed-catalog.mjs",
     "parity:kg-store": "npm run build && node scripts/parity-check.mjs"
   },
   "dependencies": {
