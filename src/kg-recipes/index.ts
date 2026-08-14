@@ -15,6 +15,10 @@ export { reposition, type RepositionArgs } from "./reposition.js";
 export { setContent, type SetContentArgs } from "./set-content.js";
 export { RECIPES, type RecipeDescriptor, type RecipeParam } from "./registry.js";
 export {
+  CATALOG_NAMESPACE, CATALOG_ROOT_ID, listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine,
+  type CatalogEntry, type ClonedSubtree, type UseRoutineArgs,
+} from "./catalog.js";
+export {
   containmentEdgeFor, deriveTemplate, isKnownLabel, orderPathsOf,
   ALIGNMENT_EDGE, POSITION, type NodeTemplate,
 } from "./lc.js";
