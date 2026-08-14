@@ -524,3 +524,42 @@ recipes — not a mechanical migration. Golden gate regenerated; `add_activity` 
 green; branch → PR → re-seed. **Acceptance bar: the generated guide's pedagogical
 quality is preserved or improved, and what a curator approves in `diff_draft` /
 `preview` is what ships.**
+
+## Batched authoring + generic reads (live)
+
+**Status: live.** Bulk authoring (seed a subtree of many nodes, then wire many edges)
+made the one-at-a-time flow painful — 88 `StandardsFrameworkItem`s plus 84 alignment
+edges was ~350 round-trips. Two batched write tools and two generic read tools address
+that; all four preserve namespace scoping and (writes) the two-phase confirm contract.
+
+**Reads.**
+
+- **`walk_graph(fromId, direction, edgeTypes?, nodeTypes?, maxDepth?, includeEdges?, limit?, cursor?, slot?)`**
+  — one directional (`out`/`in`/`both`), edge- and label-filtered, paginated BFS over the
+  echoed raw graph. It is the single generic traversal and **replaced `get_course`** (which
+  blew the token cap on any non-trivial course): a course subtree is `walk_graph(course,
+  "out", ["hasPart","hasChild","usesRoutine"])`; the framework root is `walk_graph(<any
+  SFI>, "in", ["hasChild"], ["StandardsFramework"])`. Non-matching nodes are traversed
+  *through*, so `nodeTypes` composes with the walk. Pagination is stateless (a
+  deterministic re-run sliced by an opaque `(depth,id)` cursor, like `read_audit`).
+  `slot:"draft"` walks the unpublished draft (curator/approver only, same tier as
+  `diff_draft`), closing the gap `get_course`'s removal left. Reader: `curriculum/walk.ts`.
+- **`namespace_stats()`** — an argument-free orientation snapshot: node counts by label,
+  edge counts by type, structural roots (no inbound `hasPart`/`hasChild`), draft state
+  (open + staged-edit count), and cheap heuristic `coverageFlags`. Run it first to see the
+  shape of a namespace before writing a walk. Reader: `curriculum/stats.ts`.
+
+**Writes (batched).** Both fold the single-item verb over one accumulating graph, so the
+whole batch is **one** `runGraphMutation` → one diff → one confirmation token → one `apply`
+audit record (the `useRoutine` shape). Any item error blocks the whole batch — no partial
+apply.
+
+- **`add_nodes(items[], …)`** — the batch form of the typed adds. Each item attaches under
+  an **existing** parent (intra-batch parents are deferred to a future composite recipe);
+  ids are minted per item and returned so a follow-up `create_edges` can wire them. Recipe:
+  `kg-recipes/add-nodes.ts`.
+- **`create_edges(edges[], …)`** — the batch form of `create_edge`. Duplicate detection
+  spans both the batch and the current draft. Recipe: `kg-recipes/create-edges.ts`.
+
+`get_capabilities` advertises all four (batched writes under `editable.typedAdds` /
+`editable.structural.verbs`; the reads under a new `discovery` block).

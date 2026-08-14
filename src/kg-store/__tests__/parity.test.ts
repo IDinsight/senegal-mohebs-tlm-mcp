@@ -86,7 +86,7 @@ async function collectReads(source: "bundle" | "firestore", workspace: string, g
     // behavior as before this refactor, when resolveProfile was called twice.
     const adapter = resolveAdapter(grade, subject)!;
 
-    // The read surface is now the generic graph read (get_course / get_standards)
+    // The read surface is now the generic graph read (walk_graph / get_standards)
     // over the parsed model's rawGraph. Snapshot that model — node ids + the edge
     // multiset — so bundle and firestore must produce the identical read graph.
     const model = adapter.model();

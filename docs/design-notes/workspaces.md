@@ -187,7 +187,7 @@ deploy, then verify, then delete the old paths.
 6. **Deploy the explorer** (Firebase Hosting) so its selector groups by workspace:
    `firebase deploy --only hosting`.
 7. **Verify against the live MCP server** (not just `parity --live`): `set_context`
-   into the workspace, `get_course` (KG reads), `list_documents` / `reconcile`
+   into the workspace, `walk_graph` (KG reads), `list_documents` / `reconcile`
    (Storage reads), `get_capabilities` (super-admin + workspace echo). Check the
    explorer selector shows the workspace group.
 8. **Optional — populate the registry:** `create_workspace senegal` +

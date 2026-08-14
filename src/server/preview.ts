@@ -47,7 +47,7 @@ export const PREVIEW_LABEL = "PREVIEW — generated from an unpublished draft, n
 // in KG_SOURCE=firestore mode; in bundle mode there is no draft concept, so we
 // return null (→ the caller surfaces the clear "no draft" notice). The
 // deserialize step is the same store-bridge path activate.ts uses for published.
-async function resolveDraftModel(
+export async function resolveDraftModel(
   ns: string,
 ): Promise<{ model: CurriculumModel; draftSlot: string; draftVersion: string | null } | null> {
   if (kgSource() !== "firestore") return null;
@@ -88,8 +88,8 @@ async function denyIfNotDraftReader(ns: string): Promise<Record<string, unknown>
 }
 
 // ── Core: preview_generation ─────────────────────────────────────────────────
-// The draft-resolved analog of get_course: the containment subtree under one
-// Course, read from the DRAFT model, tagged as a preview. Reads only; no graph
+// The draft-resolved course-subtree read (what walk_graph over hasPart/hasChild
+// returns, but from the DRAFT model), tagged as a preview. Reads only; no graph
 // write. Exported so tests drive the real logic.
 export async function previewGeneration(course: string): Promise<Record<string, unknown>> {
   const adapter = getActiveAdapter();
@@ -109,7 +109,7 @@ export async function previewGeneration(course: string): Promise<Record<string, 
     };
   }
 
-  // Read the SAME course subtree get_course returns, but from the draft-resolved
+  // Read the SAME course subtree walk_graph returns, but from the draft-resolved
   // model — so the curator sees the graph a staged edit would generate from. The
   // standards spine (get_standards) resolves against published as usual.
   const sub = courseSubgraph(resolved.model, course);
@@ -172,7 +172,7 @@ export function registerPreviewTools(server: McpServer) {
     {
       title: "Preview generation from the draft",
       description:
-        "Return the containment subtree under one Course resolved from the UNPUBLISHED DRAFT (not published) — the draft-resolved analog of get_course — so you can generate a PREVIEW of the teaching material a staged edit would produce, before publishing. This closes the editing loop: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change). Curators and approvers only. If no draft exists, returns a clear 'no draft to preview' notice. 'course' is a Course id (from list_courses). IMPORTANT: the returned subtree is a PREVIEW — generate the .docx from it, then surface it via create_preview_upload_url (segregated, short-lived, non-canonical). NEVER log_generation or create_upload_url a preview: those write to the canonical bucket/history and would defeat the isolation.",
+        "Return the containment subtree under one Course resolved from the UNPUBLISHED DRAFT (not published) — the draft-resolved course-subtree read (walk_graph reads the published graph; this reads the draft) — so you can generate a PREVIEW of the teaching material a staged edit would produce, before publishing. This closes the editing loop: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change). Curators and approvers only. If no draft exists, returns a clear 'no draft to preview' notice. 'course' is a Course id (from list_courses). IMPORTANT: the returned subtree is a PREVIEW — generate the .docx from it, then surface it via create_preview_upload_url (segregated, short-lived, non-canonical). NEVER log_generation or create_upload_url a preview: those write to the canonical bucket/history and would defeat the isolation.",
       inputSchema: { course: z.string() },
     },
     guarded(async (a: { course: string }) => asJson(await previewGeneration(a.course))),

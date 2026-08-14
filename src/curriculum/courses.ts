@@ -1,7 +1,10 @@
 /*
  * Module: curriculum · generic Course readers
  *
- * Subject-agnostic graph readers behind the list_courses / get_course tools.
+ * Subject-agnostic graph readers behind list_courses (coursesOf),
+ * preview_generation (courseSubgraph — the draft course-subtree read), and
+ * get_standards (standardsFor). The generic walk_graph tool covers the same
+ * traversals for ad-hoc reads; these stay as the named readers those tools use.
  * They do NO projection — no chapter/week/lesson vocabulary, no cooked slice.
  * They just surface raw Learning-Commons nodes so the caller (the LLM) reads the
  * structure and assembles materials itself. Everything comes from the model's
@@ -19,7 +22,7 @@ type EdgeOut = { id: string; type: string; start: string; end: string; propertie
 // `usesRoutine` is also followed so the InstructionalRoutine a lesson applies —
 // and, through the routine's own `hasPart`, its step routines and Materials — are
 // pulled into the subtree; without it the routine (attached by usesRoutine, not
-// containment) would be invisible in get_course.
+// containment) would be invisible in the course subtree.
 const EXPAND_EDGES = new Set(["hasPart", "hasChild", "usesRoutine"]);
 
 const nodeOut = (n: RawGraphSnapshot["nodes"][number]): NodeOut => ({ id: n.id, labels: n.labels ?? [], properties: n.properties ?? {} });
@@ -64,8 +67,9 @@ export function courseSubgraph(model: CurriculumModel, courseId: string): { cour
 // substance (the OS text) is on the SFI itself, its skills are the
 // `LearningComponent`s that `supports` it (or are its `hasChild` children), and
 // its illustrative tasks are the `Activity`s that align to it. This is the ONE
-// hop `get_course` deliberately does not take (following alignment from a course
-// pulls ~3/4 of the graph), so it is a separate per-node reader. Returns the
+// hop the course-subtree read deliberately does not take (following alignment
+// from a course pulls ~3/4 of the graph), so it is a separate per-node reader.
+// Returns the
 // origin + its aligned SFI(s) + that 1-hop neighborhood as raw nodes + edges.
 // Empty `nodes` when the node aligns to nothing (e.g. a placeholder not yet wired
 // to the spine). Returns null if the node id isn't in the graph.

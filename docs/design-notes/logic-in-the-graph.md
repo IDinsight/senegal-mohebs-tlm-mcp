@@ -160,12 +160,12 @@ exist purely to serve a Bucket-C heuristic.
 
 ## Realized — the adapter projection is trimmed
 
-Once both maths prompts read curriculum from the graph (`list_courses` / `get_course`
+Once both maths prompts read curriculum from the graph (`list_courses` / `walk_graph`
 / `get_standards`) instead of the adapter's cooked context, that projection had no
 callers and was **removed**. Gone from `SubjectAdapter` and all three adapters:
 `slice`, `listUnits`, `progression`, `requiredCoverage`, `scopeValues`, and
 `buildGenerationContext` (with `get_generation_context`); `preview_generation` now
-returns the draft-resolved `get_course` subtree. What the adapter still carries is
+returns the draft-resolved `walk_graph` subtree. What the adapter still carries is
 thin and mostly declarative: `parse` (generic descriptor) + `model()`, `detect`,
 `deliverables`/`capabilities`/`wordingAliases`, `coverageWarnings`, and the maths
 `suggestFreshDomain`/`domainUsage` heuristic.

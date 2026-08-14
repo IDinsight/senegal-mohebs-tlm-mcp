@@ -25,7 +25,7 @@ import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { runGraphMutation, kgNamespace, mintNodeId, type MutationGraph } from "../kg-store/index.js";
-import { addNode } from "../kg-recipes/index.js";
+import { addNode, addNodes } from "../kg-recipes/index.js";
 import type { SubjectAdapter } from "../types.js";
 
 // Namespace + coverage hook the active subject binds to (same as the other
@@ -43,6 +43,45 @@ function withMinted(result: unknown, mintedNodeId: string): unknown {
   const r = result as { kind?: string; phase?: string };
   if (r && r.kind === "graphMutation" && r.phase === "preview") return { ...(result as object), mintedNodeId };
   return result;
+}
+
+// One item of an add_nodes batch, as it arrives from the caller. `kind` is the
+// LC label (the discriminator); `properties` is the same kind-specific bag the
+// singular typed adds build (audience, groupName, statementType, content, …).
+type AddNodesItemInput = {
+  kind: string;
+  parentId?: string;
+  description?: string;   // display text → normalized title/text + raw.description
+  title_en?: string;
+  position?: number;
+  via?: string;
+  alignTo?: string;
+  properties?: Record<string, unknown>;
+  mintedNodeId?: string;  // caller's own alias, echoed back in the id map for correlation
+};
+
+// The LC labels add_nodes accepts — the same set the nine typed add tools cover.
+const ADD_NODE_KINDS = [
+  "Course", "LessonGrouping", "Lesson", "Activity", "Assessment",
+  "Material", "LearningComponent", "InstructionalRoutine", "StandardsFrameworkItem",
+] as const;
+
+// Surface the per-item minted ids on a dry-run preview: `mintedNodeIds` in item
+// order (echo the whole array back on confirm so the args-hash matches), plus a
+// `{ yourAlias → realId }` map for items that supplied their own mintedNodeId.
+// No-op on confirm / blocked / unauthorized results.
+function withMintedBatch(result: unknown, items: AddNodesItemInput[], mintedIds: string[]): unknown {
+  const r = result as { kind?: string; phase?: string };
+  if (!(r && r.kind === "graphMutation" && r.phase === "preview")) {
+    return result;
+  }
+  const mintedNodeIdMap: Record<string, string> = {};
+  items.forEach((item, index) => {
+    if (item.mintedNodeId) {
+      mintedNodeIdMap[item.mintedNodeId] = mintedIds[index];
+    }
+  });
+  return { ...(result as object), mintedNodeIds: mintedIds, mintedNodeIdMap };
 }
 
 // The fields every typed add shares.
@@ -295,5 +334,61 @@ export function registerAuthoringTools(server: McpServer) {
     guarded(async (a: AddCommon & { parentId: string; timeRequired?: string; summary?: string }) =>
       runTypedAdd("InstructionalRoutine", { ...a, properties: { timeRequired: a.timeRequired, "metadata.summary": a.summary } }),
     ),
+  );
+
+  // ── add_nodes (batched) ──────────────────────────────────────────────────────
+  server.registerTool(
+    "add_nodes",
+    {
+      title: "Add many nodes in one batch",
+      description:
+        "Create MANY nodes in ONE atomic draft edit — the batch form of the typed add tools, for bulk authoring (e.g. 88 StandardsFrameworkItems under a framework) without ~180 round-trips. Each `items[i]` has `kind` (the LC label — Course/LessonGrouping/Lesson/Activity/Assessment/Material/LearningComponent/InstructionalRoutine/StandardsFrameworkItem), an EXISTING `parentId`, `description` (display title), optional `position`/`alignTo`/`via`, and `properties` (the kind-specific canonical LC bag: audience, groupName, statementType, content, …). Each item attaches under an already-existing parent — a node minted in the SAME batch cannot be a parent (stage nodes here, then wire cross-references with create_edges). Optional per-item `mintedNodeId` is your own alias, returned in an id map so you can correlate items to their real ids. ALL-OR-NOTHING: the dry-run validates every item and returns ONE combined diff + ONE confirmationToken + `mintedNodeIds` (real ids, in item order); any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true, the token, AND `mintedNodeIds` echoed back verbatim. DRAFT edit — publish_draft to make it live.",
+      inputSchema: {
+        items: z.array(
+          z.object({
+            kind: z.enum(ADD_NODE_KINDS),
+            parentId: z.string().optional(),
+            description: z.string().optional(),
+            title_en: z.string().optional(),
+            position: z.number().optional(),
+            via: z.string().optional(),
+            alignTo: z.string().optional(),
+            properties: z.record(z.any()).optional(),
+            mintedNodeId: z.string().optional(),
+          }),
+        ),
+        confirm: z.boolean().optional(),
+        confirmationToken: z.string().optional(),
+        mintedNodeIds: z.array(z.string()).optional(),   // real ids, echoed on confirm
+      },
+    },
+    guarded(async (a: { items: AddNodesItemInput[]; confirm?: boolean; confirmationToken?: string; mintedNodeIds?: string[] }) => {
+      const { namespace, coverage } = bind(getActiveAdapter());
+
+      // Mint one real id per item on the dry-run; on confirm reuse the exact ids
+      // the caller echoes back, so the args-hash matches the previewed batch.
+      const mintedIds = a.confirm ? (a.mintedNodeIds ?? []) : a.items.map(() => mintNodeId());
+      const builtItems = a.items.map((item, index) => ({
+        label: item.kind,
+        parentId: item.parentId,
+        newNodeId: mintedIds[index] ?? "",
+        title: item.description,
+        title_en: item.title_en,
+        position: item.position,
+        via: item.via,
+        alignTo: item.alignTo,
+        properties: item.properties,
+      }));
+
+      const result = await runGraphMutation({
+        namespace,
+        mutation: addNodes,
+        args: { namespace, items: builtItems },
+        confirm: a.confirm,
+        token: a.confirmationToken,
+        coverage,
+      });
+      return asJson(a.confirm ? result : withMintedBatch(result, a.items, mintedIds));
+    }),
   );
 }

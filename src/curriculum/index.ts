@@ -12,3 +12,5 @@ export { serializeModel, deserializeToModel, toRawEnvelope, edgeId, PRELOADED_MO
 export { emptyContainerWarnings, multiParentWarnings, runCoverageRules, type CoverageRuleSpec } from "./coverage.js";
 export { resolvePrune, type PruneStrategySpec } from "./prunes.js";
 export { coursesOf, courseSubgraph, standardsFor } from "./courses.js";
+export { walkGraph, type WalkArgs, type WalkDirection, type WalkResult } from "./walk.js";
+export { computeGraphStats, type GraphStats, type StatsRoot } from "./stats.js";
