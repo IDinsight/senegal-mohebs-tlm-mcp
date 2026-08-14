@@ -158,6 +158,22 @@ exactly what this note predicts. C is guidance on *how to author*, so it lives i
 prompt, not in tools; `suggest_fresh_domain`/`domain_usage` are the lone tools that
 exist purely to serve a Bucket-C heuristic.
 
+## Realized — the adapter projection is trimmed
+
+Once both maths prompts read curriculum from the graph (`list_courses` / `get_course`
+/ `get_standards`) instead of the adapter's cooked context, that projection had no
+callers and was **removed**. Gone from `SubjectAdapter` and all three adapters:
+`slice`, `listUnits`, `progression`, `requiredCoverage`, `scopeValues`, and
+`buildGenerationContext` (with `get_generation_context`); `preview_generation` now
+returns the draft-resolved `get_course` subtree. What the adapter still carries is
+thin and mostly declarative: `parse` (generic descriptor) + `model()`, `detect`,
+`deliverables`/`capabilities`/`wordingAliases`, `coverageWarnings`, and the maths
+`suggestFreshDomain`/`domainUsage` heuristic.
+
+**Caveat:** reading and the maths *manual* have no `Course` node wired to the spine
+yet, so their generation is data-dark until that Course is authored — a deferred data
+job, not a code gap.
+
 ## Related
 
 - [`instructional-routines.md`](instructional-routines.md) — the mechanism that puts a

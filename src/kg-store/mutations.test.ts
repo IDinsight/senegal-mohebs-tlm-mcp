@@ -407,9 +407,10 @@ describe("graph-mutation framework — reusability & parity", () => {
         const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
+        const m = adapter.model();
         return {
-          units: adapter.listUnits(),
-          perScope: adapter.scopeValues().map((s) => ({ s, slice: adapter.slice(s), progression: adapter.progression(s) })),
+          nodes: [...m.byId.keys()].sort(),
+          edges: (m.rawGraph?.relationships ?? []).map((e) => `${e.type}|${e.start}|${e.end}`).sort(),
         };
       });
     }

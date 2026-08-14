@@ -91,11 +91,10 @@ async function readPublished(workspace: string, grade: string, subject: string) 
     const r = await activateContext(workspace, grade, subject);
     if (!r.ok) throw new Error(`activate ${grade}/${subject}: ${r.error}`);
     const adapter = resolveAdapter(grade, subject)!;
+    const m = adapter.model();
     return {
-      units: adapter.listUnits(),
-      perUnit: adapter.scopeValues().map((s) => ({
-        scope: s, slice: adapter.slice(s), progression: adapter.progression(s),
-      })),
+      nodes: [...m.byId.keys()].sort(),
+      edges: (m.rawGraph?.relationships ?? []).map((e) => `${e.type}|${e.start}|${e.end}`).sort(),
     };
   });
 }
@@ -123,7 +122,7 @@ describe("draft/published lifecycle (memory backend)", () => {
       const pointer = await store.readPointer(ns);
       expect(pointer).toEqual({ publishedSlot: "a", draftSlot: null });
       const snap = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
-      expect(snap.units.length).toBeGreaterThan(0);
+      expect(snap.nodes.length).toBeGreaterThan(0);
     });
 
     it(`${label}: createDraft snapshots published byte-for-byte`, async () => {

@@ -84,20 +84,14 @@ async function collectReads(source: "bundle" | "firestore", workspace: string, g
     // builds a fresh instance closing over the same session state — same
     // behavior as before this refactor, when resolveProfile was called twice.
     const adapter = resolveAdapter(grade, subject)!;
-    const units = adapter.listUnits();
-    const scopes = adapter.scopeValues();
-    const perUnit: Array<{ scope: number | string; slice: unknown; progression: unknown; requiredCoverage: unknown; generationContext: unknown[] }> = [];
-    for (const scope of scopes) {
-      const slice = adapter.slice(scope);
-      const progression = adapter.progression(scope);
-      const requiredCoverage = adapter.requiredCoverage(scope);
-      const generationContext: unknown[] = [];
-      for (const d of adapter.deliverables) {
-        generationContext.push(await adapter.buildGenerationContext(scope, d.key));
-      }
-      perUnit.push({ scope, slice, progression, requiredCoverage, generationContext });
-    }
-    return { units, scopes, perUnit };
+    // The read surface is now the generic graph read (get_course / get_standards)
+    // over the parsed model's rawGraph. Snapshot that model — node ids + the edge
+    // multiset — so bundle and firestore must produce the identical read graph.
+    const m = adapter.model();
+    return {
+      nodes: [...m.byId.keys()].sort(),
+      edges: (m.rawGraph?.relationships ?? []).map((e) => `${e.type}|${e.start}|${e.end}`).sort(),
+    };
   });
 }
 

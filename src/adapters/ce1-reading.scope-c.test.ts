@@ -155,12 +155,11 @@ describe("add_node — Material + set_content; the slice surfaces them", () => {
     expect(mat.type).toBe("material");
     expect((mat.properties.raw as Record<string, unknown>).content).toBe(content);
     expect(draft.edges.map((e) => e.id)).toContain(makeEdgeId(HAS_PART, activityId, materialId));
-
-    const ctx = await adapter().buildGenerationContext(1, "teacher_guide", modelOf(draft)) as { curriculum: { sessions: { activities: { titre: string | null; materials: { contenu: string | null }[] }[] }[] } };
-    const authored = ctx.curriculum.sessions.flatMap((s) => s.activities).find((x) => x.titre === "Étape 3 : Écouter le texte")!;
-    expect(authored).toBeTruthy();
-    expect(authored.materials.map((mm) => mm.contenu)).toContain(content);
-  });
+    // The Activity that Material hangs under is itself under the session Lesson —
+    // the authored content is reachable in the draft content tree (the read is now
+    // the generic get_course subtree, not a cooked slice).
+    expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, week1SessionLesson(draft), activityId))).toBe(true);
+  }, 15000); // two two-phase mutations over the ~2000-node reading graph — heavier than the 5s default
 
   it("allows a Material directly on a week grouping and on a lesson (any container)", async () => {
     const published = await readPublished();
@@ -170,9 +169,10 @@ describe("add_node — Material + set_content; the slice surfaces them", () => {
     expect((await runRecipe(addNode, { namespace: ns, parentId: weekId, label: "Material", newNodeId: mintNodeId(), properties: { content: "[week opening scene]", materialType: "Reference" } })).confirm?.phase).toBe("apply");
     expect((await runRecipe(addNode, { namespace: ns, parentId: lessonId, label: "Material", newNodeId: mintNodeId(), properties: { content: "[shared reading text]" } })).confirm?.phase).toBe("apply");
 
-    const ctx = await adapter().buildGenerationContext(1, "teacher_guide", modelOf(await readDraft())) as { curriculum: { materials: { contenu: string | null }[]; sessions: { materials: { contenu: string | null }[] }[] } };
-    expect(ctx.curriculum.materials.map((x) => x.contenu)).toContain("[week opening scene]");
-    expect(ctx.curriculum.sessions.flatMap((s) => s.materials).map((x) => x.contenu)).toContain("[shared reading text]");
+    const draft = await readDraft();
+    const matContents = draft.nodes.filter((n) => n.type === "material").map((n) => (n.properties.raw as Record<string, unknown>).content);
+    expect(matContents).toContain("[week opening scene]");
+    expect(matContents).toContain("[shared reading text]");
   });
 
   it("set_content replaces an existing node's content, preserving everything else", async () => {

@@ -423,9 +423,9 @@ describe("reads and generation remain ungated for unknown actors", () => {
       const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
       expect(r.ok).toBe(true);
       const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
-      return { units: adapter.listUnits(), scopes: adapter.scopeValues() };
+      return { nodes: [...adapter.model().byId.keys()].sort() };
     });
-    expect(output.units.length).toBeGreaterThan(0);
+    expect(output.nodes.length).toBeGreaterThan(0);
     // No blocked audit — reads didn't hit authz.
     expect(await store.listAudit({ namespace: ns, eventType: "blocked" })).toEqual([]);
   });
@@ -457,7 +457,7 @@ describe("parity: reads are unaffected by #8", () => {
         const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
-        return { units: adapter.listUnits(), scopes: adapter.scopeValues() };
+        return { nodes: [...adapter.model().byId.keys()].sort() };
       });
     }
     const before = await reads();
