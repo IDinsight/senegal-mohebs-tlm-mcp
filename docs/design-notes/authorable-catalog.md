@@ -1,36 +1,54 @@
 # Authorable catalog — subjects as data, curators as authors
 
-> **Status: Proposal — first slice of the catalog built (2026-08-14).** This note sets
-> the target and build order. Most of it (the config layer, the routine→generation
-> wiring, formatters) is still a proposal, but the **routine catalog itself is now
-> implemented** for browse + copy-onto-lesson — see "What shipped" below. It extends
+> **Status: Live — the routine + formatter catalog is shipped, deployed, and verified
+> (2026-08-14).** The catalog (routines and formatters, across a shared and a
+> per-workspace scope) runs on the deployed server; the house-style formatter is applied
+> to both CI-maths Courses, and a generated chapter was verified to take its style from
+> the formatter. Still a **proposal**: the subject-profile **config layer**, the MCP
+> **resources** browse surface (D5), reading's routine catalog (blocked on its content
+> layer), and re-copy/detach ergonomics. This note extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
-> [`instructional-routines.md`](instructional-routines.md) with a curator-facing
-> layer, and it revises the "Next phases" of the routines note (which still names the
-> since-removed `buildGenerationContext`). Decisions were chosen on 2026-08-14; **D2
-> was revised from by-reference to copy-on-use during implementation** (see below).
+> [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
+> **D2 was revised from by-reference to copy-on-use during implementation** (see below).
 
-## What shipped (the routine catalog)
+## What shipped (the catalog)
 
-The first slice is live in code (not yet seeded to the live store):
+Live on the deployed server, seeded, and verified end-to-end (PRs #77, #78, #79):
 
-- **A shared library in a reserved namespace** (`CATALOG_NAMESPACE`), shaped as a root
-  `InstructionalRoutine` container holding the entry routines (→ steps → Materials).
-  Seeded by `scripts/seed-catalog.mjs` (`npm run seed:catalog`), which extracts every
-  subject's routine subtrees and re-homes them under one root — today the two CI-maths
-  routines are its first entries.
-- **`list_catalog`** — an ungated read that browses the entries (id, name, summary,
-  ordered steps, material count).
-- **`use_routine`** — curator-gated, two-phase: it **copies** an entry's subtree with
-  fresh ids into the active subject's draft and links the lesson via `usesRoutine`
-  (see D2). Dry-run returns the diff + token + the minted `old → new` id-map; confirm
-  reuses the map so both phases build the identical clone.
-- **`get_capabilities`** carries a `catalog` mirror; `canUse` is sourced from the same
-  `apply` gate `use_routine` enforces.
+**The catalog — two scopes, two kinds.**
+- **Two scopes** (D3): a shared `_shared/_catalog/routines` (cross-tenant) and a
+  per-workspace `<workspace>/_catalog/routines`, resolved via `catalogNamespace(...)`.
+  `list_catalog` reads both, unions them, and tags each entry with `scope`
+  (shared | workspace) and `kind` (routine | formatter). Editing an entry is gated by
+  its own namespace's authz — shared → super_admin, workspace → that tenant's curators.
+- **Two kinds** (D1): **routines** (pedagogical structure → steps → Materials) and
+  **formatters** (a house-style spec `Material`). Both are `InstructionalRoutine`
+  entries under a root container; `kind` comes from `metadata.catalogKind`.
+- Seeded by `scripts/seed-catalog.mjs` (`npm run seed:catalog`), which extracts each
+  subject's routine subtrees and splices the authored `HOUSE_STYLE_FORMATTER` under one
+  root. The live shared catalog has **3 entries** (2 CI-maths routines + the house style).
 
-Not yet done: seeding the live store + a server redeploy (the tools are code), the MCP
-**resources** browse surface (D5 — `list_catalog` is a tool for now), the **formatter**
-kind, and re-copy/detach ergonomics.
+**Applying — copy-on-use (D2).** `use_routine` copies a routine onto a **Lesson**;
+`use_formatter` copies a formatter onto a **Course/deliverable**. Both share one
+two-phase path: clone the entry's subtree with fresh ids into the active subject's
+draft, link it via `usesRoutine`, dry-run returns diff + token + the minted `old → new`
+id-map, confirm reuses it. The copy is independent of the library (drift is the accepted
+tradeoff).
+
+**Generation reads it, prompts slimmed (#79).** `get_course` already surfaces a Course's
+`usesRoutine` formatter, so the maths prompts were slimmed: the shared house style
+(palette, fonts, page setup, image compression) now lives **only** in the formatter, not
+the prompts. Verified live — a generated CI-maths chapter took its palette / typography /
+page setup from the applied formatter, with the routine driving structure, no inlined
+fallback. (Reading's prompt is untouched — it has no Course yet, so no formatter can be
+applied.)
+
+**Surfaced.** `get_capabilities` carries a `catalog` mirror (both scope namespaces,
+`canUse` from the same `apply` gate, and the per-namespace edit governance).
+
+**Not yet:** the subject-profile **config layer**, the MCP **resources** browse surface
+(D5 — `list_catalog` / `use_*` are tools for now), reading's routine catalog (blocked on
+its missing content layer), and re-copy/detach ergonomics.
 
 ## The goal
 
@@ -299,9 +317,9 @@ files are gone.
 |---|---|---|
 | D1 | One catalog or two | **One** `kind`-tagged spec-block catalog, reusing the routine substrate |
 | D2 | Reference vs copy on pick | **Copy-on-use** (revised from by-reference; forced by a shared cross-namespace library — copy localizes the reference; tradeoff = drift) |
-| D3 | Catalog scope | **Shared library** (reserved namespace, read by every context); per-workspace entries deferred |
+| D3 | Catalog scope | **Both — shipped:** shared `_shared/_catalog` + per-workspace `<ws>/_catalog`; `list_catalog` unions + tags scope; edit gated per-namespace |
 | D4 | Where authored data lives | **Content → LC nodes** (catalog = a reserved-namespace routine graph); profile → separate config layer (later phase) |
-| D5 | Curator browse surface | **Tool for now** (`list_catalog`); MCP resources deferred. `use_routine` attaches |
+| D5 | Curator browse surface | **Tool for now** (`list_catalog`); MCP resources deferred. `use_routine` / `use_formatter` attach by copy |
 | D6 | Build order | **Routine wiring first → profile to config → catalog → dissolve residue** |
 | D7 | Residual per-subject logic | **Generic mechanism switched by config** (no node-authorable prune language) |
 
