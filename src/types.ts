@@ -245,24 +245,12 @@ export interface SubjectAdapter {
 
   // The active CurriculumModel (memoized; published slot in firestore mode, the
   // on-disk bundle in dev). Generic — it carries the echoed `rawGraph`, so the
-  // tool layer can read raw LC nodes/edges without a subject projection (the
-  // list_courses / get_course generic graph readers use this).
+  // tool layer can read raw LC nodes/edges without a subject projection. This is
+  // now the ONLY read surface the adapter exposes: the cooked per-unit projection
+  // (slice/listUnits/progression/…) and buildGenerationContext were removed once
+  // generation moved to the generic graph readers (list_courses / get_course /
+  // get_standards) — see docs/design-notes/logic-in-the-graph.md.
   model(): CurriculumModel;
-
-  // LC → friendly projection. Return shapes are subject-specific.
-  listUnits(): unknown[];
-  slice(scope: number | string): unknown | null;
-  progression(scope: number | string): unknown;
-  requiredCoverage(scope: number | string): unknown[];
-  scopeValues(): Array<number | string>;
-
-  // Pre-generation payload. `model` is an OPTIONAL pre-resolved CurriculumModel
-  // to build the context from instead of the adapter's default (published)
-  // model — the seam preview_generation uses to generate from a DRAFT-resolved
-  // model (Phase 3) without touching the published read path. When omitted, the
-  // adapter resolves its own (published) model exactly as before, so existing
-  // callers (get_generation_context) are unaffected.
-  buildGenerationContext(scope: number | string, deliverableKey: DeliverableKey, model?: CurriculumModel): Promise<unknown>;
 
   // Optional, capability-gated at the tool boundary.
   suggestFreshDomain?(): Promise<unknown>;

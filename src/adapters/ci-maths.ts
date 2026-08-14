@@ -14,15 +14,11 @@
  * projection. The two axes — schedule (week→OS) and content (domaine→chapter→OS)
  * — are read through the edges (childrenOf), never a denormalized number.
  */
-import { listEntries } from "../storage/index.js";
-import { neighborhoodDomains, suggestFreshDomain, domainUsage } from "../generation/index.js";
-import { parseGraph, terminologySections, emptyContainerWarnings, type GraphParseDescriptor } from "../curriculum/index.js";
+import { suggestFreshDomain, domainUsage } from "../generation/index.js";
+import { parseGraph, emptyContainerWarnings, type GraphParseDescriptor } from "../curriculum/index.js";
 import { noAccents } from "../utils/index.js";
-import { makeEnsure, detectEnvelope, aggregateCharacters, alignedStandardOf, textWording } from "./engine.js";
-import type {
-  SubjectAdapter, DeliverableSpec,
-  CurriculumModel, CurriculumUnit, GraphView,
-} from "../types.js";
+import { makeEnsure, detectEnvelope, textWording } from "./engine.js";
+import type { SubjectAdapter, DeliverableSpec, CurriculumModel, GraphView } from "../types.js";
 
 const ADAPTER_ID = "ci-maths/nodes-relationships-v1";
 
@@ -34,15 +30,6 @@ const DELIVERABLES: DeliverableSpec[] = [
   { key: "manual", label: "Manuel de l'élève (pupil book)", scopeKind: "chapter", classify: (f) => !isLessons(f), dependsOn: [], promptFile: "PROMPT_generate_chapter.md" },
   { key: "lessons", label: "Fiches de leçons (teacher guide)", scopeKind: "chapter", classify: isLessons, dependsOn: ["manual"], promptFile: "PROMPT_generate_lessons.md" },
 ];
-
-// ── Small typed accessors over the raw passthrough (unit.properties) ──────────
-type Meta = { role?: string; order?: number; en?: Record<string, any> };
-const meta = (u: CurriculumUnit): Meta => (u.properties.metadata as Meta) ?? {};
-const rawStr = (u: CurriculumUnit, k: string): string | null => (u.properties[k] as string) ?? null;
-// An illustrative task (Activity) aligns to a STANDARD via hasEducationalAlignment;
-// the specific component it exemplifies is carried here (canonical: no Activity↔LC edge).
-type Illustrates = { id?: string; name?: string; order?: number };
-const illustrates = (u: CurriculumUnit): Illustrates => ((u.properties.metadata as { illustratesComponent?: Illustrates })?.illustratesComponent) ?? {};
 
 // ── Raw envelope → CurriculumModel ──────────────────────────────────────────
 // Delegated to the generic parser; the descriptor is all that is subject-specific.
@@ -126,93 +113,6 @@ function ciMathsCoverageWarnings(graph: GraphView): string[] {
 export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdapter {
   const ensure = makeEnsure(parse);
 
-  // Read helpers, all parametrized by the CurriculumModel they read (published via
-  // ensure(); a draft-resolved model for preview). Chapter→lesson and week→lesson
-  // are followed through the EDGES (childrenOf), not any number.
-  // Authored chapters only — filtered by the canonical LessonGrouping `groupName`
-  // ("Chapitre"), which also keeps weeks (groupName "Semaine", a different kind
-  // anyway) and any other grouping out of the chapter projection.
-  const chaptersIn = (m: CurriculumModel) => m.unitsOfKind("chapter").filter((c) => c.properties.groupName === "Chapitre");
-  const chapters = () => chaptersIn(ensure());
-  const chapterOf = (m: CurriculumModel, chapNum: number) => chaptersIn(m).find((c) => c.order === chapNum) ?? null;
-  const domaineOf = (m: CurriculumModel, chapter: CurriculumUnit) => m.byId.get(chapter.parentId ?? "")?.title ?? null;
-  const lessonsOf = (m: CurriculumModel, chapter: CurriculumUnit) =>
-    m.childrenOf(chapter.id).filter((u) => u.kind === "lesson").sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  // lesson id → its week number (schedule axis).
-  const weekMap = (m: CurriculumModel) => {
-    const map = new Map<string, number | null>();
-    for (const w of m.unitsOfKind("week")) for (const l of m.childrenOf(w.id)) if (l.kind === "lesson") map.set(l.id, w.order);
-    return map;
-  };
-
-  const listUnitsIn = (m: CurriculumModel) =>
-    chaptersIn(m)
-      .map((c) => ({ chapitreNum: c.order, chapitreTitre: c.title, domaine: domaineOf(m, c) }))
-      .sort((a, b) => (a.chapitreNum ?? 0) - (b.chapitreNum ?? 0));
-
-  const buildSlice = (chapNum: number, m: CurriculumModel = ensure()) => {
-    const chapter = chapterOf(m, chapNum);
-    if (!chapter) return null;
-    const lessonUnits = lessonsOf(m, chapter);
-    const weekOf = weekMap(m);
-    const expOf = alignedStandardOf(m); // lesson → the spine standard it aligns to
-    // Illustrative tasks align to a STANDARD; the component each exemplifies rides
-    // in metadata.illustratesComponent. Index tasks by that component id (ordered),
-    // replacing the old (non-canonical) activity→component edge.
-    const tasksByComponent = new Map<string, CurriculumUnit[]>();
-    for (const t of m.unitsOfKind("task")) {
-      const cid = illustrates(t).id;
-      if (cid) (tasksByComponent.get(cid) ?? tasksByComponent.set(cid, []).get(cid)!).push(t);
-    }
-    for (const list of tasksByComponent.values()) list.sort((a, b) => (illustrates(a).order ?? 0) - (illustrates(b).order ?? 0));
-    // The lesson's stable identifier is its aligned expectation's id (the OS): the
-    // Lesson node is an authoring wrapper, but downstream references key on the OS.
-    const identityOf = (ln: CurriculumUnit) => expOf.get(ln.id)?.id ?? ln.id;
-    const bilanId = (() => {
-      const b = lessonUnits.find((l) => l.isAssessment);
-      return b ? identityOf(b) : null;
-    })();
-
-    const lessons = lessonUnits.map((ln) => {
-      // Teaching facts (number, week) come from the Lesson; standard facts (OS
-      // text, components/tasks, statement type/code, palier) from the expectation.
-      const ex = expOf.get(ln.id) ?? ln;
-      const components = m.childrenOf(ex.id).filter((c) => c.kind === "component").map((cn) => ({
-        identifier: cn.id,
-        description: cn.text ?? null,
-        description_en: meta(cn).en?.description ?? null,
-        reference: rawStr(cn, "reference"),
-        tasks: (tasksByComponent.get(cn.id) ?? []).map((tn) => ({
-          identifier: tn.id,
-          description: tn.text ?? null,
-          contentType: rawStr(tn, "contentType"),
-        })),
-      }));
-      return {
-        identifier: identityOf(ln), leconNum: ln.order ?? null, osTexte: ex.text ?? null,
-        statementType: meta(ex).role ?? null, statementCode: rawStr(ex, "statementCode"),
-        semaine: weekOf.get(ln.id) ?? null, palier: (ex.properties.palier as number) ?? null,
-        isBilan: ln.isAssessment, components,
-      };
-    });
-    return {
-      chapitreNum: chapNum,
-      chapitreTitre: chapter.title ?? null,
-      domaine: domaineOf(m, chapter),
-      lessons, bilanLessonId: bilanId,
-    };
-  };
-
-  const buildProgression = (chapNum: number, m: CurriculumModel = ensure()) => {
-    const chapterUnit = chapterOf(m, chapNum);
-    if (!chapterUnit) return { buildsTowards: [] as number[], buildsFrom: [] as number[] };
-    const numOf = (id: string) => m.byId.get(id)?.order ?? undefined;
-    return {
-      buildsTowards: chapterUnit.buildsTowards.map(numOf).filter((n): n is number => n != null),
-      buildsFrom: chapterUnit.buildsFrom.map(numOf).filter((n): n is number => n != null),
-    };
-  };
-
   return {
     grade, subject,
     id: ADAPTER_ID,
@@ -250,51 +150,6 @@ export function buildCiMathsAdapter(grade: string, subject: string): SubjectAdap
 
     detect: detectEnvelope, parse,
     model: ensure,
-
-    listUnits: () => listUnitsIn(ensure()),
-    slice: (scope) => buildSlice(Number(scope)),
-    progression: (scope) => buildProgression(Number(scope)),
-    requiredCoverage: (scope) => {
-      const s = buildSlice(Number(scope));
-      return s ? s.lessons.filter((l) => !l.isBilan).map((l) => ({ leconNum: l.leconNum, osTexte: l.osTexte })) : [];
-    },
-    scopeValues: () => chapters().map((c) => c.order).filter((n): n is number => n != null).sort((a, b) => a - b),
-
-    async buildGenerationContext(scope, deliverableKey, model) {
-      const m = model ?? ensure();
-      const chapter = Number(scope);
-      const docType = deliverableKey;
-      const notes: string[] = [];
-      const entries = await listEntries();
-      const establishedCharacters = aggregateCharacters(entries);
-
-      const coverage = listUnitsIn(m).map((c) => ({
-        chapter: c.chapitreNum,
-        hasManual: entries.some((e) => e.unit === c.chapitreNum && e.type === "manual"),
-        hasLessons: entries.some((e) => e.unit === c.chapitreNum && e.type === "lessons"),
-      }));
-
-      const manualForThisChapter = entries.find((e) => e.id === `${chapter}:manual`) ?? null;
-      if (docType === "lessons" && !manualForThisChapter) notes.push(`No pupil manual is tracked for chapter ${chapter}. Lesson sheets build on the manual — generate or ingest the manual first.`);
-
-      const curriculumSlice = buildSlice(chapter, m);
-      if (!curriculumSlice) notes.push(`Chapter ${chapter} was not found in the knowledge graph.`);
-      const requiredLessonCoverage = curriculumSlice
-        ? curriculumSlice.lessons.filter((l) => !l.isBilan).map((l) => ({ leconNum: l.leconNum, osTexte: l.osTexte }))
-        : [];
-
-      return {
-        unit: chapter, deliverable: docType, curriculum: curriculumSlice, progression: buildProgression(chapter, m), requiredLessonCoverage,
-        establishedCharacters,
-        exampleDomains: await (async () => {
-          const avoidNearby = await neighborhoodDomains(chapter);
-          const suggested = await suggestFreshDomain(avoidNearby);
-          return { suggested, avoidNearby };
-        })(),
-        terminology: { note: "Glossary derives from the KG's own wording; when a term's wording is missing, search the MOHEBS FR/Wolof terminology via get_terminology and use that. Do not invent wording.", sections: terminologySections() },
-        coverage, manualForThisChapter, notes,
-      };
-    },
 
     suggestFreshDomain: () => suggestFreshDomain(),
     domainUsage: () => domainUsage(),

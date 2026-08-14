@@ -432,7 +432,7 @@ describe("parity oracle: published reads stay identical after audit-producing op
         const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
-        return { units: adapter.listUnits(), scopes: adapter.scopeValues() };
+        return { nodes: [...adapter.model().byId.keys()].sort() };
       });
     }
     const before = await readsFromPublished();

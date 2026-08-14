@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 import { CONFIG, kgSource } from "../config.js";
 import { sourcePath, sessionState } from "../context/index.js";
 import { PRELOADED_MODEL_KEY } from "../curriculum/index.js";
-import type { CharacterRef, CurriculumModel, CurriculumUnit, HistoryEntry, WordingAliases } from "../types.js";
+import type { CurriculumModel, WordingAliases } from "../types.js";
 
 // The one way an adapter gets its CurriculumModel, memoized per adapter instance.
 // firestore mode reads the model activate.ts pinned in the session bag; bundle
@@ -38,40 +38,6 @@ export function makeEnsure(parse: (raw: unknown) => CurriculumModel): () => Curr
 export function detectEnvelope(raw: unknown): boolean {
   const g = raw as { nodes?: unknown[]; relationships?: unknown[] } | undefined;
   return Array.isArray(g?.nodes) && Array.isArray(g?.relationships);
-}
-
-// A character established in earlier documents, ready to reuse. `firstUnit` is the
-// earliest scope (chapter/week) it appeared in — used only to order the list.
-export type EstablishedCharacter = { name: string; type?: string; role?: string; description?: string; firstUnit: number };
-
-// Roll every past document's `characters` up by name: earliest unit wins, and
-// type/role/description fill in from whichever entry first has them. Sorted by
-// first appearance, then name. Identical need for maths and reading.
-export function aggregateCharacters(entries: HistoryEntry[]): EstablishedCharacter[] {
-  const byName = new Map<string, EstablishedCharacter>();
-  for (const e of entries) {
-    for (const raw of e.content.characters ?? []) {
-      const c: CharacterRef = typeof raw === "string" ? { name: raw } : raw;
-      if (!c?.name) continue;
-      const existing = byName.get(c.name);
-      if (!existing) byName.set(c.name, { name: c.name, type: c.type, role: c.role, description: c.description, firstUnit: e.unit });
-      else {
-        existing.firstUnit = Math.min(existing.firstUnit, e.unit);
-        existing.type ??= c.type; existing.role ??= c.role; existing.description ??= c.description;
-      }
-    }
-  }
-  return [...byName.values()].sort((a, b) => a.firstUnit - b.firstUnit || a.name.localeCompare(b.name));
-}
-
-// Index each content Lesson to the standard (expectation) it aligns to. The
-// parser records that alignment as expectation.childIds ∋ the lesson, so one scan
-// of the expectations builds the reverse map. Both subjects read it the same way.
-export function alignedStandardOf(m: CurriculumModel): Map<string, CurriculumUnit> {
-  const map = new Map<string, CurriculumUnit>();
-  for (const ex of m.unitsOfKind("expectation"))
-    for (const child of m.childrenOf(ex.id)) if (child.kind === "lesson") map.set(child.id, ex);
-  return map;
 }
 
 // Build the standard text/text_en wording aliases for the given kinds: a node's
