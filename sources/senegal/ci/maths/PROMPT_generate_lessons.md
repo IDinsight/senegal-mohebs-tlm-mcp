@@ -143,28 +143,24 @@ itself stays in the pupil's manual only.
 
 ## Formatting specification — fixed look and feel
 
-**House style comes from the graph when present.** If the teacher-guide `Course` carries a
-**formatter** — a `usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is
-`"formatter"`, surfaced by `get_course` — apply the shared house-style spec in its
-`Material.content` (palette, typography, page setup, image rules): it is the single source of
-truth for the shared look. The **subject-specific layout** below (the distribution table, the
-five step-box tables, the `E dit :` / inline `Je retiens` conventions) still applies on top. If
-the Course carries **no** formatter, use the palette, typography and page rules below as the
-default — they are the same house style.
+**House style comes from the formatter.** The teacher-guide `Course` carries a **formatter** — a
+`usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is `"formatter"`, surfaced by
+`get_course`. Read its `Material.content` and apply the shared house style it defines: the
+**colour palette** (primary green, light green, grey, orange, white-on-green), the **typography**
+(Calibri; body/heading sizes) and the **page setup** (A4, margins, compact spacing). Those values
+live only in the formatter — do not restate them here.
 
-(Sizes are given in points; treat them as targets, not pixel-exact values.)
+The **subject-specific layout** below says which formatter colour each part takes and how the
+sheet is built; apply it on top of the formatter's house style. (Sizes in points are targets,
+not pixel-exact.)
 
-**Page & font.** A4 portrait. Margins ≈ 1.7 cm top/bottom, 2.0 cm left/right (content width
-≈ 17 cm). **Calibri** throughout.
-
-**Colour palette** (use consistently):
-- **Primary green `#2E7D5E`** — main title, the "Tableau de répartition" heading, each lesson
-  title, the labels `OS :` and `Matériel didactique :`, the `E dit :` cue, and the
-  **fill** of the distribution-table header row (with white text).
-- **Light green `#E8F3EE`** — fill of every **step-box header row**.
-- **Grey `#666666`** — the chapter subtitle and the guide/meta line.
-- **Orange `#D4812A`** — the `Je retiens` cue label only.
-- **White `#FFFFFF`** — text sitting on the green table-header fill.
+**Where each formatter colour goes:**
+- **Primary green** — main title, the "Tableau de répartition" heading, each lesson title, the
+  `OS :` and `Matériel didactique :` labels, the `E dit :` cue, and the distribution-table
+  header-row fill (with white text on it).
+- **Light green** — the fill of every step-box header row.
+- **Grey** — the chapter subtitle and the guide/meta line.
+- **Orange** — the `Je retiens` cue label only.
 
 **Document opening (once, at the top of the file):**
 1. **Title** — `Fiches de leçons — Chapitre N` — green, bold, ≈ 17 pt.
@@ -197,7 +193,7 @@ its own page):
 - **No image, no situation picture, no placeholder** (see "No images").
 - Then the **five step boxes**, in order. Each step box is a **single-column, two-row table**
   with thin single borders and a small gap after it:
-  - **Header row** — light-green fill (`#E8F3EE`), text in green bold ≈ 11 pt, written as
+  - **Header row** — the formatter's light-green fill, text in the primary green bold, written as
     `STEP — Name  (N minutes)`.
   - **Body row** — white background, prose paragraphs ≈ 11 pt (one short paragraph per idea).
 

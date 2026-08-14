@@ -87,7 +87,7 @@ Once the chapter text is complete:
 2. **Generate the opening-scene image first** (`amorce`) with `generate_image` at **`16:9`**, `2K`. Save the returned **Firebase signed URL**. Drawn with the HOUSE ART STYLE block prepended, this scene fixes the cast of characters and the specific palette for the chapter (the overall art style is fixed by the HOUSE ART STYLE block).
 3. **Generate every activity image** with `generate_image` at **`21:9`** (see ASPECT RATIO RULES) — every activity image is wide and short to keep the printed book compact. Use each block's description as the prompt, prepending the **HOUSE ART STYLE** block (above) verbatim so all images share the same look; the amorce further anchors the character appearance and palette.  (The bilan has no image, so nothing is generated for it.)
 4. **Collect each Firebase signed URL** returned by `generate_image`.
-5. **Replace each `[IMAGE: <id>]` description block** in the docx with the actual fetched image at that position, centred. The amorce (`16:9`) sits ~14–16 cm wide; the "Je retiens" banner (`21:9`) spans the full text width but stays short; **every activity image (`21:9`) is exactly 5.25 cm high** — its width follows the 21:9 ratio (~12.3 cm) and it is centred. **Before embedding, downscale and re-encode each image** (see IMAGE EMBEDDING & FILE SIZE below): resize to ~1600 px on the long edge and save as **JPEG (quality ~82)**, never a full-resolution lossless PNG. Remove the description text once the image is embedded.
+5. **Replace each `[IMAGE: <id>]` description block** in the docx with the actual fetched image at that position, centred. The amorce (`16:9`) sits ~14–16 cm wide; the "Je retiens" banner (`21:9`) spans the full text width but stays short; **every activity image (`21:9`) is exactly 5.25 cm high** — its width follows the 21:9 ratio (~12.3 cm) and it is centred. **Before embedding, downscale and re-encode each image** per the formatter's image rules (see IMAGE EMBEDDING & FILE SIZE below), never a full-resolution lossless PNG. Remove the description text once the image is embedded.
 6. **After embedding, look at each activity image and verify it against its answer key** — the correct option must be present, at the intended letter, and be the *only* correct one; the drawn reference must match the prompt. Image models frequently swap panel contents or miscount, so regenerate any image where the option contents or counts don't match before finalising.
 7. If any image fails to generate or fetch, leave its labelled description block in place so the document stays complete and the gap is obvious.
 
@@ -162,14 +162,15 @@ Because activity images are independent compositions, generating them directly w
 
 ## IMAGE EMBEDDING & FILE SIZE
 
-Generate images at high quality, but **embed a downscaled, compressed copy** — do not drop full-resolution lossless images straight into the document. Full-res PNGs bloat the file badly: eight of them can push a chapter to ~16 MB, which breaks Word's preview/PDF converter and makes the file painful to share. Compressed JPEGs at print-sensible size keep the whole chapter around **1–2 MB with no visible loss of quality**.
+Generate images at high quality (`2K`, per Pass 2), but **embed a downscaled, compressed copy** —
+never drop a full-resolution lossless PNG straight in (eight of them push a chapter to ~16 MB,
+which breaks Word's preview/PDF converter). **Follow the formatter's image rules** for the
+compression (resize the long edge, re-encode as JPEG, keep the file a few MB) — that shared spec
+lives in the formatter (see Document setup), not here.
 
-Rules for every embedded image:
-- **Generate** at `2K` (as specified in Pass 2) for quality headroom.
-- **Before embedding, resize** to **~1600 px on the long edge** (a sensible print resolution at these display widths).
-- **Re-encode as JPEG** at **quality ~82**, not PNG. (Use PNG only if an image genuinely needs transparency — these illustrations do not.)
-- **Target total document size ≈ 1–2 MB.** If the finished `.docx` is above ~5 MB, the images were embedded too large — reduce the long edge (e.g. 1400 px) or JPEG quality (e.g. 78) and re-embed.
-- Keep the on-page display dimensions unchanged (amorce ~14–16 cm wide; activity images 5.25 cm high, ~12.3 cm wide at 21:9, centred); only the underlying pixel resolution and encoding change.
+What is **subject-specific and stays here — the on-page display dimensions** (only the underlying
+pixel resolution/encoding changes): the amorce ~14–16 cm wide; every activity image 5.25 cm high
+(~12.3 cm at 21:9), centred; the "Je retiens" banner full text-width.
 
 ---
 
@@ -179,18 +180,16 @@ Rules for every embedded image:
 
 ### Document setup
 
-**House style comes from the graph when present.** If the pupil-book `Course` carries a
-**formatter** — a `usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is
-`"formatter"`, surfaced by `get_course` — apply the shared house-style spec in its
-`Material.content` (palette, typography, page setup, image-compression rules) as the source of
-truth for the shared look; the art style and activity-image rules elsewhere in this prompt still
-apply on top. If the Course carries no formatter, use the defaults below (the same house style).
+**House style comes from the formatter.** The pupil-book `Course` carries a **formatter** — a
+`usesRoutine` → `InstructionalRoutine` with `metadata.catalogKind "formatter"`, surfaced by
+`get_course`. Read its `Material.content` and apply the shared palette, typography (Calibri, body
++ heading sizes), page setup (A4, margins) and compact spacing it defines — those live only in the
+formatter, don't restate them. The art style, activity-image and layout rules elsewhere in this
+prompt apply on top.
 
-- **Page size**: A4, margins 2 cm
-- **Font**: clean sans-serif (Calibri or similar), body 12 pt, activity prompts 11 pt
-- **Headings**: chapter title = Heading 1 (bold, 20 pt, centred, green #2e7d5e); sections = Heading 2 (bold, 14 pt)
-- **Colours**: green/teal for headings and key terms, orange #d4812a for answer markers
-- **Compact spacing (save paper — the government prints at scale).** Keep vertical whitespace tight throughout: body line spacing ~1.0 (single), space-after on normal paragraphs ~2–4 pt, and no blank "spacer" paragraphs between lines. Do not rely on Word's default paragraph spacing, which is loose — set spacing explicitly. Headings may keep a little space *before* to separate sections, but list items and answer choices sit close together.
+- **Headings structure**: chapter title = Heading 1 (centred); sections = Heading 2.
+- **Where the formatter colours go here**: the chapter title, section headings and key terms in
+  the primary green; answer markers in the orange; the "Je retiens" box on the light-green fill.
 
 ### "Je retiens" box
 - Bordered box, light green background, key terms in **bold green**
@@ -302,7 +301,7 @@ Each activity targets a specific lesson (OS) through its component(s) (from `get
 - [ ] **Each finished image checked against its answer key**: correct option present, at the intended letter, uniquely correct; counts and contents match the prompt; mis-generated images regenerated
 - [ ] Every `[IMAGE: id]` block replaced with the fetched image (failed ones left as labelled blocks)
 - [ ] The prompt/question text stays in Word; the A / B / C answer choices live ONLY in the image and are not repeated as text
-- [ ] Embedded images downscaled to ~1600 px long edge and saved as JPEG (~quality 82), not lossless PNG
+- [ ] Embedded images downscaled + JPEG-re-encoded per the formatter's image rules, not lossless PNG
 - [ ] Spacing is compact throughout (single line spacing, minimal space-after, no blank spacer paragraphs); the bilan's A/B/C choices sit tight under each question to save vertical space
-- [ ] Final .docx is a reasonable size (~1–2 MB target; investigate if above ~5 MB)
+- [ ] Final .docx is a reasonable size (a few MB, per the formatter's image rules; investigate if much larger)
 - [ ] Valid .docx that opens correctly in Word
