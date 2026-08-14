@@ -15,8 +15,9 @@ export { reposition, type RepositionArgs } from "./reposition.js";
 export { setContent, type SetContentArgs } from "./set-content.js";
 export { RECIPES, type RecipeDescriptor, type RecipeParam } from "./registry.js";
 export {
-  CATALOG_NAMESPACE, CATALOG_ROOT_ID, listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine,
-  type CatalogEntry, type ClonedSubtree, type UseRoutineArgs,
+  catalogNamespace, SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, CATALOG_ROOT_ID, HOUSE_STYLE_FORMATTER,
+  listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine,
+  type CatalogEntry, type CatalogScope, type CatalogKind, type ClonedSubtree, type UseRoutineArgs,
 } from "./catalog.js";
 export {
   containmentEdgeFor, deriveTemplate, isKnownLabel, orderPathsOf,

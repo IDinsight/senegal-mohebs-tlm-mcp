@@ -26,7 +26,7 @@ import { listAvailableContexts, subjectDir, newSessionState, runInSession } from
 import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel } from "../../curriculum/index.js";
 import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, upsertProperty, STRUCTURAL_RULES, UPSERT_PROPERTY_SAFE_PATHS, __resetMutationsForTest } from "../../kg-store/index.js";
-import { RECIPES, CATALOG_NAMESPACE } from "../../kg-recipes/index.js";
+import { RECIPES, SHARED_CATALOG_NAMESPACE } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../../actor.js";
 import { authorize } from "../../authz.js";
@@ -287,8 +287,8 @@ describe("editable and rules come from the real sources (no hand-copied literals
   it("catalog advertises the two tools; canUse mirrors the apply gate", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     expect(caps.catalog.browse).toBe(true);   // list_catalog is an ungated read
-    expect(caps.catalog.tools).toEqual(["list_catalog", "use_routine"]);
-    expect(caps.catalog.namespace).toBe(CATALOG_NAMESPACE);
+    expect(caps.catalog.tools).toEqual(["list_catalog", "use_routine", "use_formatter"]);
+    expect(caps.catalog.scopes.shared).toBe(SHARED_CATALOG_NAMESPACE);
     // use_routine copies onto the draft — same gate as any edit, no drift.
     expect(caps.catalog.canUse).toBe(caps.actions.canEditDraft);
   });

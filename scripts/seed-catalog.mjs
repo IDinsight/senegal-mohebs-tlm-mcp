@@ -5,7 +5,7 @@
  *
  * It scans the installed sources, extracts every subject's InstructionalRoutine
  * subtrees, re-homes them under one root container, and writes the result to the
- * reserved catalog namespace (CATALOG_NAMESPACE), slot "a" — the same slot/pointer
+ * reserved catalog namespace (SHARED_CATALOG_NAMESPACE), slot "a" — the same slot/pointer
  * discipline as seed-kg-store. Non-routine content (chapters, lessons, the standards
  * spine) is dropped; the catalog holds only routines. Ids are preserved and the root
  * id is fixed, so a re-seed overwrites the same docs (idempotent).
@@ -37,11 +37,12 @@ if (!existsSync(DIST)) {
 const { CONFIG } = await import(new URL("../dist/config.js", import.meta.url));
 const { listAvailableContexts, subjectDir } = await import(new URL("../dist/context/index.js", import.meta.url));
 const { createMemoryKgStore, createFirestoreKgStore } = await import(new URL("../dist/kg-store/index.js", import.meta.url));
-const { assembleCatalog, CATALOG_NAMESPACE } = await import(new URL("../dist/kg-recipes/index.js", import.meta.url));
+const { assembleCatalog, SHARED_CATALOG_NAMESPACE, HOUSE_STYLE_FORMATTER } = await import(new URL("../dist/kg-recipes/index.js", import.meta.url));
 
 const dryRun = process.argv.slice(2).includes("--dry-run");
 
-// Read every installed source's raw graph; assembleCatalog keeps only the routines.
+// Read every installed source's raw graph (assembleCatalog keeps only the routine
+// subtrees), plus the authored house-style formatter.
 const sources = [];
 let hashes = "";
 for (const { workspace, grade, subject } of listAvailableContexts()) {
@@ -52,13 +53,14 @@ for (const { workspace, grade, subject } of listAvailableContexts()) {
   const parsed = JSON.parse(bytes.toString("utf8"));
   sources.push({ nodes: parsed.nodes ?? [], relationships: parsed.relationships ?? parsed.edges ?? [] });
 }
+sources.push(HOUSE_STYLE_FORMATTER);
 
 const { nodes, edges } = assembleCatalog(sources);
 const routineCount = nodes.filter((n) => (n.labels ?? []).includes("InstructionalRoutine")).length;
 const entryCount = edges.filter((e) => e.type === "hasPart" && e.from === "catalog-root").length;
 
 const store = dryRun ? createMemoryKgStore() : createFirestoreKgStore();
-console.error(`seed-catalog: backend=${store.kind}, ns='${CATALOG_NAMESPACE}', ${entryCount} entries, ${nodes.length} nodes, ${edges.length} edges.`);
+console.error(`seed-catalog: backend=${store.kind}, ns='${SHARED_CATALOG_NAMESPACE}', ${entryCount} entries, ${nodes.length} nodes, ${edges.length} edges.`);
 
 const meta = {
   contentHash: createHash("sha256").update(hashes).digest("hex"),
@@ -69,10 +71,10 @@ const meta = {
 };
 
 try {
-  const existing = await store.readPointer(CATALOG_NAMESPACE);
-  await store.writeSlot(CATALOG_NAMESPACE, "a", { nodes, edges, meta });
-  await store.ensurePointer(CATALOG_NAMESPACE, "a");
-  const after = await store.readPointer(CATALOG_NAMESPACE);
+  const existing = await store.readPointer(SHARED_CATALOG_NAMESPACE);
+  await store.writeSlot(SHARED_CATALOG_NAMESPACE, "a", { nodes, edges, meta });
+  await store.ensurePointer(SHARED_CATALOG_NAMESPACE, "a");
+  const after = await store.readPointer(SHARED_CATALOG_NAMESPACE);
   const note = existing && after && after.publishedSlot !== "a"
     ? ` (WARNING: publishedSlot is '${after.publishedSlot}', not 'a' — this re-seed wrote a non-published slot)`
     : "";

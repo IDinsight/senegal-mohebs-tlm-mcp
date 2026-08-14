@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine } from "../catalog.js";
+import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine, SHARED_CATALOG_NAMESPACE, HOUSE_STYLE_FORMATTER } from "../catalog.js";
 import { edgeId, type MutationEdge, type MutationGraph, type MutationNode } from "../../kg-store/index.js";
 import { CONFIG } from "../../config.js";
 import { subjectDir } from "../../context/index.js";
@@ -41,16 +41,20 @@ function catalogFixture(): MutationGraph {
 
 describe("listCatalogEntries", () => {
   it("lists the root container's routine children as entries, with their step outline", () => {
-    const entries = listCatalogEntries(catalogFixture());
+    const entries = listCatalogEntries(catalogFixture(), "shared");
     expect(entries).toHaveLength(1);
     const entry = entries[0];
-    expect(entry).toMatchObject({ id: "entry", kind: "routine", name: "Fiche de leçon", summary: "French only", materialCount: 2 });
+    expect(entry).toMatchObject({ id: "entry", kind: "routine", scope: "shared", name: "Fiche de leçon", summary: "French only", materialCount: 2 });
     expect(entry.steps.map((s) => s.id)).toEqual(["s1", "s2"]);
     expect(entry.steps[0]).toMatchObject({ name: "Déclencheur", order: 1, timeRequired: "PT4M" });
   });
 
+  it("tags entries with the scope they were read from", () => {
+    expect(listCatalogEntries(catalogFixture(), "workspace")[0].scope).toBe("workspace");
+  });
+
   it("does not list the root, steps, or materials as entries", () => {
-    const ids = listCatalogEntries(catalogFixture()).map((e) => e.id);
+    const ids = listCatalogEntries(catalogFixture(), "shared").map((e) => e.id);
     expect(ids).not.toContain("root");
     expect(ids).not.toContain("s1");
     expect(ids).not.toContain("m1");
@@ -60,7 +64,7 @@ describe("listCatalogEntries", () => {
     // Routines with no hasPart edges at all: each is its own root with no children,
     // so nothing lists as an entry. The catalog namespace always seeds a container.
     const loose: MutationGraph = { nodes: [routine("a", { description: "A" }), routine("b", { description: "B" })], edges: [] };
-    expect(listCatalogEntries(loose)).toEqual([]);
+    expect(listCatalogEntries(loose, "shared")).toEqual([]);
   });
 });
 
@@ -82,7 +86,7 @@ describe("assembleCatalog", () => {
   };
 
   it("re-homes each source's routine subtree under one root, dropping non-routine content", () => {
-    const catalog = assembleCatalog([rawSource], "root");
+    const catalog = assembleCatalog([rawSource], SHARED_CATALOG_NAMESPACE, "root");
     const ids = catalog.nodes.map((n) => n.id);
     expect(ids).toContain("root");
     expect(ids).toEqual(expect.arrayContaining(["r-entry", "r-s1", "r-m1"]));
@@ -92,7 +96,7 @@ describe("assembleCatalog", () => {
   });
 
   it("produces a graph that enumerates as a catalog (round-trip through listCatalogEntries)", () => {
-    const entries = listCatalogEntries(assembleCatalog([rawSource], "root"));
+    const entries = listCatalogEntries(assembleCatalog([rawSource], SHARED_CATALOG_NAMESPACE, "root"), "shared");
     expect(entries.map((e) => e.id)).toEqual(["r-entry"]);
     expect(entries[0]).toMatchObject({ name: "Fiche", summary: "FR only", materialCount: 1 });
     expect(entries[0].steps.map((s) => s.id)).toEqual(["r-s1"]);
@@ -100,13 +104,20 @@ describe("assembleCatalog", () => {
 
   it("extracts the real CI-maths routines into two browsable catalog entries (what the seed produces)", () => {
     const bundle = JSON.parse(readFileSync(resolve(subjectDir("senegal", "ci", "maths"), CONFIG.kgFile), "utf8"));
-    const entries = listCatalogEntries(assembleCatalog([{ nodes: bundle.nodes, relationships: bundle.relationships }]));
+    const entries = listCatalogEntries(assembleCatalog([{ nodes: bundle.nodes, relationships: bundle.relationships }]), "shared");
     const byName = Object.fromEntries(entries.map((e) => [e.name, e]));
     expect(entries).toHaveLength(2);
     expect(byName["Fiche de leçon — enseignement explicite (30 min)"].steps).toHaveLength(5);
     expect(byName["Manuel de l'élève — structure d'un chapitre"].steps).toHaveLength(6);
     // Steps come back in ordinal order, with the teacher-guide timings preserved.
     expect(byName["Fiche de leçon — enseignement explicite (30 min)"].steps[0].timeRequired).toBe("PT4M");
+  });
+
+  it("splices the authored house-style formatter as a kind:formatter entry", () => {
+    // The formatter is fed to assembleCatalog like any source; it lists as its own kind.
+    const [formatter] = listCatalogEntries(assembleCatalog([HOUSE_STYLE_FORMATTER]), "shared");
+    expect(formatter).toMatchObject({ kind: "formatter", name: "MOHEBS house style (docx)", materialCount: 1 });
+    expect(formatter.steps).toEqual([]);   // a formatter carries a spec Material, not ordered steps
   });
 });
 
