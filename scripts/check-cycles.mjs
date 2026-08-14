@@ -26,11 +26,16 @@ import { fileURLToPath } from "node:url";
 const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..", "src");
 
 // Layer rank per top-level module (higher may import lower or same).
+// Each module keeps its tests in a __tests__/ subfolder, so a test's module is
+// still its enclosing module (e.g. kg-store/__tests__/*) and inherits that rank.
+// The one exception is src/__tests__/ — tests for the root-level files — which is
+// its own top-level module; it sits at the app layer since it exercises app entry
+// points, and tests are layering-up exempt regardless (see isTest below).
 const LAYERS = {
-  server: 3, "index.ts": 3, "activate.ts": 3, "http.ts": 3, "consent.ts": 3, "kg-export.ts": 3, "kg-export.test.ts": 3,
+  server: 3, "index.ts": 3, "activate.ts": 3, "http.ts": 3, "consent.ts": 3, "kg-export.ts": 3, "__tests__": 3,
   adapters: 2,
   storage: 1, curriculum: 1, generation: 1, "kg-store": 1, "kg-recipes": 1, workspaces: 1,
-  config: 0, "config.ts": 0, types: 0, "types.ts": 0, context: 0, utils: 0, "actor.ts": 0, "actor.test.ts": 0, "authz.ts": 0, "authz.test.ts": 0,
+  config: 0, "config.ts": 0, types: 0, "types.ts": 0, context: 0, utils: 0, "actor.ts": 0, "authz.ts": 0,
 };
 
 const files = [];

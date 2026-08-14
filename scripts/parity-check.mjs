@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Parity harness — CLI entry point. Same oracle as src/kg-store/parity.test.ts
+ * Parity harness — CLI entry point. Same oracle as src/kg-store/__tests__/parity.test.ts
  * (deep-equal on parsed reads for every grade/subject and every unit), but
  * runs against whichever backend is configured at runtime — so it can be
  * pointed at a real Firestore instance to validate the seeded data before a

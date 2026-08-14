@@ -15,7 +15,7 @@ Explain in **plain language** — avoid jargon, and define any technical term yo
 ```bash
 npm run build          # check-cycles + tsc → dist/  (Docker build runs this)
 npm test               # vitest run (all suites)
-npx vitest run src/server/preview.test.ts        # a single test file
+npx vitest run src/server/__tests__/preview.test.ts        # a single test file
 npx vitest run -t "reflects a staged edit"       # tests matching a name
 npm run typecheck      # tsc --noEmit
 npm run check:cycles   # layering + import-cycle check (also part of build)
@@ -25,7 +25,7 @@ npm run seed:kg-store  # seed Firestore from sources/ (needs KG_SOURCE=firestore
 npm run parity:kg-store  # assert firestore reads == bundle reads, per context
 ```
 
-Tests use `vitest` and never touch real Firebase/Firestore: a **memory KG store** (`createMemoryKgStore` + `__setKgStoreForTest`) and a **fake StorageAdapter** (`__setStorageForTest`) are injected, and `KG_SOURCE="firestore"` exercises the lifecycle path. Follow `src/kg-store/lifecycle.test.ts` / `src/server/preview.test.ts` for new suites.
+Tests use `vitest` and never touch real Firebase/Firestore: a **memory KG store** (`createMemoryKgStore` + `__setKgStoreForTest`) and a **fake StorageAdapter** (`__setStorageForTest`) are injected, and `KG_SOURCE="firestore"` exercises the lifecycle path. Follow `src/kg-store/__tests__/lifecycle.test.ts` / `src/server/__tests__/preview.test.ts` for new suites.
 
 ## Module layering (enforced)
 
@@ -52,7 +52,7 @@ Both subjects share the converged `{ nodes, relationships }` envelope in **canon
 
 ## Full-graph store + faithful re-export
 
-The Firestore store holds the **complete raw LC graph**, not just the curriculum spine: every raw node (spine nodes tagged `spine:true` + normalized fields; framework/derived nodes `spine:false` + `raw` only) and every raw edge with its real type — `hasChild`/`hasPart`/`supports`/`hasEducationalAlignment`/`relatesTo`/`buildsTowards`. Reads are unchanged: hydration rebuilds the raw envelope (`store-bridge.ts::toRawEnvelope`) and re-runs `adapter.parse`, so the read model is byte-identical to a bundle read — guarded by `parity:kg-store`. Because the store *is* the raw graph, `toRawEnvelope` also reproduces the source JSON (so the store can replace the bundle; guard: `curriculum/faithful-reexport.test.ts`). Changing what's stored needs a re-seed (`seed:kg-store`). The KG explorer (`src/kg-export.ts`) follows the **LC ontology only**: every node is categorized/coloured by its LC **label** (`StandardsFramework`/`StandardsFrameworkItem`/`Course`/`LessonGrouping`/`Lesson`/`Activity`/`Material`/`LearningComponent`), and it offers two generic views — a **containment hierarchy** (walk `hasChild`+`hasPart` from the framework root) and **by-label** — with no subject vocabulary (no domaine/chapitre/semaine/strand/palier). The detail panel renders the node's raw LC properties generically. `supports` and `hasEducationalAlignment` fold (reversed) into the display containment tree so components/lessons stay reachable (display-only; the store keeps the real edges).
+The Firestore store holds the **complete raw LC graph**, not just the curriculum spine: every raw node (spine nodes tagged `spine:true` + normalized fields; framework/derived nodes `spine:false` + `raw` only) and every raw edge with its real type — `hasChild`/`hasPart`/`supports`/`hasEducationalAlignment`/`relatesTo`/`buildsTowards`. Reads are unchanged: hydration rebuilds the raw envelope (`store-bridge.ts::toRawEnvelope`) and re-runs `adapter.parse`, so the read model is byte-identical to a bundle read — guarded by `parity:kg-store`. Because the store *is* the raw graph, `toRawEnvelope` also reproduces the source JSON (so the store can replace the bundle; guard: `curriculum/__tests__/faithful-reexport.test.ts`). Changing what's stored needs a re-seed (`seed:kg-store`). The KG explorer (`src/kg-export.ts`) follows the **LC ontology only**: every node is categorized/coloured by its LC **label** (`StandardsFramework`/`StandardsFrameworkItem`/`Course`/`LessonGrouping`/`Lesson`/`Activity`/`Material`/`LearningComponent`), and it offers two generic views — a **containment hierarchy** (walk `hasChild`+`hasPart` from the framework root) and **by-label** — with no subject vocabulary (no domaine/chapitre/semaine/strand/palier). The detail panel renders the node's raw LC properties generically. `supports` and `hasEducationalAlignment` fold (reversed) into the display containment tree so components/lessons stay reachable (display-only; the store keeps the real edges).
 
 ## Draft/published + the curator loop
 

@@ -73,7 +73,7 @@ so a routine subtree is stored and re-exported verbatim but never enters the
 curriculum read model. That is what lets us add a routine as a pure **data-only**
 change: curriculum reads stay byte-identical (guarded by the read-projection
 goldens), and the full-graph store still round-trips (guarded by
-`curriculum/faithful-reexport.test.ts`). The routine surfaces only where the graph
+`curriculum/__tests__/faithful-reexport.test.ts`). The routine surfaces only where the graph
 is shown raw — the KG explorer's by-label view, and folded under each `usesRoutine`
 source in the curriculum view.
 

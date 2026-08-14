@@ -1,0 +1,110 @@
+/*
+ * Parity harness (KG_SOURCE=bundle vs KG_SOURCE=firestore)
+ *
+ * Primary acceptance oracle for the KG-store swap AND for the adapter refactor.
+ * Iterates every installed grade/subject and every unit inside it, calls the
+ * curriculum + KG read tools against BOTH backends (bundle read directly from
+ * sources/, and firestore hydrated from an in-memory KgNodeStore that mirrors
+ * what the seed script writes), and asserts DEEP structural equality on the
+ * parsed results.
+ *
+ * Any diff fails the build — this is the byte-for-byte parity check the task
+ * requires. The harness uses the memory store so it runs in CI without live
+ * Firestore; the SAME code path exercises a real Firestore store when
+ * `KG_SOURCE=firestore` is set at runtime.
+ */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../../context/index.js";
+import { CONFIG } from "../../config.js";
+import { resolveAdapter } from "../../adapters/index.js";
+import { serializeModel } from "../../curriculum/index.js";
+import { __setKgStoreForTest, createMemoryKgStore, kgNamespace } from "../index.js";
+import { __setStorageForTest } from "../../storage/index.js";
+import { activateContext } from "../../activate.js";
+import type { StorageAdapter, HistoryFile } from "../../types.js";
+
+// A no-op storage adapter — get_generation_context reads history via
+// listEntries(), which is orthogonal to the KG source. Returning an empty
+// history keeps the harness self-contained (no bucket credentials needed).
+const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const fakeStorage: StorageAdapter = {
+  listDocuments: async () => [],
+  getObjectMd5: async () => null,
+  downloadDocx: async () => Buffer.from(""),
+  createUploadUrl: async () => ({ url: "", objectKey: "", contentType: "", expiresAt: "" }),
+  createDownloadUrl: async () => ({ url: "", objectKey: "", expiresAt: "", exists: false }),
+  readHistory: async () => emptyHistory,
+  writeHistory: async () => {},
+};
+
+// Seed a memory store from each bundle so the firestore path has data to
+// hydrate from. The seed logic here mirrors scripts/seed-kg-store.mjs exactly
+// — same adapter parse, same serializeModel — so a passing test proves the
+// same serialization the operator will run against live Firestore.
+const memStore = createMemoryKgStore();
+const priorEnv = process.env.KG_SOURCE;
+
+beforeAll(async () => {
+  __setKgStoreForTest(memStore);
+  __setStorageForTest(fakeStorage);
+  for (const { workspace, grade, subject } of listAvailableContexts()) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
+    const adapter = resolveAdapter(grade, subject);
+    if (!adapter) continue;
+    const model = adapter.parse(raw);
+    const { nodes, edges } = serializeModel(model, kgNamespace(workspace, grade, subject));
+    await memStore.writeSlot(kgNamespace(workspace, grade, subject), "a", {
+      nodes, edges,
+      meta: { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length },
+    });
+    await memStore.ensurePointer(kgNamespace(workspace, grade, subject), "a");
+  }
+});
+
+afterAll(() => {
+  // Restore ambient state — vitest reuses the process across files.
+  if (priorEnv === undefined) delete process.env.KG_SOURCE;
+  else process.env.KG_SOURCE = priorEnv;
+  __setKgStoreForTest(null);
+});
+
+// Run the same read sequence against both backends inside its own session, so
+// no cache leaks across the flag flip. Returns the collected output — deep-
+// equal on the two sides is the parity assertion.
+async function collectReads(source: "bundle" | "firestore", workspace: string, grade: string, subject: string) {
+  process.env.KG_SOURCE = source;
+  const state = newSessionState();
+  return runInSession(state, async () => {
+    const activation = await activateContext(workspace, grade, subject);
+    if (!activation.ok) throw new Error(`activate ${grade}/${subject} @ ${source} failed: ${activation.error}`);
+
+    // Re-resolve the adapter here so the same-session bag wiring picks up the
+    // preloaded model (firestore) or the bundle read (bundle). Each call
+    // builds a fresh instance closing over the same session state — same
+    // behavior as before this refactor, when resolveProfile was called twice.
+    const adapter = resolveAdapter(grade, subject)!;
+
+    // The read surface is now the generic graph read (get_course / get_standards)
+    // over the parsed model's rawGraph. Snapshot that model — node ids + the edge
+    // multiset — so bundle and firestore must produce the identical read graph.
+    const model = adapter.model();
+    return {
+      nodes: [...model.byId.keys()].sort(),
+      edges: (model.rawGraph?.relationships ?? []).map((edge) => `${edge.type}|${edge.start}|${edge.end}`).sort(),
+    };
+  });
+}
+
+describe("parity: KG_SOURCE=bundle vs KG_SOURCE=firestore", () => {
+  for (const { workspace, grade, subject } of listAvailableContexts()) {
+    it(`produces identical read output for ${grade}/${subject}`, async () => {
+      const fromBundle = await collectReads("bundle", workspace, grade, subject);
+      const fromStore = await collectReads("firestore", workspace, grade, subject);
+      // Deep-equal on parsed JSON: key ordering / whitespace can differ across
+      // internal codepaths, but the semantic shape must not.
+      expect(fromStore).toEqual(fromBundle);
+    });
+  }
+});

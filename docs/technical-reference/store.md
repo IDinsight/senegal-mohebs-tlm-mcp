@@ -256,7 +256,7 @@ Advertised in `get_capabilities` under `actions.canReadAudit` and the `audit` bl
 ```bash
 npm run parity:kg-store                  # offline: memory store seeded from bundle
 npm run parity:kg-store -- --live        # against live Firestore (needs a prior seed)
-npm test                                 # includes src/kg-store/parity.test.ts
+npm test                                 # includes src/kg-store/__tests__/parity.test.ts
 ```
 
 Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering doesn't cause false diffs, but the response shape itself must not change. A secondary manual check (regenerating a manual and a lessons deliverable with the flag flipped and confirming the pre-LLM generation context is identical) is documented in the roadmap; the LLM output itself is not byte-stable and is not the parity oracle.
