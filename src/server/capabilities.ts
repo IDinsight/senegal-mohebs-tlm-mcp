@@ -28,7 +28,7 @@ import { authorize, effectiveRole, type AuthAction } from "../authz.js";
 import {
   kgNamespace, getKgStore, UPSERT_PROPERTY_SAFE_PATHS, STRUCTURAL_RULES,
 } from "../kg-store/index.js";
-import { RECIPES } from "../kg-recipes/index.js";
+import { RECIPES, CATALOG_NAMESPACE } from "../kg-recipes/index.js";
 
 // The five actions this server has today. Kept as a const-tuple so the
 // response shape is stable and the mirror-property test can iterate over
@@ -174,6 +174,19 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       "read_audit is a filtered, paginated, READ-ONLY view of the append-only audit log for THIS namespace, newest-first. APPROVERS ONLY (same tier as publish); curators / no-role are blocked and the blocked read is itself audited. It cannot alter, redact, or reorder any record. Namespace-scoped: to review another namespace, set_context to it (there is no namespace argument). Filters: actor, action, outcome (applied|blocked), nodeId, since/until. Modes: 'summary' (compact, no before/after — the default) and 'detail' (full before/after; also for a specific auditId). Pagination via limit (default 25, max 100) + an opaque cursor. Each call appends ONE lightweight 'read' event (actor + query + timestamp + count) — never a before/after — so 'who reviewed history' stays answerable. It is deliberately a reader, not analytics.",
   };
 
+  // ── catalog: advertise the shared routine catalog. `browse` (list_catalog) is
+  // an ungated read; `canUse` (use_routine) COPIES an entry onto a lesson, so it
+  // mirrors the SAME apply gate any draft edit enforces (actions.canEditDraft →
+  // authorize(actor, "apply", ns)) and cannot drift.
+  const catalog = {
+    browse: true,
+    canUse: actions.canEditDraft,
+    namespace: CATALOG_NAMESPACE,
+    tools: ["list_catalog", "use_routine"],
+    note:
+      "The shared routine catalog is a cross-context library of reusable instructional routines. list_catalog browses the entries (id, name, summary, ordered steps, material count) — an ungated read. use_routine APPLIES an entry to a Lesson/Course/Activity by COPYING it: the entry's whole subtree is cloned with fresh ids into the active subject's DRAFT and linked via usesRoutine, so the copy is independent and later edits to the library entry do not reach it. use_routine is two-phase (dry-run returns diff + confirmationToken + a minted old→new id-map; confirm re-checks the token and applies to the draft) and curator-gated like any edit. Seed the catalog namespace to populate it; it lists [] until then.",
+  };
+
   return {
     actor: {
       id: actor.id,
@@ -196,6 +209,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     editable,
     preview,
     audit,
+    catalog,
     rules,
   };
 }
