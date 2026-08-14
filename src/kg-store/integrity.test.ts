@@ -398,7 +398,7 @@ describe("parity — coverage/force work does not leak into published reads", ()
         const r = await activateContext(targetCtx.workspace, targetCtx.grade, targetCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
-        return { units: adapter.listUnits(), scopes: adapter.scopeValues() };
+        return { nodes: [...adapter.model().byId.keys()].sort() };
       });
     }
     const before = await reads();

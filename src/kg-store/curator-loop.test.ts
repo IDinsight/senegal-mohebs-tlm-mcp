@@ -433,7 +433,11 @@ describe("parity: published reads unaffected until publish, then reflect the cha
         const r = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
         if (!r.ok) throw new Error(r.error);
         const ad = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
-        return { units: ad.listUnits() };
+        const m = ad.model();
+        // node ids + the title of each chapter — a title edit doesn't change ids
+        // but does change the published chapter title, which is what we assert.
+        const titles = Object.fromEntries([...m.byId.values()].filter((u) => u.kind === "chapter").map((u) => [u.id, u.title]));
+        return { nodes: [...m.byId.keys()].sort(), titles };
       });
     }
     const before = await reads();
@@ -459,12 +463,9 @@ describe("parity: published reads unaffected until publish, then reflect the cha
       if (dry.phase !== "preview") throw new Error();
       await publishDraftWithConfirm(ns, { confirm: true, token: dry.confirmationToken });
     });
-    const after = await reads() as { units: Array<{ chapitreNum: number; chapitreTitre: string | null }> };
-    // The units list is derived from the published chapter title; find the
-    // edited chapter (by its number = normalized order) and confirm the new
-    // wording is what generation sees.
-    const editedChapterNum = (chapter.properties as any).order;
-    const editedListEntry = after.units.find((u) => u.chapitreNum === editedChapterNum);
-    expect(editedListEntry?.chapitreTitre).toBe("parity-check-title");
+    const after = await reads() as { titles: Record<string, string | null> };
+    // After publish the read reflects the new wording — the edited chapter's
+    // published title is what generation now sees.
+    expect(after.titles[chapter.id]).toBe("parity-check-title");
   });
 });

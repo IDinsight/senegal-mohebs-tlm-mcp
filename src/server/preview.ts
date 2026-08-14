@@ -31,7 +31,7 @@ import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor } from "../kg-store/index.js";
-import { toRawEnvelope } from "../curriculum/index.js";
+import { toRawEnvelope, courseSubgraph } from "../curriculum/index.js";
 import { getStorageAdapter } from "../storage/index.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
@@ -88,20 +88,12 @@ async function denyIfNotDraftReader(ns: string): Promise<Record<string, unknown>
 }
 
 // ── Core: preview_generation ─────────────────────────────────────────────────
-// The draft-resolved analog of get_generation_context's core. Scoped to one
-// unit + deliverable, built from the DRAFT model, tagged as a preview. Reads
-// only; no graph write. Exported so tests drive the real logic.
-export async function previewGeneration(unit: number, deliverable: string): Promise<Record<string, unknown>> {
+// The draft-resolved analog of get_course: the containment subtree under one
+// Course, read from the DRAFT model, tagged as a preview. Reads only; no graph
+// write. Exported so tests drive the real logic.
+export async function previewGeneration(course: string): Promise<Record<string, unknown>> {
   const adapter = getActiveAdapter();
   const ns = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
-
-  // Scope guard: an unknown deliverable is rejected before any draft read, the
-  // same way get_generation_context validates it. No implicit whole-curriculum
-  // path exists — the unit + deliverable are required by the tool schema.
-  const validKeys = adapter.deliverables.map((d) => d.key);
-  if (!validKeys.includes(deliverable)) {
-    return { preview: true, error: `Unknown deliverable '${deliverable}' for the active subject. Valid deliverables: ${validKeys.join(", ")}.` };
-  }
 
   const denied = await denyIfNotDraftReader(ns);
   if (denied) return denied;
@@ -117,11 +109,13 @@ export async function previewGeneration(unit: number, deliverable: string): Prom
     };
   }
 
-  // Build the SAME generation context the published flow builds, but from the
-  // draft-resolved model. Only the curriculum projection differs by model;
-  // characters/coverage/domains come from document history + the domain pool,
-  // which are shared and untouched by the preview.
-  const context = await adapter.buildGenerationContext(unit, deliverable, resolved.model);
+  // Read the SAME course subtree get_course returns, but from the draft-resolved
+  // model — so the curator sees the graph a staged edit would generate from. The
+  // standards spine (get_standards) resolves against published as usual.
+  const sub = courseSubgraph(resolved.model, course);
+  if (!sub) {
+    return { preview: true, error: `Course '${course}' not found in the draft. Call list_courses for available course ids.` };
+  }
 
   // Audit a PREVIEW event — distinct from apply/publish/generation, and never
   // recorded via log_generation. It documents who read unpublished draft content
@@ -132,18 +126,16 @@ export async function previewGeneration(unit: number, deliverable: string): Prom
     actor: toAuditActor(currentActor()),
     namespace: ns,
     eventType: "preview",
-    reason: `preview generation for unit ${unit} (${deliverable}) from draft${resolved.draftVersion ? ` ${resolved.draftVersion}` : ""}`,
+    reason: `preview generation for course '${course}' from draft${resolved.draftVersion ? ` ${resolved.draftVersion}` : ""}`,
   });
 
   return {
     preview: true,
     label: PREVIEW_LABEL,
     isolation:
-      "This context was resolved from the UNPUBLISHED draft. Generate the .docx from it, then surface the result via create_preview_upload_url. Do NOT call log_generation or create_upload_url with a preview — those write to the canonical documents bucket and history and would break the isolation.",
+      "This course subtree was resolved from the UNPUBLISHED draft. Generate the .docx from it, then surface the result via create_preview_upload_url. Do NOT call log_generation or create_upload_url with a preview — those write to the canonical documents bucket and history and would break the isolation.",
     draftVersion: resolved.draftVersion,
-    unit,
-    deliverable,
-    context,
+    ...sub,
   };
 }
 
@@ -180,10 +172,10 @@ export function registerPreviewTools(server: McpServer) {
     {
       title: "Preview generation from the draft",
       description:
-        "Load the generation context for one unit + deliverable resolved from the UNPUBLISHED DRAFT (not published), so you can generate a PREVIEW of the teaching material a staged edit would produce — before publishing. This closes the editing loop: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change). Curators and approvers only. If no draft exists, returns a clear 'no draft to preview' notice. 'unit' is the scope value (CI maths: chapter number); 'deliverable' is a deliverable key (CI maths: 'manual' or 'lessons'). IMPORTANT: the returned context is a PREVIEW — generate the .docx from it, then surface it via create_preview_upload_url (segregated, short-lived, non-canonical). NEVER log_generation or create_upload_url a preview: those write to the canonical bucket/history and would defeat the isolation.",
-      inputSchema: { unit: z.number().int(), deliverable: z.string() },
+        "Return the containment subtree under one Course resolved from the UNPUBLISHED DRAFT (not published) — the draft-resolved analog of get_course — so you can generate a PREVIEW of the teaching material a staged edit would produce, before publishing. This closes the editing loop: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change). Curators and approvers only. If no draft exists, returns a clear 'no draft to preview' notice. 'course' is a Course id (from list_courses). IMPORTANT: the returned subtree is a PREVIEW — generate the .docx from it, then surface it via create_preview_upload_url (segregated, short-lived, non-canonical). NEVER log_generation or create_upload_url a preview: those write to the canonical bucket/history and would defeat the isolation.",
+      inputSchema: { course: z.string() },
     },
-    guarded(async (a: { unit: number; deliverable: string }) => asJson(await previewGeneration(a.unit, a.deliverable))),
+    guarded(async (a: { course: string }) => asJson(await previewGeneration(a.course))),
   );
 
   server.registerTool(

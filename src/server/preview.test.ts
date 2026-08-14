@@ -25,7 +25,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { CONFIG } from "../config.js";
 import { listAvailableContexts, subjectDir, newSessionState, runInSession, docKey, previewKey } from "../context/index.js";
 import { resolveAdapter } from "../adapters/index.js";
-import { serializeModel } from "../curriculum/index.js";
+import { serializeModel, courseSubgraph } from "../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
   runGraphMutation, upsertProperty, __resetMutationsForTest,
@@ -106,6 +106,13 @@ async function pickChapter(): Promise<{ id: string; num: number; title: string }
   return { id: chapter.id, num: (chapter.properties as any).order, title: (chapter.properties as any).title };
 }
 
+// The student-book Course ("Outil de l'élève") — the id previews are scoped to.
+async function pickCourse(): Promise<{ id: string }> {
+  const nodes = await store.listNodes(ns, "a");
+  const course = nodes.find((n) => (n.labels ?? []).includes("Course") && String((n.properties as any).raw?.description ?? "").includes("Outil de l'élève"))!;
+  return { id: course.id };
+}
+
 // Stage a wording edit on the draft as `actor` (two-phase confirm).
 async function stageTitleEdit(actor: Actor, nodeId: string, value: string): Promise<void> {
   await withCtx(actor, async () => {
@@ -133,34 +140,37 @@ afterAll(() => {
 
 // ── 1 + 7: preview reflects the staged edit; published still reflects the old ─
 describe("draft-resolved preview reflects a staged edit; published generation does not", () => {
-  it("preview curriculum shows the NEW title while published shows the OLD", async () => {
+  it("preview subtree shows the NEW title while published shows the OLD", async () => {
     const ch = await pickChapter();
+    const course = await pickCourse();
     const NEW = `${ch.title} — DRAFT EDIT`;
     await stageTitleEdit(CURATOR, ch.id, NEW);
 
-    const res = await withCtx(CURATOR, () => previewGeneration(ch.num, "manual"));
+    const res = await withCtx(CURATOR, () => previewGeneration(course.id));
     expect(res.preview).toBe(true);
     expect(res.label).toBe(PREVIEW_LABEL);
-    expect((res.context as any).curriculum.chapitreTitre).toBe(NEW);
+    const draftNode = (res.nodes as any[]).find((n) => n.id === ch.id);
+    expect(draftNode.properties.description).toBe(NEW);
 
-    // Published generation (buildGenerationContext with NO model) still old.
+    // Published read (courseSubgraph on the published model) still old.
     const published = await withCtx(CURATOR, async () => {
       const adapter = resolveAdapter(ctx.grade, ctx.subject)!;
-      return adapter.buildGenerationContext(ch.num, "manual");
-    });
-    expect((published as any).curriculum.chapitreTitre).toBe(ch.title);
-    expect((published as any).curriculum.chapitreTitre).not.toBe(NEW);
+      return courseSubgraph(adapter.model(), course.id)!;
+    }) as { nodes: Array<{ id: string; properties: any }> };
+    const pubNode = published.nodes.find((n) => n.id === ch.id)!;
+    expect(pubNode.properties.description).toBe(ch.title);
+    expect(pubNode.properties.description).not.toBe(NEW);
   });
 });
 
 // ── 2: no-draft notice ──────────────────────────────────────────────────────
 describe("no draft → clear notice, no output", () => {
-  it("returns noDraft with a message and no context", async () => {
-    const ch = await pickChapter();
-    const res = await withCtx(CURATOR, () => previewGeneration(ch.num, "manual"));
+  it("returns noDraft with a message and no subtree", async () => {
+    const course = await pickCourse();
+    const res = await withCtx(CURATOR, () => previewGeneration(course.id));
     expect(res.noDraft).toBe(true);
     expect(typeof res.message).toBe("string");
-    expect(res.context).toBeUndefined();
+    expect(res.nodes).toBeUndefined();
     expect(res.label).toBeUndefined();
   });
 });
@@ -169,13 +179,14 @@ describe("no draft → clear notice, no output", () => {
 describe("a preview run leaves everything canonical untouched", () => {
   it("published slot, pointer, bucket, history and log_generation are all unaffected", async () => {
     const ch = await pickChapter();
+    const course = await pickCourse();
     await stageTitleEdit(CURATOR, ch.id, `${ch.title} — DRAFT EDIT`);
 
     const publishedBefore = await rawSlot(store, "a");
     const pointerBefore = await store.readPointer(ns);
     const auditBefore = await store.listAudit({ namespace: ns });
 
-    await withCtx(CURATOR, () => previewGeneration(ch.num, "manual"));
+    await withCtx(CURATOR, () => previewGeneration(course.id));
 
     // Published slot byte-for-byte identical; pointer unchanged.
     expect(await rawSlot(store, "a")).toEqual(publishedBefore);
@@ -219,22 +230,24 @@ describe("preview output is segregated from the canonical bucket", () => {
 describe("role gate: curator + approver may preview; others blocked + audited", () => {
   it("approver may preview a staged draft", async () => {
     const ch = await pickChapter();
+    const course = await pickCourse();
     await stageTitleEdit(CURATOR, ch.id, `${ch.title} — DRAFT EDIT`);
-    const res = await withCtx(APPROVER, () => previewGeneration(ch.num, "manual"));
+    const res = await withCtx(APPROVER, () => previewGeneration(course.id));
     expect(res.preview).toBe(true);
-    expect(res.context).toBeDefined();
+    expect(res.nodes).toBeDefined();
   });
 
   for (const actor of [NO_ROLE, null]) {
     const label = actor ? `signed-in '${actor.role ?? "no-role"}'` : "unknown";
     it(`${label} is blocked (unauthorized) and the denial is audited`, async () => {
       const ch = await pickChapter();
+      const course = await pickCourse();
       await stageTitleEdit(CURATOR, ch.id, `${ch.title} — DRAFT EDIT`);
       const before = (await store.listAudit({ namespace: ns, eventType: "blocked" })).length;
 
-      const res = await withCtx(actor, () => previewGeneration(ch.num, "manual"));
+      const res = await withCtx(actor, () => previewGeneration(course.id));
       expect(res.phase).toBe("unauthorized");
-      expect(res.context).toBeUndefined();
+      expect(res.nodes).toBeUndefined();
 
       const after = (await store.listAudit({ namespace: ns, eventType: "blocked" })).length;
       expect(after).toBe(before + 1);
@@ -249,20 +262,20 @@ describe("role gate: curator + approver may preview; others blocked + audited", 
 });
 
 // ── 6: scoping ──────────────────────────────────────────────────────────────
-describe("preview is scoped — unknown deliverable rejected, one unit only", () => {
-  it("rejects an unknown deliverable before touching the draft", async () => {
+describe("preview is scoped — unknown course rejected, one course only", () => {
+  it("rejects an unknown course id", async () => {
     const ch = await pickChapter();
     await stageTitleEdit(CURATOR, ch.id, `${ch.title} — DRAFT EDIT`);
-    const res = await withCtx(CURATOR, () => previewGeneration(ch.num, "not_a_deliverable"));
+    const res = await withCtx(CURATOR, () => previewGeneration("no-such-course"));
     expect(typeof res.error).toBe("string");
-    expect(res.context).toBeUndefined();
+    expect(res.nodes).toBeUndefined();
   });
 
-  it("scopes the context to the requested unit", async () => {
+  it("scopes the subtree to the requested course", async () => {
     const ch = await pickChapter();
+    const course = await pickCourse();
     await stageTitleEdit(CURATOR, ch.id, `${ch.title} — DRAFT EDIT`);
-    const res = await withCtx(CURATOR, () => previewGeneration(ch.num, "manual"));
-    expect(res.unit).toBe(ch.num);
-    expect((res.context as any).unit).toBe(ch.num);
+    const res = await withCtx(CURATOR, () => previewGeneration(course.id));
+    expect(res.course).toBe(course.id);
   });
 });
