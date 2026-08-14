@@ -73,19 +73,15 @@ async function collect(source, workspace, grade, subject) {
     const r = await activateContext(workspace, grade, subject);
     if (!r.ok) throw new Error(`activate ${workspace}/${grade}/${subject} @ ${source}: ${r.error}`);
     const adapter = resolveAdapter(grade, subject);
-    const perUnit = [];
-    for (const scope of adapter.scopeValues()) {
-      const generationContext = [];
-      for (const d of adapter.deliverables) generationContext.push(await adapter.buildGenerationContext(scope, d.key));
-      perUnit.push({
-        scope,
-        slice: adapter.slice(scope),
-        progression: adapter.progression(scope),
-        requiredCoverage: adapter.requiredCoverage(scope),
-        generationContext,
-      });
-    }
-    return { units: adapter.listUnits(), scopes: adapter.scopeValues(), perUnit };
+    // The read surface is the generic graph read (get_course / get_standards) over
+    // the parsed model's rawGraph. Snapshot node ids + the edge multiset — bundle
+    // and firestore must produce the identical read graph. Mirrors the oracle in
+    // src/kg-store/__tests__/parity.test.ts (the cooked per-unit projections are gone).
+    const model = adapter.model();
+    return {
+      nodes: [...model.byId.keys()].sort(),
+      edges: (model.rawGraph?.relationships ?? []).map((e) => `${e.type}|${e.start}|${e.end}`).sort(),
+    };
   });
 }
 
@@ -98,7 +94,7 @@ for (const { workspace, grade, subject } of listAvailableContexts()) {
     // Deep-strict-equal is the parity oracle. Parsed JSON, not raw strings,
     // so field-ordering differences on the way in don't produce false diffs.
     deepStrictEqual(storeReads, bundleReads);
-    console.error(`parity-check: ${label}: OK — ${bundleReads.scopes.length} unit(s) matched.`);
+    console.error(`parity-check: ${label}: OK — ${bundleReads.nodes.length} node(s), ${bundleReads.edges.length} edge(s) matched.`);
   } catch (e) {
     failures++;
     if (e instanceof AssertionError) {
