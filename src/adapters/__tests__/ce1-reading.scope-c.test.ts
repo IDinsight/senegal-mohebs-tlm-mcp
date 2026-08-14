@@ -89,9 +89,9 @@ async function runRecipe<A>(mutation: GraphMutation<A>, args: A) {
 
 function week1SessionLesson(graph: MutationGraph): string {
   const model = modelOf(graph);
-  const week = model.unitsOfKind("week").find((w) => w.order === 1)!;
-  const day = model.childrenOf(week.id).find((c) => c.kind === "day")!;
-  return model.childrenOf(day.id).find((c) => c.kind === "lesson")!.id;
+  const week = model.unitsOfKind("Semaine").find((w) => w.order === 1)!;
+  const day = model.childrenOf(week.id).find((c) => c.kind === "Jour")!;
+  return model.childrenOf(day.id).find((c) => c.kind === "Lesson")!.id;
 }
 
 beforeAll(() => { __setStorageForTest(fakeStorage); });
@@ -125,7 +125,7 @@ describe("add_node — Activity under a session lesson", () => {
     expect(confirm.phase).toBe("apply");
 
     const node = (await readDraft()).nodes.find((n) => n.id === activityId)!;
-    expect(node.type).toBe("activity");             // canonical fallback kind for label Activity
+    expect(node.type).toBe("Activity");             // canonical fallback kind for label Activity
     expect(node.labels).toContain("Activity");
     const raw = node.properties.raw as Record<string, unknown>;
     expect(raw.description).toBe("Étape 1 : Découvrir le vocabulaire");
@@ -156,7 +156,7 @@ describe("add_node — Material + set_content; the slice surfaces them", () => {
 
     const draft = await readDraft();
     const material = draft.nodes.find((n) => n.id === materialId)!;
-    expect(material.type).toBe("material");
+    expect(material.type).toBe("Material");
     expect((material.properties.raw as Record<string, unknown>).content).toBe(content);
     expect(draft.edges.map((e) => e.id)).toContain(makeEdgeId(HAS_PART, activityId, materialId));
     // The Activity that Material hangs under is itself under the session Lesson —
@@ -167,14 +167,14 @@ describe("add_node — Material + set_content; the slice surfaces them", () => {
 
   it("allows a Material directly on a week grouping and on a lesson (any container)", async () => {
     const published = await readPublished();
-    const weekId = modelOf(published).unitsOfKind("week").find((w) => w.order === 1)!.id;
+    const weekId = modelOf(published).unitsOfKind("Semaine").find((w) => w.order === 1)!.id;
     const lessonId = week1SessionLesson(published);
 
     expect((await runRecipe(addNode, { namespace: ns, parentId: weekId, label: "Material", newNodeId: mintNodeId(), properties: { content: "[week opening scene]", materialType: "Reference" } })).confirm?.phase).toBe("apply");
     expect((await runRecipe(addNode, { namespace: ns, parentId: lessonId, label: "Material", newNodeId: mintNodeId(), properties: { content: "[shared reading text]" } })).confirm?.phase).toBe("apply");
 
     const draft = await readDraft();
-    const materialContents = draft.nodes.filter((n) => n.type === "material").map((n) => (n.properties.raw as Record<string, unknown>).content);
+    const materialContents = draft.nodes.filter((n) => n.type === "Material").map((n) => (n.properties.raw as Record<string, unknown>).content);
     expect(materialContents).toContain("[week opening scene]");
     expect(materialContents).toContain("[shared reading text]");
   });

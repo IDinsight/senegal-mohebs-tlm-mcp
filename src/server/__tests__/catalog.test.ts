@@ -92,8 +92,8 @@ const modelOf = (g: MutationGraph): CurriculumModel => adapter().parse(toRawEnve
 // A real Lesson id from the published CI-maths seed (a valid usesRoutine target).
 function someLessonId(g: MutationGraph): string {
   const m = modelOf(g);
-  const week = m.unitsOfKind("week").find((w) => m.childrenOf(w.id).some((c) => c.kind === "lesson"))!;
-  return m.childrenOf(week.id).find((c) => c.kind === "lesson")!.id;
+  const week = m.unitsOfKind("Semaine").find((w) => m.childrenOf(w.id).some((c) => c.kind === "Lesson"))!;
+  return m.childrenOf(week.id).find((c) => c.kind === "Lesson")!.id;
 }
 
 beforeAll(() => { __setStorageForTest(fakeStorage); });
@@ -172,7 +172,7 @@ describe("use_routine", () => {
 
   it("blocks copying onto a non-lesson target (a chapter grouping)", async () => {
     const published = await readPublished();
-    const chapterId = modelOf(published).unitsOfKind("chapter")[0].id;
+    const chapterId = modelOf(published).unitsOfKind("Chapitre")[0].id;
     const catalog = await readCatalog(SHARED_CATALOG_NAMESPACE);
     const clone = cloneRoutineSubtree(catalog, "cat-entry", ns, () => mintNodeId())!;
     const args = { namespace: ns, targetId: chapterId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };

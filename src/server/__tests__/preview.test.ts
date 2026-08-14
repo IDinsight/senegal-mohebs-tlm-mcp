@@ -28,8 +28,9 @@ import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel, courseSubgraph } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
-  runGraphMutation, upsertProperty, __resetMutationsForTest,
+  runGraphMutation, __resetMutationsForTest,
 } from "../../kg-store/index.js";
+import { reposition } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import { activateContext } from "../../activate.js";
@@ -104,7 +105,7 @@ async function rawSlot(kgStore: KgNodeStore, slot: Slot) {
 // Pick a chapter node that carries a string title, and return its id + number.
 async function pickChapter(): Promise<{ id: string; num: number; title: string }> {
   const nodes = await store.listNodes(ns, "a");
-  const chapter = nodes.find((n) => n.type === "chapter" && typeof (n.properties as any).title === "string" && typeof (n.properties as any).order === "number")!;
+  const chapter = nodes.find((n) => n.type === "Chapitre" && typeof (n.properties as any).title === "string" && typeof (n.properties as any).order === "number")!;
   return { id: chapter.id, num: (chapter.properties as any).order, title: (chapter.properties as any).title };
 }
 
@@ -115,15 +116,14 @@ async function pickCourse(): Promise<{ id: string }> {
   return { id: course.id };
 }
 
-// Stage a wording edit on the draft as `actor` (two-phase confirm).
-async function stageTitleEdit(actor: Actor, nodeId: string, value: string): Promise<void> {
+// Stage a reposition edit on the draft as `actor` (two-phase confirm).
+async function stageReposition(actor: Actor, nodeId: string, position: number): Promise<void> {
   await withCtx(actor, async () => {
-    const adapter = resolveAdapter(ctx.grade, ctx.subject)!;
-    const preview = await runGraphMutation({ namespace: ns, mutation: upsertProperty, args: { nodeId, key: "title", value, aliases: adapter.wordingAliases } });
+    const preview = await runGraphMutation({ namespace: ns, mutation: reposition, args: { namespace: ns, nodeId, position } });
     if (preview.phase !== "preview") {
       throw new Error(`expected preview, got ${preview.phase}`);
     }
-    const applied = await runGraphMutation({ namespace: ns, mutation: upsertProperty, args: { nodeId, key: "title", value, aliases: adapter.wordingAliases }, confirm: true, token: preview.confirmationToken });
+    const applied = await runGraphMutation({ namespace: ns, mutation: reposition, args: { namespace: ns, nodeId, position }, confirm: true, token: preview.confirmationToken });
     if (applied.phase !== "apply" || !applied.ok) {
       throw new Error("apply failed");
     }
@@ -150,26 +150,34 @@ afterAll(() => {
 
 // ── 1 + 7: preview reflects the staged edit; published still reflects the old ─
 describe("draft-resolved preview reflects a staged edit; published generation does not", () => {
-  it("preview subtree shows the NEW title while published shows the OLD", async () => {
+  it("preview subtree shows the NEW position while published shows the OLD", async () => {
     const chapter = await pickChapter();
     const course = await pickCourse();
-    const NEW = `${chapter.title} — DRAFT EDIT`;
-    await stageTitleEdit(CURATOR, chapter.id, NEW);
+
+    // The chapter's published ordinal, straight from the published subtree.
+    const publishedBefore = await withCtx(CURATOR, async () => {
+      const adapter = resolveAdapter(ctx.grade, ctx.subject)!;
+      return courseSubgraph(adapter.model(), course.id)!;
+    }) as { nodes: Array<{ id: string; properties: any }> };
+    const originalPosition = publishedBefore.nodes.find((n) => n.id === chapter.id)!.properties.position as number;
+    const NEW_POSITION = originalPosition + 100;
+    await stageReposition(CURATOR, chapter.id, NEW_POSITION);
 
     const res = await withCtx(CURATOR, () => previewGeneration(course.id));
     expect(res.preview).toBe(true);
     expect(res.label).toBe(PREVIEW_LABEL);
     const draftNode = (res.nodes as any[]).find((n) => n.id === chapter.id);
-    expect(draftNode.properties.description).toBe(NEW);
+    expect(draftNode.properties.position).toBe(NEW_POSITION);
 
-    // Published read (courseSubgraph on the published model) still old.
+    // Published read (courseSubgraph on the published model) still shows the old
+    // ordinal — the staged reposition never reached published.
     const published = await withCtx(CURATOR, async () => {
       const adapter = resolveAdapter(ctx.grade, ctx.subject)!;
       return courseSubgraph(adapter.model(), course.id)!;
     }) as { nodes: Array<{ id: string; properties: any }> };
     const pubNode = published.nodes.find((n) => n.id === chapter.id)!;
-    expect(pubNode.properties.description).toBe(chapter.title);
-    expect(pubNode.properties.description).not.toBe(NEW);
+    expect(pubNode.properties.position).toBe(originalPosition);
+    expect(pubNode.properties.position).not.toBe(NEW_POSITION);
   });
 });
 
@@ -190,7 +198,7 @@ describe("a preview run leaves everything canonical untouched", () => {
   it("published slot, pointer, bucket, history and log_generation are all unaffected", async () => {
     const chapter = await pickChapter();
     const course = await pickCourse();
-    await stageTitleEdit(CURATOR, chapter.id, `${chapter.title} — DRAFT EDIT`);
+    await stageReposition(CURATOR, chapter.id, 99);
 
     const publishedBefore = await rawSlot(store, "a");
     const pointerBefore = await store.readPointer(ns);
@@ -241,7 +249,7 @@ describe("role gate: curator + approver may preview; others blocked + audited", 
   it("approver may preview a staged draft", async () => {
     const chapter = await pickChapter();
     const course = await pickCourse();
-    await stageTitleEdit(CURATOR, chapter.id, `${chapter.title} — DRAFT EDIT`);
+    await stageReposition(CURATOR, chapter.id, 99);
     const res = await withCtx(APPROVER, () => previewGeneration(course.id));
     expect(res.preview).toBe(true);
     expect(res.nodes).toBeDefined();
@@ -252,7 +260,7 @@ describe("role gate: curator + approver may preview; others blocked + audited", 
     it(`${label} is blocked (unauthorized) and the denial is audited`, async () => {
       const chapter = await pickChapter();
       const course = await pickCourse();
-      await stageTitleEdit(CURATOR, chapter.id, `${chapter.title} — DRAFT EDIT`);
+      await stageReposition(CURATOR, chapter.id, 99);
       const before = (await store.listAudit({ namespace: ns, eventType: "blocked" })).length;
 
       const res = await withCtx(actor, () => previewGeneration(course.id));
@@ -275,7 +283,7 @@ describe("role gate: curator + approver may preview; others blocked + audited", 
 describe("preview is scoped — unknown course rejected, one course only", () => {
   it("rejects an unknown course id", async () => {
     const chapter = await pickChapter();
-    await stageTitleEdit(CURATOR, chapter.id, `${chapter.title} — DRAFT EDIT`);
+    await stageReposition(CURATOR, chapter.id, 99);
     const res = await withCtx(CURATOR, () => previewGeneration("no-such-course"));
     expect(typeof res.error).toBe("string");
     expect(res.nodes).toBeUndefined();
@@ -284,7 +292,7 @@ describe("preview is scoped — unknown course rejected, one course only", () =>
   it("scopes the subtree to the requested course", async () => {
     const chapter = await pickChapter();
     const course = await pickCourse();
-    await stageTitleEdit(CURATOR, chapter.id, `${chapter.title} — DRAFT EDIT`);
+    await stageReposition(CURATOR, chapter.id, 99);
     const res = await withCtx(CURATOR, () => previewGeneration(course.id));
     expect(res.course).toBe(course.id);
   });

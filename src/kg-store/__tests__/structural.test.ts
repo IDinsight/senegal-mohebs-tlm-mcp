@@ -40,7 +40,7 @@ import { __setStorageForTest } from "../../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../../actor.js";
 import type { MutationGraph } from "../index.js";
 import type { KgNodeStore, StoredMeta } from "../types.js";
-import type { StorageAdapter, HistoryFile, WordingAliases } from "../../types.js";
+import type { StorageAdapter, HistoryFile } from "../../types.js";
 
 const emptyHistory: HistoryFile = { version: 2, entries: [] };
 const fakeStorage: StorageAdapter = {
@@ -95,9 +95,6 @@ async function readPublishedGraph(namespace: string): Promise<MutationGraph> {
   return readSlotGraph(namespace, pointer!.publishedSlot);
 }
 
-// The CI maths adapter's wordingAliases (read once here so tests don't depend
-// on a specific adapter's static object).
-const aliases = (): WordingAliases => resolveAdapter(targetCtx.grade, targetCtx.subject)!.wordingAliases;
 
 beforeAll(() => { __setStorageForTest(fakeStorage); });
 beforeEach(async () => {
@@ -121,7 +118,7 @@ describe("create_node", () => {
     const newNodeId = mintNodeId();
     const preview = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "New chapter", raw: { chapitreNum: 999 } }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "New chapter", raw: { chapitreNum: 999 } }, namespace: ns, newNodeId },
     });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
     // The diff surfaces the added node with the minted id.
@@ -129,12 +126,12 @@ describe("create_node", () => {
 
     const applied = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "New chapter", raw: { chapitreNum: 999 } }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "New chapter", raw: { chapitreNum: 999 } }, namespace: ns, newNodeId },
       confirm: true, token: preview.confirmationToken,
     });
     expect(applied).toMatchObject({ ok: true });
     const draft = await readSlotGraph(ns, "b");
-    expect(draft.nodes.some((n) => n.id === newNodeId && n.type === "chapter")).toBe(true);
+    expect(draft.nodes.some((n) => n.id === newNodeId && n.type === "Chapitre")).toBe(true);
     // Published is untouched.
     const published = await readSlotGraph(ns, "a");
     expect(published.nodes.some((n) => n.id === newNodeId)).toBe(false);
@@ -145,9 +142,9 @@ describe("create_node", () => {
     const blocked = await runGraphMutation({
       namespace: ns, mutation: createNode,
       args: {
-        kind: "chapter",
+        kind: "Chapitre",
         properties: { title: "Rogue", id: "caller-supplied-id" },  // sneak in an id
-        namespace: ns, aliases: aliases(), newNodeId,
+        namespace: ns, newNodeId,
       },
     });
     if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
@@ -159,24 +156,12 @@ describe("create_node", () => {
     const newNodeId = mintNodeId();
     const blocked = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "widget", properties: { text: "..." }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "widget", properties: { text: "..." }, namespace: ns, newNodeId },
     });
     if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
     expect(blocked.errors.some((e) => e.includes("not a known node kind"))).toBe(true);
   });
 
-  it("warns (does not block) when the new node has no wording for its kind", async () => {
-    const newNodeId = mintNodeId();
-    const preview = await runGraphMutation({
-      namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: {}, namespace: ns, aliases: aliases(), newNodeId },
-    });
-    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
-    // Token issued (warnings don't block); one warning names the missing keys.
-    expect(typeof preview.confirmationToken).toBe("string");
-    expect(preview.warnings.length).toBeGreaterThanOrEqual(1);
-    expect(preview.warnings[0]).toMatch(/without wording/);
-  });
 });
 
 // ── link_nodes ──────────────────────────────────────────────────────────────
@@ -185,7 +170,7 @@ describe("link_nodes", () => {
   it("adds an edge between two existing nodes", async () => {
     const graph = await readPublishedGraph(ns);
     // Pick two chapters and link them with hasDependency (a known edge type).
-    const chapters = graph.nodes.filter((n) => n.type === "chapter");
+    const chapters = graph.nodes.filter((n) => n.type === "Chapitre");
     const [firstChapter, lastChapter] = [chapters[0], chapters[chapters.length - 1]];
     // Choose a pair that isn't already linked.
     const existingId = makeEdgeId("hasDependency", firstChapter.id, lastChapter.id);
@@ -248,7 +233,7 @@ describe("link_nodes", () => {
 
   it("rejects a self-loop", async () => {
     const graph = await readPublishedGraph(ns);
-    const node = graph.nodes.find((n) => n.type === "chapter")!;
+    const node = graph.nodes.find((n) => n.type === "Chapitre")!;
     const blocked = await runGraphMutation({
       namespace: ns, mutation: linkNodes,
       args: { edgeType: "hasDependency", fromId: node.id, toId: node.id, properties: {}, namespace: ns },
@@ -296,12 +281,12 @@ describe("delete_node — non-cascading", () => {
     const newNodeId = mintNodeId();
     const createPreview = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "isolated" }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "isolated" }, namespace: ns, newNodeId },
     });
     if (createPreview.phase !== "preview") throw new Error("preview");
     await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "isolated" }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "isolated" }, namespace: ns, newNodeId },
       confirm: true, token: createPreview.confirmationToken,
     });
 
@@ -374,7 +359,7 @@ describe("Rule 1 — disguised rename across delete_node + create_node", () => {
     // times the serial unlink out. Unlink them so delete_node passes Rule 2; Rule
     // 1 is what we're exercising here, not Rule 2.
     const graph = await readPublishedGraph(ns);
-    const chapter = graph.nodes.find((n) => n.type === "task")!;
+    const chapter = graph.nodes.find((n) => n.type === "Activity")!;
     const incident = graph.edges.filter((edge) => edge.from === chapter.id || edge.to === chapter.id);
     for (const edge of incident) {
       const unlinkPreview = await runGraphMutation({ namespace: ns, mutation: unlinkNodes, args: { edgeId: edge.id } });
@@ -403,7 +388,7 @@ describe("Rule 1 — disguised rename across delete_node + create_node", () => {
         kind: chapter.type,
         properties: { ...(chapter.properties as Record<string, unknown>) },  // identical content
         labels: chapter.labels,   // labels are content too — reproduce them so Rule 1 sees an exact twin
-        namespace: ns, aliases: aliases(), newNodeId,
+        namespace: ns, newNodeId,
       },
     });
     // Rule 1 fires because the PUBLISHED reference still contains the
@@ -418,9 +403,9 @@ describe("Rule 1 — disguised rename across delete_node + create_node", () => {
     const preview = await runGraphMutation({
       namespace: ns, mutation: createNode,
       args: {
-        kind: "chapter",
+        kind: "Chapitre",
         properties: { title: "A wholly new chapter", raw: { chapitreNum: 99999 } },
-        namespace: ns, aliases: aliases(), newNodeId,
+        namespace: ns, newNodeId,
       },
     });
     // A brand-new distinct chapter is fine — no removed twin to match against.
@@ -435,7 +420,7 @@ describe("role matrix — every primitive gated on curator/approver", () => {
   const primitiveCalls: Array<[string, () => Promise<unknown>]> = [
     ["create_node", () => runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "x" }, namespace: ns, aliases: aliases(), newNodeId: mintNodeId() },
+      args: { kind: "Chapitre", properties: { title: "x" }, namespace: ns, newNodeId: mintNodeId() },
     })],
     ["link_nodes", async () => {
       // Read as an unaffected caller so authz denial doesn't short-circuit
@@ -488,12 +473,12 @@ describe("audit — apply and blocked records", () => {
     const newNodeId = mintNodeId();
     const preview = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "audited" }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "audited" }, namespace: ns, newNodeId },
     });
     if (preview.phase !== "preview") throw new Error("preview");
     await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "audited" }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "audited" }, namespace: ns, newNodeId },
       confirm: true, token: preview.confirmationToken,
     });
     const applyRecs = await store.listAudit({ namespace: ns, eventType: "apply" });
@@ -523,12 +508,12 @@ describe("end-to-end: manual structural add across a draft, then publish", () =>
     const chapterId = mintNodeId();
     const chapterPreview = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "Nouveau chapitre", raw: { chapitreNum: 42, chapitreTitre: "Nouveau chapitre" } }, namespace: ns, aliases: aliases(), newNodeId: chapterId },
+      args: { kind: "Chapitre", properties: { title: "Nouveau chapitre", raw: { chapitreNum: 42, chapitreTitre: "Nouveau chapitre" } }, namespace: ns, newNodeId: chapterId },
     });
     if (chapterPreview.phase !== "preview") throw new Error("chapter preview");
     await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "Nouveau chapitre", raw: { chapitreNum: 42, chapitreTitre: "Nouveau chapitre" } }, namespace: ns, aliases: aliases(), newNodeId: chapterId },
+      args: { kind: "Chapitre", properties: { title: "Nouveau chapitre", raw: { chapitreNum: 42, chapitreTitre: "Nouveau chapitre" } }, namespace: ns, newNodeId: chapterId },
       confirm: true, token: chapterPreview.confirmationToken,
     });
 
@@ -536,12 +521,12 @@ describe("end-to-end: manual structural add across a draft, then publish", () =>
     const lessonId = mintNodeId();
     const lessonPreview = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "lesson", properties: { text: "Une nouvelle leçon", raw: { osTexte: "Une nouvelle leçon" } }, namespace: ns, aliases: aliases(), newNodeId: lessonId },
+      args: { kind: "Lesson", properties: { text: "Une nouvelle leçon", raw: { osTexte: "Une nouvelle leçon" } }, namespace: ns, newNodeId: lessonId },
     });
     if (lessonPreview.phase !== "preview") throw new Error("lesson preview");
     await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "lesson", properties: { text: "Une nouvelle leçon", raw: { osTexte: "Une nouvelle leçon" } }, namespace: ns, aliases: aliases(), newNodeId: lessonId },
+      args: { kind: "Lesson", properties: { text: "Une nouvelle leçon", raw: { osTexte: "Une nouvelle leçon" } }, namespace: ns, newNodeId: lessonId },
       confirm: true, token: lessonPreview.confirmationToken,
     });
 
@@ -586,12 +571,12 @@ describe("parity — a structural draft edit doesn't leak to published reads", (
     const newNodeId = mintNodeId();
     const preview = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "leak test" }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "leak test" }, namespace: ns, newNodeId },
     });
     if (preview.phase !== "preview") throw new Error("preview");
     await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "leak test" }, namespace: ns, aliases: aliases(), newNodeId },
+      args: { kind: "Chapitre", properties: { title: "leak test" }, namespace: ns, newNodeId },
       confirm: true, token: preview.confirmationToken,
     });
     const afterPublished = await readPublishedGraph(ns);

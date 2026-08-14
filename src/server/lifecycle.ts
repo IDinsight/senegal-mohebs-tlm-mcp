@@ -1,22 +1,20 @@
 /*
- * Module: server · tool group: draft lifecycle + upsert_property
+ * Module: server · tool group: draft lifecycle
  *
  * The curator loop, exposed as MCP tools:
  *
  *   diff_draft       — read-only. Whole-draft diff vs published. Curator +
  *                      approver only; unknown/no-role blocked.
- *   upsert_property  — curator writes wording. Runs through #5's confirm
- *                      framework (per-mutation diff + token) unchanged; the
- *                      adapter's wordingAliases resolve the logical key to
- *                      concrete storage paths.
  *   publish_draft    — approver only. Two-phase (dry-run whole-draft diff +
  *                      draft-level token → confirm promotes atomically).
  *   discard_draft    — curator or approver. Two-phase.
  *
- * All four use the active grade/subject via getActiveAdapter() (same
+ * All three use the active grade/subject via getActiveAdapter() (same
  * convention as list_courses, get_course, etc.) — no explicit namespace
  * arg. authorize() runs inside each underlying function, so denials never
- * leak the diff and never issue tokens.
+ * leak the diff and never issue tokens. (Curriculum EDITS are the generic
+ * graph verbs — add_node / move_node / reposition / set_content — registered
+ * from the recipes tool group.)
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -28,8 +26,6 @@ import {
   diffDraft,
   publishDraftWithConfirm,
   discardDraftWithConfirm,
-  runGraphMutation,
-  upsertProperty,
   kgNamespace,
   getKgStore,
   toAuditActor,
@@ -87,43 +83,6 @@ export function registerLifecycleTools(server: McpServer) {
       // completeness warnings (#13) — the approver's pre-publish "this chapter
       // has no bilan" surface.
       return asJson(await diffDraft(ns, activeCoverage()));
-    }),
-  );
-
-  // ── upsert_property ───────────────────────────────────────────────────────
-  // The first REAL edit tool. Runs through #5/#6/#7/#8 unchanged.
-  // `key` is a logical wording name (title / text / title_en / text_en); the
-  // adapter's wordingAliases resolves it to concrete storage paths, updated
-  // atomically. Missing key (typo) or a key not backed by an existing string
-  // → hard error, no token.
-  server.registerTool(
-    "upsert_property",
-    {
-      title: "Update wording on a curriculum node",
-      description:
-        "Edit an existing wording property on an existing node (a chapter title, a lesson objective, a component description, etc.). `key` is a logical name — 'title', 'text', 'title_en', 'text_en' — and the active subject's adapter decides which storage paths that name updates (typically both the normalized field and its source-truth mirror, atomically). REQUIRES CONFIRMATION: called without confirm:true it returns a preview with a per-mutation diff, a confirmationToken, and an expiresAt; ask the user to approve, then call again with confirm:true and the token. To make a confirm safe to retry after a dropped connection, also pass a stable `idempotencyKey` on the confirm — a retry with the same key returns the first result instead of re-applying. This is a DRAFT edit — nothing reaches generation until an approver calls publish_draft. Pilot scope: term wording only; adding new fields or editing structural properties is not exposed yet.",
-      inputSchema: {
-        nodeId: z.string(),
-        key: z.string(),
-        value: z.string(),
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-        idempotencyKey: z.string().optional(),
-      },
-    },
-    guarded(async (a: { nodeId: string; key: string; value: string; confirm?: boolean; confirmationToken?: string; idempotencyKey?: string }) => {
-      const adapter = getActiveAdapter();
-      const ns = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
-      const result = await runGraphMutation({
-        namespace: ns,
-        mutation: upsertProperty,
-        args: { nodeId: a.nodeId, key: a.key, value: a.value, aliases: adapter.wordingAliases },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        idempotencyKey: a.idempotencyKey,
-        coverage: (g) => adapter.coverageWarnings?.(g) ?? [],
-      });
-      return asJson(result);
     }),
   );
 

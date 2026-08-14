@@ -4,8 +4,8 @@
  * The four structural mutation primitives — the raw verbs a curator uses to
  * grow, connect, disconnect, and prune the graph. Each is a single #5
  * GraphMutation with its own validate hook. All four run through the same
- * framework as upsert_property: two-phase confirm envelope, #6's structural
- * rules on the proposed result, #7's audit, #8's role gate.
+ * two-phase framework every graph mutation uses: confirm envelope, #6's
+ * structural rules on the proposed result, #7's audit, #8's role gate.
  *
  * Deliberately conservative:
  *   • create_node MINTS the id server-side (never caller-supplied) so
@@ -15,9 +15,9 @@
  *     caller's flow for a connected node is "unlink first, then delete."
  *     No cascade — that's #14.
  *   • Composite / recipe operations (add-lesson-grouping, split-lesson-grouping) are #13.
- *   • Editing STRUCTURAL properties of existing nodes (renumber, code
- *     change) is a separate future step. create_node sets properties at
- *     birth; upsert_property stays wording-only.
+ *   • create_node sets a node's properties at birth; a node's ordinal and
+ *     load-bearing content are edited afterwards through the generic recipes
+ *     (reposition / set_content).
  *
  * Validation beyond #6's two rules is deliberately minimal because there is
  * no schema layer in this codebase. See Step 0 findings: LC's own
@@ -46,7 +46,6 @@ import { randomUUID } from "node:crypto";
 import { edgeId } from "./types.js";
 import type { MutationEdge, MutationGraph, MutationNode } from "./types.js";
 import type { GraphMutation } from "./mutations.js";
-import type { WordingAliases } from "../types.js";
 
 // ── Small helpers ────────────────────────────────────────────────────────────
 
@@ -57,37 +56,6 @@ const observedKinds = (base: MutationGraph): Set<string> =>
 // The set of edge types currently observed in `base`. Used by link_nodes.
 const observedEdgeTypes = (base: MutationGraph): Set<string> =>
   new Set(base.edges.map((e) => e.type));
-
-// A curator "should also set" list — the wording keys the adapter declares
-// for a given kind that are NOT populated (missing or non-string) on the
-// proposed new node. Surfaced as WARNINGS on create_node, not errors: a
-// freshly created chapter with no title is incomplete but not corrupt, and
-// the draft → publish review is the gate for completeness.
-function missingWordingKeys(
-  kind: string,
-  properties: Record<string, unknown>,
-  aliases: WordingAliases,
-): string[] {
-  const perKind = aliases[kind];
-  if (!perKind) return [];
-  const missing: string[] = [];
-  for (const [logicalKey, paths] of Object.entries(perKind)) {
-    // The key is "populated" if EVERY declared storage path currently holds
-    // a non-empty string on the proposed properties. Any path missing or
-    // holding a non-string counts as "not yet populated" for the warning.
-    const populated = paths.every((path) => {
-      const segments = path.split(".");
-      let cur: unknown = properties;
-      for (const seg of segments) {
-        if (cur === null || typeof cur !== "object") return false;
-        cur = (cur as Record<string, unknown>)[seg];
-      }
-      return typeof cur === "string" && cur.length > 0;
-    });
-    if (!populated) missing.push(logicalKey);
-  }
-  return missing;
-}
 
 // ── create_node ──────────────────────────────────────────────────────────────
 // Mints a fresh randomUUID for the new node's id and adds one node to the
@@ -101,7 +69,6 @@ export type CreateNodeArgs = {
   kind: string;
   properties: Record<string, unknown>;
   namespace: string;
-  aliases: WordingAliases;
   newNodeId: string;             // minted by the tool layer, never by the caller
   labels?: string[];             // raw LC top-level labels (recipes stamp these; raw create_node omits them)
 };
@@ -146,20 +113,7 @@ export const createNode: GraphMutation<CreateNodeArgs> = {
       errors.push(`create_node: id '${args.newNodeId}' already exists in the draft (mint collision — retry).`);
     }
 
-    // Warnings — completeness of wording. Missing wording is INCOMPLETE, not
-    // CORRUPT: the draft → publish review is the gate for completeness.
-    const warnings: string[] = [];
-    if (errors.length === 0) {
-      const missing = missingWordingKeys(args.kind, args.properties ?? {}, args.aliases);
-      if (missing.length > 0) {
-        warnings.push(
-          `Node was created without wording for: ${missing.join(", ")}. ` +
-          `Use upsert_property to set them before publish, or the reviewer will see an incomplete '${args.kind}'.`,
-        );
-      }
-    }
-
-    return { errors, warnings };
+    return { errors, warnings: [] };
   },
   apply: (base, args) => ({
     nodes: [

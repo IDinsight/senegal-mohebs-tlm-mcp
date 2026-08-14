@@ -329,7 +329,7 @@ export async function publishDraftWithConfirm(
     return {
       phase: "preview", kind: "publishDraft", needsConfirmation: true,
       action: `publish namespace '${namespace}' — no draft exists, nothing to promote`,
-      message: `There is no draft to publish for '${namespace}'. Make an edit first (upsert_property or similar), then dry-run publish_draft again.`,
+      message: `There is no draft to publish for '${namespace}'. Make an edit first (add a node, set content, reposition, …), then dry-run publish_draft again.`,
       hasDraft: false,
     };
   }

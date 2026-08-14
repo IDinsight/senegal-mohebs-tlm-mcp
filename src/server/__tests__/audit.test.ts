@@ -26,9 +26,10 @@ import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace, toAuditActor,
-  runGraphMutation, upsertProperty, deleteNode, publishDraftWithConfirm, discardDraftWithConfirm,
+  runGraphMutation, deleteNode, publishDraftWithConfirm, discardDraftWithConfirm,
   __resetMutationsForTest,
 } from "../../kg-store/index.js";
+import { reposition } from "../../kg-recipes/index.js";
 import type { KgNodeStore, StoredMeta, AuditRecord, GraphMutation, GraphDiff } from "../../kg-store/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, runAsActor, type Actor } from "../../actor.js";
@@ -190,7 +191,7 @@ describe("filters: actor, action, outcome, nodeId, time range", () => {
       edges: { added: [{ id: "hasChild:node-X->node-Y", after: { from: "node-X", to: "node-Y" } }], removed: [], changed: [] },
     };
     const records: AuditRecord[] = [
-      { id: "a1", ts: "2026-07-10T10:00:00Z", actor: alice, namespace: ns, eventType: "apply", mutation: "upsertProperty", diff: touching, baseVersion: "v0", resultingVersion: "v1" },
+      { id: "a1", ts: "2026-07-10T10:00:00Z", actor: alice, namespace: ns, eventType: "apply", mutation: "reposition", diff: touching, baseVersion: "v0", resultingVersion: "v1" },
       { id: "a2", ts: "2026-07-11T10:00:00Z", actor: bob, namespace: ns, eventType: "apply", mutation: "deleteNode", diff: edgeTouching, baseVersion: "v1", resultingVersion: "v2" },
       { id: "b1", ts: "2026-07-12T10:00:00Z", actor: alice, namespace: ns, eventType: "blocked", mutation: "rename", reason: "Rule 1: id immutable" },
       { id: "p1", ts: "2026-07-13T10:00:00Z", actor: bob, namespace: ns, eventType: "publish", promotedApplyIds: ["a1"], selfAuthored: false },
@@ -288,7 +289,7 @@ describe("pagination: newest-first, stable opaque cursor, page-size cap", () => 
 describe("summary (default) vs detail payloads", () => {
   beforeEach(async () => {
     await store.appendAudit(rec({
-      id: "ap", ts: "2026-07-10T10:00:00Z", eventType: "apply", mutation: "upsertProperty",
+      id: "ap", ts: "2026-07-10T10:00:00Z", eventType: "apply", mutation: "reposition",
       baseVersion: "v0", resultingVersion: "v1",
       diff: { nodes: { added: [], removed: [], changed: [{ id: "n1", before: { title: "old" }, after: { title: "new" } }] }, edges: { added: [], removed: [], changed: [] } },
     }));
@@ -417,18 +418,17 @@ describe("STRICT read-only: reads never alter existing records (append-only pres
 describe("readback verification: a known session is present, well-formed, and attributed", () => {
   it("applies, createDraft, publish(self-authored), discard, force-cascade delete, recipe, and blocks all read back", async () => {
     await inTarget(APPROVER, async () => {
-      const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
       const nodes = await store.listNodes(ns, "a");
-      const editTarget = nodes.find((n) => n.type === "chapter" && typeof (n.properties as { title?: unknown }).title === "string")!;
-      const chapterToDelete = nodes.find((n) => n.type === "chapter" && n.id !== editTarget.id)!;
+      const editTarget = nodes.find((n) => n.type === "Chapitre")!;
+      const chapterToDelete = nodes.find((n) => n.type === "Chapitre" && n.id !== editTarget.id)!;
 
-      // 1. apply (upsert) → lazily creates the draft (createDraft + apply).
-      const upArgs = { nodeId: editTarget.id, key: "title", value: "Known-session edit", aliases: adapter.wordingAliases };
-      const upsertPreview = await runGraphMutation({ namespace: ns, mutation: upsertProperty, args: upArgs });
-      if (upsertPreview.phase !== "preview") {
-        throw new Error(`upsert preview expected, got ${upsertPreview.phase}`);
+      // 1. apply (reposition) → lazily creates the draft (createDraft + apply).
+      const repositionArgs = { namespace: ns, nodeId: editTarget.id, position: 7 };
+      const repositionPreview = await runGraphMutation({ namespace: ns, mutation: reposition, args: repositionArgs });
+      if (repositionPreview.phase !== "preview") {
+        throw new Error(`reposition preview expected, got ${repositionPreview.phase}`);
       }
-      await runGraphMutation({ namespace: ns, mutation: upsertProperty, args: upArgs, confirm: true, token: upsertPreview.confirmationToken });
+      await runGraphMutation({ namespace: ns, mutation: reposition, args: repositionArgs, confirm: true, token: repositionPreview.confirmationToken });
 
       // 2. publish (approver authored the apply → selfAuthored true).
       const publishPreview = await publishDraftWithConfirm(ns);

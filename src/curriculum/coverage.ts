@@ -84,14 +84,131 @@ function labelFor(n: { id: string; properties: Record<string, unknown> }): strin
   return title ? `${title} (${n.id})` : n.id;
 }
 
-// A rough plural for the "has no child X" message. Not i18n — an operator hint.
+// A rough plural for the "has no child X" message, keyed on the canonical kind.
+// Not i18n — an operator hint; anything unlisted falls back to "children".
 function childWord(kind: string): string {
   switch (kind) {
-    case "chapter": return "lessons";
-    case "week": return "days";
-    case "day": return "sessions";
-    case "lesson": return "components";
-    case "component": return "tasks";
+    case "Chapitre": return "lessons";
+    case "Semaine": return "days";
+    case "Jour": return "sessions";
+    case "Lesson": return "components";
+    case "LearningComponent": return "tasks";
     default: return "children";
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Two more generic rules + a dispatcher, so a subject's whole coverage policy is
+// a DATA list of named rules (see adapters/profile.ts CoverageRuleSpec) rather
+// than a hand-written closure. Like the two shapes above, these carry no subject
+// vocabulary — the parent/child KINDS and the assessment NOUN are parameters.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Container→child links along ONE containment edge type, filtered to a
+// parent/child kind pair. Shared by the two rules below; both care only about a
+// specific axis (e.g. maths chapter→lesson via `hasPart`, not the week→lesson
+// schedule axis), so the containment edge type is a parameter, not the union.
+function childrenByParent(
+  graph: GraphView,
+  parentKind: string,
+  childKind: string,
+  containment: string,
+): Map<string, GraphView["nodes"]> {
+  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  const out = new Map<string, GraphView["nodes"]>();
+  for (const e of graph.edges) {
+    if (e.type !== containment) continue;
+    const from = byId.get(e.from), to = byId.get(e.to);
+    if (!from || from.type !== parentKind || !to || to.type !== childKind) continue;
+    (out.get(e.from) ?? out.set(e.from, []).get(e.from)!).push(to);
+  }
+  return out;
+}
+
+// Exactly one assessment child per non-empty parent. Generalises the CI maths
+// "one bilan per chapter" rule: a parent of `parentKind` holding ≥1 `childKind`
+// child (via `containment`) should have exactly one child flagged
+// `isAssessment`. `noun` is the subject's word for that child ("bilan"); it
+// defaults to "assessment". An empty parent is skipped — that is the
+// empty-container rule's job, not this one's.
+export function assessmentChildWarnings(
+  graph: GraphView,
+  opts: { parentKind: string; childKind: string; containment?: string; noun?: string },
+): string[] {
+  const containment = opts.containment ?? "hasPart";
+  const noun = opts.noun ?? "assessment";
+  const children = childrenByParent(graph, opts.parentKind, opts.childKind, containment);
+  const warnings: string[] = [];
+  for (const parent of graph.nodes) {
+    if (parent.type !== opts.parentKind) continue;
+    const kids = children.get(parent.id) ?? [];
+    if (kids.length === 0) continue; // covered by empty-container
+    const assessments = kids.filter((k) => k.properties.isAssessment === true).length;
+    const label = labelFor(parent);
+    if (assessments === 0) {
+      warnings.push(
+        `Coverage: ${opts.parentKind} '${label}' has ${kids.length} ${opts.childKind}(s) but no ${noun} ` +
+        `(end-of-${opts.parentKind} assessment). Mark one ${opts.childKind} as the ${noun} before publishing.`,
+      );
+    } else if (assessments > 1) {
+      warnings.push(
+        `Coverage: ${opts.parentKind} '${label}' has ${assessments} ${noun} ${opts.childKind}s — exactly one is expected.`,
+      );
+    }
+  }
+  return warnings;
+}
+
+// At most one parent along ONE content axis. This is the axis-scoped counterpart
+// of multiParentWarnings: a CI maths lesson legitimately has two parents (its
+// chapter on the content axis, its week on the schedule axis), so the blunt
+// multi-parent rule can't be used — here we count only parents of `parentKind`
+// reached via `containment` (chapter parents via `hasPart`) and warn on >1.
+export function singleContentParentWarnings(
+  graph: GraphView,
+  opts: { childKind: string; parentKind: string; containment?: string },
+): string[] {
+  const containment = opts.containment ?? "hasPart";
+  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  const parentCount = new Map<string, number>();
+  for (const e of graph.edges) {
+    if (e.type !== containment) continue;
+    const from = byId.get(e.from), to = byId.get(e.to);
+    if (!from || from.type !== opts.parentKind || !to || to.type !== opts.childKind) continue;
+    parentCount.set(e.to, (parentCount.get(e.to) ?? 0) + 1);
+  }
+  const warnings: string[] = [];
+  for (const [childId, count] of parentCount) {
+    if (count <= 1) continue;
+    const child = byId.get(childId)!;
+    warnings.push(
+      `Coverage: ${opts.childKind} '${labelFor(child)}' has ${count} ${opts.parentKind} parents — ` +
+      `a ${opts.childKind} belongs to exactly one ${opts.parentKind} (other axes are separate). Detach it from all but one.`,
+    );
+  }
+  return warnings;
+}
+
+// A rule spec (structurally the CoverageRuleSpec discriminated union authored in
+// adapters/profile.ts) — restated here as a leaf-friendly shape so curriculum/
+// (services) doesn't import up into adapters/. The dispatcher below turns a
+// subject's list of these into the flat warning list the mutation framework and
+// diff_draft consume.
+export type CoverageRuleSpec =
+  | { rule: "empty-container"; kinds: string[] }
+  | { rule: "multi-parent"; childKinds?: string[] }
+  | { rule: "exactly-one-assessment-child"; parentKind: string; childKind: string; containment?: string; noun?: string }
+  | { rule: "single-content-parent"; childKind: string; parentKind: string; containment?: string };
+
+export function runCoverageRules(graph: GraphView, rules: CoverageRuleSpec[]): string[] {
+  const out: string[] = [];
+  for (const r of rules) {
+    switch (r.rule) {
+      case "empty-container": out.push(...emptyContainerWarnings(graph, r.kinds)); break;
+      case "multi-parent": out.push(...multiParentWarnings(graph, r.childKinds)); break;
+      case "exactly-one-assessment-child": out.push(...assessmentChildWarnings(graph, r)); break;
+      case "single-content-parent": out.push(...singleContentParentWarnings(graph, r)); break;
+    }
+  }
+  return out;
 }

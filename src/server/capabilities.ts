@@ -10,8 +10,7 @@
  *   actions.*            ← authorize(actor, X, ns)      (from #8, the real gate)
  *   draft.exists         ← store.readPointer()           (from #4)
  *   draft.createdBy      ← store.listAudit()             (from #7)
- *   editable.keys        ← adapter.wordingAliases       (from #10's adapter surface)
- *   editable.safePaths   ← UPSERT_PROPERTY_SAFE_PATHS   (from #10's central allowlist)
+ *   editable.recipes     ← RECIPES                       (the generic edit verbs)
  *   rules.structural     ← STRUCTURAL_RULES              (from #6)
  *
  * Any calculation of "who can do what" done here would be a copy that could
@@ -26,7 +25,7 @@ import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
 import { authorize, effectiveRole, type AuthAction } from "../authz.js";
 import {
-  kgNamespace, getKgStore, UPSERT_PROPERTY_SAFE_PATHS, STRUCTURAL_RULES,
+  kgNamespace, getKgStore, STRUCTURAL_RULES,
 } from "../kg-store/index.js";
 import { RECIPES, SHARED_CATALOG_NAMESPACE, catalogNamespace } from "../kg-recipes/index.js";
 
@@ -37,7 +36,7 @@ const CAPABILITY_ACTIONS = [
   "canReadGenerate",  // reads and generation are ungated (no authorize() call needed)
   "canReadDraft",     // #9's diff_draft
   "canPreview",       // preview_generation (draft-resolved) — same tier as readDraft
-  "canEditDraft",     // #10's upsert_property (any apply)
+  "canEditDraft",     // the apply gate for every draft edit (recipes / structural / typed adds)
   "canDiscardDraft",  // #9's discard_draft
   "canPublish",       // #9's publish_draft
   "canReadAudit",     // #16's read_audit — approver-only, same tier as publish
@@ -90,13 +89,10 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     }
   }
 
-  // ── editable: sourced from #10 (wording) + #12 (structural). The active
-  // adapter's wordingAliases is a live object (not a copy) — an adapter
-  // change flows through to this response with no code edit here.
-  // `safePaths` is the central allowlist; converted to a sorted array so
-  // the JSON is stable. `structural` describes the four raw verbs a
-  // curator has for growing / connecting / detaching / pruning the graph;
-  // they observe the current graph's vocabulary rather than a schema.
+  // ── editable: the edit surface. `typedAdds` are the typed node-creation
+  // tools; `structural` describes the four raw verbs a curator has for growing /
+  // connecting / detaching / pruning the graph (they observe the current graph's
+  // vocabulary rather than a schema).
   // ── recipes: a MIRROR of the generic recipe registry (reposition / set_content).
   // Rendered straight from RECIPES so what Claude discovers cannot drift from what
   // is built. Node CREATION is the typed authoring tools (see `typedAdds`).
@@ -115,13 +111,9 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   ];
 
   const editable = {
-    scope: "term-wording + graph primitives + typed adds + generic recipes",
+    scope: "graph primitives + typed adds + generic recipes",
     note:
-      "Wording (titles, objectives, component/task descriptions) is editable via upsert_property. " +
-      "Nodes are created via the TYPED authoring tools (see `typedAdds`); edges and deletions via the raw primitives (see `structural.verbs`); ordinal and content via the generic recipes (see `recipes`). " +
-      "A node's POSITION (ordinal) and load-bearing content are edited only THROUGH the recipes (reposition / set_content), never by upsert_property.",
-    keysByNodeKind: adapter.wordingAliases,
-    safePaths: [...UPSERT_PROPERTY_SAFE_PATHS].sort(),
+      "Nodes are created via the TYPED authoring tools (see `typedAdds`); edges and deletions via the raw primitives (see `structural.verbs`); a node's ordinal and load-bearing content via the generic recipes (see `recipes` — reposition / set_content).",
     typedAdds,
     structural: {
       verbs: ["create_edge", "delete_edges", "delete_nodes"],

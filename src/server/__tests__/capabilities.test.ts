@@ -25,8 +25,8 @@ import { CONFIG } from "../../config.js";
 import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../../context/index.js";
 import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel } from "../../curriculum/index.js";
-import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, upsertProperty, STRUCTURAL_RULES, UPSERT_PROPERTY_SAFE_PATHS, __resetMutationsForTest } from "../../kg-store/index.js";
-import { RECIPES, SHARED_CATALOG_NAMESPACE } from "../../kg-recipes/index.js";
+import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, STRUCTURAL_RULES, __resetMutationsForTest } from "../../kg-store/index.js";
+import { RECIPES, SHARED_CATALOG_NAMESPACE, reposition } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../../actor.js";
 import { authorize } from "../../authz.js";
@@ -204,19 +204,18 @@ describe("draft.exists reflects the real pointer", () => {
   it("true when a curator has landed an edit; createdBy names the curator", async () => {
     // Seed one apply as CURATOR — this lazy-creates the draft.
     await withActiveContext(CURATOR, async () => {
-      const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
       const nodes = await store.listNodes(ns, "a");
-      const chapter = nodes.find((n) => n.type === "chapter" && typeof (n.properties as any).title === "string")!;
+      const chapter = nodes.find((n) => n.type === "Chapitre")!;
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "seeded", aliases: adapter.wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 7 },
       });
       if (preview.phase !== "preview") {
         throw new Error("preview");
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "seeded", aliases: adapter.wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 7 },
         confirm: true, token: preview.confirmationToken,
       });
     });
@@ -235,17 +234,6 @@ describe("draft.exists reflects the real pointer", () => {
 // ── Editable + rules sourced from real modules ──────────────────────────────
 
 describe("editable and rules come from the real sources (no hand-copied literals)", () => {
-  it("editable.keysByNodeKind IS the active adapter's wordingAliases", async () => {
-    const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
-    expect(caps.editable.keysByNodeKind).toEqual(adapter.wordingAliases);
-  });
-
-  it("editable.safePaths matches UPSERT_PROPERTY_SAFE_PATHS from kg-store (sorted)", async () => {
-    const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.editable.safePaths).toEqual([...UPSERT_PROPERTY_SAFE_PATHS].sort());
-  });
-
   it("rules.structural IS the STRUCTURAL_RULES constant from validate.ts", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     expect(caps.rules.structural).toEqual([...STRUCTURAL_RULES]);

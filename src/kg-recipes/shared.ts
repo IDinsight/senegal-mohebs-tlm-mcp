@@ -4,7 +4,7 @@
  * The subject-agnostic helpers the four verbs share: a single POSITION concept,
  * containment/parent lookups over any edge, and the created-node property
  * builder. Titles and ordinals are written straight to their canonical LC paths —
- * no wording/structural aliases here (only `upsert_property` still uses those).
+ * no wording/structural aliases involved.
  */
 
 import { readAtPath, writeAtPath, type MutationGraph, type MutationNode } from "../kg-store/index.js";
@@ -112,9 +112,8 @@ export function setPosition(nodes: MutationNode[], nodeId: string, position: num
 }
 
 // The one non-canonical-but-LC content path: a Material's payload. Kept as a
-// constant (canonical LC `Material.content`), deliberately NOT a wording alias,
-// so `upsert_property` cannot reach load-bearing content — only add_node
-// (via properties.content) and set_content write it.
+// constant (canonical LC `Material.content`): load-bearing content is written
+// only by add_node (via properties.content) and set_content.
 export const MATERIAL_CONTENT_PATH = "raw.content";
 
 // Every verb carries the namespace it operates in; the rest is verb-specific.

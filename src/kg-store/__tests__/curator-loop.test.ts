@@ -5,18 +5,16 @@
  * test walks the whole loop the way a real curator + approver would:
  *
  *   0. seed a fresh graph                    (given)
- *   1. curator dry-runs upsert_property      → per-mutation diff + token, no state change
- *   2. curator confirms upsert_property      → applied to draft, audited
+ *   1. curator dry-runs an edit (reposition) → per-mutation diff + token, no state change
+ *   2. curator confirms the edit             → applied to draft, audited
  *   3. curator dry-runs a second edit        → per-mutation diff (this one only)
  *   4. curator confirms the second edit      → both edits now on the draft
  *   5. diff_draft (approver)                 → shows the CUMULATIVE draft vs published
  *   6. approver dry-runs publish_draft       → whole-draft diff + draft-level token
  *   7. approver confirms publish_draft       → atomic promotion, audited
- *   8. subsequent read of published          → new wording is what generation sees
+ *   8. subsequent read of published          → the new ordinals are what generation sees
  *
  * Plus the negative paths:
- *   - upsert_property on a non-wording key  → rejected (safety allowlist)
- *   - upsert_property on a missing key      → rejected (existing-key rule)
  *   - stale publish (draft moved)           → rejected via the draft-level token
  *   - curator can't publish                 → unauthorized
  *   - unknown can't diff_draft              → unauthorized
@@ -31,9 +29,10 @@ import { serializeModel } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
   runGraphMutation, publishDraftWithConfirm, discardDraftWithConfirm,
-  diffDraft, upsertProperty,
+  diffDraft,
   __resetMutationsForTest, __resetDraftTokensForTest,
 } from "../index.js";
+import { reposition } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { runAsActor, __setActorForTest, type Actor } from "../../actor.js";
 import type { KgNodeStore, StoredMeta } from "../types.js";
@@ -56,8 +55,8 @@ const APPROVER: Actor = { id: "approver-uid", email: "approver@test", role: "app
 const priorEnv = process.env.KG_SOURCE;
 let store: KgNodeStore;
 const contexts = listAvailableContexts();
-// This loop test targets the CI maths adapter specifically — that's where
-// wordingAliases carry both chapter (title) and lesson (text) mappings.
+// This loop test targets the CI maths adapter specifically — a graph with both
+// chapter and lesson content nodes, so the loop can edit two distinct nodes.
 const firstCtx = contexts.find((c) => c.grade === "ci" && c.subject === "maths")!;
 const ns = kgNamespace(firstCtx.grade, firstCtx.subject);
 
@@ -78,12 +77,12 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   return freshStore;
 }
 
-// Find a chapter node with an editable title and a lesson node with an
-// editable text on the CI maths graph — the test loop edits both.
+// Find a chapter node and a lesson node on the CI maths graph — the test loop
+// repositions both (two distinct node ids, two distinct ordinals).
 async function pickChapterAndLesson() {
   const nodes = await store.listNodes(ns, "a");
-  const chapter = nodes.find((n) => n.type === "chapter" && typeof (n.properties as any).title === "string")!;
-  const lesson = nodes.find((n) => n.type === "lesson" && typeof (n.properties as any).text === "string")!;
+  const chapter = nodes.find((n) => n.type === "Chapitre")!;
+  const lesson = nodes.find((n) => n.type === "Lesson")!;
   expect(chapter).toBeTruthy();
   expect(lesson).toBeTruthy();
   return { chapter, lesson };
@@ -104,24 +103,19 @@ afterAll(() => {
   __setKgStoreForTest(null);
 });
 
-// The active adapter's wordingAliases — needed for upsertProperty args.
-const adapter = () => resolveAdapter(firstCtx.grade, firstCtx.subject)!;
-
 describe("end-to-end curator loop: edit → diff → publish", () => {
   it("full happy path: two edits on the draft, then approver publishes atomically", async () => {
     const { chapter, lesson } = await pickChapterAndLesson();
     const chapterId = chapter.id;
     const lessonId = lesson.id;
-    const originalChapterTitle = (chapter.properties as any).title as string;
-    const originalLessonText = (lesson.properties as any).text as string;
-    const newChapterTitle = originalChapterTitle + " [curator-revised]";
-    const newLessonText = originalLessonText + " [curator-revised]";
+    const newChapterPosition = 7;
+    const newLessonPosition = 13;
 
-    // ── 1+2: curator applies first edit (chapter title) ────────────────────
+    // ── 1+2: curator applies first edit (reposition the chapter) ───────────
     await runAsActor(CURATOR, async () => {
       const preview1 = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapterId, key: "title", value: newChapterTitle, aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapterId, position: newChapterPosition },
       });
       expect(preview1.phase).toBe("preview");
       if (preview1.phase !== "preview") {
@@ -134,8 +128,8 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
       expect((await store.readPointer(ns))?.draftSlot).toBe(null);
 
       const applied1 = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapterId, key: "title", value: newChapterTitle, aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapterId, position: newChapterPosition },
         confirm: true, token: preview1.confirmationToken,
       });
       expect(applied1.phase).toBe("apply");
@@ -146,11 +140,11 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
       expect((await store.readPointer(ns))?.draftSlot).toBe("b");
     });
 
-    // ── 3+4: curator applies second edit (lesson text) ─────────────────────
+    // ── 3+4: curator applies second edit (reposition the lesson) ───────────
     await runAsActor(CURATOR, async () => {
       const preview2 = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: lessonId, key: "text", value: newLessonText, aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: lessonId, position: newLessonPosition },
       });
       expect(preview2.phase).toBe("preview");
       if (preview2.phase !== "preview") {
@@ -161,8 +155,8 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
       expect(preview2.diff.nodes.changed[0].id).toBe(lessonId);
 
       const applied2 = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: lessonId, key: "text", value: newLessonText, aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: lessonId, position: newLessonPosition },
         confirm: true, token: preview2.confirmationToken,
       });
       expect(applied2.phase).toBe("apply");
@@ -204,20 +198,16 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
       return commit.auditId;
     });
 
-    // ── 8: the pointer flipped, and the new wording lives on published ─────
+    // ── 8: the pointer flipped, and the new ordinals live on published ─────
     const pointerAfter = await store.readPointer(ns);
     expect(pointerAfter?.publishedSlot).toBe("b");
     expect(pointerAfter?.draftSlot).toBe(null);
     const publishedNodes = await store.listNodes(ns, "b");
     const publishedChapter = publishedNodes.find((n) => n.id === chapterId)!;
     const publishedLesson = publishedNodes.find((n) => n.id === lessonId)!;
-    expect((publishedChapter.properties as any).title).toBe(newChapterTitle);
-    // Chapter title is aliased to BOTH title AND raw.description — both should be updated.
-    expect((publishedChapter.properties as any).raw.description).toBe(newChapterTitle);
-    expect((publishedLesson.properties as any).text).toBe(newLessonText);
-    // Post-split, a content lesson's text is aliased to text + raw.description
-    // (the OS mirror raw.os_texte lives on the expectation, edited separately).
-    expect((publishedLesson.properties as any).raw.description).toBe(newLessonText);
+    // reposition writes the normalized ordinal — what a published read now sees.
+    expect((publishedChapter.properties as any).order).toBe(newChapterPosition);
+    expect((publishedLesson.properties as any).order).toBe(newLessonPosition);
 
     // ── Audit chain reflects the whole loop ────────────────────────────────
     const audits = await store.listAudit({ namespace: ns });
@@ -230,86 +220,20 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
     expect(publishRec.promotedApplyIds).toHaveLength(2);
   });
 
-  it("upsert_property on a non-wording key is rejected by the safety allowlist", async () => {
-    const { chapter } = await pickChapterAndLesson();
-    await runAsActor(CURATOR, async () => {
-      const result = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: {
-          nodeId: chapter.id,
-          key: "statementCode",   // not declared in wordingAliases for chapter
-          value: "Chapitre 99",
-          aliases: adapter().wordingAliases,
-        },
-      });
-      expect(result.phase).toBe("blocked");
-      if (result.phase !== "blocked") {
-        throw new Error("expected blocked");
-      }
-      expect(result.errors.some((e) => e.includes("not editable"))).toBe(true);
-      // No token was issued.
-      expect("confirmationToken" in result).toBe(false);
-    });
-    // No draft was created.
-    expect((await store.readPointer(ns))?.draftSlot).toBe(null);
-  });
-
-  it("upsert_property with a valid key but on the wrong node kind is rejected", async () => {
-    const { lesson } = await pickChapterAndLesson();
-    await runAsActor(CURATOR, async () => {
-      const result = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: {
-          nodeId: lesson.id,
-          key: "title",           // valid for chapter, NOT for lesson
-          value: "impossible",
-          aliases: adapter().wordingAliases,
-        },
-      });
-      expect(result.phase).toBe("blocked");
-      if (result.phase !== "blocked") {
-        throw new Error("expected blocked");
-      }
-      expect(result.errors.some((e) => e.toLowerCase().includes("not editable on node kind"))).toBe(true);
-    });
-  });
-
-  it("upsert_property on a node with null current value (existing-key rule) is rejected", async () => {
-    // Find a lesson whose text_en is either null or missing.
-    const nodes = await store.listNodes(ns, "a");
-    const lesson = nodes.find((node) => {
-      if (node.type !== "lesson") return false;
-      const raw = (node.properties as any).raw ?? {};
-      return typeof raw.metadata?.en?.os_texte !== "string";  // includes null / undefined
-    });
-    if (!lesson) return; // no such lesson in this dataset — skip
-    await runAsActor(CURATOR, async () => {
-      const result = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: lesson.id, key: "text_en", value: "new", aliases: adapter().wordingAliases },
-      });
-      expect(result.phase).toBe("blocked");
-      if (result.phase !== "blocked") {
-        throw new Error("expected blocked");
-      }
-      expect(result.errors.some((e) => e.includes("does not currently exist as text"))).toBe(true);
-    });
-  });
-
   it("stale publish is rejected: draft moved between dry-run and confirm", async () => {
     const { chapter } = await pickChapterAndLesson();
     // Curator lands one edit.
     await runAsActor(CURATOR, async () => {
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "first", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 5 },
       });
       if (preview.phase !== "preview") {
         throw new Error();
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "first", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 5 },
         confirm: true, token: preview.confirmationToken,
       });
     });
@@ -321,15 +245,15 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
     // Curator lands ANOTHER edit — draft moves.
     await runAsActor(CURATOR, async () => {
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "second", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 6 },
       });
       if (preview.phase !== "preview") {
         throw new Error();
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "second", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 6 },
         confirm: true, token: preview.confirmationToken,
       });
     });
@@ -351,15 +275,15 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
     const { chapter } = await pickChapterAndLesson();
     await runAsActor(CURATOR, async () => {
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "seeded", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 3 },
       });
       if (preview.phase !== "preview") {
         throw new Error();
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "seeded", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 3 },
         confirm: true, token: preview.confirmationToken,
       });
       const result = await publishDraftWithConfirm(ns);
@@ -372,15 +296,15 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
     const { chapter } = await pickChapterAndLesson();
     await runAsActor(CURATOR, async () => {
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "seeded", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 3 },
       });
       if (preview.phase !== "preview") {
         throw new Error();
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "seeded", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 3 },
         confirm: true, token: preview.confirmationToken,
       });
     });
@@ -402,15 +326,15 @@ describe("approver self-approve is marked in the audit even when allowed", () =>
     const { chapter } = await pickChapterAndLesson();
     await runAsActor(APPROVER, async () => {
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "approver-authored", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 4 },
       });
       if (preview.phase !== "preview") {
         throw new Error();
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "approver-authored", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 4 },
         confirm: true, token: preview.confirmationToken,
       });
       const dryRun = await publishDraftWithConfirm(ns);
@@ -435,15 +359,15 @@ describe("discard_draft throws away the draft only", () => {
     const publishedNodesBefore = await store.listNodes(ns, "a");
     await runAsActor(CURATOR, async () => {
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "will-be-discarded", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 8 },
       });
       if (preview.phase !== "preview") {
         throw new Error();
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "will-be-discarded", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 8 },
         confirm: true, token: preview.confirmationToken,
       });
       const dryRun = await discardDraftWithConfirm(ns);
@@ -467,7 +391,7 @@ describe("discard_draft throws away the draft only", () => {
 // ── Parity oracle: published reads unchanged after a full mutation loop ─────
 
 describe("parity: published reads unaffected until publish, then reflect the change", () => {
-  it("reads before publish equal reads after seed; reads after publish reflect the new wording", async () => {
+  it("reads before publish equal reads after seed; reads after publish reflect the new ordinal", async () => {
     async function reads(): Promise<unknown> {
       const state = newSessionState();
       return runInSession(state, async () => {
@@ -478,25 +402,25 @@ describe("parity: published reads unaffected until publish, then reflect the cha
         }
         const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
         const model = adapter.model();
-        // node ids + the title of each chapter — a title edit doesn't change ids
-        // but does change the published chapter title, which is what we assert.
-        const titles = Object.fromEntries([...model.byId.values()].filter((u) => u.kind === "chapter").map((u) => [u.id, u.title]));
-        return { nodes: [...model.byId.keys()].sort(), titles };
+        // node ids + the ordinal of each chapter — a reposition doesn't change ids
+        // but does change the published chapter's order, which is what we assert.
+        const orders = Object.fromEntries([...model.byId.values()].filter((u) => u.kind === "Chapitre").map((u) => [u.id, u.order]));
+        return { nodes: [...model.byId.keys()].sort(), orders };
       });
     }
     const before = await reads();
     const { chapter } = await pickChapterAndLesson();
     await runAsActor(CURATOR, async () => {
       const preview = await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "parity-check-title", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 42 },
       });
       if (preview.phase !== "preview") {
         throw new Error();
       }
       await runGraphMutation({
-        namespace: ns, mutation: upsertProperty,
-        args: { nodeId: chapter.id, key: "title", value: "parity-check-title", aliases: adapter().wordingAliases },
+        namespace: ns, mutation: reposition,
+        args: { namespace: ns, nodeId: chapter.id, position: 42 },
         confirm: true, token: preview.confirmationToken,
       });
     });
@@ -511,9 +435,9 @@ describe("parity: published reads unaffected until publish, then reflect the cha
       }
       await publishDraftWithConfirm(ns, { confirm: true, token: dryRun.confirmationToken });
     });
-    const after = await reads() as { titles: Record<string, string | null> };
-    // After publish the read reflects the new wording — the edited chapter's
-    // published title is what generation now sees.
-    expect(after.titles[chapter.id]).toBe("parity-check-title");
+    const after = await reads() as { orders: Record<string, number | null> };
+    // After publish the read reflects the new ordinal — the repositioned chapter's
+    // published order is what generation now sees.
+    expect(after.orders[chapter.id]).toBe(42);
   });
 });

@@ -59,7 +59,6 @@ const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
 // server layer injects into runGraphMutation / diffDraft in production.
 const coverage = (graph: MutationGraph): string[] =>
   resolveAdapter(targetCtx.grade, targetCtx.subject)!.coverageWarnings?.(graph as GraphView) ?? [];
-const aliases = () => resolveAdapter(targetCtx.grade, targetCtx.subject)!.wordingAliases;
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
@@ -167,7 +166,7 @@ describe("delete_nodes cascade", () => {
     const isContainment = (t: string) => t === "hasChild" || t === "hasPart";
     // Pick a chapter with lessons (and hence components/tasks below them).
     const chapterWithChildren = graph.nodes.find(
-      (n) => n.type === "chapter" && graph.edges.some((e) => isContainment(e.type) && e.from === n.id),
+      (n) => n.type === "Chapitre" && graph.edges.some((e) => isContainment(e.type) && e.from === n.id),
     )!;
 
     // Compute the expected removed set by hand: chapter → its containment subtree.
@@ -243,9 +242,9 @@ describe("coverage warnings — inform, never block", () => {
     // lesson but (likely) no bilan → 'no bilan' warning; also we can then
     // unlink to empty it.
     const chapterId = mintNodeId();
-    await apply(createNode, { kind: "chapter", properties: { title: "Cov chap", raw: { chapitreNum: 900, chapitreTitre: "Cov chap" } }, namespace: ns, aliases: aliases(), newNodeId: chapterId });
+    await apply(createNode, { kind: "Chapitre", properties: { title: "Cov chap", raw: { chapitreNum: 900, chapitreTitre: "Cov chap" } }, namespace: ns, newNodeId: chapterId });
     const lessonId = mintNodeId();
-    await apply(createNode, { kind: "lesson", properties: { text: "Cov lesson", raw: { osTexte: "Cov lesson", chapitreNum: 900 } }, namespace: ns, aliases: aliases(), newNodeId: lessonId });
+    await apply(createNode, { kind: "Lesson", properties: { text: "Cov lesson", raw: { osTexte: "Cov lesson", chapitreNum: 900 } }, namespace: ns, newNodeId: lessonId });
 
     // Link them. The dry-run of THIS link should already warn: the chapter now
     // has a lesson but no bilan (isAssessment not set on the lesson).
@@ -273,7 +272,7 @@ describe("coverage warnings — inform, never block", () => {
     const chapterId = mintNodeId();
     const preview = await runGraphMutation({
       namespace: ns, mutation: createNode,
-      args: { kind: "chapter", properties: { title: "Lonely", raw: { chapitreNum: 901, chapitreTitre: "Lonely" } }, namespace: ns, aliases: aliases(), newNodeId: chapterId },
+      args: { kind: "Chapitre", properties: { title: "Lonely", raw: { chapitreNum: 901, chapitreTitre: "Lonely" } }, namespace: ns, newNodeId: chapterId },
       coverage,
     });
     if (preview.phase !== "preview") {
@@ -291,8 +290,8 @@ describe("coverage warnings — inform, never block", () => {
     // ambiguity explicitly: attach one lesson under a first chapter (applied),
     // then a second chapter — that's the >1 chapter-parent the rule warns on.
     const graph = await readPublished(ns);
-    const lessonId = graph.nodes.find((n) => n.type === "lesson")!.id;
-    const [chapA, chapB] = graph.nodes.filter((n) => n.type === "chapter");
+    const lessonId = graph.nodes.find((n) => n.type === "Lesson")!.id;
+    const [chapA, chapB] = graph.nodes.filter((n) => n.type === "Chapitre");
     await apply(linkNodes, { edgeType: "hasPart", fromId: chapA.id, toId: lessonId, properties: {}, namespace: ns });
 
     const preview = await runGraphMutation({
@@ -309,7 +308,7 @@ describe("coverage warnings — inform, never block", () => {
 
   it("warnings appear on diff_draft (the approver's whole-draft view)", async () => {
     const chapterId = mintNodeId();
-    await apply(createNode, { kind: "chapter", properties: { title: "Draft cov", raw: { chapitreNum: 904, chapitreTitre: "Draft cov" } }, namespace: ns, aliases: aliases(), newNodeId: chapterId });
+    await apply(createNode, { kind: "Chapitre", properties: { title: "Draft cov", raw: { chapitreNum: 904, chapitreTitre: "Draft cov" } }, namespace: ns, newNodeId: chapterId });
     const whole = await diffDraft(ns, coverage);
     expect(whole.hasDraft).toBe(true);
     expect(Array.isArray(whole.warnings)).toBe(true);
@@ -323,9 +322,9 @@ describe("coverage warnings — inform, never block", () => {
     // (no empty-container, no multi-parent). The stale bilan semantics get cleaned
     // up in the adapter rework; the notes never block. (graph-only migration.)
     const graph = await readPublished(ns);
-    const chapter = graph.nodes.find((n) => n.type === "chapter")!;
+    const chapter = graph.nodes.find((n) => n.type === "Chapitre")!;
     const preview = await runGraphMutation({
-      namespace: ns, mutation: upsertPropertyLike(chapter.id),
+      namespace: ns, mutation: touchProperty(chapter.id),
       args: {}, coverage,
     });
     if (preview.phase !== "preview") {
@@ -338,7 +337,7 @@ describe("coverage warnings — inform, never block", () => {
 
 // A tiny inline mutation that touches only a node's non-structural property so
 // the post-apply graph is still complete (used for the clean-baseline test).
-function upsertPropertyLike(nodeId: string) {
+function touchProperty(nodeId: string) {
   return {
     name: "test/touch",
     describe: () => `touch '${nodeId}'`,
@@ -355,7 +354,7 @@ describe("publish proceeds with warnings and records warningsAtPublish", () => {
   it("an approver can publish a draft that has coverage warnings; the audit records them", async () => {
     // Curator creates a lonely chapter (warns 'no child lessons').
     const chapterId = mintNodeId();
-    await apply(createNode, { kind: "chapter", properties: { title: "Publish-warn", raw: { chapitreNum: 905, chapitreTitre: "Publish-warn" } }, namespace: ns, aliases: aliases(), newNodeId: chapterId });
+    await apply(createNode, { kind: "Chapitre", properties: { title: "Publish-warn", raw: { chapitreNum: 905, chapitreTitre: "Publish-warn" } }, namespace: ns, newNodeId: chapterId });
 
     // Approver dry-runs publish — warnings are shown but a token is still issued.
     const pubPreview = await runAsActor(APPROVER, () => publishDraftWithConfirm(ns, { coverage }));
@@ -385,7 +384,7 @@ describe("publish proceeds with warnings and records warningsAtPublish", () => {
 describe("force-delete respects the role gate + audit", () => {
   it("signed-in-no-role is denied a force delete (unauthorized, blocked audit, no state change)", async () => {
     const graph = await readPublished(ns);
-    const chapter = graph.nodes.find((n) => n.type === "chapter")!;
+    const chapter = graph.nodes.find((n) => n.type === "Chapitre")!;
     const before = (await store.listAudit({ namespace: ns })).length;
     const pointerBefore = await store.readPointer(ns);
     const result = await runAsActor(SIGNED_IN_NO_ROLE, () =>
@@ -431,7 +430,7 @@ describe("parity — coverage/force work does not leak into published reads", ()
     }
     const before = await reads();
     const graph = await readPublished(ns);
-    const chapter = graph.nodes.find((n) => n.type === "chapter" && graph.edges.some((e) => e.type === "hasPart" && e.from === n.id))!;
+    const chapter = graph.nodes.find((n) => n.type === "Chapitre" && graph.edges.some((e) => e.type === "hasPart" && e.from === n.id))!;
     await apply(deleteNode, { nodeId: chapter.id }); // draft only
     const after = await reads();
     expect(after).toEqual(before);

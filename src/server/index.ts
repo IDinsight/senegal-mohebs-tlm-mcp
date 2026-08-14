@@ -33,7 +33,7 @@ export function buildServer(): McpServer {
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)
   registerCiMathsTools(server);      // suggest_fresh_domain, domain_usage (CI maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log
-  registerLifecycleTools(server);    // diff_draft, upsert_property, publish_draft, discard_draft
+  registerLifecycleTools(server);    // diff_draft, publish_draft, discard_draft
   registerStructuralTools(server);   // create_edge, delete_edges, delete_nodes (raw graph primitives)
   registerRecipeTools(server);       // reposition, set_content (ordinal + content edits)
   registerAuthoringTools(server);    // add_course/lesson_grouping/lesson/activity/assessment/material/learning_component/standard_framework_item/instructional_routine (typed LC adds)

@@ -2,17 +2,15 @@
  * Module: adapters · shared engine
  *
  * The subject-agnostic pieces every adapter used to copy: loading the parsed
- * model, the generic `detect` envelope guard, aggregating recurring characters
- * across past documents, indexing a lesson to the standard it aligns to, and
- * building the usual text/text_en wording aliases. A per-subject adapter now
- * supplies only what genuinely differs — its parse descriptor, its read
- * projection shape, and its deliverables/config.
+ * model (`makeEnsure`) and the generic `detect` envelope guard. A subject profile
+ * supplies only what genuinely differs — its parse descriptor and its
+ * deliverables/config — and the generic factory (build.ts) wires it together.
  */
 import { readFileSync } from "node:fs";
 import { CONFIG, kgSource } from "../config.js";
 import { sourcePath, sessionState } from "../context/index.js";
 import { PRELOADED_MODEL_KEY } from "../curriculum/index.js";
-import type { CurriculumModel, WordingAliases } from "../types.js";
+import type { CurriculumModel } from "../types.js";
 
 // The one way an adapter gets its CurriculumModel, memoized per adapter instance.
 // firestore mode reads the model activate.ts pinned in the session bag; bundle
@@ -40,13 +38,3 @@ export function detectEnvelope(raw: unknown): boolean {
   return Array.isArray(g?.nodes) && Array.isArray(g?.relationships);
 }
 
-// Build the standard text/text_en wording aliases for the given kinds: a node's
-// normalized field and its `raw` source mirror hold the same wording, so one
-// upsert_property call keeps both in sync. English wording lives under
-// raw.metadata.en.*. Subjects with a kind that needs extra mirror paths (e.g. a
-// maths expectation's raw.osTexte) declare that entry by hand instead.
-export function textWording(...kinds: string[]): WordingAliases {
-  const out: WordingAliases = {};
-  for (const k of kinds) out[k] = { text: ["text", "raw.description"], text_en: ["raw.metadata.en.description"] };
-  return out;
-}

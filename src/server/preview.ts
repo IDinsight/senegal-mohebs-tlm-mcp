@@ -105,7 +105,7 @@ export async function previewGeneration(course: string): Promise<Record<string, 
       noDraft: true,
       message:
         `No draft exists for '${ns}' to preview. A preview reflects UNPUBLISHED draft edits, so with no draft there is nothing to preview. ` +
-        `Stage an edit first (upsert_property or a recipe), then call preview_generation again.`,
+        `Stage an edit first (add_node / set_content / reposition / …), then call preview_generation again.`,
     };
   }
 
