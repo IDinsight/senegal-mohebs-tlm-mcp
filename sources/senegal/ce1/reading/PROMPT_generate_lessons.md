@@ -178,6 +178,14 @@ Compose the week's text(s) yourself and print them in full inside the relevant s
 
 ## Formatting specification — fixed look and feel
 
+**House style comes from the graph when present.** If the teacher-guide `Course` carries a
+**formatter** — a `usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is
+`"formatter"`, surfaced by `get_course` — apply the shared house-style spec in its
+`Material.content` (palette, typography, page setup, image rules) as the source of truth for the
+shared look. The **reading-specific** conventions below (Andika for reading texts, the dark-blue
+Wolof localization flag, the bilingual layout) still apply on top. If the Course carries no
+formatter, use the rules below as the default.
+
 **Page & font.** A4 portrait, margins ≈ 1.7 cm top/bottom, 2.0 cm left/right. Reading texts use a **literacy-appropriate font (Andika)**; body text Quattrocento Sans / EB Garamond or the project font. (The exemplar embeds these fonts.)
 
 **Palette.** Primary green `#2E7D5E` for day/session headers, metadata labels, table header fill (white text on green) and the `M …/ E …` cue; light green `#E8F3EE` for phase-name rows; **Wolof (L1) text in a consistent dark blue `#1F4E79` character style** (see the localization rule below); French in black; grey `#666666` for meta lines; orange `#D4812A` for the framed rule callout (`Je retiens` / `Xamal ni`).
