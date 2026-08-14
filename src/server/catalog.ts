@@ -1,12 +1,15 @@
 /*
- * Module: server · tool group: routine catalog
+ * Module: server · tool group: catalog
  *
- * Two tools over the shared routine catalog (a reserved namespace, CATALOG_NAMESPACE,
- * read the same by every context):
- *   - list_catalog  — browse the entries a curator can pick (read-only, ungated).
- *   - use_routine   — COPY a catalog entry onto a lesson. The entry's whole subtree
- *                     is cloned with fresh ids into the ACTIVE subject's draft and
- *                     linked via `usesRoutine`; the copy is independent of the library.
+ * Tools over the reusable-spec catalog. The catalog spans TWO scopes, both read
+ * here: the cross-tenant SHARED library and the active workspace's own library.
+ *   - list_catalog  — browse the entries a curator can pick, from BOTH scopes,
+ *                     each tagged with its scope + kind (read-only, ungated).
+ *   - use_routine   — COPY a routine entry onto a lesson.
+ *   - use_formatter — COPY a formatter entry (a house-style spec) onto a deliverable.
+ *                     Both share one path: the entry's subtree is cloned with fresh
+ *                     ids into the ACTIVE subject's draft and linked via `usesRoutine`;
+ *                     the copy is independent of the library.
  *
  * use_routine shares the graph-mutation envelope: a dry-run returns a diff +
  * confirmationToken + the minted id-map (no state change); the confirm re-checks the
@@ -23,21 +26,30 @@ import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
-import { CATALOG_NAMESPACE, cloneRoutineSubtree, listCatalogEntries, useRoutine } from "../kg-recipes/index.js";
+import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, listCatalogEntries, useRoutine, type CatalogScope } from "../kg-recipes/index.js";
 
-// Read the shared catalog's published slot as a plain MutationGraph. Empty when the
-// catalog namespace has never been seeded (no pointer) — list_catalog then returns [].
-// Exported for tests (the seed→read→clone path); the tools call it internally.
-export async function readCatalogGraph(): Promise<MutationGraph> {
+// Read one catalog namespace's published slot as a plain MutationGraph. Empty when
+// that namespace has never been seeded (no pointer). Exported for tests.
+export async function readCatalog(namespace: string): Promise<MutationGraph> {
   const store = getKgStore();
-  const pointer = await store.readPointer(CATALOG_NAMESPACE);
+  const pointer = await store.readPointer(namespace);
   if (!pointer) return { nodes: [], edges: [] };
   const [nodes, edges] = await Promise.all([
-    store.listNodes(CATALOG_NAMESPACE, pointer.publishedSlot),
-    store.listEdges(CATALOG_NAMESPACE, pointer.publishedSlot),
+    store.listNodes(namespace, pointer.publishedSlot),
+    store.listEdges(namespace, pointer.publishedSlot),
   ]);
   const dropSlot = <T extends { slot: unknown }>(x: T): Omit<T, "slot"> => { const { slot, ...rest } = x; return rest; };
   return { nodes: nodes.map((n: StoredNode) => dropSlot(n) as MutationNode), edges: edges.map((e: StoredEdge) => dropSlot(e) as MutationEdge) };
+}
+
+// The catalog scopes visible in the active context: the shared library plus the
+// active workspace's own (the workspace scope is dropped when the active workspace
+// IS the shared one — there is only one library then).
+function catalogScopes(): Array<{ scope: CatalogScope; namespace: string }> {
+  const scopes: Array<{ scope: CatalogScope; namespace: string }> = [{ scope: "shared", namespace: SHARED_CATALOG_NAMESPACE }];
+  const workspaceNs = catalogNamespace(activeWorkspace());
+  if (workspaceNs !== SHARED_CATALOG_NAMESPACE) scopes.push({ scope: "workspace", namespace: workspaceNs });
+  return scopes;
 }
 
 // Surface the id-map at the top level of a dry-run preview so the caller passes it
@@ -48,13 +60,52 @@ function withMintedMap(result: unknown, mintedIdMap: Record<string, string>): un
   return result;
 }
 
+// The shared copy-onto-target path behind use_routine and use_formatter: locate the
+// entry across both scopes, clone its subtree into the active subject, and link the
+// clone to `targetId` via `usesRoutine`. Two-phase (mints an id-map on dry-run, reuses
+// it on confirm). The two tools differ only in intent/wording — a routine attaches to
+// a Lesson, a formatter to the Course/deliverable — but the mechanism is identical.
+type ApplyArgs = { entryId: string; targetId: string; mintedIdMap?: Record<string, string>; confirm?: boolean; confirmationToken?: string };
+async function applyCatalogEntry(a: ApplyArgs) {
+  const adapter = getActiveAdapter();
+  const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
+  const coverage = (g: MutationGraph) => adapter.coverageWarnings?.(g as never) ?? [];
+
+  const catalogs = await Promise.all(catalogScopes().map((s) => readCatalog(s.namespace)));
+  const source = catalogs.find((graph) => graph.nodes.some((n) => n.id === a.entryId));
+  if (!source) return asJson({ error: `Catalog entry '${a.entryId}' not found in the shared or workspace library. Call list_catalog for entry ids.` });
+
+  const mint = a.confirm ? (oldId: string) => (a.mintedIdMap ?? {})[oldId] : () => mintNodeId();
+  const clone = cloneRoutineSubtree(source, a.entryId, namespace, mint)!;
+
+  const result = await runGraphMutation({
+    namespace,
+    mutation: useRoutine,
+    args: { namespace, targetId: a.targetId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId },
+    confirm: a.confirm,
+    token: a.confirmationToken,
+    coverage,
+  });
+  return asJson(a.confirm ? result : withMintedMap(result, clone.idMap));
+}
+
+// Shared confirm-gate + copy input, declared on both apply tools.
+const APPLY_INPUT = {
+  entryId: z.string(),
+  targetId: z.string(),
+  mintedIdMap: z.record(z.string(), z.string()).optional(),   // required on confirm
+  confirm: z.boolean().optional(),
+  confirmationToken: z.string().optional(),
+};
+
 export function registerCatalogTools(server: McpServer) {
   server.registerTool(
     "list_catalog",
-    { title: "List the routine catalog", description: "Browse the shared routine catalog — the reusable instructional routines a curator can apply to a lesson. Returns each entry's id, name, cross-cutting summary, ordered steps (name + timing), and material count. Pass an entry id to use_routine to copy it onto a lesson. [] when the catalog has not been seeded.", inputSchema: {} },
+    { title: "List the catalog", description: "Browse the reusable-spec catalog — the instructional routines and formatters a curator can apply to content. Reads BOTH the shared cross-tenant library and the active workspace's own; each entry carries its `scope` (shared | workspace) and `kind` (routine | formatter), plus id, name, cross-cutting summary, ordered steps (name + timing), and material count. Pass a routine's id to use_routine, or a formatter's to use_formatter, to copy it. [] when nothing is seeded.", inputSchema: {} },
     guarded(async () => {
-      const catalog = await readCatalogGraph();
-      return asJson({ namespace: CATALOG_NAMESPACE, entries: listCatalogEntries(catalog) });
+      const scopes = catalogScopes();
+      const perScope = await Promise.all(scopes.map(async (s) => listCatalogEntries(await readCatalog(s.namespace), s.scope)));
+      return asJson({ scopes: scopes.map((s) => ({ scope: s.scope, namespace: s.namespace })), entries: perScope.flat() });
     }),
   );
 
@@ -62,34 +113,19 @@ export function registerCatalogTools(server: McpServer) {
     "use_routine",
     {
       title: "Use a catalog routine",
-      description: "Apply a catalog routine to a lesson by COPYING it. The entry's subtree (steps + Materials) is cloned with fresh ids into the active subject and linked to `targetId` (a Lesson/Course/Activity) via `usesRoutine`. The copy is independent — later edits to the library entry do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap; call again with confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
-      inputSchema: {
-        entryId: z.string(),
-        targetId: z.string(),
-        mintedIdMap: z.record(z.string(), z.string()).optional(),   // required on confirm
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
+      description: "Apply a catalog ROUTINE to a lesson by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (a Lesson) via `usesRoutine`. The copy is independent — later edits to the library entry do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap; call again with confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
+      inputSchema: APPLY_INPUT,
     },
-    guarded(async (a: { entryId: string; targetId: string; mintedIdMap?: Record<string, string>; confirm?: boolean; confirmationToken?: string }) => {
-      const adapter = getActiveAdapter();
-      const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
-      const coverage = (g: MutationGraph) => adapter.coverageWarnings?.(g as never) ?? [];
+    guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
+  );
 
-      const catalog = await readCatalogGraph();
-      const mint = a.confirm ? (oldId: string) => (a.mintedIdMap ?? {})[oldId] : () => mintNodeId();
-      const clone = cloneRoutineSubtree(catalog, a.entryId, namespace, mint);
-      if (!clone) return asJson({ error: `Catalog entry '${a.entryId}' not found. Call list_catalog for entry ids.` });
-
-      const result = await runGraphMutation({
-        namespace,
-        mutation: useRoutine,
-        args: { namespace, targetId: a.targetId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage,
-      });
-      return asJson(a.confirm ? result : withMintedMap(result, clone.idMap));
-    }),
+  server.registerTool(
+    "use_formatter",
+    {
+      title: "Use a catalog formatter",
+      description: "Apply a catalog FORMATTER (a house-style spec) to a deliverable by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (the Course / deliverable root) via `usesRoutine`, so generation for that deliverable applies the style. The copy is independent — later edits to the library formatter do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap; call again with confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
+      inputSchema: APPLY_INPUT,
+    },
+    guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
   );
 }

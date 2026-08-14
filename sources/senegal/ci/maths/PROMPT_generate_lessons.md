@@ -143,8 +143,16 @@ itself stays in the pupil's manual only.
 
 ## Formatting specification — fixed look and feel
 
-This section is the **authoritative** description of the visual output. Apply it identically
-to every chapter. (Sizes are given in points; treat them as targets, not pixel-exact values.)
+**House style comes from the graph when present.** If the teacher-guide `Course` carries a
+**formatter** — a `usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is
+`"formatter"`, surfaced by `get_course` — apply the shared house-style spec in its
+`Material.content` (palette, typography, page setup, image rules): it is the single source of
+truth for the shared look. The **subject-specific layout** below (the distribution table, the
+five step-box tables, the `E dit :` / inline `Je retiens` conventions) still applies on top. If
+the Course carries **no** formatter, use the palette, typography and page rules below as the
+default — they are the same house style.
+
+(Sizes are given in points; treat them as targets, not pixel-exact values.)
 
 **Page & font.** A4 portrait. Margins ≈ 1.7 cm top/bottom, 2.0 cm left/right (content width
 ≈ 17 cm). **Calibri** throughout.

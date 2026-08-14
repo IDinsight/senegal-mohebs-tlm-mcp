@@ -178,6 +178,14 @@ Rules for every embedded image:
 **The output is a `.docx` file** (Microsoft Word), directly usable as a printed textbook chapter. After Pass 2 it contains real embedded images.
 
 ### Document setup
+
+**House style comes from the graph when present.** If the pupil-book `Course` carries a
+**formatter** — a `usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is
+`"formatter"`, surfaced by `get_course` — apply the shared house-style spec in its
+`Material.content` (palette, typography, page setup, image-compression rules) as the source of
+truth for the shared look; the art style and activity-image rules elsewhere in this prompt still
+apply on top. If the Course carries no formatter, use the defaults below (the same house style).
+
 - **Page size**: A4, margins 2 cm
 - **Font**: clean sans-serif (Calibri or similar), body 12 pt, activity prompts 11 pt
 - **Headings**: chapter title = Heading 1 (bold, 20 pt, centred, green #2e7d5e); sections = Heading 2 (bold, 14 pt)

@@ -1,19 +1,22 @@
 /*
- * Routine catalog — a shared library of instructional routines everyone copies from.
+ * Catalog — a library of reusable spec blocks (instructional routines and, later,
+ * formatters) that a curator browses and copies onto content.
  *
- * The catalog lives in its own reserved namespace (CATALOG_NAMESPACE), separate
- * from any subject graph, so it is shared across every workspace/grade/subject.
- * Its shape is a three-level containment tree in canonical Learning Commons:
+ * The catalog lives in a reserved `_catalog` partition, ONE graph per SCOPE:
+ *   - the cross-tenant SHARED library (workspace `_shared`), and
+ *   - each workspace's own library (workspace = that tenant).
+ * Both scopes share one shape — a three-level containment tree in canonical LC:
  *
- *   InstructionalRoutine (root container)          ← one per catalog, holds the entries
+ *   InstructionalRoutine (root container)          ← one per catalog graph, holds the entries
  *     ─hasPart→ InstructionalRoutine (ENTRY)       ← a catalog entry: "Fiche de leçon", …
  *                 ─hasPart→ InstructionalRoutine (step) ─hasPart→ Material
  *
- * Using an entry COPIES it: cloneRoutineSubtree mints fresh ids for the entry and
- * its whole subtree into the active subject's namespace, and `useRoutine` attaches
- * the clone to a lesson via `usesRoutine`. The copy is independent — later edits to
- * the library entry do NOT reach copies already made (that independence is the point;
- * a shared, cross-namespace by-reference link is deliberately not what this does).
+ * Each entry carries a `kind` (routine | formatter). Using an entry COPIES it:
+ * cloneRoutineSubtree mints fresh ids for the entry and its whole subtree into the
+ * active subject's namespace, and `useRoutine` attaches the clone via `usesRoutine`.
+ * The copy is independent — later edits to the library entry do NOT reach copies
+ * already made (that independence is the point). Edit rights follow the entry's
+ * namespace: `_shared` writes need super_admin, `<workspace>` writes its curators.
  *
  * See docs/design-notes/authorable-catalog.md.
  */
@@ -21,9 +24,14 @@
 import { edgeId, kgNamespace, type GraphMutation, type MutationEdge, type MutationGraph, type MutationNode } from "../kg-store/index.js";
 import type { RawGraphSnapshot } from "../types.js";
 
-// The reserved home of the shared catalog. A dedicated namespace (not tied to any
-// real workspace/grade/subject) so every context reads the same library.
-export const CATALOG_NAMESPACE = kgNamespace("_shared", "_catalog", "routines");
+// The catalog namespace for a given scope. The third segment is historically
+// "routines" (the catalog began routine-only); it now holds BOTH kinds, keyed by
+// each entry's `kind`. Kept as-is so the already-seeded shared library isn't orphaned.
+export const catalogNamespace = (workspace: string): string => kgNamespace(workspace, "_catalog", "routines");
+
+// The reserved workspace that owns the cross-tenant shared library.
+export const SHARED_CATALOG_WORKSPACE = "_shared";
+export const SHARED_CATALOG_NAMESPACE = catalogNamespace(SHARED_CATALOG_WORKSPACE);
 
 // The catalog's root container id — fixed so a re-seed overwrites the same node
 // (deterministic, idempotent) rather than minting a second root.
@@ -33,15 +41,21 @@ const ROUTINE_LABEL = "InstructionalRoutine";
 const MATERIAL_LABEL = "Material";
 const CONTAINMENT = "hasPart";
 
-// The labels a `usesRoutine` edge may originate from (canonical LC).
+// The labels a `usesRoutine` edge may originate from (canonical LC). A routine
+// attaches to a Lesson; a formatter to the Course/deliverable — both are here.
 const ROUTINE_USERS = new Set(["Lesson", "Course", "Activity"]);
 
-// One catalog entry as listed to a browsing curator — the routine's identity plus
-// a shallow outline (its steps) so the pick is informed without reading materials.
+export type CatalogScope = "shared" | "workspace";
+export type CatalogKind = "routine" | "formatter";
+
+// One catalog entry as listed to a browsing curator — the entry's identity, its
+// kind, which scope it came from, plus a shallow outline (its steps) so the pick is
+// informed without reading materials.
 export type CatalogEntry = {
   id: string;
-  kind: "routine";              // formatters will add a second kind once real formatter data exists
-  name: string;                 // the routine's title (raw.description)
+  kind: CatalogKind;
+  scope: CatalogScope;          // which library this entry lives in (drives edit rights)
+  name: string;                 // the entry's title (raw.description)
   summary: string;              // cross-cutting rules (raw.metadata.summary), "" when absent
   steps: Array<{ id: string; name: string; order: number; timeRequired?: string }>;
   materialCount: number;        // load-bearing Material leaves under the entry
@@ -55,6 +69,10 @@ const metaOf = (n: MutationNode): Record<string, unknown> => (rawOf(n).metadata 
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const num = (v: unknown): number | undefined => (typeof v === "number" ? v : undefined);
+
+// An entry's kind is tagged in metadata; entries with no tag are routines (the
+// original kind, and how the already-seeded shared library reads).
+const kindOf = (n: MutationNode): CatalogKind => (metaOf(n).catalogKind === "formatter" ? "formatter" : "routine");
 
 // A step's ordinal comes from raw.position or raw.metadata.order (CI maths writes
 // both); fall back to 0 so a malformed step still lists in a stable place.
@@ -78,7 +96,7 @@ function indexContainment(graph: MutationGraph) {
 // the routine with no routine parent; its hasPart routine children are the entries,
 // and each entry's routine children are its steps. A catalog with no root-container
 // (e.g. loose routines) yields [] — the browse surface expects the container shape.
-export function listCatalogEntries(graph: MutationGraph): CatalogEntry[] {
+export function listCatalogEntries(graph: MutationGraph, scope: CatalogScope): CatalogEntry[] {
   const { byId, children, hasRoutineParent } = indexContainment(graph);
   const roots = graph.nodes.filter((n) => isRoutine(n) && !hasRoutineParent.has(n.id));
 
@@ -87,13 +105,13 @@ export function listCatalogEntries(graph: MutationGraph): CatalogEntry[] {
     for (const entryId of children.get(root.id) ?? []) {
       const entry = byId.get(entryId);
       if (!entry || !isRoutine(entry)) continue;
-      entries.push(describeEntry(entry, byId, children));
+      entries.push(describeEntry(entry, byId, children, scope));
     }
   }
   return entries;
 }
 
-function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, children: Map<string, string[]>): CatalogEntry {
+function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, children: Map<string, string[]>, scope: CatalogScope): CatalogEntry {
   const steps: CatalogEntry["steps"] = [];
   let materialCount = 0;
   for (const childId of children.get(entry.id) ?? []) {
@@ -109,7 +127,8 @@ function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, chi
   steps.sort((a, b) => a.order - b.order);
   return {
     id: entry.id,
-    kind: "routine",
+    kind: kindOf(entry),
+    scope,
     name: str(rawOf(entry).description),
     summary: str(metaOf(entry).summary),
     steps,
@@ -156,46 +175,86 @@ export function cloneRoutineSubtree(catalog: MutationGraph, entryId: string, nam
   return { nodes, edges, newEntryId: idMap[entryId], idMap };
 }
 
-// ── Seeding the shared catalog ───────────────────────────────────────────────
+// ── Authored formatter entries ───────────────────────────────────────────────
+// Formatters are catalog entries (kind=formatter) whose Material holds a house-style
+// spec the generator applies. Unlike routines, they are NOT extracted from a subject
+// graph — they are authored here and fed to assembleCatalog as an extra "source"
+// (an InstructionalRoutine entry with a Material child, in RAW shape). `catalogKind`
+// on the entry's metadata is what makes list_catalog report kind "formatter".
+export const HOUSE_STYLE_FORMATTER: RawGraphSnapshot = {
+  nodes: [
+    {
+      id: "formatter-house-style",
+      labels: [ROUTINE_LABEL],
+      properties: {
+        description: "MOHEBS house style (docx)",
+        metadata: { role: "instructional-routine", catalogKind: "formatter", summary: "Apply to every generated .docx for a consistent look across subjects." },
+      },
+    },
+    {
+      id: "formatter-house-style-spec",
+      labels: [MATERIAL_LABEL],
+      properties: {
+        description: "House style spec",
+        materialType: "Reference",
+        metadata: { role: "instructional-routine-material" },
+        content: [
+          "House style for every generated .docx — apply consistently across subjects.",
+          "Palette: primary green #2E7D5E (titles, headings, key labels); light green #E8F3EE (section/step header fills); grey #666666 (subtitles, meta lines); orange #D4812A (callout/cue labels); white #FFFFFF text on green fills.",
+          "Typography: Calibri throughout; body 11–12 pt; headings bold (document title ~17–20 pt, section ~13–14 pt).",
+          "Page: A4 portrait; margins ≈1.7 cm top/bottom, 2.0 cm left/right (≈17 cm content width); compact spacing (single line spacing, minimal space-after, no blank spacer paragraphs).",
+          "Images: embed a downscaled JPEG — resize to ~1600 px on the long edge, quality ~82; target a few MB per document, never a full-resolution PNG.",
+          "Subject-specific layout (step-box tables, bilingual columns, activity image ratios) is NOT part of this shared style — it stays in the subject's prompt or a workspace formatter.",
+        ].join("\n\n"),
+      },
+    },
+  ],
+  relationships: [
+    { id: "formatter-house-style-haspart", type: "hasPart", start: "formatter-house-style", end: "formatter-house-style-spec", properties: {} },
+  ],
+};
+
+// ── Seeding the catalog ──────────────────────────────────────────────────────
 // Convert a raw LC graph (as read from a source knowledge_graph.json — `start`/`end`
 // edges, LC props at properties.*) into store shape for the catalog namespace: every
 // node non-spine (type = its first label, props under properties.raw), namespaced to
 // the catalog.
-function toCatalogStoreShape(raw: RawGraphSnapshot): MutationGraph {
+function toCatalogStoreShape(raw: RawGraphSnapshot, namespace: string): MutationGraph {
   const nodes: MutationNode[] = raw.nodes.map((n) => ({
-    id: n.id, type: (n.labels ?? [])[0] ?? "", namespace: CATALOG_NAMESPACE,
+    id: n.id, type: (n.labels ?? [])[0] ?? "", namespace,
     labels: n.labels ?? [], spine: false, properties: { raw: n.properties ?? {} },
   }));
   const edges: MutationEdge[] = raw.relationships.map((e) => ({
     id: edgeId(e.type, e.start, e.end), type: e.type, from: e.start, to: e.end,
-    namespace: CATALOG_NAMESPACE, properties: e.properties ?? {},
+    namespace, properties: e.properties ?? {},
   }));
   return { nodes, edges };
 }
 
-// Build the catalog's stored graph from one or more source graphs (e.g. a subject's
+// Build a catalog's stored graph from one or more source graphs (e.g. a subject's
 // knowledge_graph.json): a single root container, plus every source's routine subtrees
 // re-homed under it as entries. A source's entries are its top-level routines (an
 // `InstructionalRoutine` with no routine `hasPart` parent); each entry's subtree
 // (steps + Materials) comes along verbatim, ids preserved. Everything else in a source
 // (chapters, lessons, the spine) is dropped — the catalog holds only routines.
-export function assembleCatalog(sources: RawGraphSnapshot[], rootId = CATALOG_ROOT_ID): MutationGraph {
+// `namespace` is the target catalog (shared by default).
+export function assembleCatalog(sources: RawGraphSnapshot[], namespace = SHARED_CATALOG_NAMESPACE, rootId = CATALOG_ROOT_ID): MutationGraph {
   const root: MutationNode = {
-    id: rootId, type: ROUTINE_LABEL, namespace: CATALOG_NAMESPACE, labels: [ROUTINE_LABEL], spine: false,
-    properties: { raw: { description: "Shared routine library", metadata: { role: "instructional-routine" } } },
+    id: rootId, type: ROUTINE_LABEL, namespace, labels: [ROUTINE_LABEL], spine: false,
+    properties: { raw: { description: "Routine library", metadata: { role: "instructional-routine" } } },
   };
   const nodes: MutationNode[] = [root];
   const edges: MutationEdge[] = [];
 
   for (const source of sources) {
-    const graph = toCatalogStoreShape(source);
+    const graph = toCatalogStoreShape(source, namespace);
     const { byId, children, hasRoutineParent } = indexContainment(graph);
     const entries = graph.nodes.filter((n) => isRoutine(n) && !hasRoutineParent.has(n.id));
     for (const entry of entries) {
       const ids = new Set(subtreeIds(entry.id, children));
       for (const id of ids) { const n = byId.get(id); if (n) nodes.push(n); }
       for (const e of graph.edges) if (e.type === CONTAINMENT && ids.has(e.from) && ids.has(e.to)) edges.push(e);
-      edges.push({ id: edgeId(CONTAINMENT, rootId, entry.id), type: CONTAINMENT, from: rootId, to: entry.id, namespace: CATALOG_NAMESPACE, properties: {} });
+      edges.push({ id: edgeId(CONTAINMENT, rootId, entry.id), type: CONTAINMENT, from: rootId, to: entry.id, namespace, properties: {} });
     }
   }
   return { nodes, edges };
