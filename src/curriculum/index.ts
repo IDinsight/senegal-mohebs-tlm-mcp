@@ -10,4 +10,4 @@ export { parseGraph, type GraphParseDescriptor } from "./parse-graph.js";
 export { searchTerminology, terminologySections } from "./terminology.js";
 export { serializeModel, deserializeToModel, toRawEnvelope, edgeId, PRELOADED_MODEL_KEY } from "./store-bridge.js";
 export { emptyContainerWarnings, multiParentWarnings } from "./coverage.js";
-export { coursesOf, courseSubgraph } from "./courses.js";
+export { coursesOf, courseSubgraph, standardsFor } from "./courses.js";

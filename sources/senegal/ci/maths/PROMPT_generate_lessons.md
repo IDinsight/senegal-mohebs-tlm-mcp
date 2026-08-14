@@ -20,9 +20,9 @@ same look and feel**.
 
 ## What I will give you (inputs)
 
-1. **The curriculum, via the memory-server tools** — you do **not** receive raw JSON files.
-   The curriculum (the **source of record**) and the official **French/Wolof terminology** are
-   queried through **MCP tools**; see "Getting the curriculum from the memory server" below.
+1. **The curriculum, from the graph** — you do **not** receive raw JSON files. The curriculum
+   (the **source of record**) and the official **French/Wolof terminology** are read from the
+   knowledge graph through **MCP tools**; see "Getting the curriculum from the graph" below.
 
 2. **The pupil's manual for the chapter** ("l'outil de l'élève") — the document already
    generated for this chapter. It contains: the **opening situation** ("situation d'amorce")
@@ -44,43 +44,50 @@ same look and feel**.
 
 ---
 
-## Getting the curriculum from the memory server (tools)
+## Getting the curriculum from the graph (tools)
 
-You query the curriculum through **MCP tools** rather than parsing a file.
+You read the curriculum from a **knowledge graph** through **MCP tools**, in canonical
+Learning-Commons form (a **content tree** — Course → grouping → lesson — and a **standards
+spine** each lesson *teaches*). Read the graph directly; never work from memory.
 
-> **Tool vocabulary.** The tools use neutral names: `unit` is the **chapter number**, and `deliverable` is `"lessons"` (the teacher guide you are writing here). Pass those argument names exactly.
-
-- **`get_generation_context(unit, deliverable="lessons")`** — call this **first**. In one payload it
-  returns the chapter's **`curriculum`** — the chapter's lessons as **OS** items ordered by
-  `leconNum`, each with its **components** and their **tasks**, with the **bilan** lesson marked and
-  cross-chapter progression included — plus the **pupil manual already tracked for this chapter**
-  (the document your lessons build on), the characters established across the book, and terminology
-  guidance.
+- **`list_courses`** — call this **first**. The teacher guide is the course **"Guide de
+  l'enseignant"**. Take its `id`.
+- **`get_course(course)`** — the teacher-guide subtree as raw LC nodes + edges: its
+  **groupings** and their **lessons** (`Lesson`, in `position` order), plus the shared
+  **"Fiche de leçon — enseignement explicite"** `InstructionalRoutine` (the fixed five-step
+  structure — Déclencheur → Modelage → Nous faisons → Tu fais → Objectivation — with a per-step
+  `Material` spec and its `timeRequired`). Read the routine: it is the authored version of the
+  step structure and timings below.
+- **`get_standards(nodeId)`** — for **each lesson**, the standards it teaches: the aligned
+  `StandardsFrameworkItem` (its `description` is the objective, the **OS**), that OS's
+  **`LearningComponent`s**, and the **illustrative `Activity`s** — as raw nodes + edges. This is
+  where the OS text, components, and tasks come from. *(Empty `nodes` ⇒ that lesson is not yet
+  wired to the spine; say the OS is missing rather than invent it.)*
 - **`get_terminology(query)`** — the official French/Wolof wording for a term (ensemble,
-  appartient à, dizaine…). Use it for the key vocabulary; if it returns nothing, say the wording
-  is missing rather than invent it.
+  appartient à, dizaine…). Take the **French** only; if it returns nothing, say the wording is
+  missing rather than invent it.
+- **`list_documents`** / **`get_document_text(relPath)`** — read the **pupil manual** already
+  produced for this chapter (the document your lessons build on) and earlier sheets, for
+  continuity and the established characters.
 
-**What the returned curriculum gives you, for a chapter N** (the tool has already done the graph
-work — you consume the result):
+**How to assemble a lesson from the graph:**
 
-1. The chapter's **lessons, ordered by `leconNum`**. Each lesson carries its **OS** (`osTexte`).
-2. The **last** lesson is the **Bilan** (review): it is flagged for you. All the others are
-   ordinary lessons.
-3. Each lesson's **components** and their **tasks**, already attached — use these to feed the
-   **modelling** step, the **examples**, and the choice of the key mathematical vocabulary.
-4. **One sheet = one lesson = one OS** (at most two OS if the notions are very closely
-   linked). Note: several lessons may share the **same** `osTexte` (e.g. "découvrir le
-   nombre 10 et la dizaine" spread over 2–3 sessions); in that case, **differentiate** the
-   sheets by treating **distinct facets** of the objective (discovery, manipulation,
+1. From `get_course`, take the grouping's **lessons in `position` order**. The **Bilan**
+   (review) lesson is the one whose `educationalUse` is `Assessment`; the rest are ordinary
+   lessons.
+2. For each lesson, `get_standards(lesson)` gives its **OS** (the aligned SFI's `description`),
+   its **components**, and their **tasks** — use these to feed the **modelling** step, the
+   **examples**, and the choice of key mathematical vocabulary.
+3. **One sheet = one lesson = one OS** (at most two if very closely linked). Several lessons may
+   teach the **same** OS (e.g. "découvrir le nombre 10 et la dizaine" over 2–3 sessions); if so,
+   **differentiate** the sheets by distinct facets of the objective (discovery, manipulation,
    consolidation…) — do not make them identical.
-5. **Map each lesson to the pupil's-manual activity (or activities)** that target the same
-   OS / component: follow the provided mapping if there is one, otherwise follow the order
-   of the manual's activities. The **last lesson (Bilan)** uses the **bilan questions** of
-   the manual.
+4. **Map each lesson to the pupil's-manual activity (or activities)** targeting the same OS /
+   component (read the manual via `get_document_text`); follow the manual's activity order. The
+   **Bilan** lesson uses the manual's **bilan questions**.
 
-> **Note on numbering.** Chapter numbers follow the curriculum; the sequence may skip
-> a number (for example there is no Chapter 14 — the curriculum runs 13 → 15). Produce
-> exactly the chapters that exist; never invent a missing chapter.
+> **Note on numbering.** Chapter/lesson numbers come from each node's `position`; the sequence
+> may skip a number. Produce exactly the groupings and lessons the graph returns; never invent one.
 
 ---
 
@@ -166,7 +173,7 @@ to every chapter. (Sizes are given in points; treat them as targets, not pixel-e
 - Header row: **green fill**, **white bold** text, ≈ 9 pt.
 - Body rows: ≈ 9 pt; the **Leçon** cell in **green bold**.
 - **Type** values are exactly: `1re leçon` / `Intermédiaire` / `Bilan`.
-- One row per lesson, in `leconNum` order, **bilan included**.
+- One row per lesson, in lesson order (`position`), **bilan included**.
 
 **Each lesson sheet** (insert a **page break before each lesson**, so every lesson starts on
 its own page):
@@ -186,13 +193,12 @@ its own page):
     `STEP — Name  (N minutes)`.
   - **Body row** — white background, prose paragraphs ≈ 11 pt (one short paragraph per idea).
 
-**Fixed step order, names and timings** (identical every time):
-1. `JE FAIS — Déclencheur  (4 minutes)`
-2. `JE FAIS — Modelage  (8 minutes)`  — **for the Bilan only**, this box is
-   `JE FAIS — Rappel / Modelage  (8 minutes)`
-3. `NOUS FAISONS  (8 minutes)`
-4. `TU FAIS  (10 minutes)`
-5. `NOUS FAISONS — Objectivation  (5 minutes)`
+**Step order, names and timings — from the routine.** The five step boxes, their order, names
+and timings come from the **"Fiche de leçon — enseignement explicite" `InstructionalRoutine`**
+(read via `get_course`): its five ordered step routines ARE the boxes — each step's
+`description` is the box name and its `timeRequired` (e.g. `PT4M` = 4 minutes) the duration.
+Render each header as `STEP — Name  (N minutes)`. (For the Bilan lesson the second box reads
+`JE FAIS — Rappel / Modelage`, per that step's spec.) Do not restate the structure from memory.
 
 **Writing voice and inline conventions** (identical every time):
 - **Third-person narration**: "Le maître présente / pose / lit…", "Les élèves ouvrent /
@@ -210,49 +216,19 @@ its own page):
 
 ---
 
-## Content of each step (what to write in each box)
+## Content of each step — read it from the routine
 
-1. **JE FAIS — Déclencheur (4 minutes)** — launch the lesson.
-   - *Chapter's Lesson 1*: present the opening situation **in words**; have pupils look at
-     the picture **in their manual**; ask a few simple oral warm-up questions; recall prior
-     knowledge; announce the objective.
-   - *Intermediate lessons*: start from a quick example **sketched on the blackboard**;
-     quickly recall the previous lesson; introduce the new notion.
-   - *Last lesson (Bilan)*: explicitly return to the opening situation (in words / manual
-     picture); announce that the lesson is a review of the learning.
-   - End with: `E dit : « Aujourd'hui, nous allons apprendre à… »`
+**What to write in each box is the step's authored spec — each step routine's `Material.content`
+in the "Fiche de leçon" routine (`get_course`).** Follow it: each step's `Material.content`
+carries that step's teacher-facing spec, including the **lesson-type variants** (first lesson of
+the chapter / intermediate lesson / Bilan) and, for the Bilan, the **question split** across the
+boxes (question 1 modelled in Rappel/Modelage, 2–3 in Nous faisons, the rest in Tu fais). Do not
+restate these specs from memory — the routine is the source.
 
-2. **JE FAIS — Modelage (8 minutes)** — the teacher clearly shows how to do it **on the
-   blackboard**: draw the situation with chalk (closed loops for the ensembles, dots / marks
-   for the objects, arrows or one-to-one links as needed); **think aloud**; show how to
-   choose the correct answer; use the key mathematical words; give an example **and** a
-   counter-example. Only free supports may supplement the board (slates, fingers, or
-   pebbles / cowries pupils already have) — **no purchased props such as real vegetables or
-   baskets**.
-   - Insert lines such as: `E dit : « Je dessine d'abord au tableau… »` /
-     `E dit : « Je choisis cette réponse parce que… »` / `E dit : « La bonne réponse est… »`
-   - Include the **`Je retiens`** cue as specified above (orange bold label, inline).
-
-3. **NOUS FAISONS (8 minutes)** — **guided, collective** practice: name **one specific
-   manual activity** (e.g. "Activité 1"); read the instruction; have pupils think in pairs /
-   on the slate; call a pupil to the board; correct together; have them **justify**; end with
-   `Réponse attendue : …`.
-
-4. **TU FAIS (10 minutes)** — **independent** practice: have pupils open the manual to the
-   target activity (state which, e.g. "Activités 2 et 3" or "questions 4, 5 et 6 du bilan");
-   read the instruction; remind them to write **only the letter** of the correct answer; let
-   them work alone; **circulate** to help **without giving the answer**; end with
-   `Réponse attendue : …`.
-
-5. **NOUS FAISONS — Objectivation (5 minutes)** — consolidate: correct quickly; have one or
-   two pupils explain their answers; return to the key notion; have the rule reworded; end
-   with `E dit : « Aujourd'hui, nous avons appris que… »`.
-
-**Bilan specifics.** In the **Rappel / Modelage** box, model **question 1** aloud (relit the
-options, discard the wrong ones, justify, then choose). Treat **questions 2 and 3** in
-**Nous faisons**. Leave **questions 4, 5 and 6** for **Tu fais**. Show the expected answers
-per box (`Réponses attendues : 2 → … ; 3 → …`, etc.), and recall question 1's answer in the
-Tu fais box.
+Fill each box by combining that step's `Material.content` with **this lesson's** OS, components
+and tasks (`get_standards`) and the mapped pupil-manual activities — and render it in the fixed
+visual style + inline conventions above (the `E dit : « … »` cue, the inline `Je retiens`, the
+`Réponse attendue :` line, blackboard-first supports).
 
 ---
 
@@ -276,7 +252,7 @@ with a **global objectivation** of the chapter.
 ## What you must produce
 
 1. **First**, the **distribution table** of the chapter's lessons (exact columns and `Type`
-   values as in the formatting specification). One row per lesson, in `leconNum` order,
+   values as in the formatting specification). One row per lesson, in lesson order (`position`),
    **bilan included**.
 
 2. **Then**, **all the lesson sheets** for the chapter, in order, each following the
