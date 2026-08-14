@@ -26,7 +26,7 @@ export const RECIPES: readonly RecipeDescriptor[] = [
   },
   {
     name: "set_content",
-    summary: "Replace a node's load-bearing content (canonical LC Material.content). The dedicated verb for editing content — upsert_property is wording-only and cannot reach it.",
+    summary: "Replace a node's load-bearing content (canonical LC Material.content). The dedicated verb for editing a node's content.",
     params: [
       { name: "nodeId", required: true },
       { name: "content", required: true },

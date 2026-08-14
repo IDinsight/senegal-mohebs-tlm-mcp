@@ -9,7 +9,7 @@ export type { KgNodeStore, Slot, StoredNode, StoredEdge, StoredMeta, StoredPoint
 export { otherSlot, edgeId } from "./types.js";
 export { runGraphMutation, diffGraphs, __resetMutationsForTest } from "./mutations.js";
 export { publishDraft, discardDraft, diffDraft, publishDraftWithConfirm, discardDraftWithConfirm, __resetDraftTokensForTest } from "./publish-flow.js";
-export { upsertProperty, UPSERT_PROPERTY_SAFE_PATHS, readAtPath, writeAtPath } from "./upsert-property.js";
+export { readAtPath, writeAtPath } from "./paths.js";
 export { createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId } from "./structural.js";
 export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } from "./structural.js";
 // The composite curriculum recipes moved OUT to the `kg-recipes` module (generic
@@ -24,7 +24,6 @@ export type {
   PublishResult, DiscardResult,
   WholeDraftDiff, PublishConfirmResult, PublishConfirmPreview, DiscardConfirmResult, DiscardConfirmPreview,
 } from "./publish-flow.js";
-export type { UpsertPropertyArgs } from "./upsert-property.js";
 export { validateStructural, STRUCTURAL_RULES } from "./validate.js";
 export { matchesAuditQuery, sortAuditNewestFirst, toAuditActor } from "./audit.js";
 export type { AuditRecord, AuditQuery, AuditActor, AuditEventType } from "./types.js";

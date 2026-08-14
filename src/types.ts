@@ -130,60 +130,35 @@ export type Capabilities = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SubjectAdapter — the single per-(grade, subject) module the rest of the
-// server dispatches to. Consolidates what used to be three separate concepts
-// (CurriculumAdapter — raw parser, SubjectCurriculum — presenter, and
-// SubjectProfile — generation-context + deliverables + capabilities) into
-// one behavior module. Deliberately BEHAVIOR ONLY: no schema, no LC
-// property/edge/cardinality declarations, no integrity rules. Write-safety
-// rules live later, in the write tools — not here.
+// SubjectAdapter — the single per-(grade, subject) object the rest of the
+// server dispatches to. It is no longer hand-written per subject: a subject is a
+// declarative `SubjectProfile` (adapters/profile.ts), and one generic factory
+// (adapters/build.ts::buildAdapterFromProfile) synthesizes this object from it.
+// The runtime shape below is what consumers see; its fields are DERIVED from the
+// profile's data (see docs/design-notes/authorable-catalog.md, phase 2).
+// Deliberately BEHAVIOR ONLY: no schema, no LC property/edge/cardinality
+// declarations, no integrity rules. Write-safety rules live in the write tools.
 //
-// Common core every adapter implements:
+// Common core:
 //   - raw-schema knowledge (detect + parse) — the only place that touches raw
-//     graph JSON. Storage round-trip is handled generically on top of the
-//     parsed model by curriculum/store-bridge.ts (serializeModel /
-//     deserializeToModel), so no serialize/deserialize methods hang off the
-//     adapter;
-//   - LC → friendly projection (listUnits / slice / progression /
-//     requiredCoverage / scopeValues), rendered from the parsed CurriculumModel;
-//   - generation-context assembly (buildGenerationContext), owned by the
-//     subject because generation semantics — characters, domains, dependencies
-//     — are subject-specific;
-//   - deliverables and capabilities declarations.
+//     graph JSON. `parse` is `parseGraph` bound to the profile's descriptor;
+//     the storage round-trip is handled generically by curriculum/store-bridge.ts;
+//   - `model()` — the parsed CurriculumModel (memoized). The cooked per-unit
+//     projection (slice/listUnits/…) and buildGenerationContext were removed once
+//     generation moved to the generic graph readers (get_course / get_standards);
+//   - deliverables, capabilities, and the optional coverage hook, all
+//     synthesized from the profile.
 //
 // Optional subject-specific functions (declared on the interface but not every
 // adapter implements them). Present only when the corresponding capability is
 // enabled; gated at the tool boundary in src/server/*.
 // ─────────────────────────────────────────────────────────────────────────────
-/**
- * Wording aliases for `upsert_property` (#10). Maps a logical wording key
- * a curator would ask about (`"title"`, `"text"`, `"title_en"`, `"text_en"`)
- * to the concrete `StoredNode.properties` paths that back it for a given
- * node kind. When both a normalized field (e.g. `title`) and its raw
- * source (`raw.description`) hold the same wording, the adapter lists
- * BOTH here so one curator call updates them together — the "call twice
- * or drift" trap doesn't reach the curator's mental model.
- *
- * Paths are dot-notation relative to `StoredNode.properties`, e.g.
- * `"title"` or `"raw.description"`. The mutation validates every path
- * against a central safety allowlist regardless — a rogue adapter cannot
- * expand the editable surface by declaring a path outside the pilot.
- *
- * Empty declaration (`{}`) is legitimate for a subject whose adapter
- * doesn't yet expose editable wording.
- */
-export type WordingAliases = {
-  [nodeKind: string]: {
-    [logicalKey: string]: readonly string[];
-  };
-};
 
-// The composite curriculum recipes are now GENERIC verbs (add_node / move_node /
-// reposition / set_content) that live in the `kg-recipes` module and derive a
-// created node's identity from the graph itself. There is no per-subject
-// `RecipeProfile` / `StructuralAliases` / `LcNodeTemplate` anymore — an adapter
-// declares only its `wordingAliases` (for `upsert_property`). See
-// docs/design-notes/graph-native-authoring.md and kg-recipes/lc.ts.
+// Curriculum edits are the GENERIC verbs (add_node / move_node / reposition /
+// set_content) that live in the `kg-recipes` module and derive a created node's
+// identity from the graph itself. There is no per-subject `RecipeProfile` /
+// `StructuralAliases` / `LcNodeTemplate`, and no wording-alias surface — a node's
+// text is edited through those verbs. See docs/design-notes/graph-native-authoring.md.
 
 /**
  * A read-only view of the raw graph (nodes + edges, no storage slot tag) that
@@ -202,13 +177,6 @@ export interface SubjectAdapter {
   readonly id: string;                          // stable adapter id, e.g. "ci-maths/nodes-relationships-v1"
   readonly deliverables: DeliverableSpec[];
   readonly capabilities: Capabilities;
-  /**
-   * The wording paths a curator may edit via `upsert_property` (#10). Each
-   * entry names a node kind, then the logical wording keys available on
-   * that kind and the storage paths each key updates atomically. See
-   * `WordingAliases`. Declare `{}` for a subject with no editable wording.
-   */
-  readonly wordingAliases: WordingAliases;
 
   // The composite curriculum recipes are now GENERIC, graph-derived verbs in the
   // `kg-recipes` module (add_node / move_node / reposition / set_content),

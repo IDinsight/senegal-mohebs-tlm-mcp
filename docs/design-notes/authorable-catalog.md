@@ -46,7 +46,83 @@ applied.)
 **Surfaced.** `get_capabilities` carries a `catalog` mirror (both scope namespaces,
 `canUse` from the same `apply` gate, and the per-namespace edit governance).
 
-**Not yet:** the subject-profile **config layer**, the MCP **resources** browse surface
+## Phase 2 — subject profiles (Step 2a done, in-repo)
+
+The three per-subject adapter behavior modules are **gone**. A subject is now a
+declarative `SubjectProfile` (`src/adapters/profile.ts`, a Zod schema whose type
+is inferred so the two can't drift) read by **one** generic factory
+(`src/adapters/build.ts::buildAdapterFromProfile`). The three subjects ship as
+data literals under `src/adapters/profiles/`; the registry (`adapters/index.ts`)
+maps `(grade, subject) → profile` and validates every profile at load, so a
+malformed one fails loudly at startup rather than as a silent mis-parse in a read
+(the design's "runtime validation" risk, pinned by `adapters/__tests__/profile.test.ts`).
+
+The three function-valued adapter bits became **generic mechanisms selected by
+data** (D7), so nothing subject-specific stayed as code:
+
+- a deliverable's `classify(filename)` → a `match` spec (`"default"` |
+  `{ filenameContainsAny }`); the "default" deliverable matches iff no specific
+  one does, reproducing the old `manual = !isLessons` complement;
+- `coverageWarnings(graph)` → a list of named rules run by
+  `curriculum/coverage.ts::runCoverageRules`. Two new generic rules join the
+  existing empty-container / multi-parent shapes: `exactly-one-assessment-child`
+  (the bilan rule, with the subject's word — "bilan" — as a `noun` parameter) and
+  `single-content-parent` (the axis-scoped multi-parent for a maths lesson's two
+  parents);
+- reading's `postParse` prune → a named strategy in `curriculum/prunes.ts`
+  (`content-reachable-from-roots`, parameterised by `rootKinds`).
+
+The read model is byte-identical — the whole suite (344 tests) stays green,
+including the bundle-parse, faithful-re-export, and coverage-integrity suites that
+exercise every subject through the new profile path.
+
+**The generic identity reader (done, in-repo).** The profile no longer carries a
+per-subject kind table (`roleToKind`/`labelToKind`/`statementTypeToKind`). A node's
+`kind` is now read from its **own canonical LC fields** by one generic reader
+(`parse-graph.ts::kindOf`), uniformly for every subject: a `LessonGrouping` is named
+by its `groupName` (`Chapitre`/`Semaine`/`Jour`), a `StandardsFrameworkItem` by its
+`statementType` (`Objectif spécifique`, `Arithmétique`, `Grade`, `Theme`, … —
+falling back to `normalizedStatementType` where the source leaves `statementType`
+empty), and every content leaf by its LC `label`
+(`Lesson`/`LearningComponent`/`Activity`/`Material`). The non-canonical
+`metadata.role` sidecar is no longer consulted, and there is no dialect flag — the
+NERDC standards-only spine (Grade/Theme/Topic/…) and the Senegal spine both read
+their kind from `statementType` the same way.
+
+Senegal's `statementType` is a *domain* rather than a clean structural level, so
+its standard kinds read as domains (`Arithmétique`, `Objectif spécifique`, …) for
+now; that is cosmetic, and backfilling `statementType` to a structural vocabulary
+later needs no code change.
+
+(The `upsert_property` wording-edit tool and its `wordingAliases` surface — which
+this reader had briefly kept working through a `normalizedStatementType` fallback —
+were subsequently **removed** entirely. A node's text and ordinal are now edited
+only through the generic verbs `set_content` / `reposition`; there is no separate
+wording tool, and the profile no longer declares a wording surface.)
+
+Two consequences: kinds are now the graph's own words (`Chapitre`, `Objectif
+spécifique`, `Lesson`, …), so the coverage/prune specs key on those (and identify a
+"standard" by `normalizedStatementType`, not a kind); and, because the old kind
+table also acted as an in-scope allowlist, dropping it widens the parsed set for CI
+maths (Courses, Materials, derived-frame SFIs and the framework root now parse as
+units too). This is harmless downstream — generation reads the raw graph and edges
+(`get_course`/`get_standards`), not read-kinds; the reading prune still trims its
+scaffolding; coverage rules ignore the extra kinds — but it does change the stored
+node `type`, so **a re-seed of both subjects is required at rollout** for the live
+coverage/write path to match.
+
+**Step 2b (follow-up, not started):** move the profile records into a
+Firestore-backed config layer edited through the draft/publish curator loop, with
+the same Zod guard running at **authoring time**. Only then is a profile change
+"no redeploy"; Step 2a still ships the literals in the container. (D4.)
+
+**Scope-from-Course (deferred follow-up).** The remaining per-subject scope logic
+(the reading prune; CI maths keeping its scaffolding out) would collapse into a
+single generic mechanism — derive the in-scope set by reachability from the
+`Course` root — retiring the prune and the widened-parse concern together. Left as
+its own change so it can be reviewed against the parity + faithful-re-export guards.
+
+**Not yet:** Step 2b (above), the MCP **resources** browse surface
 (D5 — `list_catalog` / `use_*` are tools for now), reading's routine catalog (blocked on
 its missing content layer), and re-copy/detach ergonomics.
 
@@ -98,8 +174,8 @@ configuration, sitting beside a fully generic engine:
   builds on — already exists and is live for CI maths. One routine is shared by
   **112** teacher-guide lessons today; that is a catalog entry in all but name.
 
-So a subject's specifics live in five already-declarative places (`descriptor`,
-`deliverables`, `capabilities`, `wordingAliases`, `coverageWarnings`) plus the prompt
+So a subject's specifics live in a handful of already-declarative places (`descriptor`,
+`deliverables`, `capabilities`, `coverageWarnings`) plus the prompt
 `.md` files. The remaining work is not to *untangle* subject logic from generic code —
 that is done — but to **relocate** those declarations from `.ts` files into authorable
 data, and to give a curator a catalog to pick from.

@@ -63,7 +63,7 @@ export function registerRecipeTools(server: McpServer) {
     {
       title: "Replace a node's content",
       description:
-        "Replace a node's load-bearing `content` (canonical LC Material.content) in ONE atomic draft edit — the dedicated verb for editing content, since upsert_property is wording-only and cannot reach it. A nonexistent `nodeId` is BLOCKED; to remove content entirely, delete the node instead. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
+        "Replace a node's load-bearing `content` (canonical LC Material.content) in ONE atomic draft edit — the dedicated verb for editing a node's content. A nonexistent `nodeId` is BLOCKED; to remove content entirely, delete the node instead. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
         nodeId: z.string(),
         content: z.string(),

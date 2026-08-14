@@ -90,10 +90,12 @@ async function runRecipe<A>(mutation: GraphMutation<A>, args: A) {
 // take the lesson from a week rather than the chapter.
 function pick(graph: MutationGraph) {
   const model = modelOf(graph);
-  const chapter = model.unitsOfKind("chapter").sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
-  const week = model.unitsOfKind("week").find((candidate) => model.childrenOf(candidate.id).some((child) => child.kind === "lesson"))!;
-  const lesson = model.childrenOf(week.id).find((child) => child.kind === "lesson")!;
-  const expectation = model.unitsOfKind("expectation")[0];
+  const chapter = model.unitsOfKind("Chapitre").sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0];
+  const week = model.unitsOfKind("Semaine").find((candidate) => model.childrenOf(candidate.id).some((child) => child.kind === "Lesson"))!;
+  const lesson = model.childrenOf(week.id).find((child) => child.kind === "Lesson")!;
+  // A standard's kind is its statementType (many values); find one by its
+  // structural class instead (a leaf SFI is normalizedStatementType "Standard").
+  const expectation = [...model.byId.values()].find((u) => u.properties.normalizedStatementType === "Standard")!;
   return { chapterId: chapter.id, lessonId: lesson.id, expectationId: expectation.id };
 }
 
@@ -131,14 +133,14 @@ describe("add_node", () => {
 
     const draft = (await readDraft())!;
     const node = draft.nodes.find((candidate) => candidate.id === lessonId)!;
-    expect(node.type).toBe("lesson");
+    expect(node.type).toBe("Lesson");
     expect(node.labels).toContain("Lesson");
     const raw = node.properties.raw as Record<string, any>;
     expect(raw.normalizedType).toBe("Lesson");
     expect(raw.metadata.order).toBe(node.properties.order); // maths' ordinal path, mirrored to normalized order
     // Faithful re-parse: the new lesson shows up under its chapter, aligned.
     const model = modelOf(draft);
-    expect(model.childrenOf(chapterId).some((child) => child.id === lessonId && child.kind === "lesson")).toBe(true);
+    expect(model.childrenOf(chapterId).some((child) => child.id === lessonId && child.kind === "Lesson")).toBe(true);
   });
 
   it("creates a LessonGrouping (chapter) that re-parses as a chapter", async () => {
@@ -215,10 +217,10 @@ describe("move_node + reposition + set_content", () => {
     // must survive.
     const published = await readPublished();
     const model = modelOf(published);
-    const lessons = model.unitsOfKind("lesson").filter((lesson) => model.childrenOf(lesson.id).some((child) => child.kind === "task"));
+    const lessons = model.unitsOfKind("Lesson").filter((lesson) => model.childrenOf(lesson.id).some((child) => child.kind === "Activity"));
     const fromLesson = lessons[0];
     const toLesson = lessons[1];
-    const activity = model.childrenOf(fromLesson.id).find((child) => child.kind === "task")!;
+    const activity = model.childrenOf(fromLesson.id).find((child) => child.kind === "Activity")!;
     const alignEdges = published.edges.filter((edge) => edge.type === "hasEducationalAlignment" && edge.from === activity.id).map((edge) => edge.id);
     expect(alignEdges.length).toBeGreaterThan(0);
 

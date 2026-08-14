@@ -18,40 +18,46 @@
  */
 import type { SubjectAdapter } from "../types.js";
 import { ContextNotSetError, listAvailableContexts, sessionState } from "../context/index.js";
-import { buildCiMathsAdapter } from "./ci-maths.js";
-import { buildCe1ReadingAdapter } from "./ce1-reading.js";
-import { buildNigeriaMathsAdapter } from "./nigeria-maths.js";
+import { buildAdapterFromProfile } from "./build.js";
+import { validateProfile, type SubjectProfile } from "./profile.js";
+import { CI_MATHS_PROFILE } from "./profiles/ci-maths.js";
+import { CE1_READING_PROFILE } from "./profiles/ce1-reading.js";
+import { NIGERIA_MATHS_PROFILE } from "./profiles/nigeria-maths.js";
 
-// Registry: (grade/subject) → adapter builder. Add a subject by registering
-// its builder here. A subject with sources on disk but no entry here is
-// rejected by set_context (unsupported), rather than silently mis-handled.
+// Registry: (grade/subject) → subject PROFILE (data). A subject is added by
+// authoring a profile literal and registering it here — no per-subject behavior
+// module. Each profile is schema-validated at load, so a malformed profile fails
+// loudly at startup rather than as a silent mis-parse in a later read. (Phase 2b
+// moves these records into the store, edited through the curator loop; the
+// validation then runs at authoring time. See docs/design-notes/authorable-catalog.md.)
 //
-// Many-to-one is supported explicitly: two `${grade}/${subject}` keys may point
-// at the same builder when their graphs share a shape. Different grades of the
-// same subject stay independent by default — a `ce2/maths` graph with a
-// different envelope would register its own adapter, not reuse ci/maths.
-export type AdapterBuilder = (grade: string, subject: string) => SubjectAdapter;
+// A subject with sources on disk but no entry here is rejected by set_context
+// (unsupported), rather than silently mis-handled.
+const PROFILES: Record<string, SubjectProfile> = Object.fromEntries(
+  Object.entries({
+    "ci/maths": CI_MATHS_PROFILE,
+    "ce1/reading": CE1_READING_PROFILE,
+    // Nigeria NERDC maths spans Primary 1–3 in one framework, so its grade
+    // segment is the combined "primary-1-3" (see sources/nigeria/).
+    "primary-1-3/maths": NIGERIA_MATHS_PROFILE,
+  }).map(([key, profile]) => [key, validateProfile(profile, `profile for ${key}`)]),
+);
 
-const REGISTRY: Record<string, AdapterBuilder> = {
-  "ci/maths": buildCiMathsAdapter,
-  "ce1/reading": buildCe1ReadingAdapter,
-  // Nigeria NERDC maths spans Primary 1–3 in one framework, so its grade segment
-  // is the combined "primary-1-3" (see sources/nigeria/). Standards-only graph.
-  "primary-1-3/maths": buildNigeriaMathsAdapter,
-};
-
+// Many-to-one is supported by construction: two keys may share one profile when
+// their graphs have the same shape, and the builder still stamps each with its
+// own (grade, subject) identity.
 export function resolveAdapter(grade: string, subject: string): SubjectAdapter | null {
-  const build = REGISTRY[`${grade}/${subject}`];
-  return build ? build(grade, subject) : null;
+  const profile = PROFILES[`${grade}/${subject}`];
+  return profile ? buildAdapterFromProfile(profile, grade, subject) : null;
 }
 
-// Test-only surface: register a builder against an arbitrary (grade, subject)
-// key. Used by the many-to-one resolution test to prove two keys can point at
-// the same builder without shipping a synthetic subject in production.
-export function __registerAdapterForTest(grade: string, subject: string, build: AdapterBuilder | null) {
+// Test-only surface: register a profile against an arbitrary (grade, subject)
+// key. Used by the many-to-one resolution test to prove two keys can share one
+// profile without shipping a synthetic subject in production.
+export function __registerProfileForTest(grade: string, subject: string, profile: SubjectProfile | null) {
   const key = `${grade}/${subject}`;
-  if (build === null) delete REGISTRY[key];
-  else REGISTRY[key] = build;
+  if (profile === null) delete PROFILES[key];
+  else PROFILES[key] = profile;
 }
 
 // The adapter for the active context. Set by activate.ts on set_context and

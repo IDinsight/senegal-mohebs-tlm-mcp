@@ -67,7 +67,6 @@ export const addNode: GraphMutation<AddNodeArgs> = {
       kind: template.kind,
       properties,
       namespace: args.namespace,
-      aliases: {},
       newNodeId: args.newNodeId,
       labels: template.labels,
     });

@@ -38,12 +38,14 @@ export const ALIGNMENT_EDGE = "hasEducationalAlignment";
 export const POSITION = "order";
 
 // Fallback internal `kind` for a label when the graph has no example to copy
-// from. Only content labels are ever created without an example (reading's first
-// Activity/Material); groupings always have an example (maths' chapters), so the
-// LessonGrouping ambiguity (week vs chapter vs day) never reaches this map.
+// from. Kinds are the graph's own canonical values, and a content leaf's kind is
+// its LC label (Lesson/Activity/Material/Course), so the fallback is the label
+// itself. Only content labels are ever created without an example (reading's first
+// Activity/Material); a grouping's kind is its `groupName`, but groupings always
+// have an example (maths' chapters), so that ambiguity never reaches this map.
 const FALLBACK_KIND: Record<string, string> = {
-  Lesson: "lesson", Activity: "activity", Material: "material",
-  LessonGrouping: "grouping", Course: "course",
+  Lesson: "Lesson", Activity: "Activity", Material: "Material",
+  LessonGrouping: "LessonGrouping", Course: "Course",
 };
 
 // LC "boilerplate" — the constant provenance/licensing fields every node of a

@@ -21,19 +21,13 @@ type RawRel = { id: string; type: string; start: string; end: string; properties
 type RawGraph = { nodes?: RawNode[]; relationships?: RawRel[] };
 
 export type GraphParseDescriptor = {
-  // A node's `metadata.role` → CurriculumUnit.kind (weeks/chapters/domaines/leaves).
-  // Roles not listed here are ignored (scaffolding: paliers, sections, frameworks).
-  roleToKind: Record<string, string>;
-  // A node's canonical LC `statementType` → kind, tried AFTER role and BEFORE
-  // label. This is the signal for LC-native exports (e.g. the NERDC/EIDU spine)
-  // that carry no `metadata.role` sidecar and use a single StandardsFrameworkItem
-  // label for every level — Grade/Theme/Sub-Theme/Topic/Performance Objective are
-  // distinguished only here. Opt-in per descriptor: subjects that key on role
-  // (senegal) simply omit it, so there is no interaction with their parse.
-  statementTypeToKind?: Record<string, string>;
-  // A node's first label → kind, used only when no mapped role/statementType
-  // applies (components/tasks carry a label but no metadata.role).
-  labelToKind?: Record<string, string>;
+  // A node's kind is read from its OWN canonical LC fields (see `kindOf` below) —
+  // `groupName` for a LessonGrouping, `label` for a content leaf, and, for a
+  // StandardsFrameworkItem, its `statementType` (falling back to
+  // `normalizedStatementType` when that is absent). No `metadata.role` sidecar and
+  // no per-subject kind table: the graph's own values ARE the kinds. See
+  // docs/design-notes/authorable-catalog.md.
+  //
   // Where a unit's ordinal comes from: "order" = metadata.order (maths);
   // "position" = the canonical LC `position` prop (reading, post canonical-LC);
   // "description" = a bare-number description (legacy reading weeks). Omit when
@@ -66,6 +60,9 @@ const GROUPING = "Standard Grouping";
 // a Standard leaf), so it's caught by the `normalizedStatementType` check, not here.
 const GROUPING_LABELS = new Set(["Course", "LessonGrouping", "StandardsFramework"]);
 
+const SFI = "StandardsFrameworkItem";
+const str = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
+
 export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumModel {
   const g = (raw ?? {}) as RawGraph;
   const nodes = g.nodes ?? [];
@@ -73,14 +70,19 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
   const containerEdges = new Set([d.containerEdge ?? ["hasChild", "hasPart"]].flat());
   const supportEdges = new Set([d.supportEdge ?? ["supports", "hasEducationalAlignment"]].flat());
 
+  // A node's kind is its OWN canonical value — no metadata.role, no per-subject
+  // table. A LessonGrouping is named by `groupName` (Chapitre / Semaine / Jour); a
+  // StandardsFrameworkItem by its `statementType` (Objectif spécifique, Grade,
+  // Theme, …), falling back to `normalizedStatementType` ("Standard" / "Standard
+  // Grouping") where the source leaves statementType empty; everything else by its
+  // LC label (Lesson / LearningComponent / Activity / …).
   const kindOf = (n: RawNode): string | null => {
-    const role = n.properties?.metadata?.role;
-    if (role != null && d.roleToKind[role] != null) return d.roleToKind[role];
-    const stype = n.properties?.statementType;
-    if (stype != null && d.statementTypeToKind?.[stype] != null) return d.statementTypeToKind[stype];
-    const label = n.labels?.[0];
-    if (label != null && d.labelToKind?.[label] != null) return d.labelToKind[label];
-    return null;
+    const p = n.properties ?? {};
+    const groupName = str(p.groupName);
+    if (groupName) return groupName;
+    const label = n.labels?.[0] ?? null;
+    if (label === SFI) return str(p.statementType) ?? str(p.normalizedStatementType) ?? "Standard";
+    return label;
   };
   const orderOf = (n: RawNode): number | null => {
     if (d.numberFrom == null) return null;
