@@ -10,7 +10,7 @@
  *   discard_draft    — curator or approver. Two-phase.
  *
  * All three use the active grade/subject via getActiveAdapter() (same
- * convention as list_courses, get_course, etc.) — no explicit namespace
+ * convention as list_courses, walk_graph, etc.) — no explicit namespace
  * arg. authorize() runs inside each underlying function, so denials never
  * leak the diff and never issue tokens. (Curriculum EDITS are the generic
  * graph verbs — add_node / move_node / reposition / set_content — registered

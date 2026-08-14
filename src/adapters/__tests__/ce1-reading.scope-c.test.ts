@@ -161,7 +161,7 @@ describe("add_node — Material + set_content; the slice surfaces them", () => {
     expect(draft.edges.map((e) => e.id)).toContain(makeEdgeId(HAS_PART, activityId, materialId));
     // The Activity that Material hangs under is itself under the session Lesson —
     // the authored content is reachable in the draft content tree (the read is now
-    // the generic get_course subtree, not a cooked slice).
+    // the generic course subtree via walk_graph / courseSubgraph, not a cooked slice).
     expect(draft.edges.some((e) => e.id === makeEdgeId(HAS_PART, week1SessionLesson(draft), activityId))).toBe(true);
   }, 15000); // two two-phase mutations over the ~2000-node reading graph — heavier than the 5s default
 

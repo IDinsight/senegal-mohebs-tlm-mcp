@@ -10,6 +10,8 @@
  */
 
 export { addNode, type AddNodeArgs } from "./add-node.js";
+export { addNodes, type AddNodesArgs, type AddNodesItem } from "./add-nodes.js";
+export { createEdges, type CreateEdgesArgs, type CreateEdgesItem } from "./create-edges.js";
 export { moveNode, type MoveNodeArgs } from "./move-node.js";
 export { reposition, type RepositionArgs } from "./reposition.js";
 export { setContent, type SetContentArgs } from "./set-content.js";

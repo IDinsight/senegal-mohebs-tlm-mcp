@@ -19,6 +19,7 @@ import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { runGraphMutation, kgNamespace, linkNodes, unlinkNodes, deleteNode } from "../kg-store/index.js";
+import { createEdges } from "../kg-recipes/index.js";
 
 function activeNamespace(): string {
   const a = getActiveAdapter();
@@ -57,6 +58,40 @@ export function registerStructuralTools(server: McpServer) {
         namespace,
         mutation: linkNodes,
         args: { edgeType: a.edgeType, fromId: a.fromId, toId: a.toId, properties: a.properties ?? {}, namespace },
+        confirm: a.confirm,
+        token: a.confirmationToken,
+        coverage: activeCoverage(),
+      });
+      return asJson(result);
+    }),
+  );
+
+  // ── create_edges (batched) ─────────────────────────────────────────────────
+  server.registerTool(
+    "create_edges",
+    {
+      title: "Create many edges in one batch",
+      description:
+        "Add MANY edges in ONE atomic draft edit — the batch form of create_edge, for bulk wiring (e.g. 84 hasEducationalAlignment edges after an add_nodes pass). Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE combined diff + ONE confirmationToken; any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true and the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. DRAFT edit.",
+      inputSchema: {
+        edges: z.array(
+          z.object({
+            edgeType: z.string(),
+            fromId: z.string(),
+            toId: z.string(),
+            properties: z.record(JsonValue).optional(),
+          }),
+        ),
+        confirm: z.boolean().optional(),
+        confirmationToken: z.string().optional(),
+      },
+    },
+    guarded(async (a: { edges: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>; confirm?: boolean; confirmationToken?: string }) => {
+      const namespace = activeNamespace();
+      const result = await runGraphMutation({
+        namespace,
+        mutation: createEdges,
+        args: { namespace, edges: a.edges.map((edge) => ({ ...edge, properties: edge.properties ?? {} })) },
         confirm: a.confirm,
         token: a.confirmationToken,
         coverage: activeCoverage(),

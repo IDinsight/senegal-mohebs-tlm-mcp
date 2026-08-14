@@ -35,7 +35,7 @@ draft, link it via `usesRoutine`, dry-run returns diff + token + the minted `old
 id-map, confirm reuses it. The copy is independent of the library (drift is the accepted
 tradeoff).
 
-**Generation reads it, prompts slimmed (#79).** `get_course` already surfaces a Course's
+**Generation reads it, prompts slimmed (#79).** `walk_graph` already surfaces a Course's
 `usesRoutine` formatter, so the maths prompts were slimmed: the shared house style
 (palette, fonts, page setup, image compression) now lives **only** in the formatter, not
 the prompts. Verified live — a generated CI-maths chapter took its palette / typography /
@@ -106,7 +106,7 @@ spécifique`, `Lesson`, …), so the coverage/prune specs key on those (and iden
 table also acted as an in-scope allowlist, dropping it widens the parsed set for CI
 maths (Courses, Materials, derived-frame SFIs and the framework root now parse as
 units too). This is harmless downstream — generation reads the raw graph and edges
-(`get_course`/`get_standards`), not read-kinds; the reading prune still trims its
+(`walk_graph`/`get_standards`), not read-kinds; the reading prune still trims its
 scaffolding; coverage rules ignore the extra kinds — but it does change the stored
 node `type`, so **a re-seed of both subjects is required at rollout** for the live
 coverage/write path to match.
@@ -224,7 +224,7 @@ context** (§scope), so it sits in its own reserved namespace — but the store 
 one namespace at a time, edge-validation requires a target in the active graph, and
 generation walks only the active graph. A by-reference `usesRoutine` edge from a lesson
 to a routine in another namespace would be a **cross-namespace reference the
-architecture doesn't resolve** — `get_course` wouldn't even surface it. Copying
+architecture doesn't resolve** — `walk_graph` wouldn't even surface it. Copying
 localizes the reference at pick time: the clone lands in the active graph, so
 everything downstream (reads, validation, generation) works with no cross-namespace
 machinery. "Shared library" and "no cross-namespace resolution" together *force* copy.
@@ -302,7 +302,7 @@ at:
   other edit.
 - **Generation reads the resolved specs → tools, as today.** The generating model is
   *not* a human picking from a menu; it calls tools. It continues to read curriculum
-  via `get_course`/`get_standards`, which already surface a lesson's `usesRoutine`
+  via `walk_graph`/`get_standards`, which already surface a lesson's `usesRoutine`
   target and its `Material`s. The formatter resolves the same way (deliverable →
   formatter → `Material.content`), composed server-side into the prompt the model
   receives.
@@ -345,7 +345,7 @@ phase is independently shippable.
 
 1. **Wire routines into generation, slim the prompts.** Complete the routines note's
    "next phases": generation reads a lesson's `usesRoutine → steps → Material.content`
-   (via `get_course`, not the removed `buildGenerationContext`) and the Bucket-A
+   (via `walk_graph`, not the removed `buildGenerationContext`) and the Bucket-A
    structural prose is deleted from the prompt files. This *empties* the prompts of the
    logic that is moving to the graph, so later phases extract from a clean surface.
 2. **Relocate the subject profile to the config layer.** Move the five declarative

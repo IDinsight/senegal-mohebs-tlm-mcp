@@ -1,0 +1,269 @@
+/*
+ * walk_graph + namespace_stats — the generic graph reads
+ *
+ * Two layers:
+ *   • walkGraph (pure) — BFS mechanics on a small hand-built graph, where every
+ *     depth/filter/pagination assertion is exact: direction, edge/label filters,
+ *     depth truncation, cursor paging, includeEdges, unknown-node error.
+ *   • walkActiveGraph / namespaceStats (integration) — the tool cores against the
+ *     seeded CI-maths store: published vs draft slot, the draft role gate, the
+ *     orientation snapshot, and namespace scoping.
+ */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { CONFIG } from "../../config.js";
+import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../../context/index.js";
+import { resolveAdapter } from "../../adapters/index.js";
+import { serializeModel } from "../../curriculum/index.js";
+import { walkGraph } from "../../curriculum/index.js";
+import {
+  __setKgStoreForTest, createMemoryKgStore, kgNamespace, mintNodeId,
+  runGraphMutation, __resetMutationsForTest, __resetDraftTokensForTest,
+} from "../../kg-store/index.js";
+import { addNode } from "../../kg-recipes/index.js";
+import { __setStorageForTest } from "../../storage/index.js";
+import { __setActorForTest, type Actor } from "../../actor.js";
+import { activateContext } from "../../activate.js";
+import { walkActiveGraph, namespaceStats } from "../graph.js";
+import type { KgNodeStore, StoredMeta, MutationGraph } from "../../kg-store/index.js";
+import type { StorageAdapter, HistoryFile, CurriculumModel, RawGraphSnapshot } from "../../types.js";
+
+// ── Pure BFS on a hand-built graph ────────────────────────────────────────────
+// A tiny content tree: root(Course) → a,b (LessonGrouping) → a1,a2,b1 (Lesson),
+// plus one alignment edge a1 → sfi so edge-type filtering has something to skip.
+const SAMPLE: RawGraphSnapshot = {
+  nodes: [
+    { id: "root", labels: ["Course"], properties: {} },
+    { id: "a", labels: ["LessonGrouping"], properties: {} },
+    { id: "b", labels: ["LessonGrouping"], properties: {} },
+    { id: "a1", labels: ["Lesson"], properties: {} },
+    { id: "a2", labels: ["Lesson"], properties: {} },
+    { id: "b1", labels: ["Lesson"], properties: {} },
+    { id: "sfi", labels: ["StandardsFrameworkItem"], properties: {} },
+  ],
+  relationships: [
+    { id: "hasPart:root->a", type: "hasPart", start: "root", end: "a", properties: {} },
+    { id: "hasPart:root->b", type: "hasPart", start: "root", end: "b", properties: {} },
+    { id: "hasPart:a->a1", type: "hasPart", start: "a", end: "a1", properties: {} },
+    { id: "hasPart:a->a2", type: "hasPart", start: "a", end: "a2", properties: {} },
+    { id: "hasPart:b->b1", type: "hasPart", start: "b", end: "b1", properties: {} },
+    { id: "hasEducationalAlignment:a1->sfi", type: "hasEducationalAlignment", start: "a1", end: "sfi", properties: {} },
+  ],
+} as unknown as RawGraphSnapshot;
+
+const sampleModel = { rawGraph: SAMPLE } as unknown as CurriculumModel;
+const idsOf = (result: { nodes: Array<{ id: string }> }) => result.nodes.map((node) => node.id).sort();
+
+describe("walkGraph (pure BFS)", () => {
+  it("walks OUT over hasPart and skips edges not in edgeTypes", () => {
+    const result = walkGraph(sampleModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], maxDepth: 3 });
+    if ("error" in result) throw new Error(result.error);
+    // sfi is reachable only by the alignment edge, which we did not follow.
+    expect(idsOf(result)).toEqual(["a", "a1", "a2", "b", "b1", "root"]);
+    expect(result.truncated).toBe(false);
+    expect(result.edges!.length).toBe(5); // the five hasPart edges
+  });
+
+  it("emits only nodeTypes but still traverses THROUGH non-matching nodes", () => {
+    const result = walkGraph(sampleModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], nodeTypes: ["Lesson"] });
+    if ("error" in result) throw new Error(result.error);
+    // Groupings a,b are walked through but not emitted; only the three Lessons are.
+    expect(idsOf(result)).toEqual(["a1", "a2", "b1"]);
+  });
+
+  it("walks IN from a leaf up to its ancestors", () => {
+    const result = walkGraph(sampleModel, { fromId: "a1", direction: "in", edgeTypes: ["hasPart"] });
+    if ("error" in result) throw new Error(result.error);
+    expect(idsOf(result)).toEqual(["a", "a1", "root"]);
+  });
+
+  it("walks BOTH directions one hop from a middle node (up to its parent, down to its children)", () => {
+    const result = walkGraph(sampleModel, { fromId: "a", direction: "both", edgeTypes: ["hasPart"], maxDepth: 1 });
+    if ("error" in result) throw new Error(result.error);
+    expect(idsOf(result)).toEqual(["a", "a1", "a2", "root"]);
+  });
+
+  it("reports truncated when maxDepth cuts the walk", () => {
+    const result = walkGraph(sampleModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], maxDepth: 1 });
+    if ("error" in result) throw new Error(result.error);
+    expect(idsOf(result)).toEqual(["a", "b", "root"]);
+    expect(result.truncated).toBe(true);
+  });
+
+  it("pages through the whole walk with a cursor, no overlap or gaps", () => {
+    const collected: string[] = [];
+    let cursor: string | undefined;
+    // Small limit forces multiple pages over the 6-node walk.
+    for (let page = 0; page < 10; page++) {
+      const result = walkGraph(sampleModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], limit: 2, cursor });
+      if ("error" in result) throw new Error(result.error);
+      collected.push(...result.nodes.map((node) => node.id));
+      if (!result.nextCursor) break;
+      cursor = result.nextCursor;
+    }
+    // Every node exactly once.
+    expect(collected.sort()).toEqual(["a", "a1", "a2", "b", "b1", "root"]);
+    expect(new Set(collected).size).toBe(collected.length);
+  });
+
+  it("rejects a malformed cursor", () => {
+    const result = walkGraph(sampleModel, { fromId: "root", direction: "out", cursor: "!!!not-base64!!!" });
+    expect("error" in result && result.error).toMatch(/Invalid cursor/);
+  });
+
+  it("omits edges when includeEdges is false", () => {
+    const result = walkGraph(sampleModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], includeEdges: false });
+    if ("error" in result) throw new Error(result.error);
+    expect(result.edges).toBeUndefined();
+  });
+
+  it("returns an error for an unknown fromId", () => {
+    const result = walkGraph(sampleModel, { fromId: "nope", direction: "out" });
+    expect("error" in result && result.error).toMatch(/not found/);
+  });
+});
+
+// ── Integration: the tool cores against the seeded store ──────────────────────
+const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const fakeStorage: StorageAdapter = {
+  listDocuments: async () => [], getObjectMd5: async () => null, downloadDocx: async () => Buffer.from(""),
+  createUploadUrl: async () => ({ url: "", objectKey: "", contentType: "", expiresAt: "" }),
+  createDownloadUrl: async () => ({ url: "", objectKey: "", expiresAt: "", exists: false }),
+  readHistory: async () => emptyHistory, writeHistory: async () => {},
+};
+const CURATOR: Actor = { id: "curator-uid", email: "curator@test", role: "curator", unknown: false };
+const SIGNED_IN_NO_ROLE: Actor = { id: "guest-uid", email: "guest@test", unknown: false };
+
+const priorEnv = process.env.KG_SOURCE;
+let store: KgNodeStore;
+const contexts = listAvailableContexts();
+const targetCtx = contexts.find((c) => c.grade === "ci" && c.subject === "maths")!;
+const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
+
+async function seedFreshStore(): Promise<KgNodeStore> {
+  const freshStore = createMemoryKgStore();
+  for (const { workspace, grade, subject } of contexts) {
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
+    const adapter = resolveAdapter(grade, subject);
+    if (!adapter) continue;
+    const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
+    const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length };
+    await freshStore.writeSlot(kgNamespace(grade, subject), "a", { nodes, edges, meta });
+    await freshStore.ensurePointer(kgNamespace(grade, subject), "a");
+  }
+  return freshStore;
+}
+
+async function withActiveContext<T>(actor: Actor | null, fn: () => Promise<T>): Promise<T> {
+  const state = newSessionState();
+  return runInSession(state, async () => {
+    if (actor) __setActorForTest(actor);
+    else __setActorForTest(null);
+    const activation = await activateContext(targetCtx.workspace, targetCtx.grade, targetCtx.subject);
+    if (!activation.ok) throw new Error(`activate: ${activation.error}`);
+    return fn();
+  });
+}
+
+const coverage = (graph: MutationGraph): string[] => resolveAdapter("ci", "maths")!.coverageWarnings?.(graph as never) ?? [];
+
+// Stage a real draft edit (a new Lesson under the first chapter) so draft-slot
+// reads have something to reflect. Returns the new node's id.
+async function stageALessonEdit(): Promise<string> {
+  const [nodes] = await Promise.all([store.listNodes(ns, "a")]);
+  const chapter = nodes.find((node) => (node.labels ?? []).includes("LessonGrouping") && (node.properties?.raw as Record<string, unknown> | undefined)?.groupName === "Chapitre")!;
+  const newNodeId = mintNodeId();
+  const args = { namespace: ns, parentId: chapter.id, label: "Lesson", newNodeId, title: "Draft-only lesson" };
+  const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args, coverage });
+  if (preview.phase !== "preview") throw new Error("expected preview");
+  await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken, coverage });
+  return newNodeId;
+}
+
+beforeAll(() => { __setStorageForTest(fakeStorage); });
+beforeEach(async () => {
+  store = await seedFreshStore();
+  __setKgStoreForTest(store);
+  __resetMutationsForTest();
+  __resetDraftTokensForTest();
+  process.env.KG_SOURCE = "firestore";
+});
+afterAll(() => {
+  if (priorEnv === undefined) delete process.env.KG_SOURCE; else process.env.KG_SOURCE = priorEnv;
+  __setKgStoreForTest(null);
+});
+
+describe("namespace_stats", () => {
+  it("reports counts, roots, and a closed draft on a fresh seed", async () => {
+    const stats = await withActiveContext(CURATOR, namespaceStats);
+    expect(stats.namespace).toBe(ns);
+
+    const nodeCounts = stats.nodeCounts as Record<string, number>;
+    expect(nodeCounts.Lesson).toBeGreaterThan(0);
+    expect(nodeCounts.StandardsFrameworkItem).toBeGreaterThan(0);
+
+    const edgeCounts = stats.edgeCounts as Record<string, number>;
+    expect(edgeCounts.hasPart).toBeGreaterThan(0);
+
+    // CI maths has Course roots (the two content roots).
+    const roots = stats.roots as Array<{ labels: string[] }>;
+    expect(roots.some((root) => root.labels.includes("Course"))).toBe(true);
+
+    expect(stats.draft).toEqual({ open: false });
+    expect(stats.coverageFlags as string[]).toContain("no draft open");
+  });
+
+  it("reflects an open draft and its staged-edit count", async () => {
+    const stats = await withActiveContext(CURATOR, async () => {
+      await stageALessonEdit();
+      return namespaceStats();
+    });
+    const draft = stats.draft as { open: boolean; editsStaged?: number };
+    expect(draft.open).toBe(true);
+    expect(draft.editsStaged!).toBeGreaterThan(0);
+    expect(stats.coverageFlags as string[]).not.toContain("no draft open");
+  });
+});
+
+describe("walk_graph (tool core)", () => {
+  it("walks a course subtree from the published slot", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      const nodes = await store.listNodes(ns, "a");
+      const courseId = nodes.find((node) => (node.labels ?? []).includes("Course"))!.id;
+      return walkActiveGraph({ fromId: courseId, direction: "out", edgeTypes: ["hasPart", "hasChild"], maxDepth: 10 });
+    });
+    expect(result.slot).toBe("published");
+    expect((result.nodes as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  it("returns a no-draft notice for slot:draft when no draft is open", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      const nodes = await store.listNodes(ns, "a");
+      const courseId = nodes.find((node) => (node.labels ?? []).includes("Course"))!.id;
+      return walkActiveGraph({ fromId: courseId, direction: "out", slot: "draft" });
+    });
+    expect(result.noDraft).toBe(true);
+  });
+
+  it("sees a staged edit when walking slot:draft", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      const stagedId = await stageALessonEdit();
+      const nodes = await store.listNodes(ns, "a");
+      const chapter = nodes.find((node) => (node.labels ?? []).includes("LessonGrouping") && (node.properties?.raw as Record<string, unknown> | undefined)?.groupName === "Chapitre")!;
+      const walked = await walkActiveGraph({ fromId: chapter.id, direction: "out", edgeTypes: ["hasPart"], maxDepth: 2, slot: "draft" });
+      return { walked, stagedId };
+    });
+    const walkedNodeIds = (result.walked.nodes as Array<{ id: string }>).map((node) => node.id);
+    expect(walkedNodeIds).toContain(result.stagedId);
+  });
+
+  it("denies slot:draft to an actor without the draft-read role", async () => {
+    const result = await withActiveContext(SIGNED_IN_NO_ROLE, async () => {
+      const nodes = await store.listNodes(ns, "a");
+      const courseId = nodes.find((node) => (node.labels ?? []).includes("Course"))!.id;
+      return walkActiveGraph({ fromId: courseId, direction: "out", slot: "draft" });
+    });
+    expect(result.phase).toBe("unauthorized");
+  });
+});

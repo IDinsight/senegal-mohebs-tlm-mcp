@@ -52,12 +52,15 @@ spine** each lesson *teaches*). Read the graph directly; never work from memory.
 
 - **`list_courses`** — call this **first**. The teacher guide is the course **"Guide de
   l'enseignant"**. Take its `id`.
-- **`get_course(course)`** — the teacher-guide subtree as raw LC nodes + edges: its
+- **`walk_graph(fromId=<courseId>, direction="out", edgeTypes=["hasPart","hasChild","usesRoutine"], maxDepth=10)`**
+  — the teacher-guide subtree as raw LC nodes + edges: its
   **groupings** and their **lessons** (`Lesson`, in `position` order), plus the shared
   **"Fiche de leçon — enseignement explicite"** `InstructionalRoutine` (the fixed five-step
   structure — Déclencheur → Modelage → Nous faisons → Tu fais → Objectivation — with a per-step
   `Material` spec and its `timeRequired`). Read the routine: it is the authored version of the
-  step structure and timings below.
+  step structure and timings below. It **paginates** (default 100 nodes/page, max 500 via
+  `limit`) — pass the returned `nextCursor` back to fetch the rest of a large subtree, or narrow
+  it with `nodeTypes` to just the labels you need.
 - **`get_standards(nodeId)`** — for **each lesson**, the standards it teaches: the aligned
   `StandardsFrameworkItem` (its `description` is the objective, the **OS**), that OS's
   **`LearningComponent`s**, and the **illustrative `Activity`s** — as raw nodes + edges. This is
@@ -72,7 +75,7 @@ spine** each lesson *teaches*). Read the graph directly; never work from memory.
 
 **How to assemble a lesson from the graph:**
 
-1. From `get_course`, take the grouping's **lessons in `position` order**. The **Bilan**
+1. From the `walk_graph` result, take the grouping's **lessons in `position` order**. The **Bilan**
    (review) lesson is the one whose `educationalUse` is `Assessment`; the rest are ordinary
    lessons.
 2. For each lesson, `get_standards(lesson)` gives its **OS** (the aligned SFI's `description`),
@@ -145,7 +148,7 @@ itself stays in the pupil's manual only.
 
 **House style comes from the formatter.** The teacher-guide `Course` carries a **formatter** — a
 `usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is `"formatter"`, surfaced by
-`get_course`. Read its `Material.content` and apply the shared house style it defines: the
+`walk_graph`. Read its `Material.content` and apply the shared house style it defines: the
 **colour palette** (primary green, light green, grey, orange, white-on-green), the **typography**
 (Calibri; body/heading sizes) and the **page setup** (A4, margins, compact spacing). Those values
 live only in the formatter — do not restate them here.
@@ -199,7 +202,7 @@ its own page):
 
 **Step order, names and timings — from the routine.** The five step boxes, their order, names
 and timings come from the **"Fiche de leçon — enseignement explicite" `InstructionalRoutine`**
-(read via `get_course`): its five ordered step routines ARE the boxes — each step's
+(read via `walk_graph`): its five ordered step routines ARE the boxes — each step's
 `description` is the box name and its `timeRequired` (e.g. `PT4M` = 4 minutes) the duration.
 Render each header as `STEP — Name  (N minutes)`. (For the Bilan lesson the second box reads
 `JE FAIS — Rappel / Modelage`, per that step's spec.) Do not restate the structure from memory.
@@ -223,7 +226,7 @@ Render each header as `STEP — Name  (N minutes)`. (For the Bilan lesson the se
 ## Content of each step — read it from the routine
 
 **What to write in each box is the step's authored spec — each step routine's `Material.content`
-in the "Fiche de leçon" routine (`get_course`).** Follow it: each step's `Material.content`
+in the "Fiche de leçon" routine (`walk_graph`).** Follow it: each step's `Material.content`
 carries that step's teacher-facing spec, including the **lesson-type variants** (first lesson of
 the chapter / intermediate lesson / Bilan) and, for the Bilan, the **question split** across the
 boxes (question 1 modelled in Rappel/Modelage, 2–3 in Nous faisons, the rest in Tu fais). Do not

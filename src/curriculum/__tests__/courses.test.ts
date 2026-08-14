@@ -1,5 +1,5 @@
 /*
- * Generic Course readers (list_courses / get_course) — they surface raw LC
+ * Generic Course readers (coursesOf / courseSubgraph) — they surface raw LC
  * nodes with no projection. Exercised against the CI maths bundle (the one
  * subject with real Course nodes) and a subject with none.
  */

@@ -105,9 +105,11 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   // The typed, LC-grounded node-creation tools — one per node type. Each attaches
   // via its canonical LC edge and copies boilerplate from a sibling; content adds
   // take an optional alignTo (hasEducationalAlignment). See server/authoring.ts.
+  // `add_nodes` is the batched form — many typed adds in one atomic draft edit.
   const typedAdds = [
     "add_course", "add_lesson_grouping", "add_lesson", "add_activity", "add_assessment",
     "add_material", "add_learning_component", "add_standard_framework_item", "add_instructional_routine",
+    "add_nodes",
   ];
 
   const editable = {
@@ -116,12 +118,12 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       "Nodes are created via the TYPED authoring tools (see `typedAdds`); edges and deletions via the raw primitives (see `structural.verbs`); a node's ordinal and load-bearing content via the generic recipes (see `recipes` — reposition / set_content).",
     typedAdds,
     structural: {
-      verbs: ["create_edge", "delete_edges", "delete_nodes"],
+      verbs: ["create_edge", "create_edges", "delete_edges", "delete_nodes"],
       // delete_nodes ALWAYS cascades the dependent subtree; the dry-run warns
       // with the full set and nothing is removed until confirm — no force flag.
       cascade: "always-with-warning",
       note:
-        "create_edge adds an edge (usesRoutine / buildsTowards / relatesTo / hasDependency / an extra hasEducationalAlignment); edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across labels is not enforced (deferred to human review at publish). " +
+        "create_edge adds an edge (usesRoutine / buildsTowards / relatesTo / hasDependency / an extra hasEducationalAlignment); edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across labels is not enforced (deferred to human review at publish). create_edges is the batched form — many edges in one atomic draft edit (duplicate detection spans the batch AND the draft). " +
         "delete_edges removes an edge by id. " +
         "delete_nodes removes a node AND its dependent subtree (children, their children, …) plus every incident edge in one atomic mutation; the dry-run diff shows the full set that will vanish and WARNS with it — nothing is removed until you confirm, so seeing the cascade is the safety (no force flag). " +
         "To CREATE a node, use the typed authoring tools (see `typedAdds`), not create_edge.",
@@ -179,6 +181,17 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       "The catalog is a library of reusable instructional routines and formatters (house-style specs), read across TWO scopes: the cross-tenant SHARED library and the active workspace's own. list_catalog browses both — each entry tagged scope (shared|workspace) + kind (routine|formatter) — an ungated read. use_routine / use_formatter APPLY an entry (from either scope) by COPYING it: the entry's whole subtree is cloned with fresh ids into the active subject's DRAFT and linked via usesRoutine (a routine to a Lesson, a formatter to the Course/deliverable), so the copy is independent and later edits to the library entry do not reach it. Both are two-phase (dry-run returns diff + confirmationToken + a minted old→new id-map; confirm re-checks the token and applies to the draft) and curator-gated like any edit. Editing a catalog ENTRY is gated by its own namespace — shared entries need super_admin, workspace entries that tenant's curators. Seed a catalog namespace to populate it; it lists [] until then.",
   };
 
+  // ── discovery: the generic read tools for exploring the graph. Both are
+  // ungated reads; walk_graph's slot:"draft" mode is the one part that needs a
+  // role, so `canWalkDraft` mirrors the SAME draft-read gate diff_draft enforces
+  // (actions.canReadDraft) and cannot drift.
+  const discovery = {
+    tools: ["walk_graph", "namespace_stats"],
+    canWalkDraft: actions.canReadDraft,
+    note:
+      "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, paginated BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk.",
+  };
+
   return {
     actor: {
       id: actor.id,
@@ -198,6 +211,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       exists: draftExists,
       createdBy,
     },
+    discovery,
     editable,
     preview,
     audit,

@@ -139,13 +139,13 @@ verbs rather than a splice script — the splice is just faster for a one-shot b
 
 > **Superseded framing.** The `buildGenerationContext` adapter method named below has
 > since been removed — generation now reads the graph directly through
-> `get_course` / `get_standards`, which already surface a lesson's `usesRoutine` target
+> `walk_graph` / `get_standards`, which already surface a lesson's `usesRoutine` target
 > and its `Material`s. These two phases are now phase 1 of the broader
 > [`authorable-catalog.md`](authorable-catalog.md) plan, which turns routines (and
 > formatters) into a curator-picked catalog.
 
 1. **Feed the routine into generation.** Have generation resolve
-   `usesRoutine → steps → Material.content` (via `get_course`, not the removed
+   `usesRoutine → steps → Material.content` (via `walk_graph`, not the removed
    `buildGenerationContext`) and read the section specs from the graph instead of from
    prompt prose.
 2. **Slim the prompts.** Once (1) lands, delete the Bucket-A prose from

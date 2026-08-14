@@ -239,19 +239,27 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.rules.structural).toEqual([...STRUCTURAL_RULES]);
   });
 
-  it("editable.structural reports the graph primitives and always-with-warning cascade", async () => {
+  it("editable.structural reports the graph primitives (incl. batched create_edges) and always-with-warning cascade", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.editable.structural.verbs).toEqual(["create_edge", "delete_edges", "delete_nodes"]);
+    expect(caps.editable.structural.verbs).toEqual(["create_edge", "create_edges", "delete_edges", "delete_nodes"]);
     // delete_nodes always cascades the dependent subtree; the dry-run warns.
     expect(caps.editable.structural.cascade).toBe("always-with-warning");
   });
 
-  it("editable.typedAdds lists the 9 typed authoring tools", async () => {
+  it("editable.typedAdds lists the 9 typed authoring tools plus the batched add_nodes", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     expect(caps.editable.typedAdds).toEqual([
       "add_course", "add_lesson_grouping", "add_lesson", "add_activity", "add_assessment",
       "add_material", "add_learning_component", "add_standard_framework_item", "add_instructional_routine",
+      "add_nodes",
     ]);
+  });
+
+  it("discovery advertises walk_graph + namespace_stats, with canWalkDraft mirroring the draft-read gate", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    expect(caps.discovery.tools).toEqual(["walk_graph", "namespace_stats"]);
+    // canWalkDraft is the SAME gate diff_draft enforces — it cannot drift.
+    expect(caps.discovery.canWalkDraft).toBe(caps.actions.canReadDraft);
   });
 
   it("editable.coverageWarnings.enabled mirrors whether the adapter has a coverage hook (#13)", async () => {

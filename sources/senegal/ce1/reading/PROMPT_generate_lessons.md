@@ -31,11 +31,13 @@ You read the curriculum from a **knowledge graph** (canonical Learning-Commons f
 **content tree** and a **standards spine** each session *teaches*). Read the graph directly.
 
 - **`set_context(grade="ce1", subject="reading")`** — call once, first.
-- **`list_courses`** → **`get_course(course)`** — the teacher-guide course's subtree as raw LC
+- **`list_courses`** → **`walk_graph(fromId=<courseId>, direction="out", edgeTypes=["hasPart","hasChild","usesRoutine"], maxDepth=10)`** — the teacher-guide course's subtree as raw LC
   nodes + edges: its **week** groupings, their **`Jour 1–5`** day groupings, the day's **session
   lessons** (`Lesson`, in `position` order), and the shared **"Fiche de leçon"** `InstructionalRoutine`.
   This is the authoritative **structure** — produce exactly the sessions it returns, in order, with
-  the language/duration each carries. *(Reading has no `Course` node yet, so `get_course` returns
+  the language/duration each carries. It **paginates** (default 100 nodes/page, max 500 via `limit`) —
+  pass the returned `nextCursor` back to fetch the rest of a large subtree, or narrow it with
+  `nodeTypes` to just the labels you need. *(Reading has no `Course` node yet, so `walk_graph` returns
   nothing until one is authored — until then say the week's structure is missing, don't invent it.)*
 - **`get_standards(sessionId)`** — for **each session**, the standard it teaches: the aligned
   `StandardsFrameworkItem` (its `description` is the objective) + its `LearningComponent`s, as raw
@@ -104,7 +106,7 @@ If a section would be a single generic line, expand it to the exemplar's grain o
 
 ## Weekly session inventory (timetable) — read it from the graph
 
-The week's session timetable is **graph-native**: from `get_course` (the teacher-guide course), take the week grouping → its `Jour 1–5` day groupings → the day's session `Lesson`s in `position` order; `get_standards(session)` gives the standard each teaches. **Produce exactly the sessions the graph returns, in order, with the language and duration each carries.** Do not add, drop, or reorder sessions, and do not fall back to a remembered timetable — the graph is the single source of truth for structure.
+The week's session timetable is **graph-native**: from `walk_graph` (the teacher-guide course), take the week grouping → its `Jour 1–5` day groupings → the day's session `Lesson`s in `position` order; `get_standards(session)` gives the standard each teaches. **Produce exactly the sessions the graph returns, in order, with the language and duration each carries.** Do not add, drop, or reorder sessions, and do not fall back to a remembered timetable — the graph is the single source of truth for structure.
 
 Read each session's fields from its raw LC node (and `get_standards`) — the friendly names below map onto them (`position` → `ordre`, `description` → `titre`, the day grouping → `jour`, the aligned SFI → `standard`, etc.):
 
@@ -121,7 +123,7 @@ A week has **one** `remediation` session (Remédiation CGP, 60 mn). Several sess
 
 ## Authored content, when the graph carries it (activities & materials)
 
-A session may already carry its **authored, reviewed content** in the graph — the phase-by-phase script, curated and approved, not something to reinvent. In `get_course`, this hangs under the session `Lesson` (via `hasPart`):
+A session may already carry its **authored, reviewed content** in the graph — the phase-by-phase script, curated and approved, not something to reinvent. In the `walk_graph` result, this hangs under the session `Lesson` (via `hasPart`):
 
 - the session's **`Activity` children** — its **phases (Étapes)**, in `position` order. Each Activity carries its phase name (`description`), optional `studentGroupingType`, `timeRequired`, `educationalUse` (*Instruction* / *Assessment*), and its own `Material` children.
 - **`Material` nodes** (under an Activity, the session, or the week) — the **load-bearing content**: a name, `materialType` (*Core* / *Supporting* / *Reference*), and `content` — the actual scripted prose, steps, questions, or image-brief.
@@ -180,7 +182,7 @@ Compose the week's text(s) yourself and print them in full inside the relevant s
 
 **House style comes from the graph when present.** If the teacher-guide `Course` carries a
 **formatter** — a `usesRoutine` → `InstructionalRoutine` whose `metadata.catalogKind` is
-`"formatter"`, surfaced by `get_course` — apply the shared house-style spec in its
+`"formatter"`, surfaced by `walk_graph` — apply the shared house-style spec in its
 `Material.content` (palette, typography, page setup, image rules) as the source of truth for the
 shared look. The **reading-specific** conventions below (Andika for reading texts, the dark-blue
 Wolof localization flag, the bilingual layout) still apply on top. If the Course carries no
@@ -233,7 +235,7 @@ A clean **Word (.docx)**, named `Guide enseignant - Semaine N - CE1 Lecture.docx
 - [ ] Grammar/ortho/conj: Production attendue + manipulation before rule
 - [ ] CGP fiche: full diagnostic header + spine with a real syllable grid + concours
 - [ ] One autonomous reinvestment per day; 🔁 transfer scripted
-- [ ] Exactly the sessions the graph returns (`get_course` → week → days → sessions), in order, with each session's language/duration; none added, dropped, or reordered
+- [ ] Exactly the sessions the graph returns (`walk_graph` → week → days → sessions), in order, with each session's language/duration; none added, dropped, or reordered
 
 **Formatting & file**
 - [ ] Palette applied; Wolof dark-blue `#1F4E79` style applied to all L1 text (incl. L1 fragments in L2/L1-L2 sessions, as a localization flag); reading text in Andika; rules framed; phase rows shaded

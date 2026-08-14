@@ -145,7 +145,7 @@ export type Capabilities = {
 //     the storage round-trip is handled generically by curriculum/store-bridge.ts;
 //   - `model()` — the parsed CurriculumModel (memoized). The cooked per-unit
 //     projection (slice/listUnits/…) and buildGenerationContext were removed once
-//     generation moved to the generic graph readers (get_course / get_standards);
+//     generation moved to the generic graph readers (walk_graph / get_standards);
 //   - deliverables, capabilities, and the optional coverage hook, all
 //     synthesized from the profile.
 //
@@ -216,7 +216,7 @@ export interface SubjectAdapter {
   // tool layer can read raw LC nodes/edges without a subject projection. This is
   // now the ONLY read surface the adapter exposes: the cooked per-unit projection
   // (slice/listUnits/progression/…) and buildGenerationContext were removed once
-  // generation moved to the generic graph readers (list_courses / get_course /
+  // generation moved to the generic graph readers (list_courses / walk_graph /
   // get_standards) — see docs/design-notes/logic-in-the-graph.md.
   model(): CurriculumModel;
 
