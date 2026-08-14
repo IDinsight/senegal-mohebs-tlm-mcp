@@ -1,12 +1,36 @@
 # Authorable catalog — subjects as data, curators as authors
 
-> **Status: Proposal — direction agreed, not yet built.** This note sets a target
-> and a build order; no code implements it yet. It extends
+> **Status: Proposal — first slice of the catalog built (2026-08-14).** This note sets
+> the target and build order. Most of it (the config layer, the routine→generation
+> wiring, formatters) is still a proposal, but the **routine catalog itself is now
+> implemented** for browse + copy-onto-lesson — see "What shipped" below. It extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing
 > layer, and it revises the "Next phases" of the routines note (which still names the
-> since-removed `buildGenerationContext`). Decisions recorded here are defaults chosen
-> on 2026-08-14; revisit them before implementing each phase.
+> since-removed `buildGenerationContext`). Decisions were chosen on 2026-08-14; **D2
+> was revised from by-reference to copy-on-use during implementation** (see below).
+
+## What shipped (the routine catalog)
+
+The first slice is live in code (not yet seeded to the live store):
+
+- **A shared library in a reserved namespace** (`CATALOG_NAMESPACE`), shaped as a root
+  `InstructionalRoutine` container holding the entry routines (→ steps → Materials).
+  Seeded by `scripts/seed-catalog.mjs` (`npm run seed:catalog`), which extracts every
+  subject's routine subtrees and re-homes them under one root — today the two CI-maths
+  routines are its first entries.
+- **`list_catalog`** — an ungated read that browses the entries (id, name, summary,
+  ordered steps, material count).
+- **`use_routine`** — curator-gated, two-phase: it **copies** an entry's subtree with
+  fresh ids into the active subject's draft and links the lesson via `usesRoutine`
+  (see D2). Dry-run returns the diff + token + the minted `old → new` id-map; confirm
+  reuses the map so both phases build the identical clone.
+- **`get_capabilities`** carries a `catalog` mirror; `canUse` is sourced from the same
+  `apply` gate `use_routine` enforces.
+
+Not yet done: seeding the live store + a server redeploy (the tools are code), the MCP
+**resources** browse surface (D5 — `list_catalog` is a tool for now), the **formatter**
+kind, and re-copy/detach ergonomics.
 
 ## The goal
 
@@ -94,27 +118,34 @@ misconception distractors" or the Wolof/French bilingual patterns) stays as auth
 per-subject prompt text for now — those resist becoming reusable blocks, and forcing
 them into the catalog on day one would be over-generalisation.
 
-### Picking an entry: reference, with an escape hatch
+### Picking an entry: copy it
 
-When a curator picks a catalog entry for a lesson, the lesson **points at the shared
-entry** — it does not get a private copy. This is already how the graph works: 112
-lessons share one routine node, so fixing a typo in that routine fixes it everywhere
-at once. That is the behaviour we want: DRY, consistent, edit-once.
+When a curator applies a catalog entry to a lesson, the entry is **copied** — its whole
+subtree (the entry routine, its steps, their Materials) is cloned with fresh ids into
+the active subject's graph, and the lesson's `usesRoutine` edge points at the *clone*,
+not the library entry. The copy is independent thereafter.
 
-The failure mode of pure by-reference is that a curator can't tweak *one* lesson
-without changing all of them. So we add a **"detach to customize"** action: an explicit
-fork that clones the shared entry into a lesson-local copy, after which edits to that
-lesson stay local. This is the component-instance-override pattern — reference by
-default, private copy only when someone deliberately asks for one.
+This is settled by where the catalog lives. The library is **shared across every
+context** (§scope), so it sits in its own reserved namespace — but the store hydrates
+one namespace at a time, edge-validation requires a target in the active graph, and
+generation walks only the active graph. A by-reference `usesRoutine` edge from a lesson
+to a routine in another namespace would be a **cross-namespace reference the
+architecture doesn't resolve** — `get_course` wouldn't even surface it. Copying
+localizes the reference at pick time: the clone lands in the active graph, so
+everything downstream (reads, validation, generation) works with no cross-namespace
+machinery. "Shared library" and "no cross-namespace resolution" together *force* copy.
 
-**Decision (D2):** **by-reference by default, plus explicit detach-to-customize.** The
-extra machinery (a fork operation, and marking an attachment as detached) is worth it:
-it is the difference between a catalog people trust to edit and one they are afraid to
-touch.
+**Decision (D2):** **copy-on-use** (revised from an earlier by-reference proposal). The
+accepted tradeoff is **drift** — a later edit to a library entry does **not** reach
+copies already made; independence is what the copy buys. (Auto-propagation would
+require by-reference, which in turn would require either a single-namespace library —
+not shared — or the cross-namespace resolution deferred to a later phase. See §"how
+far", and note that cross-subject sharing is arguably more a *formatter* need than a
+routine need.)
 
-*Concrete:* fix a wording error in the shared "explicit teaching" routine → every
-attached lesson gets the fix, except any a curator had explicitly detached to hold a
-local variant.
+*Concrete:* a curator picks "Fiche de leçon" for a new lesson → its 5-step subtree is
+cloned into that subject, the lesson uses the clone, and the curator can tune the clone
+without touching the library or any other lesson.
 
 ### Scope: a shared library plus per-workspace entries
 
@@ -267,10 +298,10 @@ files are gone.
 | # | Decision | Chosen default |
 |---|---|---|
 | D1 | One catalog or two | **One** `kind`-tagged spec-block catalog, reusing the routine substrate |
-| D2 | Reference vs copy on pick | **By-reference + explicit detach-to-customize** |
-| D3 | Catalog scope | **Shared library *and* per-workspace entries** |
-| D4 | Where authored data lives | **Content → LC `Material` nodes; profile → separate config layer** (both via the curator loop) |
-| D5 | Curator browse surface | **Resources to browse; tools to attach and to generate** |
+| D2 | Reference vs copy on pick | **Copy-on-use** (revised from by-reference; forced by a shared cross-namespace library — copy localizes the reference; tradeoff = drift) |
+| D3 | Catalog scope | **Shared library** (reserved namespace, read by every context); per-workspace entries deferred |
+| D4 | Where authored data lives | **Content → LC nodes** (catalog = a reserved-namespace routine graph); profile → separate config layer (later phase) |
+| D5 | Curator browse surface | **Tool for now** (`list_catalog`); MCP resources deferred. `use_routine` attaches |
 | D6 | Build order | **Routine wiring first → profile to config → catalog → dissolve residue** |
 | D7 | Residual per-subject logic | **Generic mechanism switched by config** (no node-authorable prune language) |
 
