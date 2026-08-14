@@ -97,7 +97,7 @@ Both subjects declare the same three tabs: **thematic**, **planification**, **ge
 - **Generic** — `node-type`.
 
 `buildViewConfig` picks the thematic anchor by which kinds are present (`domaine` → maths hierarchy;
-else `standard` → reading strand grouping). The backend is covered by `src/kg-export.test.ts`; the
+else `standard` → reading strand grouping). The backend is covered by `src/__tests__/kg-export.test.ts`; the
 static frontend (`hosting/public/index.html`) is data-driven and adapts — **re-verify in-browser after
 `gcloud run deploy` (the /kg endpoint) + `firebase deploy --only hosting`.**
 
@@ -140,7 +140,7 @@ EVERY raw edge verbatim (`ci/maths`: 501 nodes / 877 edges; `ce1/reading`: 1968 
 `parity:kg-store`. Non-spine nodes are dropped by `parse` at read time exactly as in a bundle read.
 
 **Re-export.** Because the store IS the raw graph, `toRawEnvelope(storedNodes, storedEdges)`
-reproduces the source `knowledge_graph.json` (guarded by `src/curriculum/faithful-reexport.test.ts`)
+reproduces the source `knowledge_graph.json` (guarded by `src/curriculum/__tests__/faithful-reexport.test.ts`)
 — the store can replace the bundle. The explorer surfaces the whole graph: spine categories plus a
 neutral `framework` legend bucket for non-spine nodes and the `supports`/`relatesTo` cross-links.
 See `docs/design-notes/kg-explorer-findings.md` §1 for the original spine-only analysis (superseded).

@@ -7,7 +7,7 @@
 This is the internal design note for the graph-mutation framework in
 [`src/kg-store/mutations.ts`](../../../src/kg-store/mutations.ts). No user-facing
 graph edit tool is exposed by this step; the framework only ships with an
-internal test-only mutation ([`src/kg-store/mutations.test.ts`](../../../src/kg-store/mutations.test.ts)).
+internal test-only mutation ([`src/kg-store/__tests__/mutations.test.ts`](../../../src/kg-store/__tests__/mutations.test.ts)).
 
 ## Two lifecycles, one thin shared convention
 
@@ -44,7 +44,7 @@ token because they have nothing to reconcile against a base version.
 "stages a draft edit on namespace '…'; nothing reaches generation until
 you separately publish the draft." Document tools always say "writes NOW
 to the live bucket/history (no draft, no undo)." This is asserted in
-[`mutations.test.ts`](../../../src/kg-store/mutations.test.ts).
+[`mutations.test.ts`](../../../src/kg-store/__tests__/mutations.test.ts).
 
 ## Draft-apply mechanism
 

@@ -110,4 +110,4 @@ Draft-only preview ships now; the comparison is a follow-on.
 - `server/preview.ts` — `preview_generation` + `create_preview_upload_url` (+ testable cores).
 - `server/index.ts` — register the preview tools.
 - `server/capabilities.ts` — `canPreview` action + `preview` block.
-- `server/preview.test.ts` — draft-reflects-edit, no-draft, isolation, segregation, role matrix, scoping, parity.
+- `server/__tests__/preview.test.ts` — draft-reflects-edit, no-draft, isolation, segregation, role matrix, scoping, parity.
