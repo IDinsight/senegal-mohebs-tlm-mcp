@@ -80,20 +80,22 @@ export type NodeTemplate = {
 // The subset of BOILERPLATE_KEYS an example node actually carries in its raw props.
 function boilerplateOf(example: MutationNode): Record<string, unknown> {
   const raw = rawOf(example);
-  const out: Record<string, unknown> = {};
-  for (const k of BOILERPLATE_KEYS) if (raw[k] !== undefined) out[k] = raw[k];
-  return out;
+  const boilerplate: Record<string, unknown> = {};
+  for (const key of BOILERPLATE_KEYS) {
+    if (raw[key] !== undefined) boilerplate[key] = raw[key];
+  }
+  return boilerplate;
 }
 
-const rawOf = (n: MutationNode): Record<string, any> => (n.properties?.raw as Record<string, any>) ?? {};
+const rawOf = (node: MutationNode): Record<string, any> => (node.properties?.raw as Record<string, any>) ?? {};
 
 // The raw path(s) a node stores its ordinal at — read off a node so a created
 // sibling mirrors the SAME source convention (some sources, e.g. CI maths, carry
 // BOTH `raw.position` AND `raw.metadata.order` as mirrors; the parser reads one,
 // so a faithful node must set every one the source uses). move/reposition write
 // back to the node's OWN set. Empty → the caller defaults to `["raw.position"]`.
-export function orderPathsOf(n: MutationNode): string[] {
-  const raw = rawOf(n);
+export function orderPathsOf(node: MutationNode): string[] {
+  const raw = rawOf(node);
   const paths: string[] = [];
   if (raw.position !== undefined) paths.push("raw.position");
   if (raw.metadata?.order !== undefined) paths.push("raw.metadata.order");
@@ -108,7 +110,7 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
   // example actually has it (standards nodes do; canonical content groupings don't),
   // and synthesised for a first-of-kind only for standards labels.
   const isGrouping = GROUPING_LABELS.has(label);
-  const example = graph.nodes.find((n) => (n.labels ?? []).includes(label));
+  const example = graph.nodes.find((node) => (node.labels ?? []).includes(label));
   if (example) {
     const raw = rawOf(example);
     const orderPaths = orderPathsOf(example);
@@ -139,5 +141,5 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
 // labels this build doesn't enumerate). Used by add_node's validation.
 export function isKnownLabel(graph: MutationGraph, label: string): boolean {
   if (CONTENT_LABELS.has(label) || STANDARDS_LABELS.has(label) || label === "LearningComponent") return true;
-  return graph.nodes.some((n) => (n.labels ?? []).includes(label));
+  return graph.nodes.some((node) => (node.labels ?? []).includes(label));
 }

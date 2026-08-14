@@ -31,41 +31,79 @@ const isSfi = (n: MutationNode): boolean => (n.labels ?? []).includes("Standards
 
 export const addNode: GraphMutation<AddNodeArgs> = {
   name: "addNode",
-  describe: (a) => `create a '${a.label}' under '${a.parentId}'${a.alignTo ? ` (aligned to '${a.alignTo}')` : ""}`,
-  validate: (base, _after, a) => {
+  describe: (args) => `create a '${args.label}' under '${args.parentId}'${args.alignTo ? ` (aligned to '${args.alignTo}')` : ""}`,
+  validate: (base, _after, args) => {
     const errors: string[] = [];
-    if (typeof a.label !== "string" || a.label.length === 0) errors.push(`add_node: 'label' (the LC node label) is required.`);
-    else if (!isKnownLabel(base, a.label)) errors.push(`add_node: '${a.label}' is not a known LC label on this namespace (and none exists to copy). Known content labels: Course, LessonGrouping, Lesson, Activity, Material.`);
-    if (a.parentId && !nodeById(base, a.parentId)) errors.push(`add_node: parent '${a.parentId}' does not exist in the draft.`);
-    if (base.nodes.some((n) => n.id === a.newNodeId)) errors.push(`add_node: minted id '${a.newNodeId}' already exists (retry).`);
-    if (a.alignTo) {
-      const target = nodeById(base, a.alignTo);
-      if (!target) errors.push(`add_node: alignTo '${a.alignTo}' does not exist — a node can only align to a standard that already exists.`);
-      else if (!isSfi(target)) errors.push(`add_node: alignTo '${a.alignTo}' is not a StandardsFrameworkItem; alignment targets a standard.`);
+    if (typeof args.label !== "string" || args.label.length === 0) errors.push(`add_node: 'label' (the LC node label) is required.`);
+    else if (!isKnownLabel(base, args.label)) errors.push(`add_node: '${args.label}' is not a known LC label on this namespace (and none exists to copy). Known content labels: Course, LessonGrouping, Lesson, Activity, Material.`);
+    if (args.parentId && !nodeById(base, args.parentId)) errors.push(`add_node: parent '${args.parentId}' does not exist in the draft.`);
+    if (base.nodes.some((node) => node.id === args.newNodeId)) errors.push(`add_node: minted id '${args.newNodeId}' already exists (retry).`);
+    if (args.alignTo) {
+      const target = nodeById(base, args.alignTo);
+      if (!target) errors.push(`add_node: alignTo '${args.alignTo}' does not exist — a node can only align to a standard that already exists.`);
+      else if (!isSfi(target)) errors.push(`add_node: alignTo '${args.alignTo}' is not a StandardsFrameworkItem; alignment targets a standard.`);
     }
     return { errors, warnings: [] };
   },
-  apply: (base, a) => {
+  apply: (base, args) => {
     // apply() runs before validate() on the dry-run, so a bad parent id must
     // return base (→ clean "blocked" from validate) rather than throw here.
-    if (a.parentId && !nodeById(base, a.parentId)) return base;
-    const template = deriveTemplate(base, a.label);
-    const edge = a.via ?? containmentEdgeFor(a.label);
-    const position = a.position ?? (a.parentId ? nextPosition(base, a.parentId, edge) : 1);
-    const isAssessment = a.properties?.educationalUse === "Assessment";
-    const props = buildCreatedProps(template, { id: a.newNodeId, title: a.title, title_en: a.title_en, position, isAssessment, extraRaw: a.properties });
-    let g = createNode.apply(base, { kind: template.kind, properties: props, namespace: a.namespace, aliases: {}, newNodeId: a.newNodeId, labels: template.labels });
+    if (args.parentId && !nodeById(base, args.parentId)) return base;
+
+    const template = deriveTemplate(base, args.label);
+    const edgeType = args.via ?? containmentEdgeFor(args.label);
+    const position = args.position ?? (args.parentId ? nextPosition(base, args.parentId, edgeType) : 1);
+    const isAssessment = args.properties?.educationalUse === "Assessment";
+
+    const properties = buildCreatedProps(template, {
+      id: args.newNodeId,
+      title: args.title,
+      title_en: args.title_en,
+      position,
+      isAssessment,
+      extraRaw: args.properties,
+    });
+    let graph = createNode.apply(base, {
+      kind: template.kind,
+      properties,
+      namespace: args.namespace,
+      aliases: {},
+      newNodeId: args.newNodeId,
+      labels: template.labels,
+    });
+
     // Root node (no parentId, e.g. Course) — no containment edge. Otherwise:
     // containment (hasPart/hasChild) points parent→child; `supports`
     // (LearningComponent→SFI) points child→parent, so the new node is the source.
-    if (a.parentId) {
-      g = edge === "supports"
-        ? linkNodes.apply(g, { edgeType: edge, fromId: a.newNodeId, toId: a.parentId, properties: {}, namespace: a.namespace })
-        : linkNodes.apply(g, { edgeType: edge, fromId: a.parentId, toId: a.newNodeId, properties: { orderInParent: position }, namespace: a.namespace });
+    if (args.parentId) {
+      if (edgeType === "supports") {
+        graph = linkNodes.apply(graph, {
+          edgeType,
+          fromId: args.newNodeId,
+          toId: args.parentId,
+          properties: {},
+          namespace: args.namespace,
+        });
+      } else {
+        graph = linkNodes.apply(graph, {
+          edgeType,
+          fromId: args.parentId,
+          toId: args.newNodeId,
+          properties: { orderInParent: position },
+          namespace: args.namespace,
+        });
+      }
     }
-    if (a.alignTo && nodeById(base, a.alignTo)) {
-      g = linkNodes.apply(g, { edgeType: ALIGNMENT_EDGE, fromId: a.newNodeId, toId: a.alignTo, properties: {}, namespace: a.namespace });
+
+    if (args.alignTo && nodeById(base, args.alignTo)) {
+      graph = linkNodes.apply(graph, {
+        edgeType: ALIGNMENT_EDGE,
+        fromId: args.newNodeId,
+        toId: args.alignTo,
+        properties: {},
+        namespace: args.namespace,
+      });
     }
-    return g;
+    return graph;
   },
 };
