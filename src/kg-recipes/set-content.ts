@@ -18,19 +18,22 @@ export type SetContentArgs = RecipeCommon & {
 
 export const setContent: GraphMutation<SetContentArgs> = {
   name: "setContent",
-  describe: (a) => `set the content of '${a.nodeId}'`,
-  validate: (base, _after, a) => {
+  describe: (args) => `set the content of '${args.nodeId}'`,
+  validate: (base, _after, args) => {
     const errors: string[] = [];
-    if (!nodeById(base, a.nodeId)) errors.push(`set_content: node '${a.nodeId}' does not exist in the draft.`);
-    if (typeof a.content !== "string" || a.content.length === 0) errors.push(`set_content: 'content' is required (to remove content, delete the node instead).`);
+    if (!nodeById(base, args.nodeId)) errors.push(`set_content: node '${args.nodeId}' does not exist in the draft.`);
+    if (typeof args.content !== "string" || args.content.length === 0) errors.push(`set_content: 'content' is required (to remove content, delete the node instead).`);
     return { errors, warnings: [] };
   },
-  apply: (base, a) => {
-    const node = nodeById(base, a.nodeId);
+  apply: (base, args) => {
+    const node = nodeById(base, args.nodeId);
     if (!node) return base;
-    return {
-      nodes: base.nodes.map((n) => (n.id === a.nodeId ? { ...n, properties: writeAtPath(n.properties, MATERIAL_CONTENT_PATH, a.content) } : n)),
-      edges: base.edges,
-    };
+
+    const nodesWithContent = base.nodes.map((candidate) => {
+      if (candidate.id !== args.nodeId) return candidate;
+      const properties = writeAtPath(candidate.properties, MATERIAL_CONTENT_PATH, args.content);
+      return { ...candidate, properties };
+    });
+    return { nodes: nodesWithContent, edges: base.edges };
   },
 };

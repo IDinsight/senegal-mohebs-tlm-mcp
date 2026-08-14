@@ -16,15 +16,16 @@ export type RepositionArgs = RecipeCommon & {
 
 export const reposition: GraphMutation<RepositionArgs> = {
   name: "reposition",
-  describe: (a) => `set the position of '${a.nodeId}' to ${a.position}`,
-  validate: (base, _after, a) => {
+  describe: (args) => `set the position of '${args.nodeId}' to ${args.position}`,
+  validate: (base, _after, args) => {
     const errors: string[] = [];
-    if (!nodeById(base, a.nodeId)) errors.push(`reposition: node '${a.nodeId}' does not exist in the draft.`);
-    if (typeof a.position !== "number" || !Number.isFinite(a.position)) errors.push(`reposition: 'position' must be a number.`);
+    if (!nodeById(base, args.nodeId)) errors.push(`reposition: node '${args.nodeId}' does not exist in the draft.`);
+    if (typeof args.position !== "number" || !Number.isFinite(args.position)) errors.push(`reposition: 'position' must be a number.`);
     return { errors, warnings: [] };
   },
-  apply: (base, a) => {
-    if (!nodeById(base, a.nodeId)) return base;
-    return { nodes: setPosition(base.nodes, a.nodeId, a.position), edges: base.edges };
+  apply: (base, args) => {
+    if (!nodeById(base, args.nodeId)) return base;
+    const repositionedNodes = setPosition(base.nodes, args.nodeId, args.position);
+    return { nodes: repositionedNodes, edges: base.edges };
   },
 };

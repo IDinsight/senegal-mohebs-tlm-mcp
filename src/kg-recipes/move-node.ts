@@ -20,37 +20,56 @@ export type MoveNodeArgs = RecipeCommon & {
   position?: number;     // within-target order; defaults to appending
 };
 
-const labelOf = (n: { labels?: string[] } | undefined): string => n?.labels?.[0] ?? "";
+const labelOf = (node: { labels?: string[] } | undefined): string => node?.labels?.[0] ?? "";
 
 export const moveNode: GraphMutation<MoveNodeArgs> = {
   name: "moveNode",
-  describe: (a) => `move '${a.nodeId}' under '${a.toParentId}'`,
-  validate: (base, _after, a) => {
+  describe: (args) => `move '${args.nodeId}' under '${args.toParentId}'`,
+  validate: (base, _after, args) => {
     const errors: string[] = [];
-    const node = nodeById(base, a.nodeId);
-    const parent = nodeById(base, a.toParentId);
-    if (!node) errors.push(`move_node: node '${a.nodeId}' does not exist in the draft.`);
-    if (!parent) errors.push(`move_node: target parent '${a.toParentId}' does not exist in the draft.`);
-    if (a.nodeId === a.toParentId) errors.push(`move_node: a node cannot be its own parent.`);
+    const node = nodeById(base, args.nodeId);
+    const parent = nodeById(base, args.toParentId);
+
+    if (!node) errors.push(`move_node: node '${args.nodeId}' does not exist in the draft.`);
+    if (!parent) errors.push(`move_node: target parent '${args.toParentId}' does not exist in the draft.`);
+    if (args.nodeId === args.toParentId) errors.push(`move_node: a node cannot be its own parent.`);
+
     if (node) {
-      const edge = a.via ?? containmentEdgeFor(labelOf(node));
-      if (parentEdgeIds(base, a.nodeId, edge).length === 0)
-        errors.push(`move_node: '${a.nodeId}' has no '${edge}' parent to move from (pass 'via' to name the axis).`);
+      const nodeLabel = labelOf(node);
+      const edgeType = args.via ?? containmentEdgeFor(nodeLabel);
+      if (parentEdgeIds(base, args.nodeId, edgeType).length === 0) {
+        errors.push(`move_node: '${args.nodeId}' has no '${edgeType}' parent to move from (pass 'via' to name the axis).`);
+      }
     }
     return { errors, warnings: [] };
   },
-  apply: (base, a) => {
-    const node = nodeById(base, a.nodeId);
-    const parent = nodeById(base, a.toParentId);
+  apply: (base, args) => {
+    const node = nodeById(base, args.nodeId);
+    const parent = nodeById(base, args.toParentId);
     if (!node || !parent) return base;
-    const edge = a.via ?? containmentEdgeFor(labelOf(node));
-    // Detach every current parent on this axis, then attach the new one.
-    let g = base;
-    for (const edgeId of parentEdgeIds(g, a.nodeId, edge)) g = unlinkNodes.apply(g, { edgeId });
-    const position = a.position ?? nextPosition(g, a.toParentId, edge);
-    g = linkNodes.apply(g, { edgeType: edge, fromId: a.toParentId, toId: a.nodeId, properties: { orderInParent: position }, namespace: a.namespace });
-    // Keep the node's own POSITION consistent with its new slot.
-    g = { nodes: setPosition(g.nodes, a.nodeId, position), edges: g.edges };
-    return g;
+
+    const nodeLabel = labelOf(node);
+    const edgeType = args.via ?? containmentEdgeFor(nodeLabel);
+
+    // Detach the node from every current parent on this axis before re-attaching.
+    let graph = base;
+    for (const edgeId of parentEdgeIds(graph, args.nodeId, edgeType)) {
+      graph = unlinkNodes.apply(graph, { edgeId });
+    }
+
+    // Attach it under the new parent, appending unless a position was given.
+    const position = args.position ?? nextPosition(graph, args.toParentId, edgeType);
+    graph = linkNodes.apply(graph, {
+      edgeType,
+      fromId: args.toParentId,
+      toId: args.nodeId,
+      properties: { orderInParent: position },
+      namespace: args.namespace,
+    });
+
+    // Keep the node's own POSITION field consistent with its new slot.
+    const repositionedNodes = setPosition(graph.nodes, args.nodeId, position);
+    graph = { nodes: repositionedNodes, edges: graph.edges };
+    return graph;
   },
 };
