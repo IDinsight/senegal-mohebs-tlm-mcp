@@ -6,20 +6,20 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
-import { CONFIG } from "../config.js";
-import { listAvailableContexts, subjectDir } from "../context/index.js";
-import { resolveAdapter } from "../adapters/index.js";
-import { serializeModel, toRawEnvelope } from "../curriculum/index.js";
+import { CONFIG } from "../../config.js";
+import { listAvailableContexts, subjectDir } from "../../context/index.js";
+import { resolveAdapter } from "../../adapters/index.js";
+import { serializeModel, toRawEnvelope } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace, runGraphMutation, mintNodeId,
   edgeId as makeEdgeId, __resetMutationsForTest, __resetDraftTokensForTest,
-} from "../kg-store/index.js";
-import type { MutationGraph, StoredMeta, KgNodeStore, StoredNode, StoredEdge } from "../kg-store/index.js";
-import { CATALOG_NAMESPACE, cloneRoutineSubtree, listCatalogEntries, useRoutine } from "../kg-recipes/index.js";
-import { readCatalogGraph } from "./catalog.js";
-import { __setStorageForTest } from "../storage/index.js";
-import { __setActorForTest, type Actor } from "../actor.js";
-import type { StorageAdapter, HistoryFile, CurriculumModel } from "../types.js";
+} from "../../kg-store/index.js";
+import type { MutationGraph, StoredMeta, KgNodeStore, StoredNode, StoredEdge } from "../../kg-store/index.js";
+import { CATALOG_NAMESPACE, cloneRoutineSubtree, listCatalogEntries, useRoutine } from "../../kg-recipes/index.js";
+import { readCatalogGraph } from "../catalog.js";
+import { __setStorageForTest } from "../../storage/index.js";
+import { __setActorForTest, type Actor } from "../../actor.js";
+import type { StorageAdapter, HistoryFile, CurriculumModel } from "../../types.js";
 
 const emptyHistory: HistoryFile = { version: 2, entries: [] };
 const fakeStorage: StorageAdapter = {

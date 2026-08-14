@@ -6,11 +6,11 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine } from "./catalog.js";
-import { edgeId, type MutationEdge, type MutationGraph, type MutationNode } from "../kg-store/index.js";
-import { CONFIG } from "../config.js";
-import { subjectDir } from "../context/index.js";
-import type { RawGraphSnapshot } from "../types.js";
+import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine } from "../catalog.js";
+import { edgeId, type MutationEdge, type MutationGraph, type MutationNode } from "../../kg-store/index.js";
+import { CONFIG } from "../../config.js";
+import { subjectDir } from "../../context/index.js";
+import type { RawGraphSnapshot } from "../../types.js";
 
 const NS = "test/catalog";
 
