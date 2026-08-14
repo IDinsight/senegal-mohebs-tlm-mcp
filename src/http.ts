@@ -285,6 +285,16 @@ async function main() {
     if (!session) {
       if (req.method === "POST" && isInitializeRequest(req.body)) {
         session = newSession();
+      } else if (sessionId) {
+        // A session id was sent but we don't hold it — the server restarted (a deploy
+        // drops all in-memory sessions) or the session expired. Per the MCP spec this
+        // is a 404, NOT a 400: 404 tells the client to start a NEW session by
+        // re-initializing. It reconnects transparently, and restoreUserContext() then
+        // reloads this user's grade/subject from the bucket — so a redeploy needs NO
+        // manual reconnect. Returning 400 here made clients treat it as a hard error
+        // and stall (the "set_context rejected" symptom after a deploy).
+        res.status(404).json({ jsonrpc: "2.0", error: { code: -32001, message: "Session not found or expired — start a new session by re-initializing." }, id: (req.body && req.body.id) ?? null });
+        return;
       } else {
         res.status(400).json({ jsonrpc: "2.0", error: { code: -32000, message: "Bad Request: no valid session. Send an initialize request first." }, id: null });
         return;
