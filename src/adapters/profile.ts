@@ -93,24 +93,11 @@ export type DeliverableMatch = z.infer<typeof deliverableMatchSchema>;
 export type ParseProfile = z.infer<typeof parseSchema>;
 export type PruneSpec = z.infer<typeof pruneSchema>;
 
-// Migration shim: drop keys the schema no longer declares so a core seeded
-// BEFORE they were retired still validates against the now-strict schema (the
-// deploy→re-seed window reads old cells). Only `coverage` is stripped — any
-// OTHER unknown key still fails `.strict()`, so typo protection holds. Remove
-// this once every namespace has been re-seeded.
-//   - `coverage` — retired: coverage is prose in the guide (review_draft).
-function dropRetiredKeys(raw: unknown): unknown {
-  if (!raw || typeof raw !== "object") return raw;
-  const core = { ...(raw as Record<string, unknown>) };
-  delete core.coverage;
-  return core;
-}
-
 // Validate a profile literal (the machine `core`). Throws a readable error
 // naming the offending path so a bad profile fails loudly at the boundary,
 // never as a silent mis-parse deep in a read.
 export function validateProfile(raw: unknown, context = "subject profile"): SubjectProfile {
-  const result = subjectProfileSchema.safeParse(dropRetiredKeys(raw));
+  const result = subjectProfileSchema.safeParse(raw);
   if (!result.success) {
     const issues = result.error.issues
       .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
