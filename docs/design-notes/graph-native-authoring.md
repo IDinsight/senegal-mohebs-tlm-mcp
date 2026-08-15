@@ -576,6 +576,17 @@ payload-shape / idempotency, not new capability:
   keeps the diff alongside `counts`. Applied on both dry-run and confirm. Storage/audit
   unchanged. **Breaking** for callers that parsed `diff` off the response. Shaping lives in
   `server/batch.ts`.
+  - **Extended to `publish_draft` / `discard_draft`** (a later 252-edit draft on the same
+    namespace showed their dry-runs echo the *whole-draft* diff — even larger — and blow the
+    same cap, so callers couldn't extract the `confirmationToken`). Same `returnMode` param,
+    same `"summary"` default, same `counts` contract (reusing `batch.ts`'s `countsOf`); shaping
+    lives in `server/lifecycle.ts`. `warnings` are kept **verbatim in both modes** — coverage
+    flags are load-bearing for an approver before promoting. The staged `profileDiff` is dropped
+    in summary like the graph diff (the "(includes a subject-profile change)" note stays on the
+    action/message). The commit results were already diff-free, so only the dry-run changed.
+    `diff_draft` remains the endpoint for the full diff on demand. **Breaking** for callers that
+    parsed `diff` off a publish/discard response. Advertised in `get_capabilities` under
+    `lifecycle`.
 - **`walk_graph` default `limit` 50** (was 100; ceiling still 500). A framework-root walk of
   156 SFIs blew the token cap on the old default. Pagination is the expected path — the
   response always carries `nextCursor` plus two independent flags: **`truncatedByLimit`** (the
