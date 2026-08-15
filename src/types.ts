@@ -216,7 +216,7 @@ export interface SubjectAdapter {
   // tool layer can read raw LC nodes/edges without a subject projection. This is
   // now the ONLY read surface the adapter exposes: the cooked per-unit projection
   // (slice/listUnits/progression/…) and buildGenerationContext were removed once
-  // generation moved to the generic graph readers (list_courses / walk_graph /
+  // generation moved to the generic graph readers (walk_graph /
   // get_standards) — see docs/design-notes/logic-in-the-graph.md.
   model(): CurriculumModel;
 

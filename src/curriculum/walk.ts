@@ -20,7 +20,7 @@ type RawNode = RawGraphSnapshot["nodes"][number];
 type RawEdge = RawGraphSnapshot["relationships"][number];
 
 // A bare node/edge as returned to the caller — raw LC labels + properties, the
-// same shape list_courses / get_standards surface.
+// same shape get_standards surfaces.
 type NodeOut = { id: string; labels: string[]; properties: Record<string, unknown> };
 type EdgeOut = { id: string; type: string; start: string; end: string; properties: Record<string, unknown> };
 

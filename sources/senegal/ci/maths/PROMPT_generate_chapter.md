@@ -16,7 +16,7 @@ You do **not** receive raw JSON files. The CI mathematics curriculum lives in a 
 
 ### Tools to call
 
-- **`list_courses`** — call this **first**. Lists the subject's `Course` nodes; the pupil manual is the course **"Outil de l'élève"**. Take its `id`.
+- **`namespace_stats`** — call this **first**. Its `roots` array lists the subject's content roots; each root is `{ id, labels, description }`. The pupil manual is the Course root — the entry whose `labels` include `"Course"` and whose `description` is **"Outil de l'élève"**. Take its `id`.
 - **`walk_graph(fromId=<courseId>, direction="out", edgeTypes=["hasPart","hasChild","usesRoutine"], maxDepth=10)`** — the whole pupil-book subtree as raw LC nodes + edges: the **chapters** (`LessonGrouping`, one per chapter — its `position` is the chapter number), each chapter's **lessons** (`Lesson`) and their **activities/materials**, plus the **"Manuel de l'élève — structure d'un chapitre"** `InstructionalRoutine` (the fixed section template — amorce → je retiens → … → bilan — and its per-section `Material` specs). Find the `LessonGrouping` for your chapter and read the routine. It **paginates** (default 100 nodes/page, max 500 via `limit`) — pass the returned `nextCursor` back to fetch the rest of a large subtree, or narrow it with `nodeTypes` to just the labels you need.
 - **`get_standards(nodeId)`** — for **each lesson**, this returns the standards it teaches: the aligned `StandardsFrameworkItem` (its `description` is the objective text, the **OS**), that OS's **`LearningComponent`s**, and the **illustrative `Activity`s** — as raw nodes + edges. This is where the OS text + components + tasks come from. *(If it returns empty `nodes`, that lesson is not yet wired to the spine — say the OS is missing rather than invent it.)*
 - **`get_terminology(query)`** — the official French/Wolof wording for a term. **Take only the French — never the Wolof** (chapters are French only). If it returns nothing, say the wording is missing rather than invent it.
@@ -26,7 +26,7 @@ You do **not** receive raw JSON files. The CI mathematics curriculum lives in a 
 
 ### How to build a chapter's content
 
-1. `list_courses` → take the **"Outil de l'élève"** course id.
+1. `namespace_stats` → from its `roots`, pick the Course (the entry whose `labels` include `"Course"` and whose `description` is **"Outil de l'élève"**) → take its `id`.
 2. `walk_graph` → find your chapter's `LessonGrouping`; read its lessons and the **"structure d'un chapitre"** routine (the section template — see CHAPTER STRUCTURE below).
 3. For **each lesson** under the chapter, call `get_standards(lesson)` → the OS text, its learning components, and illustrative tasks. Plan activities from these — at least one per non-bilan lesson (ideally two); track which lesson each component and task belongs to.
 4. Reuse the **established characters** (read a recent earlier chapter via `list_documents` / `get_document_text`); adopt a **fresh example domain** (`suggest_fresh_domain`).
