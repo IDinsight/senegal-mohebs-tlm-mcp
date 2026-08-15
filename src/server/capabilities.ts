@@ -106,17 +106,17 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   const editable = {
     scope: "batched node/edge authoring + generic recipes",
     note:
-      "Nodes are created via `add_nodes` (one or many — see `batch`, with the per-kind property catalog in `batch.kindProperties`); edges via create_edge / create_edges; deletions via delete_edges / delete_nodes (see `structural.verbs`); a node's ordinal and load-bearing content via the generic recipes (see `recipes` — reposition / set_content).",
+      "Nodes are created via `add_nodes` (one or many — see `batch`, with the per-kind property catalog in `batch.kindProperties`); edges via `create_edges` (one or many); deletions via delete_edges / delete_nodes (see `structural.verbs`); a node's ordinal and load-bearing content via the generic recipes (see `recipes` — reposition / set_content).",
     structural: {
-      verbs: ["create_edge", "create_edges", "delete_edges", "delete_nodes"],
+      verbs: ["create_edges", "delete_edges", "delete_nodes"],
       // delete_nodes ALWAYS cascades the dependent subtree; the dry-run warns
       // with the full set and nothing is removed until confirm — no force flag.
       cascade: "always-with-warning",
       note:
-        "create_edge adds an edge (usesRoutine / buildsTowards / relatesTo / hasDependency / an extra hasEducationalAlignment); edge id is deterministic (`<type>:<from>-><to>`) and edge-type LEGALITY across labels is not enforced (deferred to human review at publish). create_edges is the batched form — many edges in one atomic draft edit (duplicate detection spans the batch AND the draft). " +
+        "create_edges adds one edge or many (usesRoutine / buildsTowards / relatesTo / hasDependency / an extra hasEducationalAlignment); edge id is deterministic (`<type>:<from>-><to>`), duplicate detection spans the batch AND the draft, and edge-type LEGALITY across labels is not enforced (deferred to human review at publish). It replaced the single create_edge. " +
         "delete_edges removes an edge by id. " +
         "delete_nodes removes a node AND its dependent subtree (children, their children, …) plus every incident edge in one atomic mutation; the dry-run diff shows the full set that will vanish and WARNS with it — nothing is removed until you confirm, so seeing the cascade is the safety (no force flag). " +
-        "To CREATE a node, use the typed authoring tools (see `typedAdds`), not create_edge.",
+        "To CREATE a node, use `add_nodes`, not create_edges.",
     },
     recipes,
     // The batched writes and their response/idempotency controls, advertised so

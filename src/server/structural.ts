@@ -1,11 +1,10 @@
 /*
- * Module: server · tool group: raw graph primitives
+ * Module: server · tool group: edge + deletion verbs
  *
- * The low-level edge/node verbs — create_edge, delete_edges, delete_nodes.
- * Node CREATION is the typed authoring tools (server/authoring.ts); these are
- * the escape hatch for edges the typed adds don't set (usesRoutine,
- * buildsTowards, relatesTo, hasDependency, an extra hasEducationalAlignment) and
- * for deletions. All share the pattern:
+ * The edge/deletion verbs — create_edges, delete_edges, delete_nodes. Node
+ * CREATION is add_nodes (server/authoring.ts); create_edges is the escape hatch
+ * for edges add_nodes doesn't set (usesRoutine, buildsTowards, relatesTo,
+ * hasDependency, an extra hasEducationalAlignment). All share the pattern:
  *
  *   • Two-phase confirm (dry-run returns diff + confirmationToken; confirm
  *     applies to the DRAFT only).
@@ -18,7 +17,7 @@ import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
-import { runGraphMutation, kgNamespace, linkNodes, unlinkNodes, deleteNode } from "../kg-store/index.js";
+import { runGraphMutation, kgNamespace, unlinkNodes, deleteNode } from "../kg-store/index.js";
 import { createEdges } from "../kg-recipes/index.js";
 import { runBatchMutation, type ReturnMode } from "./batch.js";
 import { idempotencyPayloadHash } from "./idempotency.js";
@@ -64,43 +63,13 @@ export async function runCreateEdges(a: {
 }
 
 export function registerStructuralTools(server: McpServer) {
-  // ── create_edge ──────────────────────────────────────────────────────────
-  server.registerTool(
-    "create_edge",
-    {
-      title: "Create an edge between two nodes",
-      description:
-        "Add an edge of `edgeType` from `fromId` to `toId`. Both endpoints must already exist in the draft. This is the escape hatch for edges the typed add tools don't set for you — `usesRoutine` (apply a routine to a Lesson/Course/Activity), `buildsTowards` / `relatesTo` / `hasDependency` (standard or content prerequisites), or an extra `hasEducationalAlignment`. Edge id is deterministic — the same (type, from, to) triple always produces the same id, and re-creating the same triple is rejected as a duplicate. Edge-type legality across labels is a judgment for the reviewer at publish, not enforced here. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken; call again with confirm:true and the token to stage the edit on the draft.",
-      inputSchema: {
-        edgeType: z.string(),
-        fromId: z.string(),
-        toId: z.string(),
-        properties: z.record(JsonValue).optional(),
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown>; confirm?: boolean; confirmationToken?: string }) => {
-      const namespace = activeNamespace();
-      const result = await runGraphMutation({
-        namespace,
-        mutation: linkNodes,
-        args: { edgeType: a.edgeType, fromId: a.fromId, toId: a.toId, properties: a.properties ?? {}, namespace },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: activeCoverage(),
-      });
-      return asJson(result);
-    }),
-  );
-
-  // ── create_edges (batched) ─────────────────────────────────────────────────
+  // ── create_edges ───────────────────────────────────────────────────────────
   server.registerTool(
     "create_edges",
     {
-      title: "Create many edges in one batch",
+      title: "Create edges (one or many) in one batch",
       description:
-        "Add MANY edges in ONE atomic draft edit — the batch form of create_edge, for bulk wiring (e.g. 84 hasEducationalAlignment edges after an add_nodes pass). Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE confirmationToken; any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true and the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. " +
+        "The edge-creation tool — add ONE edge or MANY in one atomic draft edit (it replaced the single create_edge). Use it for edges add_nodes doesn't set: `usesRoutine` (apply a routine to a Lesson/Course/Activity), `buildsTowards` / `relatesTo` / `hasDependency` (prerequisites), or an extra `hasEducationalAlignment`. Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE confirmationToken; any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true and the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. " +
         "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff; 'full' also attaches the whole `diff`. " +
         "`idempotencyKey` (optional): a unique key (a UUID) makes a RETRIED confirm safe — same key + same payload replays the first apply's summary with `replayed:true` (no double-apply/audit) instead of REPLAY; same key + different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Namespace-scoped, 24h TTL. Omit for strict single-use. DRAFT edit.",
       inputSchema: {
@@ -130,7 +99,7 @@ export function registerStructuralTools(server: McpServer) {
     {
       title: "Delete an edge",
       description:
-        "Remove one edge by its `edgeId`. Edge ids are deterministic (`edgeId = <type>:<from>-><to>`) — get one from a prior create_edge preview, from diff_draft, or from the graph. Removing an edge cannot orphan a node (the node just becomes less connected); the dangling-edge check only cares about surviving edges. Use this to detach a node before delete_nodes if you want to keep the (now-detached) subtree. REQUIRES CONFIRMATION.",
+        "Remove one edge by its `edgeId`. Edge ids are deterministic (`edgeId = <type>:<from>-><to>`) — get one from a prior create_edges preview, from diff_draft, or from the graph. Removing an edge cannot orphan a node (the node just becomes less connected); the dangling-edge check only cares about surviving edges. Use this to detach a node before delete_nodes if you want to keep the (now-detached) subtree. REQUIRES CONFIRMATION.",
       inputSchema: {
         edgeId: z.string(),
         confirm: z.boolean().optional(),

@@ -1,9 +1,9 @@
 /*
- * Recipe: create_edges (batched)
+ * Recipe: create_edges (one or many)
  *
- * Add MANY edges in one atomic draft edit — the batch form of create_edge, so
- * wiring (e.g. 84 hasEducationalAlignment edges after a bulk add_nodes) is one
- * dry-run + one confirm. Every edge runs the same single-edge `linkNodes`,
+ * Add ONE edge or MANY in one atomic draft edit, so wiring (e.g. 84
+ * hasEducationalAlignment edges after a bulk add_nodes) is one dry-run + one
+ * confirm. Every edge runs the same single-edge `linkNodes`,
  * folded over an accumulating graph, so the batch is ONE mutation → one diff →
  * one confirmation token → one apply audit record.
  *
@@ -17,8 +17,8 @@
 import { linkNodes, type GraphMutation, type LinkNodesArgs } from "../kg-store/index.js";
 import { RecipeCommon } from "./shared.js";
 
-// One edge to create — the same fields create_edge takes, minus the namespace
-// (shared across the batch).
+// One edge to create — edgeType + endpoints (+ optional properties); the
+// namespace is shared across the batch.
 export type CreateEdgesItem = {
   edgeType: string;
   fromId: string;
