@@ -1,16 +1,17 @@
 # Typed authoring tools — an LC-grounded mutation surface
 
-> **Status: Implemented.** Replaced the generic `add_node`/`move_node` and the raw
-> `create_node`/`link_nodes`/`unlink_nodes`/`delete_node` tools with a **typed,
-> per-LC-label** authoring surface: 9 typed adds in `src/server/authoring.ts` over
-> the internal `addNode` core, the renamed primitives `create_edge`/`delete_edges`/
-> `delete_nodes` in `src/server/structural.ts`, and `reposition`/`set_content` in
-> `src/server/recipes.ts`. Boilerplate is copied from a sibling node
-> (`kg-recipes/lc.ts`). It builds on
-> [`graph-native-authoring.md`](graph-native-authoring.md) and the direction in
-> [`logic-in-the-graph.md`](logic-in-the-graph.md) (experts author the graph; tools
-> stay thin). Node/edge specifics are grounded in
-> [`../reference/learning-commons/`](../reference/learning-commons/).
+> **Status: RETIRED — superseded by `add_nodes`.** The 9 per-LC-label typed adds
+> (`add_lesson`, `add_standard_framework_item`, …) were removed: they were thin
+> facades over the same `addNode` recipe, so **`add_nodes`** (one node or many,
+> `src/server/authoring.ts`) now covers every case. The per-kind property
+> vocabulary they documented was preserved in `KIND_PROPERTIES` (mirrored by
+> `get_capabilities` under `editable.batch.kindProperties`) and in the `add_nodes`
+> tool description, so nothing was lost. Read the per-tool sections below as
+> historical; the LC grounding they describe still applies to `add_nodes`'
+> `kind` + `properties`. The edge/delete primitives (`create_edge`/`create_edges`/
+> `delete_edges`/`delete_nodes`) and `reposition`/`set_content` are unchanged.
+> Boilerplate is still copied from a sibling node (`kg-recipes/lc.ts`). Current
+> surface: [`graph-native-authoring.md`](graph-native-authoring.md).
 
 ## Why typed, not generic
 

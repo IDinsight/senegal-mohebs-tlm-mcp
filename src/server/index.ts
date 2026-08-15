@@ -38,7 +38,7 @@ export function buildServer(): McpServer {
   registerLifecycleTools(server);    // diff_draft, publish_draft, discard_draft
   registerStructuralTools(server);   // create_edge, delete_edges, delete_nodes (raw graph primitives)
   registerRecipeTools(server);       // reposition, set_content (ordinal + content edits)
-  registerAuthoringTools(server);    // add_course/lesson_grouping/lesson/activity/assessment/material/learning_component/standard_framework_item/instructional_routine (typed LC adds)
+  registerAuthoringTools(server);    // add_nodes (the single node-creation tool — one or many; replaced the per-label typed adds)
   registerCatalogTools(server);      // list_catalog, use_routine (shared routine catalog — browse + copy-onto-lesson)
   registerCapabilityTools(server);   // get_capabilities (read-only mirror of what the caller can do)
   registerAuditTools(server);        // read_audit (approver-only, read-only reader over the append-only audit log)

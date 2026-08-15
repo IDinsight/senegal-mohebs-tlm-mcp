@@ -28,6 +28,7 @@ import {
   kgNamespace, getKgStore, STRUCTURAL_RULES,
 } from "../kg-store/index.js";
 import { RECIPES, SHARED_CATALOG_NAMESPACE, catalogNamespace } from "../kg-recipes/index.js";
+import { KIND_PROPERTIES } from "./authoring.js";
 
 // The five actions this server has today. Kept as a const-tuple so the
 // response shape is stable and the mirror-property test can iterate over
@@ -102,21 +103,10 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     list: RECIPES.map((r) => ({ name: r.name, summary: r.summary, params: r.params })),
   };
 
-  // The typed, LC-grounded node-creation tools — one per node type. Each attaches
-  // via its canonical LC edge and copies boilerplate from a sibling; content adds
-  // take an optional alignTo (hasEducationalAlignment). See server/authoring.ts.
-  // `add_nodes` is the batched form — many typed adds in one atomic draft edit.
-  const typedAdds = [
-    "add_course", "add_lesson_grouping", "add_lesson", "add_activity", "add_assessment",
-    "add_material", "add_learning_component", "add_standard_framework_item", "add_instructional_routine",
-    "add_nodes",
-  ];
-
   const editable = {
-    scope: "graph primitives + typed adds + generic recipes",
+    scope: "batched node/edge authoring + generic recipes",
     note:
-      "Nodes are created via the TYPED authoring tools (see `typedAdds`); edges and deletions via the raw primitives (see `structural.verbs`); a node's ordinal and load-bearing content via the generic recipes (see `recipes` — reposition / set_content).",
-    typedAdds,
+      "Nodes are created via `add_nodes` (one or many — see `batch`, with the per-kind property catalog in `batch.kindProperties`); edges via create_edge / create_edges; deletions via delete_edges / delete_nodes (see `structural.verbs`); a node's ordinal and load-bearing content via the generic recipes (see `recipes` — reposition / set_content).",
     structural: {
       verbs: ["create_edge", "create_edges", "delete_edges", "delete_nodes"],
       // delete_nodes ALWAYS cascades the dependent subtree; the dry-run warns
@@ -130,15 +120,20 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     },
     recipes,
     // The batched writes and their response/idempotency controls, advertised so
-    // callers can feature-detect returnMode + idempotencyKey.
+    // callers can feature-detect returnMode + idempotencyKey and look up the
+    // per-kind property vocabulary the retired typed adds used to document.
     batch: {
       tools: ["add_nodes", "create_edges"],
       params: ["returnMode", "idempotencyKey"],
       returnModes: ["summary", "full"],
       defaultReturnMode: "summary",
       idempotencyTtlHours: 24,
+      // kind → the canonical LC props that kind accepts in an add_nodes item's
+      // `properties` bag. add_nodes is THE node-creation tool (one or many); the
+      // per-label typed adds were retired in favour of it.
+      kindProperties: KIND_PROPERTIES,
       note:
-        "add_nodes / create_edges apply a whole batch as ONE atomic draft edit (one diff, one token, one audit record). returnMode defaults to 'summary' — a compact `counts` object instead of the full diff (which is ~200 KB for an 84-item batch); pass 'full' to also get the diff. idempotencyKey (a client-chosen UUID) makes a RETRIED confirm a safe replay (same key + same payload → the first apply's summary with replayed:true, no double-apply/audit; different payload → IDEMPOTENCY_KEY_MISMATCH). Keys are namespace-scoped and expire after 24h; omit for strict single-use tokens.",
+        "add_nodes creates one node or many; create_edges wires many edges — each a whole batch as ONE atomic draft edit (one diff, one token, one audit record). add_nodes REPLACED the per-label typed adds (add_lesson/add_material/…): pass `kind` (the LC label) + a `properties` bag; `kindProperties` lists what each kind accepts. returnMode defaults to 'summary' — a compact `counts` object instead of the full diff (~200 KB for an 84-item batch); pass 'full' to also get the diff. idempotencyKey (a client-chosen UUID) makes a RETRIED confirm a safe replay (same key + same payload → the first apply's summary with replayed:true, no double-apply/audit; different payload → IDEMPOTENCY_KEY_MISMATCH). Keys are namespace-scoped and expire after 24h; omit for strict single-use tokens.",
     },
     coverageWarnings: {
       // Whether the active subject's adapter emits completeness warnings.

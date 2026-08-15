@@ -561,7 +561,7 @@ apply.
 - **`create_edges(edges[], …)`** — the batch form of `create_edge`. Duplicate detection
   spans both the batch and the current draft. Recipe: `kg-recipes/create-edges.ts`.
 
-`get_capabilities` advertises all four (batched writes under `editable.typedAdds` /
+`get_capabilities` advertises all four (batched writes under `editable.batch` /
 `editable.structural.verbs`; the reads under a new `discovery` block).
 
 ### Payload shape + idempotency (follow-on, live)
