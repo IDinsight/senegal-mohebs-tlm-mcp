@@ -279,6 +279,12 @@ faithful-re-export stay green.
 
 ### Open (next increments)
 
+- **Remove `deliverables` → graph-linked documents.** The profile's `deliverables`
+  concept is superseded: a generated document is identified by the **graph node it
+  covers**, not a `(unit, deliverable)` coordinate (the manual-vs-lessons split is
+  the which-Course split, structurally). This retires `deliverables`, `get_prompt`,
+  and the filename-classification half of `reconcile`. Designed in
+  [`graph-linked-documents.md`](graph-linked-documents.md) (proposal).
 - *Guides authored for all three subjects.* `ci/maths` (two-parent axis + bilan),
   `ce1/reading` (bilingual week→day→session, one-parent, skill-area alignment), and
   `primary-1-3/maths` (standards-only NERDC hierarchy, browse-not-author). Further
