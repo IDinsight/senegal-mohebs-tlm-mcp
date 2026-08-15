@@ -19,6 +19,7 @@ import { registerLifecycleTools } from "./lifecycle.js";
 import { registerStructuralTools } from "./structural.js";
 import { registerRecipeTools } from "./recipes.js";
 import { registerAuthoringTools } from "./authoring.js";
+import { registerProfileTools } from "./profile.js";
 import { registerCatalogTools } from "./catalog.js";
 import { registerCapabilityTools } from "./capabilities.js";
 import { registerAuditTools } from "./audit.js";
@@ -39,6 +40,7 @@ export function buildServer(): McpServer {
   registerStructuralTools(server);   // create_edges, delete_edges, delete_nodes (edge + deletion verbs)
   registerRecipeTools(server);       // edit_node (content / position / title edits — replaced reposition + set_content)
   registerAuthoringTools(server);    // add_nodes (the single node-creation tool — one or many; replaced the per-label typed adds)
+  registerProfileTools(server);      // get_profile, edit_profile (subject profile as authored config — phase 2b)
   registerCatalogTools(server);      // list_catalog, use_routine (shared routine catalog — browse + copy-onto-lesson)
   registerCapabilityTools(server);   // get_capabilities (read-only mirror of what the caller can do)
   registerAuditTools(server);        // read_audit (approver-only, read-only reader over the append-only audit log)

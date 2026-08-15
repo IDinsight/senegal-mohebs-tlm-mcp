@@ -20,6 +20,11 @@ import type { SubjectAdapter } from "../types.js";
 import { ContextNotSetError, listAvailableContexts, sessionState } from "../context/index.js";
 import { buildAdapterFromProfile } from "./build.js";
 import { validateProfile, type SubjectProfile } from "./profile.js";
+
+// Re-export the profile schema surface so cross-module callers (e.g. the
+// edit_profile server tool) reach it through this barrel, per the layering rule.
+export { validateProfile } from "./profile.js";
+export type { SubjectProfile } from "./profile.js";
 import { CI_MATHS_PROFILE } from "./profiles/ci-maths.js";
 import { CE1_READING_PROFILE } from "./profiles/ce1-reading.js";
 import { NIGERIA_MATHS_PROFILE } from "./profiles/nigeria-maths.js";
@@ -49,6 +54,23 @@ const PROFILES: Record<string, SubjectProfile> = Object.fromEntries(
 export function resolveAdapter(grade: string, subject: string): SubjectAdapter | null {
   const profile = PROFILES[`${grade}/${subject}`];
   return profile ? buildAdapterFromProfile(profile, grade, subject) : null;
+}
+
+// The in-repo profile literal for a (grade, subject), already validated at load.
+// This is the seed's SOURCE and the fallback the firestore path uses for a
+// namespace seeded before the config layer existed (no config cell yet).
+export function getRegisteredProfile(grade: string, subject: string): SubjectProfile | null {
+  return PROFILES[`${grade}/${subject}`] ?? null;
+}
+
+// Build an adapter from a profile READ FROM THE STORE (phase 2b) rather than the
+// in-repo literal. The stored record is untrusted JSON, so it goes through the
+// SAME Zod guard the load-time registry uses — a malformed stored profile throws
+// a readable error here (surfaced by activate.ts as a refuse-to-load) instead of
+// mis-parsing a whole workspace silently.
+export function buildAdapterFromStoredProfile(grade: string, subject: string, raw: unknown): SubjectAdapter {
+  const profile = validateProfile(raw, `stored profile for ${grade}/${subject}`);
+  return buildAdapterFromProfile(profile, grade, subject);
 }
 
 // Test-only surface: register a profile against an arbitrary (grade, subject)

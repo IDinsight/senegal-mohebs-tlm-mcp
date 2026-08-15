@@ -5,14 +5,14 @@
  * Firestore backend's slot + pointer model so the same lifecycle tests
  * exercise both implementations. No network, no persistence.
  */
-import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
+import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredConfig, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
 import { otherSlot } from "./types.js";
 import { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";
 
-type SlotBucket = { nodes: Map<string, StoredNode>; edges: Map<string, StoredEdge>; meta: StoredMeta | null };
+type SlotBucket = { nodes: Map<string, StoredNode>; edges: Map<string, StoredEdge>; meta: StoredMeta | null; config: StoredConfig | null };
 type Namespace = { slots: Record<Slot, SlotBucket>; pointer: StoredPointer | null };
 
-const emptySlot = (): SlotBucket => ({ nodes: new Map(), edges: new Map(), meta: null });
+const emptySlot = (): SlotBucket => ({ nodes: new Map(), edges: new Map(), meta: null, config: null });
 
 export function createMemoryKgStore(): KgNodeStore {
   const namespaces = new Map<string, Namespace>();
@@ -31,19 +31,29 @@ export function createMemoryKgStore(): KgNodeStore {
     async listNodes(namespace, slot) { return [...ensureNs(namespace).slots[slot].nodes.values()]; },
     async listEdges(namespace, slot) { return [...ensureNs(namespace).slots[slot].edges.values()]; },
     async readMeta(namespace, slot) { return ensureNs(namespace).slots[slot].meta; },
+    async readConfig(namespace, slot) { return ensureNs(namespace).slots[slot].config; },
     async readPointer(namespace) { return ensureNs(namespace).pointer; },
 
     async writeSlot(namespace, slot, batch, audit) {
       const n = ensureNs(namespace);
       // Replace-wholesale so a re-write for the same slot converges to identical
-      // state — no stale documents left behind.
+      // state — no stale documents left behind. The profile config cell is a
+      // SEPARATE concern (writeConfig owns it), so it's preserved across a graph
+      // rewrite — mirroring firestore, where writeSlot never touches configA/B.
       n.slots[slot] = {
         nodes: new Map(batch.nodes.map((v) => [v.id, { ...v, namespace, slot }])),
         edges: new Map(batch.edges.map((v) => [v.id, { ...v, namespace, slot }])),
         meta: { ...batch.meta },
+        config: n.slots[slot].config,
       };
       // Atomic in the memory backend: the state write above and the audit push
       // below share a single synchronous block — no interleaving is possible.
+      if (audit) auditLog.push({ ...audit });
+    },
+
+    async writeConfig(namespace, slot, config, audit) {
+      const n = ensureNs(namespace);
+      n.slots[slot] = { ...n.slots[slot], config: { ...config } };
       if (audit) auditLog.push({ ...audit });
     },
 
@@ -61,11 +71,14 @@ export function createMemoryKgStore(): KgNodeStore {
       const to = otherSlot(from);
       const source = n.slots[from];
       // Byte-for-byte clone; ids preserved verbatim. Slot rewritten to the
-      // destination so the copies are queryable under the draft slot.
+      // destination so the copies are queryable under the draft slot. The
+      // profile config rides along too, so the draft opens from the published
+      // profile.
       n.slots[to] = {
         nodes: new Map([...source.nodes.entries()].map(([id, v]) => [id, { ...v, slot: to }])),
         edges: new Map([...source.edges.entries()].map(([id, v]) => [id, { ...v, slot: to }])),
         meta: source.meta ? { ...source.meta } : null,
+        config: source.config ? { ...source.config } : null,
       };
       // Pointer is set LAST so a mid-copy failure (irrelevant here but the
       // firestore backend depends on this ordering) leaves the draft invisible.

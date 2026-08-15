@@ -45,6 +45,16 @@ export type StoredMeta = {
   edgeCount: number;
 };
 
+// The subject-profile config, stored beside the graph as OPAQUE JSON. kg-store
+// is subject-agnostic — it never parses or validates this; the profile schema
+// lives in the adapters layer (SubjectProfile), and validation is injected at
+// authoring time (see config-flow.ts). One StoredConfig per (namespace, slot),
+// so a draft can carry a proposed profile independent of the published one; the
+// cell rides the SAME pointer as the graph (copied on createDraft, cleared on
+// discardDraft, promoted by the publish flip) — see docs/design-notes/authorable-catalog.md
+// phase 2b.
+export type StoredConfig = Record<string, unknown>;
+
 // Draft/published pointer for one namespace. `publishedSlot` is always set once
 // the namespace has been seeded. `draftSlot`, when set, MUST differ from
 // `publishedSlot` (two slots total). The pointer doc is the atomic swap point:
@@ -81,6 +91,7 @@ export interface KgNodeStore {
   listNodes(namespace: string, slot: Slot): Promise<StoredNode[]>;
   listEdges(namespace: string, slot: Slot): Promise<StoredEdge[]>;
   readMeta(namespace: string, slot: Slot): Promise<StoredMeta | null>;
+  readConfig(namespace: string, slot: Slot): Promise<StoredConfig | null>;
   readPointer(namespace: string): Promise<StoredPointer | null>;
 
   // ── Wholesale slot write (seed + createDraft's internal copy + apply) ──────
@@ -97,6 +108,14 @@ export interface KgNodeStore {
   // optional here only to keep the seed path untouched.
   writeSlot(namespace: string, slot: Slot, batch: SlotWriteBatch, audit?: AuditRecord): Promise<void>;
 
+  // Write the subject-profile config cell for one (namespace, slot). Independent
+  // of writeSlot — the profile is edited on its own cadence (edit_profile), not
+  // on every graph write. Like writeSlot's final meta touch, `audit` (when
+  // passed) is committed in the SAME transaction as the config write. The seed
+  // writes the published cell without an audit; edit_profile writes the draft
+  // cell with one.
+  writeConfig(namespace: string, slot: Slot, config: StoredConfig, audit?: AuditRecord): Promise<void>;
+
   // Set the pointer to publishedSlot if no pointer exists yet; no-op otherwise.
   // Used by the seed script so the first seed also stamps the initial pointer.
   ensurePointer(namespace: string, publishedSlot: Slot): Promise<void>;
@@ -109,8 +128,9 @@ export interface KgNodeStore {
   //
   // createDraft: if no draft exists, copy the published slot into the free
   //   slot and set draftSlot in the pointer LAST (so a half-copied draft is
-  //   invisible to readers). If a draft already exists, no-op (idempotent).
-  //   Errors if the namespace has never been seeded (no pointer).
+  //   invisible to readers). The copy includes the profile CONFIG cell, so a
+  //   fresh draft starts from the published profile. If a draft already exists,
+  //   no-op (idempotent). Errors if the namespace has never been seeded (no pointer).
   createDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
   // publishDraft: atomic single-doc pointer flip —
@@ -119,9 +139,10 @@ export interface KgNodeStore {
   // overwrites its slot. Errors if no draft exists.
   publishDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
-  // discardDraft: single-doc pointer write — draftSlot := null. Orphaned draft
-  // docs remain until the next createDraft overwrites them. No-op if no
-  // draft exists.
+  // discardDraft: single-doc pointer write — draftSlot := null, and the draft
+  // slot's meta + config cells are cleared alongside it (so a fresh createDraft
+  // doesn't inherit a stale profile). Orphaned draft node/edge docs remain until
+  // the next createDraft overwrites them. No-op if no draft exists.
   discardDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
   // ── Audit surface (append-only) ────────────────────────────────────────────

@@ -118,7 +118,9 @@ export type GraphUnauthorizedResult = {
 // robust against Firestore's non-guaranteed query order — the same logical
 // graph always hashes to the same string.
 
-const stableStringify = (v: unknown): string => {
+// Exported so config-flow.ts can hash a profile record the same order-stable
+// way (Firestore doesn't guarantee object key order on read-back).
+export const stableStringify = (v: unknown): string => {
   if (v === null || typeof v !== "object") return JSON.stringify(v);
   if (Array.isArray(v)) return "[" + v.map(stableStringify).join(",") + "]";
   const keys = Object.keys(v as Record<string, unknown>).sort();

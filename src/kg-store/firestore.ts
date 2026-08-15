@@ -18,7 +18,7 @@
  */
 import { createRequire } from "node:module";
 import { CONFIG } from "../config.js";
-import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
+import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredConfig, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
 import { otherSlot } from "./types.js";
 import { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";
 
@@ -100,16 +100,20 @@ async function commitInChunks<T>(db: Firestore, items: T[], apply: (batch: FsBat
   }
 }
 
-// Pointer doc layout. We keep the two per-slot meta stamps on the same doc as
-// the pointer so a publish (which is transactional on the pointer) can also
-// swap the "current" meta atomically.
+// Pointer doc layout. We keep the two per-slot meta stamps AND the two per-slot
+// profile-config cells on the same doc as the pointer, so a publish (which is
+// transactional on the pointer) swaps both the "current" meta and the "current"
+// profile atomically with the slot flip — no separate publish step for config.
 type PointerDoc = {
   publishedSlot: Slot;
   draftSlot: Slot | null;
   metaA?: StoredMeta | null;
   metaB?: StoredMeta | null;
+  configA?: StoredConfig | null;
+  configB?: StoredConfig | null;
 };
 const metaField = (slot: Slot): "metaA" | "metaB" => (slot === "a" ? "metaA" : "metaB");
+const configField = (slot: Slot): "configA" | "configB" => (slot === "a" ? "configA" : "configB");
 
 export function createFirestoreKgStore(): KgNodeStore {
   initFirebase();
@@ -144,6 +148,12 @@ export function createFirestoreKgStore(): KgNodeStore {
     async readMeta(namespace, slot) {
       const p = await fetchPointer(namespace);
       const stored = p ? p[metaField(slot)] : null;
+      return stored ?? null;
+    },
+
+    async readConfig(namespace, slot) {
+      const p = await fetchPointer(namespace);
+      const stored = p ? p[configField(slot)] : null;
       return stored ?? null;
     },
 
@@ -188,6 +198,21 @@ export function createFirestoreKgStore(): KgNodeStore {
         const doc = await tx.get(pRef as unknown as FsDocRef);
         const prev = (doc.data() as PointerDoc | undefined) ?? {};
         tx.set(pRef as unknown as FsDocRef, { ...prev, [metaField(slot)]: { ...batch.meta } }, { merge: true });
+        if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
+      });
+    },
+
+    async writeConfig(namespace, slot, config, audit) {
+      // Single-doc transaction on the pointer, mirroring writeSlot's final meta
+      // touch: set this slot's config cell and — when the caller passed an audit
+      // — the audit doc, together, so a committed profile edit always has its
+      // record. merge:true leaves the other slot's cell and the pointer fields
+      // untouched.
+      await db.runTransaction(async (tx) => {
+        const pRef = pointerRef(namespace);
+        const doc = await tx.get(pRef as unknown as FsDocRef);
+        const prev = (doc.data() as PointerDoc | undefined) ?? {};
+        tx.set(pRef as unknown as FsDocRef, { ...prev, [configField(slot)]: { ...config } }, { merge: true });
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },
@@ -256,7 +281,14 @@ export function createFirestoreKgStore(): KgNodeStore {
           throw new Error(`createDraft: '${namespace}' was published concurrently; retry.`);
         }
         if (p.draftSlot) return; // another createDraft finished first — accept it (no audit either)
-        tx.update(ref as unknown as FsDocRef, { draftSlot: to, [metaField(to)]: p[metaField(from)] ?? null });
+        // Carry the published slot's meta AND profile config into the new draft
+        // cell, so the draft starts from the published profile (the node/edge
+        // copy above already cloned the graph). Both ride this same pointer tx.
+        tx.update(ref as unknown as FsDocRef, {
+          draftSlot: to,
+          [metaField(to)]: p[metaField(from)] ?? null,
+          [configField(to)]: p[configField(from)] ?? null,
+        });
         // Join the audit doc into this same pointer transaction — the draft
         // is only observable once THIS commits, so audit and state agree.
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
@@ -285,9 +317,9 @@ export function createFirestoreKgStore(): KgNodeStore {
         const doc = await tx.get(ref as unknown as FsDocRef);
         const p = (doc.data() as PointerDoc | undefined) ?? null;
         if (!p || !p.draftSlot) return; // idempotent no-op — no audit either
-        // Clear the draft slot's meta cell alongside the pointer so a fresh
-        // createDraft doesn't inherit a stale meta.
-        tx.update(ref as unknown as FsDocRef, { draftSlot: null, [metaField(p.draftSlot)]: null });
+        // Clear the draft slot's meta AND config cells alongside the pointer so
+        // a fresh createDraft doesn't inherit a stale meta or profile.
+        tx.update(ref as unknown as FsDocRef, { draftSlot: null, [metaField(p.draftSlot)]: null, [configField(p.draftSlot)]: null });
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },
