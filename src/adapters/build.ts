@@ -15,10 +15,9 @@
  */
 import { suggestFreshDomain, domainUsage } from "../generation/index.js";
 import { parseGraph, resolvePrune, type GraphParseDescriptor } from "../curriculum/index.js";
-import { noAccents } from "../utils/index.js";
 import { makeEnsure, detectEnvelope } from "./engine.js";
-import type { SubjectProfile, DeliverableProfile } from "./profile.js";
-import type { SubjectAdapter, DeliverableSpec, CurriculumModel } from "../types.js";
+import type { SubjectProfile } from "./profile.js";
+import type { SubjectAdapter, CurriculumModel } from "../types.js";
 
 // A profile's parse block → the GraphParseDescriptor the generic parser consumes.
 // The only non-passthrough field is `prune`, resolved to the descriptor's
@@ -26,31 +25,6 @@ import type { SubjectAdapter, DeliverableSpec, CurriculumModel } from "../types.
 function toDescriptor(parse: SubjectProfile["parse"]): GraphParseDescriptor {
   const { prune, ...rest } = parse;
   return { ...rest, ...(prune ? { postParse: resolvePrune(prune) } : {}) };
-}
-
-// Synthesize each deliverable's `classify(filename)` from its `match` spec. A
-// "default" deliverable matches iff NO deliverable with a specific match does —
-// reproducing the old `manual = !isLessons` complement without either deliverable
-// naming the other. A `filenameContainsAny` matches accent/case-insensitively
-// (noAccents lowercases), the same test the old `isLessons` used.
-function classifiers(deliverables: DeliverableProfile[]): DeliverableSpec[] {
-  const matchesSpecific = (d: DeliverableProfile, filename: string): boolean =>
-    d.match !== "default" &&
-    d.match.filenameContainsAny.some((term) => noAccents(filename).includes(noAccents(term)));
-
-  const anySpecific = (filename: string) => deliverables.some((d) => matchesSpecific(d, filename));
-
-  return deliverables.map((d) => ({
-    key: d.key,
-    label: d.label,
-    scopeKind: d.scopeKind,
-    dependsOn: d.dependsOn,
-    promptFile: d.promptFile,
-    ...(d.pathHint ? { pathHint: d.pathHint } : {}),
-    classify: d.match === "default"
-      ? (filename: string) => !anySpecific(filename)
-      : (filename: string) => matchesSpecific(d, filename),
-  }));
 }
 
 export function buildAdapterFromProfile(profile: SubjectProfile, grade: string, subject: string): SubjectAdapter {
@@ -61,7 +35,6 @@ export function buildAdapterFromProfile(profile: SubjectProfile, grade: string, 
   const adapter: SubjectAdapter = {
     grade, subject,
     id: profile.id,
-    deliverables: classifiers(profile.deliverables),
     capabilities: profile.capabilities,
     detect: detectEnvelope,
     parse,

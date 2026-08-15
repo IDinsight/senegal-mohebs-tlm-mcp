@@ -33,7 +33,7 @@ import { __setActorForTest, type Actor } from "../../actor.js";
 const TEST_CURATOR: Actor = { id: "test-curator-uid", email: "curator@test", role: "curator", unknown: false };
 
 // Storage stub — same shape the other kg-store tests use.
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [],
   getObjectMd5: async () => null,

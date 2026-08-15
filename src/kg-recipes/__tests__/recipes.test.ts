@@ -30,7 +30,7 @@ import type { StorageAdapter, HistoryFile, CurriculumModel } from "../../types.j
 const HAS_PART = "hasPart";
 const ALIGN = "hasEducationalAlignment";
 
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [], getObjectMd5: async () => null, downloadDocx: async () => Buffer.from(""),
   createUploadUrl: async () => ({ url: "", objectKey: "", contentType: "", expiresAt: "" }),

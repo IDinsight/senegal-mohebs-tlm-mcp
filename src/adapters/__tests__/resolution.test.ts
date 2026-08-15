@@ -7,7 +7,7 @@
  *
  * The check uses `__registerProfileForTest` to attach the SAME profile under
  * two synthetic keys, then asserts both resolve to adapters whose builder
- * output shares the same adapter id and deliverables. We deliberately do NOT
+ * output shares the same adapter id and capabilities. We deliberately do NOT
  * register these keys as part of listAvailableContexts (there are no source
  * folders for them) — the resolution mapping is source-independent by design.
  */
@@ -35,10 +35,10 @@ describe("adapter resolution", () => {
     const [adapter1, adapter2] = TEST_KEYS.map(([grade, subject]) => resolveAdapter(grade, subject));
     expect(adapter1).toBeTruthy();
     expect(adapter2).toBeTruthy();
-    // Both adapters share the CI maths adapter id and deliverable set — same
-    // behavior module, bound to different (grade, subject) pairs.
+    // Both adapters are built from the same CI maths profile — same adapter id
+    // and capabilities, bound to different (grade, subject) pairs.
     expect(adapter1!.id).toBe(adapter2!.id);
-    expect(adapter1!.deliverables.map((d) => d.key)).toEqual(adapter2!.deliverables.map((d) => d.key));
+    expect(adapter1!.capabilities).toEqual(adapter2!.capabilities);
     // Each carries its own (grade, subject) identity, though — the builder
     // takes them as arguments, so many-to-one doesn't collapse identities.
     expect(adapter1!.grade).toBe(TEST_KEYS[0][0]);

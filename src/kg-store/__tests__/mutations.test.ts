@@ -43,7 +43,7 @@ import { __setActorForTest, type Actor } from "../../actor.js";
 // Tests that specifically care about the authz gate live in authz.test.ts.
 const TEST_CURATOR: Actor = { id: "test-curator-uid", email: "curator@test", role: "curator", unknown: false };
 
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [],
   getObjectMd5: async () => null,
@@ -393,7 +393,7 @@ describe("graph-mutation framework — reusability & parity", () => {
     // check is to search the built tool source for the mutation names.
     const files = [
       "server/documents.ts", "server/context.ts", "server/curriculum.ts",
-      "server/generation.ts", "server/ci-maths.ts", "server/index.ts",
+      "server/ci-maths.ts", "server/index.ts",
     ];
     for (const f of files) {
       const text = readFileSync(resolve("src", f), "utf8");

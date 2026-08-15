@@ -1,24 +1,19 @@
 import mammoth from "mammoth";
 import { getStorageAdapter } from "./adapter.js";
-import { firstInt } from "../utils/index.js";
-import type { DeliverableSpec, DiscoveredDoc } from "../types.js";
+import type { DiscoveredDoc } from "../types.js";
 
-// Classification is per-subject, so the deliverable specs are passed in by the
-// caller (the app layer, which owns the active adapter). This keeps storage a
-// pure service that never reaches up into adapters.
-export async function discoverDocuments(deliverables: DeliverableSpec[]): Promise<DiscoveredDoc[]> {
+// Discovery no longer classifies (deliverables are gone from this path): it just
+// lists the real .docx objects in the documents bucket. reconcile() diffs these
+// against history BY relPath — a document's identity is the node it is linked to
+// at record time, never parsed from the filename. Preview .docx live under a
+// segregated previews/ prefix and never appear here.
+export async function discoverDocuments(): Promise<DiscoveredDoc[]> {
   const objs = await getStorageAdapter().listDocuments();
   const out: DiscoveredDoc[] = [];
   for (const o of objs) {
-    const segments = o.relPath.split("/");
-    if (segments.length < 2) continue;               // must live under a scope subfolder
-    const unit = firstInt(segments[0]);
-    if (unit == null) continue;
-    const filename = segments[segments.length - 1];
-    if (!filename.toLowerCase().endsWith(".docx") || filename.startsWith("~$")) continue;
-    const spec = deliverables.find((d) => d.classify(filename));
-    if (!spec) continue;
-    out.push({ id: `${unit}:${spec.key}`, unit, type: spec.key, relPath: o.relPath, md5: o.md5, updated: o.updated });
+    const filename = o.relPath.split("/").pop() ?? "";
+    if (!filename.toLowerCase().endsWith(".docx") || filename.startsWith("~$")) continue;   // skip non-docx + Office lock files
+    out.push({ relPath: o.relPath, md5: o.md5, updated: o.updated });
   }
   return out;
 }

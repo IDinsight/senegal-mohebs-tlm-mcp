@@ -3,18 +3,18 @@
  * (get_profile / edit_profile / get_graph_guide)
  *
  * The subject PROFILE is a two-field record (phase 2c): a machine `core` (the
- * declarative config that drives parsing / deliverables / coverage) plus an
+ * declarative config that drives parsing) plus an
  * optional authored `guide` — markdown the AUTHORING/GENERATING LLM reads to
  * interpret and modify the graph. Reads consume only the core; the guide never
  * sits on the read hot path. The record lives in the store's config cell beside
  * the graph, rides the shared draft/publish loop, and is edited here through the
  * same two-phase envelope as a graph edit. The Zod guard that used to run only at
- * process load now runs at AUTHORING time: edit_profile injects it (plus a light
- * referential check) into the store's config-flow, so a malformed core is refused
- * at dry-run instead of mis-parsing a whole workspace at runtime.
+ * process load now runs at AUTHORING time: edit_profile injects it into the
+ * store's config-flow, so a malformed core is refused at dry-run instead of
+ * mis-parsing a whole workspace at runtime.
  *
- * `get_graph_guide` is the LLM-facing read — just the markdown, like get_prompt /
- * get_terminology surface per-subject text. See docs/design-notes/authorable-catalog.md.
+ * `get_graph_guide` is the LLM-facing read — just the markdown, like
+ * get_terminology surfaces per-subject text. See docs/design-notes/authorable-catalog.md.
  *
  * In bundle mode (dev) there is no store: reads return the in-repo record and
  * edit_profile is unavailable (the literal is the source of truth there).
@@ -23,21 +23,12 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
-import { getActiveAdapter, getRegisteredProfile, getRegisteredGuide, validateProfileRecord, type SubjectProfile } from "../adapters/index.js";
+import { getActiveAdapter, getRegisteredProfile, getRegisteredGuide, validateProfileRecord } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
 import { authorize } from "../authz.js";
 import { kgSource } from "../config.js";
 import { kgNamespace, getKgStore, editProfileWithConfirm, type StoredConfig } from "../kg-store/index.js";
-
-// Every kind a profile core's rules key on — the referential-check targets. A
-// deliverable naming a scopeKind no node carries is valid Zod but matches
-// nothing, so it earns a (non-blocking) warning.
-function referencedKinds(core: SubjectProfile): string[] {
-  const kinds = new Set<string>();
-  for (const d of core.deliverables) kinds.add(d.scopeKind);
-  return [...kinds];
-}
 
 // The authored `guide` markdown from a stored config value, whatever its shape:
 // the new { core, guide } record carries it; a legacy flat profile (pre-2c seed)
@@ -50,22 +41,19 @@ function guideOf(raw: unknown): string | undefined {
   return undefined;
 }
 
-// The validator injected into editProfileWithConfirm. `knownKinds` is captured
-// from the current graph so the referential check runs without the store layer
-// (which stays subject-agnostic) knowing what a "kind" is. validateProfileRecord
-// blocks a malformed core or an over-long guide; the referential mismatches warn.
-function makeValidator(namespace: string, knownKinds: Set<string>) {
+// The validator injected into editProfileWithConfirm: validateProfileRecord
+// blocks a malformed core or an over-long guide. There is no referential check
+// left — the profile core no longer carries rules that key on a node kind
+// (coverage rules were retired in phase 2c, deliverables in the graph-linked
+// documents change), so a valid core is always referentially fine.
+function makeValidator(namespace: string) {
   return (proposed: StoredConfig): { errors: string[]; warnings: string[] } => {
-    let core: SubjectProfile;
     try {
-      ({ core } = validateProfileRecord(proposed, `profile for ${namespace}`));
+      validateProfileRecord(proposed, `profile for ${namespace}`);
     } catch (e) {
       return { errors: [(e as Error).message], warnings: [] };
     }
-    const warnings = referencedKinds(core)
-      .filter((k) => !knownKinds.has(k))
-      .map((k) => `profile references kind '${k}', but no node in the current graph has that kind — a coverage or deliverable rule keyed on it will match nothing.`);
-    return { errors: [], warnings };
+    return { errors: [], warnings: [] };
   };
 }
 
@@ -137,17 +125,9 @@ export async function runEditProfile(profile: Record<string, unknown>, confirm?:
     return { error: "edit_profile is only available in firestore mode. In bundle/dev mode the subject profile is the in-repo record — edit src/adapters/profiles/ and re-seed." };
   }
 
-  // Capture the current graph's kinds for the referential check. Use the draft
-  // slot when one is open (that's the surface the edit lands on), else published.
-  const store = getKgStore();
-  const pointer = await store.readPointer(namespace);
-  const slot = pointer?.draftSlot ?? pointer?.publishedSlot;
-  const nodes = slot ? await store.listNodes(namespace, slot) : [];
-  const knownKinds = new Set(nodes.map((n) => n.type));
-
   return editProfileWithConfirm(namespace, profile, {
     confirm, token,
-    validate: makeValidator(namespace, knownKinds),
+    validate: makeValidator(namespace),
   });
 }
 
@@ -264,7 +244,7 @@ export function registerProfileTools(server: McpServer) {
     {
       title: "Read the subject profile",
       description:
-        "Read the active grade/subject's SUBJECT PROFILE record — { core, guide }: the machine `core` (config that drives parsing, deliverables, coverage) plus the authored `guide` markdown (phase 2c). Read-only. In firestore mode it comes from the store's config cell (the live source of truth, editable via edit_profile); pass slot:'draft' to see a staged, unpublished edit (curator/approver only). In bundle/dev mode it is the in-repo record. Use this before edit_profile to get the exact record you'll edit and pass back. (To read just the guide markdown, use get_graph_guide.)",
+        "Read the active grade/subject's SUBJECT PROFILE record — { core, guide }: the machine `core` (config that drives parsing) plus the authored `guide` markdown (phase 2c). Read-only. In firestore mode it comes from the store's config cell (the live source of truth, editable via edit_profile); pass slot:'draft' to see a staged, unpublished edit (curator/approver only). In bundle/dev mode it is the in-repo record. Use this before edit_profile to get the exact record you'll edit and pass back. (To read just the guide markdown, use get_graph_guide.)",
       inputSchema: { slot: z.enum(["published", "draft"]).optional() },
     },
     guarded(async (a: { slot?: "published" | "draft" }) => asJson(await readProfile(a.slot))),
@@ -288,7 +268,7 @@ export function registerProfileTools(server: McpServer) {
     {
       title: "Edit the subject profile",
       description:
-        "Replace the active grade/subject's SUBJECT PROFILE record with a new one — the two-phase, curator-gated way to change the machine `core` (parsing/deliverables/coverage) AND the authored `guide` markdown as DATA, with no redeploy (phase 2b/2c). Pass the WHOLE { core, guide } record (get_profile first, edit, pass it back); this replaces, it does not patch. A bare core (no guide) is accepted for back-compat. The core is validated against its schema and the guide length-checked AT THIS STEP — a malformed record is BLOCKED at dry-run (no token). A dry-run returns the before/after diff + any referential warnings (e.g. a rule naming a kind no node has) + a confirmationToken, changing nothing; confirm STAGES it onto the draft (a profile edit and curriculum edits share one draft). Nothing reaches generation until you publish_draft. firestore mode only — in bundle/dev mode the profile is the in-repo record, edited in the repo.",
+        "Replace the active grade/subject's SUBJECT PROFILE record with a new one — the two-phase, curator-gated way to change the machine `core` (parsing) AND the authored `guide` markdown as DATA, with no redeploy (phase 2b/2c). Pass the WHOLE { core, guide } record (get_profile first, edit, pass it back); this replaces, it does not patch. A bare core (no guide) is accepted for back-compat. The core is validated against its schema and the guide length-checked AT THIS STEP — a malformed record is BLOCKED at dry-run (no token). A dry-run returns the before/after diff + any referential warnings (e.g. a rule naming a kind no node has) + a confirmationToken, changing nothing; confirm STAGES it onto the draft (a profile edit and curriculum edits share one draft). Nothing reaches generation until you publish_draft. firestore mode only — in bundle/dev mode the profile is the in-repo record, edited in the repo.",
       inputSchema: {
         profile: z.record(z.string(), z.unknown()),
         confirm: z.boolean().optional(),

@@ -28,7 +28,7 @@ import type { StorageAdapter, HistoryFile } from "../../types.js";
 // A no-op storage adapter — get_generation_context reads history via
 // listEntries(), which is orthogonal to the KG source. Returning an empty
 // history keeps the harness self-contained (no bucket credentials needed).
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [],
   getObjectMd5: async () => null,

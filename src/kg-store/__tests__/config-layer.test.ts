@@ -35,7 +35,7 @@ import { runAsActor, __setActorForTest, type Actor } from "../../actor.js";
 import type { KgNodeStore, StoredConfig, StoredMeta } from "../types.js";
 import type { StorageAdapter, HistoryFile } from "../../types.js";
 
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [],
   getObjectMd5: async () => null,
@@ -158,7 +158,7 @@ describe("editProfileWithConfirm — two-phase", () => {
 
   it("blocks a malformed core at dry-run with no token", async () => {
     await runAsActor(CURATOR, async () => {
-      const bad = { core: { ...(baseCore()), deliverables: "not-an-array" } } as StoredConfig;
+      const bad = { core: { ...(baseCore()), capabilities: "not-an-object" } } as StoredConfig;
       const res = await editProfileWithConfirm(ns, bad, { validate });
       expect(res.phase).toBe("blocked");
       if (res.phase !== "blocked") throw new Error("expected blocked");

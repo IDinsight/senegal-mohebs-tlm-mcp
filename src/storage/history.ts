@@ -1,83 +1,100 @@
 /*
  * Module: storage · internal
  *
- * The history is the cache of record: one entry per (scope, deliverable), keyed
- * by `${scope}:${deliverableKey}`, storing the md5 and the extracted content so a
- * tracked document is never re-parsed. This file owns loading/saving it, upserts
- * (record_document_content / log_generation), and reconcile() — the diff of the
- * bucket against history. Deliverable specs are passed in by the caller so this
- * service never imports the adapters layer.
+ * The history is the cache of record: one entry per generated document, keyed by
+ * the graph node it covers (`nodeId`). It stores the md5 and the extracted
+ * content so a tracked document is never re-parsed. This file owns
+ * loading/saving it, upserts (record_document_content / log_generation), and
+ * reconcile() — the diff of the bucket against history. reconcile no longer
+ * classifies filenames: it diffs by relPath and reports untracked docs for the
+ * curator to link to a node (see docs/design-notes/graph-linked-documents.md).
  */
 import { getStorageAdapter, getHistCache, setHistCache } from "./adapter.js";
 import { discoverDocuments } from "./documents.js";
-import type { HistoryFile, HistoryEntry, DeliverableSpec, DocType, DocumentContent } from "../types.js";
+import type { HistoryFile, HistoryEntry, DocumentContent } from "../types.js";
+
+const EMPTY: HistoryFile = { version: 3, entries: [] };
 
 async function histLoad(): Promise<HistoryFile> {
   const cached = getHistCache();
   if (cached) return cached;
-  const loaded = (await getStorageAdapter().readHistory()) ?? { version: 2 as const, entries: [] };
+  const raw = await getStorageAdapter().readHistory();
+  // A pre-node-keyed (v2) history was keyed by (unit, deliverable); it can't be
+  // mapped to node ids without the graph, so we ignore it and start fresh — the
+  // bucket objects then re-surface via reconcile as untracked for re-linking.
+  const isCurrent = raw != null && raw.version === 3;
+  if (raw != null && !isCurrent) console.error("[history] ignoring a legacy (pre-nodeId) history file — run reconcile to re-link documents to their nodes");
+  const loaded = isCurrent ? raw : { ...EMPTY, entries: [] };
   setHistCache(loaded);
   return loaded;
 }
 
 async function histSave() { await getStorageAdapter().writeHistory(await histLoad()); }
 
+// Ordered by the transitional ordinal when present (chapter/week number), then
+// by node id — a stable total order the pagination cursor pins to.
 export async function listEntries() {
-  return [...(await histLoad()).entries].sort((a, b) => a.unit - b.unit || a.type.localeCompare(b.type));
+  return [...(await histLoad()).entries].sort(
+    (a, b) => (a.unit ?? Infinity) - (b.unit ?? Infinity) || a.nodeId.localeCompare(b.nodeId),
+  );
 }
 
-export async function getEntry(id: string) {
-  return (await histLoad()).entries.find((e) => e.id === id);
+export async function getEntry(nodeId: string) {
+  return (await histLoad()).entries.find((e) => e.nodeId === nodeId);
 }
 
 async function histUpsert(entry: HistoryEntry) {
   const h = await histLoad();
-  const i = h.entries.findIndex((e) => e.id === entry.id);
+  const i = h.entries.findIndex((e) => e.nodeId === entry.nodeId);
   if (i >= 0) h.entries[i] = entry; else h.entries.push(entry);
   await histSave();
 }
 
-export async function recordContent(source: "pipeline" | "parsed", input: { unit: number; type: DocType; relPath: string; content: DocumentContent }) {
+export async function recordContent(source: "pipeline" | "parsed", input: { nodeId: string; unit?: number; relPath: string; content: DocumentContent }) {
   const md5 = await getStorageAdapter().getObjectMd5(input.relPath);
   if (md5 == null) {
     return { error: `Object not found in the bucket at documents/${input.relPath}. Upload it first via create_upload_url, then call this again.` };
   }
+  const now = new Date().toISOString();
   const entry: HistoryEntry = {
-    id: `${input.unit}:${input.type}`, unit: input.unit, type: input.type, relPath: input.relPath,
-    md5, updated: new Date().toISOString(), source, recordedAt: new Date().toISOString(), content: input.content,
+    id: input.nodeId, nodeId: input.nodeId, relPath: input.relPath, md5,
+    updated: now, source, recordedAt: now, content: input.content,
+    ...(input.unit != null ? { unit: input.unit } : {}),
   };
   await histUpsert(entry);
   return entry;
 }
 
-export async function reconcile(deliverables: DeliverableSpec[]) {
+// Discover-only reconcile: list the bucket's .docx objects and diff against
+// history BY relPath. An entry is tracked when its object is present + unchanged,
+// dropped when its object is gone, and reported as untracked (changed) when the
+// object's bytes differ. Any bucket object with no history entry is untracked
+// (new) — the curator links it to a node via record_document_content.
+export async function reconcile() {
   const h = await histLoad();
-  const discovered = await discoverDocuments(deliverables);
-  const byId = new Map<string, typeof discovered>();
-  for (const d of discovered) (byId.get(d.id) ?? byId.set(d.id, []).get(d.id)!).push(d);
+  const discovered = await discoverDocuments();
+  const byPath = new Map(discovered.map((d) => [d.relPath, d]));
 
   const result = {
-    tracked: [] as { id: string; relPath: string }[],
-    untracked: [] as { id: string; unit: number; type: DocType; relPath: string; reason: "new" | "changed" }[],
-    dropped: [] as string[],
-    duplicatesResolved: [] as { id: string; chosen: string; discarded: string[] }[],
+    tracked: [] as { nodeId: string; relPath: string }[],
+    untracked: [] as { relPath: string; md5: string | null; reason: "new" | "changed" }[],
+    dropped: [] as string[],   // nodeIds whose object is gone
   };
 
-  for (const [id, docsList] of byId) {
-    const known = h.entries.find((e) => e.id === id);
-    let chosen: (typeof discovered)[number];
-    if (docsList.length === 1) chosen = docsList[0];
-    else {
-      chosen = (known && docsList.find((d) => d.md5 && d.md5 === known.md5)) ?? [...docsList].sort((a, b) => (b.updated ?? "").localeCompare(a.updated ?? ""))[0];
-      result.duplicatesResolved.push({ id, chosen: chosen.relPath, discarded: docsList.filter((d) => d !== chosen).map((d) => d.relPath) });
-    }
-    if (known && chosen.md5 && known.md5 === chosen.md5) result.tracked.push({ id, relPath: chosen.relPath });
-    else result.untracked.push({ id, unit: chosen.unit, type: chosen.type, relPath: chosen.relPath, reason: known ? "changed" : "new" });
+  const knownPaths = new Set<string>();
+  const survivors: HistoryEntry[] = [];
+  for (const e of h.entries) {
+    const obj = byPath.get(e.relPath);
+    if (!obj) { result.dropped.push(e.nodeId); continue; }   // object gone → drop the stale entry
+    survivors.push(e);
+    knownPaths.add(e.relPath);
+    if (obj.md5 && obj.md5 === e.md5) result.tracked.push({ nodeId: e.nodeId, relPath: e.relPath });
+    else result.untracked.push({ relPath: e.relPath, md5: obj.md5, reason: "changed" });
+  }
+  for (const d of discovered) {
+    if (!knownPaths.has(d.relPath)) result.untracked.push({ relPath: d.relPath, md5: d.md5, reason: "new" });
   }
 
-  const presentIds = new Set(byId.keys());
-  const before = h.entries.length;
-  h.entries = h.entries.filter((e) => { if (presentIds.has(e.id)) return true; result.dropped.push(e.id); return false; });
-  if (h.entries.length !== before) await histSave();
+  if (survivors.length !== h.entries.length) { h.entries = survivors; await histSave(); }
   return result;
 }

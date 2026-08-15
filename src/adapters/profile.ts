@@ -3,14 +3,13 @@
  *
  * A `SubjectProfile` is the DATA that describes a subject to the generic adapter
  * builder (build.ts). It replaces the hand-written per-subject behavior modules:
- * everything those modules used to express as code — which LC label/role maps to
- * which read kind, the deliverables, the editable wording paths, the coverage
- * rules, the parse-time prune — is expressed here as a validated literal.
+ * everything those modules used to express as code — the parse descriptor, the
+ * capabilities, the parse-time prune — is expressed here as a validated literal.
+ * (Deliverables left the profile with the graph-linked-documents change; coverage
+ * rules were retired in phase 2c — coverage now lives in the guide's prose.)
  *
- * The three function-valued bits the old adapters carried are declared as data
- * and synthesized generically by the builder:
- *   - a deliverable's `classify(filename)`  → a `match` spec (default | substring);
- *   - a subject's `coverageWarnings(graph)`  → a list of named coverage rules;
+ * The one function-valued bit the old adapters carried is declared as data and
+ * synthesized generically by the builder:
  *   - the parse descriptor's `postParse`     → a named prune strategy.
  *
  * The Zod schema is the single source of truth; the exported types are inferred
@@ -19,30 +18,6 @@
  * move to the store, per docs/design-notes/authorable-catalog.md phase 2b).
  */
 import { z } from "zod";
-
-// ── Deliverable classification (was DeliverableSpec.classify) ────────────────
-// A file is recognised as a deliverable by matching its filename. Two shapes:
-//   - "default": the fallback — matches iff no OTHER deliverable's specific
-//     match does (reproduces the old `manual = !isLessons` complement without
-//     naming the sibling); a subject with one deliverable uses this.
-//   - { filenameContainsAny }: accent/case-insensitive substring match (e.g. the
-//     maths teacher guide, whose filenames contain "fiche(s) de leçon").
-const deliverableMatchSchema = z.union([
-  z.literal("default"),
-  z.object({ filenameContainsAny: z.array(z.string()).min(1) }).strict(),
-]);
-
-const deliverableSchema = z
-  .object({
-    key: z.string().min(1),
-    label: z.string().min(1),
-    scopeKind: z.string().min(1),          // which unit-kind ONE document covers
-    match: deliverableMatchSchema,
-    dependsOn: z.array(z.string()),        // deliverable keys required first ([] = standalone)
-    promptFile: z.string().nullable(),     // generation prompt basename, or null
-    pathHint: z.string().optional(),
-  })
-  .strict();
 
 // ── Parse descriptor (the GraphParseDescriptor, minus the postParse closure) ──
 // `prune` names a generic strategy (prunes.ts) that becomes the descriptor's
@@ -78,18 +53,31 @@ const capabilitiesSchema = z
   })
   .strict();
 
-export const subjectProfileSchema = z
-  .object({
-    id: z.string().min(1),               // stable adapter id, e.g. "ci-maths/nodes-relationships-v1"
-    capabilities: capabilitiesSchema,
-    parse: parseSchema,
-    deliverables: z.array(deliverableSchema),
-  })
-  .strict();
+// TRANSITIONAL: a profile cell seeded before the deliverables removal still
+// carries a `deliverables` array. Strip it before strict validation so those
+// cells keep activating through the re-seed (the strict object would otherwise
+// reject the unknown key). Remove this shim once every namespace is re-seeded
+// without deliverables (see docs/design-notes/graph-linked-documents.md).
+const stripLegacyDeliverables = (raw: unknown): unknown => {
+  if (raw && typeof raw === "object" && "deliverables" in raw) {
+    const { deliverables: _dropped, ...rest } = raw as Record<string, unknown>;
+    return rest;
+  }
+  return raw;
+};
+
+export const subjectProfileSchema = z.preprocess(
+  stripLegacyDeliverables,
+  z
+    .object({
+      id: z.string().min(1),               // stable adapter id, e.g. "ci-maths/nodes-relationships-v1"
+      capabilities: capabilitiesSchema,
+      parse: parseSchema,
+    })
+    .strict(),
+);
 
 export type SubjectProfile = z.infer<typeof subjectProfileSchema>;
-export type DeliverableProfile = z.infer<typeof deliverableSchema>;
-export type DeliverableMatch = z.infer<typeof deliverableMatchSchema>;
 export type ParseProfile = z.infer<typeof parseSchema>;
 export type PruneSpec = z.infer<typeof pruneSchema>;
 

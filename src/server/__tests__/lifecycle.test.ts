@@ -31,7 +31,7 @@ import { runPublishDraft, runDiscardDraft } from "../lifecycle.js";
 import type { KgNodeStore, StoredMeta } from "../../kg-store/index.js";
 import type { StorageAdapter, HistoryFile } from "../../types.js";
 
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [], getObjectMd5: async () => null, downloadDocx: async () => Buffer.from(""),
   createUploadUrl: async () => ({ url: "", objectKey: "", contentType: "", expiresAt: "" }),

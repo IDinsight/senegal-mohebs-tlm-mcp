@@ -14,7 +14,7 @@
  *      key under previews/, never the canonical documents/ keyspace.
  *   5. ROLE matrix: curator + approver may preview; signed-in-no-role and
  *      unknown are blocked (and the denial is audited).
- *   6. SCOPING: an unknown deliverable is rejected; a preview is scoped to the
+ *   6. SCOPING: an unknown course is rejected; a preview is scoped to the
  *      one unit asked for (no implicit whole-curriculum path).
  *   7. PARITY: the published buildGenerationContext output is unchanged for
  *      existing callers.
@@ -41,7 +41,7 @@ import type { StorageAdapter, HistoryFile } from "../../types.js";
 // A storage stub that COUNTS canonical writes, so isolation tests can assert a
 // preview never touches the documents bucket / history, and implements the
 // preview upload path so the segregation test can inspect the object key.
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 let canonicalUploadCalls = 0;
 let historyWrites = 0;
 const fakeStorage: StorageAdapter = {

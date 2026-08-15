@@ -1,15 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Deliverables & history
+// Document history
 // ─────────────────────────────────────────────────────────────────────────────
-
-// A deliverable key identifies one kind of document a subject produces
-// (e.g. "manual", "lessons"). It is an open string drawn from the active
-// SubjectAdapter's deliverable list — NOT a fixed union — because the set of
-// deliverables varies per grade/subject. Kept as a named alias for readability.
-export type DeliverableKey = string;
-
-// Back-compat alias. Historically a closed "manual" | "lessons" union; now open.
-export type DocType = DeliverableKey;
 
 export type CharacterRef = {
   name: string;
@@ -26,19 +17,30 @@ export type DocumentContent = {
   terminologyUsed?: string[];
 };
 
+// A generated document's identity is the graph node it covers — its "scope node"
+// (a Chapitre/Semaine/Lesson) — not a (unit, deliverable) coordinate. See
+// docs/design-notes/graph-linked-documents.md. `id === nodeId`.
 export type HistoryEntry = {
-  id: string;                 // `${scope}:${deliverableKey}` (CI maths: `${unit}:manual`)
-  unit: number;               // scope value (CI maths: chapter number; CE1 reading: week); numeric for every subject shipped so far
-  type: DeliverableKey;
+  id: string;                 // == nodeId (kept as `id` for the shared upsert/paging helpers)
+  nodeId: string;             // the scope node this document covers
   relPath: string;
   md5: string;
   updated: string;
   source: "pipeline" | "parsed";
   recordedAt: string;
   content: DocumentContent;
+  // TRANSITIONAL: the scope node's ordinal (chapter/week number), stamped at
+  // record time from the graph. Kept only so CI-maths example-domain rotation
+  // keeps working; it is removed when generation goes graph-native (step 4),
+  // once rotation reads the ordinal straight from the node.
+  unit?: number;
 };
 
-export type HistoryFile = { version: 2; entries: HistoryEntry[] };
+// Bumped to 3 for the node-keyed schema. A pre-node-keyed (v2) history can't be
+// auto-mapped to node ids without the graph, so it is ignored on load and the
+// bucket docs re-surface as untracked for re-linking (the "fresh reconcile"
+// migration in graph-linked-documents.md).
+export type HistoryFile = { version: 3; entries: HistoryEntry[] };
 
 export type StoredObject = {
   relPath: string;
@@ -46,10 +48,10 @@ export type StoredObject = {
   updated: string | null;
 };
 
+// A .docx object found in the documents bucket. Discovery no longer classifies
+// (deliverables are gone from this path) — reconcile() diffs these against
+// history BY relPath, and the curator links each untracked doc to its node.
 export type DiscoveredDoc = {
-  id: string;
-  unit: number;
-  type: DeliverableKey;
   relPath: string;
   md5: string | null;
   updated: string | null;
@@ -112,18 +114,8 @@ export interface CurriculumModel {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Deliverables + capabilities — axes 2–3. §5.3.
+// Capabilities — the subject-behaviour flags. §5.3.
 // ─────────────────────────────────────────────────────────────────────────────
-export type DeliverableSpec = {
-  key: DeliverableKey;                       // replaces the old DocType enum value
-  label: string;                             // human name, e.g. "Manuel de l'élève"
-  scopeKind: string;                         // which unit-kind ONE document covers
-  classify: (filename: string) => boolean;   // recognize an uploaded file as this deliverable
-  dependsOn: DeliverableKey[];               // deliverables required first ([] = standalone)
-  promptFile: string | null;                 // generation prompt basename in the subject folder
-  pathHint?: string;                         // optional relPath convention for uploads
-};
-
 export type Capabilities = {
   exampleDomainRotation: boolean;   // CI maths storybook variety; false for CE1 reading
 };
@@ -145,8 +137,9 @@ export type Capabilities = {
 //   - `model()` — the parsed CurriculumModel (memoized). The cooked per-unit
 //     projection (slice/listUnits/…) and buildGenerationContext were removed once
 //     generation moved to the generic graph readers (walk_graph / get_standards);
-//   - deliverables, capabilities, and the optional coverage hook, all
-//     synthesized from the profile.
+//   - `capabilities`, synthesized from the profile. (Deliverables were removed —
+//     a document's identity is now the graph node it covers; see
+//     docs/design-notes/graph-linked-documents.md.)
 //
 // Optional subject-specific functions (declared on the interface but not every
 // adapter implements them). Present only when the corresponding capability is
@@ -163,7 +156,6 @@ export interface SubjectAdapter {
   readonly grade: string;
   readonly subject: string;
   readonly id: string;                          // stable adapter id, e.g. "ci-maths/nodes-relationships-v1"
-  readonly deliverables: DeliverableSpec[];
   readonly capabilities: Capabilities;
 
   // The composite curriculum recipes are now GENERIC, graph-derived verbs in the

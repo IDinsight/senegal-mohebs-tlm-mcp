@@ -9,7 +9,6 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { asJson, buildConfirmEnvelope, classifyError, toolError, isDebug, type ToolResult } from "../utils/index.js";
-import { getActiveAdapter } from "../adapters/index.js";
 import { ContextNotSetError } from "../context/index.js";
 
 export { asJson, toolError, type ToolResult };
@@ -46,15 +45,6 @@ export const guarded = <A>(fn: (a: A) => ToolResult | Promise<ToolResult>) => as
     const detail = isDebug() && e instanceof Error ? { stack: e.stack } : undefined;
     return toolError(code, message, detail);
   }
-};
-
-// Validate a deliverable key against the active adapter. Returns an error
-// ToolResult when the key isn't one this subject produces, so the openness of
-// the deliverable set is enforced at runtime (the schema can't be a fixed enum,
-// since the valid keys depend on the context chosen at runtime).
-export const badDeliverable = (key: string): ToolResult | null => {
-  const keys = getActiveAdapter().deliverables.map((d) => d.key);
-  return keys.includes(key) ? null : asJson({ error: `Unknown deliverable '${key}' for the active subject. Valid deliverables: ${keys.join(", ")}.` });
 };
 
 // Guard a capability-specific tool: returns an explanatory ToolResult when the
