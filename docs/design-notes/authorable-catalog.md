@@ -4,9 +4,11 @@
 > (2026-08-14).** The catalog (routines and formatters, across a shared and a
 > per-workspace scope) runs on the deployed server; the house-style formatter is applied
 > to both CI-maths Courses, and a generated chapter was verified to take its style from
-> the formatter. Still a **proposal**: the subject-profile **config layer**, the MCP
-> **resources** browse surface (D5), reading's routine catalog (blocked on its content
-> layer), and re-copy/detach ergonomics. This note extends
+> the formatter. The subject-profile **config layer** (phase 2b) is built too:
+> profiles are authored data in the store, edited through the curator loop with the
+> schema guard at authoring time (`get_profile` / `edit_profile`). Still a **proposal**:
+> the MCP **resources** browse surface (D5), reading's routine catalog (blocked on its
+> content layer), and re-copy/detach ergonomics. This note extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
 > **D2 was revised from by-reference to copy-on-use during implementation** (see below).
@@ -111,10 +113,37 @@ scaffolding; coverage rules ignore the extra kinds — but it does change the st
 node `type`, so **a re-seed of both subjects is required at rollout** for the live
 coverage/write path to match.
 
-**Step 2b (follow-up, not started):** move the profile records into a
-Firestore-backed config layer edited through the draft/publish curator loop, with
-the same Zod guard running at **authoring time**. Only then is a profile change
-"no redeploy"; Step 2a still ships the literals in the container. (D4.)
+**Step 2b (done, in-repo) — the profile is authored config.** The profile records
+now live in a **Firestore config layer beside the graph** and are edited through
+the same draft/publish curator loop, with the Zod guard running at **authoring
+time**. A profile change is finally "no redeploy". (D4.)
+
+- **Storage — a config cell on the pointer doc.** Each `(namespace, slot)` carries
+  the profile as opaque JSON in a `configA`/`configB` cell on the pointer doc,
+  exactly mirroring the per-slot `meta` stamp. It rides the **same** pointer as
+  the graph: `createDraft` copies it into the draft cell, `discardDraft` clears
+  it, and the atomic publish flip promotes it — one draft, one publish, one audit
+  trail for graph **and** profile (the "shared pointer" decision). `kg-store`
+  stays subject-agnostic: it stores and hashes the JSON but never parses it.
+- **Resolution follows `KG_SOURCE`.** In `firestore` mode `activateContext` reads
+  the published config cell, runs `validateProfile`, and builds the adapter from
+  it — so a published profile edit takes effect with no redeploy; a namespace
+  seeded before the config layer (no cell) falls back to the in-repo literal until
+  re-seeded, and an **invalid** stored profile is refused (activation fails loudly
+  rather than mis-parsing). In `bundle`/dev mode the in-repo literal stays the
+  source of truth. The seed (`seed:kg-store`) writes the literal into the config
+  cell, so the literals are now the seed **source** + bundle fallback + test
+  fixtures, not the live read path.
+- **Editing — `get_profile` / `edit_profile`.** `edit_profile` is a two-phase,
+  curator-gated replace built on the store's `config-flow` (its own token space,
+  modeled on the publish flow): the dry-run runs the injected validator — the
+  **Zod guard plus a referential check** ("a coverage/deliverable rule names a
+  kind no node has") — and blocks a malformed profile with no token; the confirm
+  stages the new profile onto the draft. `diff_draft` / `publish_draft` surface a
+  staged profile change as `profileDiff`, and the publish token's fingerprint
+  folds in the profile hash, so an approver can neither miss nor unknowingly
+  promote a profile edit that landed since their dry-run. `get_capabilities`
+  carries a `profile` mirror (`canEdit` from the same apply gate).
 
 **Scope-from-Course (deferred follow-up).** The remaining per-subject scope logic
 (the reading prune; CI maths keeping its scaffolding out) would collapse into a
@@ -122,9 +151,9 @@ single generic mechanism — derive the in-scope set by reachability from the
 `Course` root — retiring the prune and the widened-parse concern together. Left as
 its own change so it can be reviewed against the parity + faithful-re-export guards.
 
-**Not yet:** Step 2b (above), the MCP **resources** browse surface
-(D5 — `list_catalog` / `use_*` are tools for now), reading's routine catalog (blocked on
-its missing content layer), and re-copy/detach ergonomics.
+**Not yet:** the MCP **resources** browse surface
+(D5 — `list_catalog` / `use_*` / `get_profile` are tools for now), reading's routine
+catalog (blocked on its missing content layer), and re-copy/detach ergonomics.
 
 ## The goal
 
@@ -370,17 +399,28 @@ files are gone.
 
 ## Risks and open questions
 
-- **Runtime vs compile-time validation (phase 2).** Today a bad descriptor fails
-  `tsc`. Moving it to data moves that failure to runtime/authoring time. This is
-  acceptable only with real schema validation on the profile record and a guard in the
-  mutation path; treat it as part of phase 2, not a footnote.
+- **Runtime vs compile-time validation (phase 2) — addressed.** Moving the profile
+  to data moved its failure from `tsc` to authoring time. This is handled: the
+  `edit_profile` dry-run runs `validateProfile` (the same Zod guard the load-time
+  registry uses) and blocks a malformed profile with no token, and
+  `activateContext` refuses an invalid stored profile rather than mis-parsing. A
+  light referential check (a rule naming a kind no node has) warns without
+  blocking. Full referential validation (e.g. a deliverable's `promptFile` must
+  resolve) is a reasonable later addition.
 - **Detach drift (D2).** Detached lesson-local copies do not receive later fixes to the
   shared entry — by design, but curators need to *see* that a block is detached and
   which shared version it forked from. The attach record should carry that provenance.
-- **`characterConsistency` is currently dead.** The audit found this capability is
-  declared by every adapter but read nowhere. Decide whether it becomes a real
-  generation input (it is the "character consistency" half of the logic-in-the-graph
-  principle) or is removed — don't carry it into the config layer unexamined.
+- **`characterConsistency` — removed.** This capability was declared by every
+  profile but read nowhere, and its concern (keep the cast + art style consistent
+  across a subject's materials) is already handled — better — as **authored prompt
+  prose** ("reuse the established characters", the HOUSE ART STYLE block) in every
+  generation prompt. Wiring a boolean to gate that prose would re-introduce the
+  inlined-house-style-in-code pattern this whole note dismantles; character/art
+  consistency is Bucket-B/C and belongs in authored data (prompt today, a formatter
+  or routine catalog entry tomorrow), not a code flag. It was deleted rather than
+  carried into the config layer, where a curator could toggle a setting that does
+  nothing. (`exampleDomainRotation` stays — it gates a real behaviour: the
+  `suggest_fresh_domain` / `domain_usage` helper tools.)
 - **Scale honesty.** With three subjects and a couple of routines, the catalog earns
   its keep from the *authoring UX* and the multi-tenant direction, not from
   deduplication alone. Keep phase 3's first cut small (the shared house style + the two
@@ -394,7 +434,7 @@ files are gone.
 | D1 | One catalog or two | **One** `kind`-tagged spec-block catalog, reusing the routine substrate |
 | D2 | Reference vs copy on pick | **Copy-on-use** (revised from by-reference; forced by a shared cross-namespace library — copy localizes the reference; tradeoff = drift) |
 | D3 | Catalog scope | **Both — shipped:** shared `_shared/_catalog` + per-workspace `<ws>/_catalog`; `list_catalog` unions + tags scope; edit gated per-namespace |
-| D4 | Where authored data lives | **Content → LC nodes** (catalog = a reserved-namespace routine graph); profile → separate config layer (later phase) |
+| D4 | Where authored data lives | **Content → LC nodes** (catalog = a reserved-namespace routine graph); profile → **separate config layer, shipped** (a config cell on the pointer doc, riding the shared draft/publish loop; `get_profile` / `edit_profile`) |
 | D5 | Curator browse surface | **Tool for now** (`list_catalog`); MCP resources deferred. `use_routine` / `use_formatter` attach by copy |
 | D6 | Build order | **Routine wiring first → profile to config → catalog → dissolve residue** |
 | D7 | Residual per-subject logic | **Generic mechanism switched by config** (no node-authorable prune language) |

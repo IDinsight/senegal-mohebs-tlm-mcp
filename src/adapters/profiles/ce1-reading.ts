@@ -12,7 +12,7 @@ import type { SubjectProfile } from "../profile.js";
 
 export const CE1_READING_PROFILE: SubjectProfile = {
   id: "ce1-reading/nodes-relationships-v1",
-  capabilities: { exampleDomainRotation: false, characterConsistency: true },
+  capabilities: { exampleDomainRotation: false },
 
   // Kinds are canonical: a week is a LessonGrouping named `Semaine`, a day one
   // named `Jour`; sessions are `Lesson`s and standards are `Standard`s. No role table.

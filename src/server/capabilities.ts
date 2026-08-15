@@ -24,6 +24,7 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
 import { authorize, effectiveRole, type AuthAction } from "../authz.js";
+import { kgSource } from "../config.js";
 import {
   kgNamespace, getKgStore, STRUCTURAL_RULES,
 } from "../kg-store/index.js";
@@ -205,6 +206,19 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, PAGINATED BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. Page with limit (default 50, max 500) + nextCursor; do not raise the limit to fit a big result. truncatedByLimit means more nodes remain on further pages; truncated means the depth cap hid deeper nodes. slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk; its `roots` (each with id + labels + description) surfaces the Course content roots, so it replaced list_courses.",
   };
 
+  // ── profile: the subject profile as authored config (phase 2b). `canEdit`
+  // mirrors the SAME apply gate any draft edit enforces (actions.canEditDraft →
+  // authorize(actor, "apply", ns)) and cannot drift. In bundle/dev mode the
+  // profile is the in-repo literal (edit_profile is unavailable there).
+  const profile = {
+    source: kgSource() === "firestore" ? "store" : "in-repo-literal",
+    editable: kgSource() === "firestore",
+    canEdit: kgSource() === "firestore" && actions.canEditDraft,
+    tools: ["get_profile", "edit_profile"],
+    note:
+      "The subject profile is the declarative record that configures parsing, deliverables, and coverage for this grade/subject. In firestore mode it is AUTHORED DATA in the store's config cell (get_profile reads it; edit_profile replaces it through the two-phase draft/publish loop, validated against its schema at authoring time), so a profile change needs no redeploy. It rides the SAME draft as curriculum edits — diff_draft/publish_draft surface a staged profile change as `profileDiff`. In bundle/dev mode the profile is the in-repo literal and edit_profile is unavailable.",
+  };
+
   return {
     actor: {
       id: actor.id,
@@ -226,6 +240,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     },
     discovery,
     editable,
+    profile,
     preview,
     audit,
     catalog,

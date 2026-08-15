@@ -23,6 +23,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { getKgStore } from "./adapter.js";
 import { toAuditActor } from "./audit.js";
 import { diffGraphs, hashGraph, stripSlot } from "./mutations.js";
+import { diffProfile, hashConfig, type WholeDraftProfileDiff } from "./config-flow.js";
 import type { AuditRecord, GraphDiff, MutationGraph, Slot } from "./types.js";
 import { currentActor, type Actor } from "../actor.js";
 import { authorize, selfApproveAllowed } from "../authz.js";
@@ -192,6 +193,15 @@ export type WholeDraftDiff = {
   // coverage hook was supplied; omitted when there's no draft. Warnings NEVER
   // block publish.
   warnings?: string[];
+  // The staged subject-profile change, if any (phase 2b). The profile rides the
+  // SAME draft as the graph, so an approver must see a profile edit here before
+  // publishing it. `changed: false` when the draft's profile equals published.
+  // Present whenever a draft exists.
+  profileDiff?: WholeDraftProfileDiff;
+  // Fingerprint of the draft's PROFILE cell — folded (with draftVersion) into
+  // the publish/discard token so a profile edit that lands between dry-run and
+  // confirm invalidates the token. Present whenever a draft exists.
+  profileVersion?: string;
 };
 
 // `coverage` is the active adapter's subject-aware hook, injected by the server
@@ -204,11 +214,13 @@ export async function diffDraft(
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
   if (!pointer || !pointer.draftSlot) return { hasDraft: false };
-  const [pubN, pubE, drN, drE] = await Promise.all([
+  const [pubN, pubE, drN, drE, profileDiff, draftConfig] = await Promise.all([
     store.listNodes(namespace, pointer.publishedSlot),
     store.listEdges(namespace, pointer.publishedSlot),
     store.listNodes(namespace, pointer.draftSlot),
     store.listEdges(namespace, pointer.draftSlot),
+    diffProfile(namespace),
+    store.readConfig(namespace, pointer.draftSlot),
   ]);
   const published: MutationGraph = { nodes: pubN.map(stripSlot), edges: pubE.map(stripSlot) };
   const draft: MutationGraph = { nodes: drN.map(stripSlot), edges: drE.map(stripSlot) };
@@ -218,8 +230,15 @@ export async function diffDraft(
     draftVersion: hashGraph(draft),
     diff: diffGraphs(published, draft),
     warnings: coverage ? coverage(draft) : [],
+    profileDiff,
+    profileVersion: hashConfig(draftConfig),
   };
 }
+
+// The single fingerprint the publish/discard token binds to: graph draft hash
+// AND profile draft hash. Either changing since dry-run invalidates the token,
+// so the shared-pointer draft can't promote an unseen graph OR profile edit.
+const draftFingerprint = (snap: WholeDraftDiff): string => `${snap.draftVersion}:${snap.profileVersion}`;
 
 // ── Draft-level concurrency token for publish_draft / discard_draft ─────────
 // Distinct from #5's per-mutation token — same self-describing receipt
@@ -270,6 +289,7 @@ export type PublishConfirmPreview = {
   draftVersion?: string;
   diff?: GraphDiff;
   warnings?: string[];          // coverage warnings on the draft (#13) — inform, never block
+  profileDiff?: WholeDraftProfileDiff; // staged subject-profile change (phase 2b), so the approver sees it
   confirmationToken?: string;   // absent when there's nothing to publish
 };
 export type PublishConfirmResult =
@@ -309,7 +329,7 @@ export async function publishDraftWithConfirm(
     // coverage hook so we can record the warnings-at-publish on the audit.
     const current = await diffDraft(namespace, opts.coverage);
     if (!current.hasDraft) return { phase: "commit", kind: "publishDraft", ok: false, reason: "no draft to publish" };
-    if (current.draftVersion !== payload.dv) return { phase: "commit", kind: "publishDraft", ok: false, reason: "the draft moved since dry-run — re-preview to see the current diff before publishing" };
+    if (draftFingerprint(current) !== payload.dv) return { phase: "commit", kind: "publishDraft", ok: false, reason: "the draft moved since dry-run — re-preview to see the current diff before publishing" };
 
     // Delegate to the atomic primitive. It runs its own authz (redundant
     // but cheap and defence-in-depth) and its own self-approve check. The
@@ -333,21 +353,28 @@ export async function publishDraftWithConfirm(
       hasDraft: false,
     };
   }
-  const token = encodeDraftToken({ op: "publish", ns: namespace, dv: snap.draftVersion!, n: randomBytes(16).toString("base64url") });
-  const changeCount = (snap.diff!.nodes.added.length + snap.diff!.nodes.changed.length + snap.diff!.nodes.removed.length +
-                       snap.diff!.edges.added.length + snap.diff!.edges.changed.length + snap.diff!.edges.removed.length);
+  const token = encodeDraftToken({ op: "publish", ns: namespace, dv: draftFingerprint(snap), n: randomBytes(16).toString("base64url") });
+  const changeCount = graphChangeCount(snap.diff!) + (snap.profileDiff?.changed ? 1 : 0);
+  const profileNote = snap.profileDiff?.changed ? " (includes a subject-profile change)" : "";
   return {
     phase: "preview", kind: "publishDraft", needsConfirmation: true,
-    action: `PROMOTE the draft on namespace '${namespace}' to LIVE (published) — ${changeCount} change(s) will be visible to generation immediately after this step`,
-    message: `Do NOT proceed yet. Ask the user to confirm — about to promote ${changeCount} draft change(s) to published on '${namespace}'. Once they explicitly agree, call this tool again with confirm: true AND the confirmationToken from this response.`,
+    action: `PROMOTE the draft on namespace '${namespace}' to LIVE (published) — ${changeCount} change(s)${profileNote} will be visible to generation immediately after this step`,
+    message: `Do NOT proceed yet. Ask the user to confirm — about to promote ${changeCount} draft change(s)${profileNote} to published on '${namespace}'. Once they explicitly agree, call this tool again with confirm: true AND the confirmationToken from this response.`,
     hasDraft: true,
     publishedVersion: snap.publishedVersion,
     draftVersion: snap.draftVersion,
     diff: snap.diff,
     warnings: snap.warnings,
+    profileDiff: snap.profileDiff,
     confirmationToken: token,
   };
 }
+
+// Count of node/edge changes in a graph diff — shared by the publish/discard
+// previews so the "N change(s)" phrasing can't drift.
+const graphChangeCount = (d: GraphDiff): number =>
+  d.nodes.added.length + d.nodes.changed.length + d.nodes.removed.length +
+  d.edges.added.length + d.edges.changed.length + d.edges.removed.length;
 
 // ── discard_draft (two-phase) ────────────────────────────────────────────────
 // Mirrors publish_draft's shape. Curator or approver may call.
@@ -360,6 +387,7 @@ export type DiscardConfirmPreview = {
   hasDraft: boolean;
   draftVersion?: string;
   diff?: GraphDiff;
+  profileDiff?: WholeDraftProfileDiff; // staged subject-profile change (phase 2b) the discard will throw away
   confirmationToken?: string;
 };
 export type DiscardConfirmResult =
@@ -393,7 +421,7 @@ export async function discardDraftWithConfirm(
 
     const current = await diffDraft(namespace);
     if (!current.hasDraft) return { phase: "commit", kind: "discardDraft", ok: false, reason: "no draft to discard" };
-    if (current.draftVersion !== payload.dv) return { phase: "commit", kind: "discardDraft", ok: false, reason: "the draft moved since dry-run — re-preview before discarding" };
+    if (draftFingerprint(current) !== payload.dv) return { phase: "commit", kind: "discardDraft", ok: false, reason: "the draft moved since dry-run — re-preview before discarding" };
 
     const result = await discardDraft(namespace);
     consumedDraftNonces.add(payload.n);
@@ -410,16 +438,17 @@ export async function discardDraftWithConfirm(
       hasDraft: false,
     };
   }
-  const token = encodeDraftToken({ op: "discard", ns: namespace, dv: snap.draftVersion!, n: randomBytes(16).toString("base64url") });
-  const changeCount = (snap.diff!.nodes.added.length + snap.diff!.nodes.changed.length + snap.diff!.nodes.removed.length +
-                       snap.diff!.edges.added.length + snap.diff!.edges.changed.length + snap.diff!.edges.removed.length);
+  const token = encodeDraftToken({ op: "discard", ns: namespace, dv: draftFingerprint(snap), n: randomBytes(16).toString("base64url") });
+  const changeCount = graphChangeCount(snap.diff!) + (snap.profileDiff?.changed ? 1 : 0);
+  const profileNote = snap.profileDiff?.changed ? " (includes a subject-profile change)" : "";
   return {
     phase: "preview", kind: "discardDraft", needsConfirmation: true,
-    action: `DISCARD ${changeCount} draft change(s) on namespace '${namespace}' — the draft will be thrown away and published is untouched`,
-    message: `Do NOT proceed yet. Ask the user to confirm — about to DISCARD ${changeCount} draft change(s) on '${namespace}'. Once they explicitly agree, call this tool again with confirm: true AND the confirmationToken from this response.`,
+    action: `DISCARD ${changeCount} draft change(s)${profileNote} on namespace '${namespace}' — the draft will be thrown away and published is untouched`,
+    message: `Do NOT proceed yet. Ask the user to confirm — about to DISCARD ${changeCount} draft change(s)${profileNote} on '${namespace}'. Once they explicitly agree, call this tool again with confirm: true AND the confirmationToken from this response.`,
     hasDraft: true,
     draftVersion: snap.draftVersion,
     diff: snap.diff,
+    profileDiff: snap.profileDiff,
     confirmationToken: token,
   };
 }

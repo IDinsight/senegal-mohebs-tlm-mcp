@@ -18,7 +18,7 @@ import { resolve } from "node:path";
 import { CONFIG, kgSource } from "./config.js";
 import { slug } from "./utils/index.js";
 import { setActiveContext, listAvailableContexts, subjectDir, sessionState, type ActiveContext } from "./context/index.js";
-import { resolveAdapter, setActiveAdapter } from "./adapters/index.js";
+import { resolveAdapter, buildAdapterFromStoredProfile, setActiveAdapter } from "./adapters/index.js";
 import { getKgStore, kgNamespace } from "./kg-store/index.js";
 import { toRawEnvelope, PRELOADED_MODEL_KEY } from "./curriculum/index.js";
 import type { CurriculumModel } from "./types.js";
@@ -33,7 +33,11 @@ export async function activateContext(workspace: string, grade: string, subject:
   const match = available.find((c) => c.workspace === w && c.grade === g && c.subject === s);
   if (!match) return { ok: false, error: `No sources installed for workspace '${workspace}' / grade '${grade}' / subject '${subject}'.`, available };
 
-  const adapter = resolveAdapter(match.grade, match.subject);
+  // The in-repo adapter is the registration check (a subject with no profile is
+  // unsupported) AND the fallback for a firestore namespace seeded before the
+  // config layer. In firestore mode it may be REPLACED below by an adapter built
+  // from the namespace's stored profile.
+  let adapter = resolveAdapter(match.grade, match.subject);
   if (!adapter) return { ok: false, error: `Sources exist for '${match.grade}/${match.subject}', but no subject adapter is registered for it. This grade/subject is not supported yet.`, available };
 
   // ── Schema guard ──────────────────────────────────────────────────────────
@@ -56,12 +60,25 @@ export async function activateContext(workspace: string, grade: string, subject:
     }
     if (!pointer) return { ok: false, error: `KG_SOURCE=firestore but no seed found for namespace '${ns}'. Run: npm run seed:kg-store (see README).`, available };
     const publishedSlot = pointer.publishedSlot;
-    const [meta, nodes, edges] = await Promise.all([
+    const [meta, nodes, edges, storedConfig] = await Promise.all([
       getKgStore().readMeta(ns, publishedSlot),
       getKgStore().listNodes(ns, publishedSlot),
       getKgStore().listEdges(ns, publishedSlot),
+      getKgStore().readConfig(ns, publishedSlot),
     ]);
     if (!meta) return { ok: false, error: `KG_SOURCE=firestore: pointer for '${ns}' says slot '${publishedSlot}' is published, but that slot has no meta. Re-run the seed.`, available };
+    // Phase 2b: the SUBJECT PROFILE is authored data. When the published slot
+    // carries a profile cell, build the adapter from it (the store is the source
+    // of truth for a live server), so a published profile edit takes effect with
+    // no redeploy. A namespace seeded before the config layer has no cell yet —
+    // fall back to the in-repo literal until it is re-seeded.
+    if (storedConfig) {
+      try {
+        adapter = buildAdapterFromStoredProfile(match.grade, match.subject, storedConfig);
+      } catch (e) {
+        return { ok: false, error: `The stored subject profile for '${ns}' is invalid and would mis-parse: ${(e as Error).message}. Fix it via edit_profile or re-run the seed.`, available };
+      }
+    }
     // The store holds the full raw graph; reconstruct the LC envelope and run
     // the SAME parser bundle-mode uses, so the spine model is identical
     // (guarded by parity:kg-store). Non-spine nodes are dropped by parse here,
