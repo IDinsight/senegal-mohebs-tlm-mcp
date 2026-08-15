@@ -221,6 +221,7 @@ describe("bundle mode is untouched by the lifecycle", () => {
       readMeta: async () => { throw new Error("bundle mode must not touch readMeta"); },
       readConfig: async () => { throw new Error("bundle mode must not touch readConfig"); },
       readPointer: async () => { throw new Error("bundle mode must not touch readPointer"); },
+      listNamespaces: async () => { throw new Error("bundle mode must not touch listNamespaces"); },
       writeSlot: async () => { throw new Error("bundle mode must not touch writeSlot"); },
       writeConfig: async () => { throw new Error("bundle mode must not touch writeConfig"); },
       ensurePointer: async () => { throw new Error("bundle mode must not touch ensurePointer"); },

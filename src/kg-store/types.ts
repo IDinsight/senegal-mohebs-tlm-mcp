@@ -94,6 +94,12 @@ export interface KgNodeStore {
   readConfig(namespace: string, slot: Slot): Promise<StoredConfig | null>;
   readPointer(namespace: string): Promise<StoredPointer | null>;
 
+  // Every namespace that has a pointer (i.e. has been seeded/imported). The
+  // store is the source of truth for WHICH graphs exist — context discovery
+  // enumerates these instead of scanning on-disk source folders. Includes the
+  // reserved catalog partitions (`…/_catalog/routines`); the caller filters.
+  listNamespaces(): Promise<string[]>;
+
   // ── Wholesale slot write (seed + createDraft's internal copy + apply) ──────
   // Idempotent: after this returns, the store's state for (namespace, slot)
   // equals exactly the passed nodes/edges/meta. Stale docs in that slot are

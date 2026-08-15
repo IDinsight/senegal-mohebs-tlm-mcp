@@ -163,6 +163,14 @@ export function createFirestoreKgStore(): KgNodeStore {
       return { publishedSlot: p.publishedSlot, draftSlot: p.draftSlot ?? null };
     },
 
+    // One pointer doc per namespace, its id the flattened namespace — reverse
+    // the "/"→"__" slug to recover the original key. (nsSlug is lossless: every
+    // namespace segment is slug()-ed, so "__" never occurs inside one.)
+    async listNamespaces() {
+      const snap = await db.collection(POINTERS).get();
+      return snap.docs.map((d) => d.id.replace(/__/g, "/"));
+    },
+
     async writeSlot(namespace, slot, batch, audit) {
       // Idempotency (per slot): upsert target ids, delete stragglers in this
       // slot only. The other slot is untouched — critical for createDraft's

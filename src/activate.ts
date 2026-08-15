@@ -17,15 +17,30 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CONFIG, kgSource } from "./config.js";
 import { slug } from "./utils/index.js";
-import { setActiveContext, listAvailableContexts, subjectDir, sessionState, type ActiveContext } from "./context/index.js";
+import { setActiveContext, setAvailableContexts, listAvailableContexts, subjectDir, sessionState, type ActiveContext } from "./context/index.js";
 import { resolveAdapter, buildAdapterFromStoredProfile, setActiveAdapter } from "./adapters/index.js";
-import { getKgStore, kgNamespace } from "./kg-store/index.js";
+import { getKgStore, kgNamespace, parseNamespace } from "./kg-store/index.js";
 import { toRawEnvelope, PRELOADED_MODEL_KEY } from "./curriculum/index.js";
 import type { CurriculumModel } from "./types.js";
 
 export type ActivateResult =
   | { ok: true; context: ActiveContext }
   | { ok: false; error: string; available: ActiveContext[] };
+
+// Populate the installed-context list from the KG store: every namespace with a
+// pointer, parsed back into a teaching context (catalog partitions filtered
+// out). The store is the source of truth for which graphs exist, so this
+// replaces the on-disk sources/ scan. Best-effort: on a store error we leave the
+// list unset so listAvailableContexts falls back to the disk scan. Called at
+// startup (firestore mode) and after an import adds a namespace.
+export async function refreshAvailableContexts(): Promise<void> {
+  const namespaces = await getKgStore().listNamespaces();
+  const contexts = namespaces
+    .map(parseNamespace)
+    .filter((c): c is ActiveContext => c !== null)
+    .sort((a, b) => a.workspace.localeCompare(b.workspace) || a.grade.localeCompare(b.grade) || a.subject.localeCompare(b.subject));
+  setAvailableContexts(contexts);
+}
 
 export async function activateContext(workspace: string, grade: string, subject: string): Promise<ActivateResult> {
   const w = slug(workspace), g = slug(grade), s = slug(subject);

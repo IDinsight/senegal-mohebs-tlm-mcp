@@ -22,7 +22,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { buildServer } from "./server/index.js";
 import { CONFIG, kgSource, DEFAULT_WORKSPACE } from "./config.js";
 import { getActiveContext, listAvailableContexts } from "./context/index.js";
-import { activateContext } from "./activate.js";
+import { activateContext, refreshAvailableContexts } from "./activate.js";
 import { getActiveAdapter } from "./adapters/index.js";
 import { reconcile } from "./storage/index.js";
 import { installProcessGuards } from "./utils/index.js";
@@ -51,9 +51,22 @@ async function applyStartupContext() {
   }
 }
 
+// In firestore mode, discover installed contexts from the STORE (not the on-disk
+// sources/ scan). Best-effort: on a store error we log and leave the disk-scan
+// fallback in place, so startup never hard-fails on a transient store hiccup.
+async function loadAvailableContexts() {
+  if (kgSource() !== "firestore") return;
+  try {
+    await refreshAvailableContexts();
+  } catch (e) {
+    console.error(`${LOG} could not list namespaces from the store (falling back to the sources/ scan):`, (e as Error).message);
+  }
+}
+
 async function main() {
   // Keep a stray async failure from taking the process down (see http.ts).
   installProcessGuards(LOG);
+  await loadAvailableContexts();
   await applyStartupContext();
   if (getActiveContext()) {
     try {
