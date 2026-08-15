@@ -260,6 +260,17 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.discovery.tools).toEqual(["walk_graph", "namespace_stats"]);
     // canWalkDraft is the SAME gate diff_draft enforces — it cannot drift.
     expect(caps.discovery.canWalkDraft).toBe(caps.actions.canReadDraft);
+    // Feature-detection for the paginated walk.
+    expect(caps.discovery.walkGraph.defaults.limit).toBe(50);
+    expect(caps.discovery.walkGraph.maxLimit).toBe(500);
+  });
+
+  it("editable.batch advertises the batched writes' returnMode + idempotency controls", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    expect(caps.editable.batch.tools).toEqual(["add_nodes", "create_edges"]);
+    expect(caps.editable.batch.params).toEqual(["returnMode", "idempotencyKey"]);
+    expect(caps.editable.batch.defaultReturnMode).toBe("summary");
+    expect(caps.editable.batch.returnModes).toEqual(["summary", "full"]);
   });
 
   it("editable.coverageWarnings.enabled mirrors whether the adapter has a coverage hook (#13)", async () => {

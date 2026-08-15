@@ -20,6 +20,8 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { runGraphMutation, kgNamespace, linkNodes, unlinkNodes, deleteNode } from "../kg-store/index.js";
 import { createEdges } from "../kg-recipes/index.js";
+import { runBatchMutation, type ReturnMode } from "./batch.js";
+import { idempotencyPayloadHash } from "./idempotency.js";
 
 function activeNamespace(): string {
   const a = getActiveAdapter();
@@ -34,6 +36,32 @@ function activeCoverage(): (graph: import("../kg-store/index.js").MutationGraph)
 }
 
 const JsonValue = z.any();
+
+// The create_edges core, exported so tests drive the real logic. Normalizes each
+// edge's properties, then delegates response shaping + idempotency to
+// runBatchMutation (no minted ids for edges, so `extra` is empty).
+export async function runCreateEdges(a: {
+  edges: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
+  confirm?: boolean;
+  confirmationToken?: string;
+  returnMode?: ReturnMode;
+  idempotencyKey?: string;
+}): Promise<Record<string, unknown>> {
+  const namespace = activeNamespace();
+  const normalizedEdges = a.edges.map((edge) => ({ ...edge, properties: edge.properties ?? {} }));
+  return runBatchMutation({
+    namespace,
+    mutation: createEdges,
+    args: { namespace, edges: normalizedEdges },
+    confirm: a.confirm,
+    token: a.confirmationToken,
+    coverage: activeCoverage(),
+    returnMode: a.returnMode ?? "summary",
+    idempotencyKey: a.idempotencyKey,
+    payloadHash: idempotencyPayloadHash(normalizedEdges),
+    extra: {},
+  });
+}
 
 export function registerStructuralTools(server: McpServer) {
   // ── create_edge ──────────────────────────────────────────────────────────
@@ -72,7 +100,9 @@ export function registerStructuralTools(server: McpServer) {
     {
       title: "Create many edges in one batch",
       description:
-        "Add MANY edges in ONE atomic draft edit — the batch form of create_edge, for bulk wiring (e.g. 84 hasEducationalAlignment edges after an add_nodes pass). Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE combined diff + ONE confirmationToken; any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true and the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. DRAFT edit.",
+        "Add MANY edges in ONE atomic draft edit — the batch form of create_edge, for bulk wiring (e.g. 84 hasEducationalAlignment edges after an add_nodes pass). Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE confirmationToken; any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true and the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. " +
+        "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff; 'full' also attaches the whole `diff`. " +
+        "`idempotencyKey` (optional): a unique key (a UUID) makes a RETRIED confirm safe — same key + same payload replays the first apply's summary with `replayed:true` (no double-apply/audit) instead of REPLAY; same key + different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Namespace-scoped, 24h TTL. Omit for strict single-use. DRAFT edit.",
       inputSchema: {
         edges: z.array(
           z.object({
@@ -82,22 +112,16 @@ export function registerStructuralTools(server: McpServer) {
             properties: z.record(JsonValue).optional(),
           }),
         ),
+        returnMode: z.enum(["summary", "full"]).optional(),
+        idempotencyKey: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { edges: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>; confirm?: boolean; confirmationToken?: string }) => {
-      const namespace = activeNamespace();
-      const result = await runGraphMutation({
-        namespace,
-        mutation: createEdges,
-        args: { namespace, edges: a.edges.map((edge) => ({ ...edge, properties: edge.properties ?? {} })) },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage: activeCoverage(),
-      });
-      return asJson(result);
-    }),
+    guarded(async (a: {
+      edges: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
+      confirm?: boolean; confirmationToken?: string; returnMode?: ReturnMode; idempotencyKey?: string;
+    }) => asJson(await runCreateEdges(a))),
   );
 
   // ── delete_edges ───────────────────────────────────────────────────────────

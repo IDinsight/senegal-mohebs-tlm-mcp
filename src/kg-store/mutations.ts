@@ -98,7 +98,7 @@ export type GraphBlockedResult = {
 export type GraphApplyFailCode =
   | "STALE_TOKEN" | "TOKEN_EXPIRED" | "REPLAY" | "INVALID_TOKEN" | "ARGS_MISMATCH" | "MUTATION_MISMATCH" | "UNSEEDED";
 export type GraphApplyResult =
-  | { phase: "apply"; ok: true; kind: "graphMutation"; applied: string; draftSlot: Slot; diff: GraphDiff; idempotent?: boolean }
+  | { phase: "apply"; ok: true; kind: "graphMutation"; applied: string; draftSlot: Slot; diff: GraphDiff; auditId: string; idempotent?: boolean }
   | { phase: "apply"; ok: false; kind: "graphMutation"; reason: "stale" | "expired" | "replay" | "invalidToken" | "argsMismatch" | "mutationMismatch" | "unseeded"; code: GraphApplyFailCode; message: string };
 
 // A distinct result for role-denied calls. Kept separate from `blocked`
@@ -447,7 +447,7 @@ export async function runGraphMutation<Args>(
     // Consume the nonce LAST — if writeSlot throws, the token remains usable
     // for a legitimate retry after the operator fixes the underlying issue.
     consumedNonces.add(payload.n);
-    const result: GraphApplyResult = { phase: "apply", ok: true, kind: "graphMutation", applied: mutation.describe(args), draftSlot, diff };
+    const result: GraphApplyResult = { phase: "apply", ok: true, kind: "graphMutation", applied: mutation.describe(args), draftSlot, diff, auditId: applyRec.id };
     // Record the success under the idempotency key (if any) so a retried confirm
     // returns THIS result rather than re-applying. Set together with the nonce
     // so "nonce consumed" always implies "result cached" — no window where a

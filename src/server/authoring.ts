@@ -26,6 +26,8 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { runGraphMutation, kgNamespace, mintNodeId, type MutationGraph } from "../kg-store/index.js";
 import { addNode, addNodes } from "../kg-recipes/index.js";
+import { runBatchMutation, type ReturnMode } from "./batch.js";
+import { idempotencyPayloadHash } from "./idempotency.js";
 import type { SubjectAdapter } from "../types.js";
 
 // Namespace + coverage hook the active subject binds to (same as the other
@@ -66,22 +68,55 @@ const ADD_NODE_KINDS = [
   "Material", "LearningComponent", "InstructionalRoutine", "StandardsFrameworkItem",
 ] as const;
 
-// Surface the per-item minted ids on a dry-run preview: `mintedNodeIds` in item
-// order (echo the whole array back on confirm so the args-hash matches), plus a
-// `{ yourAlias → realId }` map for items that supplied their own mintedNodeId.
-// No-op on confirm / blocked / unauthorized results.
-function withMintedBatch(result: unknown, items: AddNodesItemInput[], mintedIds: string[]): unknown {
-  const r = result as { kind?: string; phase?: string };
-  if (!(r && r.kind === "graphMutation" && r.phase === "preview")) {
-    return result;
-  }
+// The add_nodes core, exported so tests drive the real logic (like
+// buildCapabilitiesReport). Mints per-item ids, folds them into the batch
+// mutation, and delegates response shaping + idempotency to runBatchMutation.
+export async function runAddNodes(a: {
+  items: AddNodesItemInput[];
+  confirm?: boolean;
+  confirmationToken?: string;
+  mintedNodeIds?: string[];
+  returnMode?: ReturnMode;
+  idempotencyKey?: string;
+}): Promise<Record<string, unknown>> {
+  const { namespace, coverage } = bind(getActiveAdapter());
+
+  // Mint one real id per item on the dry-run; on confirm reuse the exact ids the
+  // caller echoes back, so the args-hash matches the previewed batch.
+  const mintedIds = a.confirm ? (a.mintedNodeIds ?? []) : a.items.map(() => mintNodeId());
+  const builtItems = a.items.map((item, index) => ({
+    label: item.kind,
+    parentId: item.parentId,
+    newNodeId: mintedIds[index] ?? "",
+    title: item.description,
+    title_en: item.title_en,
+    position: item.position,
+    via: item.via,
+    alignTo: item.alignTo,
+    properties: item.properties,
+  }));
+
+  // A { yourAlias → realId } map for items that supplied their own mintedNodeId,
+  // surfaced (with mintedNodeIds) on both the preview and the apply summary.
   const mintedNodeIdMap: Record<string, string> = {};
-  items.forEach((item, index) => {
+  a.items.forEach((item, index) => {
     if (item.mintedNodeId) {
       mintedNodeIdMap[item.mintedNodeId] = mintedIds[index];
     }
   });
-  return { ...(result as object), mintedNodeIds: mintedIds, mintedNodeIdMap };
+
+  return runBatchMutation({
+    namespace,
+    mutation: addNodes,
+    args: { namespace, items: builtItems },
+    confirm: a.confirm,
+    token: a.confirmationToken,
+    coverage,
+    returnMode: a.returnMode ?? "summary",
+    idempotencyKey: a.idempotencyKey,
+    payloadHash: idempotencyPayloadHash(builtItems),
+    extra: { mintedNodeIds: mintedIds, mintedNodeIdMap },
+  });
 }
 
 // The fields every typed add shares.
@@ -342,7 +377,9 @@ export function registerAuthoringTools(server: McpServer) {
     {
       title: "Add many nodes in one batch",
       description:
-        "Create MANY nodes in ONE atomic draft edit — the batch form of the typed add tools, for bulk authoring (e.g. 88 StandardsFrameworkItems under a framework) without ~180 round-trips. Each `items[i]` has `kind` (the LC label — Course/LessonGrouping/Lesson/Activity/Assessment/Material/LearningComponent/InstructionalRoutine/StandardsFrameworkItem), an EXISTING `parentId`, `description` (display title), optional `position`/`alignTo`/`via`, and `properties` (the kind-specific canonical LC bag: audience, groupName, statementType, content, …). Each item attaches under an already-existing parent — a node minted in the SAME batch cannot be a parent (stage nodes here, then wire cross-references with create_edges). Optional per-item `mintedNodeId` is your own alias, returned in an id map so you can correlate items to their real ids. ALL-OR-NOTHING: the dry-run validates every item and returns ONE combined diff + ONE confirmationToken + `mintedNodeIds` (real ids, in item order); any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true, the token, AND `mintedNodeIds` echoed back verbatim. DRAFT edit — publish_draft to make it live.",
+        "Create MANY nodes in ONE atomic draft edit — the batch form of the typed add tools, for bulk authoring (e.g. 88 StandardsFrameworkItems under a framework) without ~180 round-trips. Each `items[i]` has `kind` (the LC label — Course/LessonGrouping/Lesson/Activity/Assessment/Material/LearningComponent/InstructionalRoutine/StandardsFrameworkItem), an EXISTING `parentId`, `description` (display title), optional `position`/`alignTo`/`via`, and `properties` (the kind-specific canonical LC bag: audience, groupName, statementType, content, …). Each item attaches under an already-existing parent — a node minted in the SAME batch cannot be a parent (stage nodes here, then wire cross-references with create_edges). Optional per-item `mintedNodeId` is your own alias, returned in an id map so you can correlate items to their real ids. ALL-OR-NOTHING: the dry-run validates every item and returns ONE confirmationToken + `mintedNodeIds` (real ids, in item order); any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true, the token, AND `mintedNodeIds` echoed back verbatim. " +
+        "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff (~1 KB — enough to progress to confirm and wire ids); 'full' also attaches the whole `diff`. " +
+        "`idempotencyKey` (optional): pass a unique key (a UUID) to make a RETRIED confirm safe — a repeat with the same key + same payload returns the first apply's summary with `replayed:true` (no double-apply, no double-audit) instead of REPLAY; the same key with a different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Keys are namespace-scoped and expire after 24h. Omit it to keep strict single-use tokens. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
         items: z.array(
           z.object({
@@ -357,38 +394,16 @@ export function registerAuthoringTools(server: McpServer) {
             mintedNodeId: z.string().optional(),
           }),
         ),
+        returnMode: z.enum(["summary", "full"]).optional(),
+        idempotencyKey: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
         mintedNodeIds: z.array(z.string()).optional(),   // real ids, echoed on confirm
       },
     },
-    guarded(async (a: { items: AddNodesItemInput[]; confirm?: boolean; confirmationToken?: string; mintedNodeIds?: string[] }) => {
-      const { namespace, coverage } = bind(getActiveAdapter());
-
-      // Mint one real id per item on the dry-run; on confirm reuse the exact ids
-      // the caller echoes back, so the args-hash matches the previewed batch.
-      const mintedIds = a.confirm ? (a.mintedNodeIds ?? []) : a.items.map(() => mintNodeId());
-      const builtItems = a.items.map((item, index) => ({
-        label: item.kind,
-        parentId: item.parentId,
-        newNodeId: mintedIds[index] ?? "",
-        title: item.description,
-        title_en: item.title_en,
-        position: item.position,
-        via: item.via,
-        alignTo: item.alignTo,
-        properties: item.properties,
-      }));
-
-      const result = await runGraphMutation({
-        namespace,
-        mutation: addNodes,
-        args: { namespace, items: builtItems },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage,
-      });
-      return asJson(a.confirm ? result : withMintedBatch(result, a.items, mintedIds));
-    }),
+    guarded(async (a: {
+      items: AddNodesItemInput[]; confirm?: boolean; confirmationToken?: string;
+      mintedNodeIds?: string[]; returnMode?: ReturnMode; idempotencyKey?: string;
+    }) => asJson(await runAddNodes(a))),
   );
 }

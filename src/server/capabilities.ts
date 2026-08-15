@@ -129,6 +129,17 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
         "To CREATE a node, use the typed authoring tools (see `typedAdds`), not create_edge.",
     },
     recipes,
+    // The batched writes and their response/idempotency controls, advertised so
+    // callers can feature-detect returnMode + idempotencyKey.
+    batch: {
+      tools: ["add_nodes", "create_edges"],
+      params: ["returnMode", "idempotencyKey"],
+      returnModes: ["summary", "full"],
+      defaultReturnMode: "summary",
+      idempotencyTtlHours: 24,
+      note:
+        "add_nodes / create_edges apply a whole batch as ONE atomic draft edit (one diff, one token, one audit record). returnMode defaults to 'summary' — a compact `counts` object instead of the full diff (which is ~200 KB for an 84-item batch); pass 'full' to also get the diff. idempotencyKey (a client-chosen UUID) makes a RETRIED confirm a safe replay (same key + same payload → the first apply's summary with replayed:true, no double-apply/audit; different payload → IDEMPOTENCY_KEY_MISMATCH). Keys are namespace-scoped and expire after 24h; omit for strict single-use tokens.",
+    },
     coverageWarnings: {
       // Whether the active subject's adapter emits completeness warnings.
       enabled: typeof adapter.coverageWarnings === "function",
@@ -188,8 +199,15 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   const discovery = {
     tools: ["walk_graph", "namespace_stats"],
     canWalkDraft: actions.canReadDraft,
+    walkGraph: {
+      params: ["fromId", "direction", "edgeTypes", "nodeTypes", "maxDepth", "includeEdges", "limit", "cursor", "slot"],
+      defaults: { limit: 50, maxDepth: 3 },
+      maxLimit: 500,
+      // Two independent overflow flags callers should branch on.
+      pagination: "nextCursor + truncatedByLimit (page limit) vs truncated (depth cap)",
+    },
     note:
-      "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, paginated BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk.",
+      "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, PAGINATED BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. Page with limit (default 50, max 500) + nextCursor; do not raise the limit to fit a big result. truncatedByLimit means more nodes remain on further pages; truncated means the depth cap hid deeper nodes. slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk.",
   };
 
   return {

@@ -563,3 +563,33 @@ apply.
 
 `get_capabilities` advertises all four (batched writes under `editable.typedAdds` /
 `editable.structural.verbs`; the reads under a new `discovery` block).
+
+### Payload shape + idempotency (follow-on, live)
+
+An 84-SFI + 84-edge batch on `senegal/ci/maths` surfaced three friction points — all
+payload-shape / idempotency, not new capability:
+
+- **`returnMode: "summary" | "full"`** on `add_nodes` / `create_edges`, default **`"summary"`**.
+  The full diff of an 84-item batch is ~200 KB, forcing callers to save-and-grep just for the
+  token + minted ids. `"summary"` drops `diff` and returns a compact `counts`
+  `{ nodesAdded, edgesAdded, nodesChanged, nodesRemoved, edgesRemoved }` (~1 KB); `"full"`
+  keeps the diff alongside `counts`. Applied on both dry-run and confirm. Storage/audit
+  unchanged. **Breaking** for callers that parsed `diff` off the response. Shaping lives in
+  `server/batch.ts`.
+- **`walk_graph` default `limit` 50** (was 100; ceiling still 500). A framework-root walk of
+  156 SFIs blew the token cap on the old default. Pagination is the expected path — the
+  response always carries `nextCursor` plus two independent flags: **`truncatedByLimit`** (the
+  page limit cut this response — page on) vs **`truncated`** (the `maxDepth` cap hid deeper
+  nodes).
+- **`idempotencyKey`** on `add_nodes` / `create_edges`. A retried confirm with the same key +
+  same payload replays the first apply's summary (`replayed: true`) instead of `REPLAY` — no
+  double-apply, no double-audit. Same key + different payload → `IDEMPOTENCY_KEY_MISMATCH`
+  with the original summary attached. Keys are **namespace-scoped**, expire after **24h**, and
+  are process-scoped (a restart falls back to the base-hash CAS, which still blocks any
+  double-apply via `STALE_TOKEN`). Kept in `server/idempotency.ts` — not kg-store — because
+  the stored summary is tool-layer data (minted ids, the apply's `auditId`) the framework
+  never sees. Omit the key for strict single-use tokens (unchanged behaviour).
+
+The two-phase contract was audited in the same pass: the framework's preview branch computes
+the diff purely in memory and never calls `writeSlot`/`createDraft` — only confirm writes — so
+a dry-run stages nothing (guarded by a `namespace_stats.draft` before/after test).
