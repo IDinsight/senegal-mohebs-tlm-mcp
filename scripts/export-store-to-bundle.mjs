@@ -10,12 +10,12 @@
  * fold them back into the source of truth, so a later re-seed preserves them and
  * `parity:kg-store --live` reads clean.
  *
- * Usage:
- *   npm run build
- *   node scripts/export-store-to-bundle.mjs --live [ci maths]   # write real sources/
- *   node scripts/export-store-to-bundle.mjs [ci maths]          # SELF-TEST: memory
- *        store seeded from the current bundle, exported to a temp dir + diffed
+ * Usage (wired as `npm run export:kg-store`, which builds first):
+ *   npm run export:kg-store                       # SELF-TEST: memory store seeded
+ *        from the current bundle, exported to a temp dir + round-trip-diffed
  *        (proves the round-trip without touching sources/)
+ *   npm run export:kg-store -- --live [ci maths]  # write real sources/ from Firestore
+ *   # equivalently, after `npm run build`: node scripts/export-store-to-bundle.mjs …
  *
  * --live reads real Firestore (KG_SOURCE=firestore; requires SERVICE_ACCOUNT_KEY_PATH
  * + FIREBASE_STORAGE_BUCKET). An optional `grade subject` filters to one context.
