@@ -96,4 +96,23 @@ A chapter's assessment (the "bilan") is a \`Lesson\` with \`educationalUse: "Ass
 - **Kinds are the graph's own words** — a grouping's \`groupName\`, an SFI's
   \`statementType\`, a content leaf's LC \`label\`. There is no separate subject "role"
   tag to set.
+
+## Coverage expectations
+
+A well-formed chapter satisfies these. The server checks the first three
+**automatically** and warns on a violation (they are advisory — they never block a
+publish); \`review_draft\` checks all of them, including the last two, which are
+prose-only:
+
+- **No empty chapter** — every \`Chapitre\` has at least one \`Lesson\`.
+- **Exactly one bilan per chapter** — each \`Chapitre\` has exactly one \`Lesson\`
+  flagged \`educationalUse: "Assessment"\` (the bilan).
+- **One chapter per lesson** — a \`Lesson\` has exactly one \`Chapitre\` parent (via
+  \`hasPart\`). Its \`Semaine\` parent (via \`hasChild\`) is a separate axis and does
+  not count against this.
+- **Every teaching lesson is aligned** — each non-bilan \`Lesson\` has a
+  \`hasEducationalAlignment\` edge to the OS it teaches. A lesson with no alignment
+  is unmoored from the curriculum.
+- **Chapters are contiguous** — \`Chapitre\` \`position\`s run from 1 with no gaps or
+  duplicates, so the book has no missing or double-numbered chapter.
 `;
