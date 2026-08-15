@@ -7,8 +7,9 @@
 > the formatter. The subject-profile **config layer** (phase 2b) is built too:
 > profiles are authored data in the store, edited through the curator loop with the
 > schema guard at authoring time (`get_profile` / `edit_profile`). Still a **proposal**:
-> the MCP **resources** browse surface (D5), reading's routine catalog (blocked on its
-> content layer), and re-copy/detach ergonomics. This note extends
+> the **graph-guide MD layer** (phase 2c — the profile as prose an LLM reads), the MCP
+> **resources** browse surface (D5), reading's routine catalog (blocked on its content
+> layer), and re-copy/detach ergonomics. This note extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
 > **D2 was revised from by-reference to copy-on-use during implementation** (see below).
@@ -145,15 +146,111 @@ time**. A profile change is finally "no redeploy". (D4.)
   promote a profile edit that landed since their dry-run. `get_capabilities`
   carries a `profile` mirror (`canEdit` from the same apply gate).
 
+## Phase 2c — the profile as a "graph guide" the LLM reads (proposal)
+
+> **Status: proposal, not built.** This section is the design pass for turning the
+> profile from *config a machine executes* into *guidance a person authors and an
+> LLM reads*. It builds directly on the Phase 2b config cell and changes no read
+> semantics.
+
+The Phase 2b profile is **configuration for deterministic server code** — the
+parser, the coverage checker, the deliverable classifier. But the larger part of
+"how to interpret this subject's graph" has no home yet: the guidance an
+**authoring or generating LLM** needs when it reads and edits the graph through
+the generic tools (`walk_graph`, `add_nodes`, `create_edges`, `edit_node`). That
+LLM flies largely blind today — it infers a subject's conventions from the graph
+and from `CLAUDE.md`. Phase 2c gives it an authored **graph guide**: a markdown
+document, per subject, that narrates the ontology, the vocabulary, the intended
+hierarchy, and the coverage *intent* in prose.
+
+*The motivating example.* A Senegal maths guide would say: "OS (*Objectif
+spécifique*) and OA (*Objectif d'apprentissage*) are both `StandardsFrameworkItem`s
+— the same family, standards — distinguished by their `statementType`; the
+containment logic is **OA → OS → LearningComponent**; author content by aligning a
+`Lesson` to its OS via `hasEducationalAlignment`." Notice that *most of this is
+already in the graph* — the LC `label`, the `statementType`, the `hasChild` edges.
+The guide's job is not to re-encode it but to **state it where the LLM reliably
+reads it**, together with the *intent* the raw edges don't carry (where a new node
+belongs, what a valid structure looks like).
+
+### Two readers, one boundary
+
+The design rests on separating who consumes each kind of interpretation:
+
+- **Reader A — deterministic code, on the read hot path.** `parseGraph`/`kindOf`,
+  the coverage checker, the deliverable classifier. They run on every read,
+  synchronously, and are guarded byte-identical across a re-seed (parity). Code
+  cannot read prose; putting an LLM on this path would make reads slow,
+  non-deterministic, and token-costed, and would forfeit the parity guarantee. So
+  Reader A keeps a **thin, machine-readable core** — and, thanks to the generic
+  identity reader (§Phase 2a), that core is already tiny: a few edge names, a
+  numbering hint, a prune strategy, plus the deliverable file-match.
+- **Reader B — the authoring/generating LLM.** It reaches the graph only through
+  tools and prompts, so it can (and should) be guided by **prose**. This is where
+  the graph guide lives.
+
+The boundary is the rule: **prose guides the LLM; it never sits on the
+deterministic read hot path.** That is also the guide's safety — because reads
+don't consume it, a wrong or vague guide can mislead an author but can never break
+a read or corrupt the parse (unlike a malformed machine core, which `edit_profile`
+still Zod-guards and `activateContext` still refuses).
+
+### The layered profile
+
+The Phase 2b config cell (opaque JSON) carries two fields:
+
+- a **`core`** — the thin machine-readable config Reader A consumes, Zod-validated
+  exactly as today; and
+- a **`guide`** — the authored markdown Reader B reads.
+
+Both ride the same draft/publish loop and are edited through `edit_profile`; a new
+read tool surfaces the guide to the LLM, exactly as `get_prompt` / `get_terminology`
+already surface per-subject text today (that substrate exists —
+`sources/<subject>/PROMPT_*.md`, `terminology.json`, and their tools). The cell
+stays opaque to `kg-store`, so this is a payload change, not new store machinery.
+
+### What this lets us delete, and what stays code
+
+The **advisory coverage rules** are the prime candidate to move from code into the
+guide's prose: they only *warn* (never block) and they are not on the read hot
+path, so "each chapter should have exactly one bilan" can become a sentence an LLM
+checks when it reviews a draft (on `diff_draft`), retiring the coded rule set. The
+parser and the deliverable classifier **stay code** — they are on the hot path. So
+phase 2c is not "delete all subject config"; it is "move the part a human
+reads-and-reasons-about into prose, and keep the part a machine must execute as a
+thin core." That is the honest form of "no per-subject code": the *mechanisms*
+stay generic code; the *subject knowledge*, including its interpretation guidance,
+becomes authored data — most of it prose.
+
+### Open for the design pass
+
+- The exact split: which fields the `core` keeps (parse descriptor, deliverable
+  match) vs what the guide narrates (ontology, vocab map, hierarchy, coverage
+  intent). Aim to keep `core` at what a machine *must* execute, nothing a human
+  would rather read as prose.
+- Coverage-as-prose: a new opt-in "review this draft against the guide" LLM tool,
+  or folded into the existing `diff_draft` flow? The former keeps the hot path
+  untouched and makes the LLM cost explicit.
+- Guide validation: it is free text, so the guard is "it can't break reads" (by
+  construction — reads never consume it), not a schema. The `core` keeps its Zod
+  guard.
+
+**Decision (D8):** a **layered profile** — thin machine-readable `core` for the
+deterministic parser/classifier + an authored markdown `guide` for the
+authoring/generating LLM; prose never on the read hot path. (Chosen over
+"MD-only / LLM interprets everything," which would put an LLM on the read path and
+lose determinism + parity.)
+
 **Scope-from-Course (deferred follow-up).** The remaining per-subject scope logic
 (the reading prune; CI maths keeping its scaffolding out) would collapse into a
 single generic mechanism — derive the in-scope set by reachability from the
 `Course` root — retiring the prune and the widened-parse concern together. Left as
 its own change so it can be reviewed against the parity + faithful-re-export guards.
 
-**Not yet:** the MCP **resources** browse surface
-(D5 — `list_catalog` / `use_*` / `get_profile` are tools for now), reading's routine
-catalog (blocked on its missing content layer), and re-copy/detach ergonomics.
+**Not yet:** the **graph-guide MD layer** (phase 2c below), the MCP **resources**
+browse surface (D5 — `list_catalog` / `use_*` / `get_profile` are tools for now),
+reading's routine catalog (blocked on its missing content layer), and
+re-copy/detach ergonomics.
 
 ## The goal
 
@@ -438,6 +535,7 @@ files are gone.
 | D5 | Curator browse surface | **Tool for now** (`list_catalog`); MCP resources deferred. `use_routine` / `use_formatter` attach by copy |
 | D6 | Build order | **Routine wiring first → profile to config → catalog → dissolve residue** |
 | D7 | Residual per-subject logic | **Generic mechanism switched by config** (no node-authorable prune language) |
+| D8 | Profile: config vs guide | **Layered (proposal)** — thin machine-readable `core` for the deterministic parser/classifier (Zod-guarded, on the read hot path) + an authored markdown `guide` the LLM reads; prose never on the read hot path. Advisory coverage migrates to guide prose; parser/classifier stay code |
 
 ## Related
 
