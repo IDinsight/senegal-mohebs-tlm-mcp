@@ -23,14 +23,16 @@ function domainPool(): string[] {
 
 export async function domainUsage() {
   const usage = new Map<string, Set<number>>();
-  for (const e of await listEntries()) for (const d of e.content.exampleDomains ?? []) { const k = d.toLowerCase(); (usage.get(k) ?? usage.set(k, new Set()).get(k)!).add(e.unit); }
+  // `unit` is the transitional scope-node ordinal (see HistoryEntry); an entry
+  // without one can't place a chapter, so it is skipped for rotation purposes.
+  for (const e of await listEntries()) { if (e.unit == null) continue; for (const d of e.content.exampleDomains ?? []) { const k = d.toLowerCase(); (usage.get(k) ?? usage.set(k, new Set()).get(k)!).add(e.unit); } }
   return [...usage.entries()].map(([domain, ch]) => ({ domain, chapters: [...ch].sort((a, b) => a - b) }));
 }
 
 export async function neighborhoodDomains(unit: number, k: number = DOMAIN_NEIGHBORHOOD_K): Promise<Record<number, string[]>> {
   const result: Record<number, string[]> = {};
   for (const e of await listEntries()) {
-    if (e.unit === unit) continue;
+    if (e.unit == null || e.unit === unit) continue;   // no ordinal → can't place; skip
     const domains = e.content.exampleDomains ?? [];
     if (domains.length === 0) continue;
     if (Math.abs(e.unit - unit) <= k) {

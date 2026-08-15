@@ -1,12 +1,24 @@
 # Graph-linked documents — a document's identity is the node it covers
 
-> **Status: proposal, not built.** This note designs the replacement for the
-> profile's `deliverables` concept: a generated `.docx` is identified by the
-> **graph node it covers**, not by a `(unit, deliverable)` coordinate. It is the
-> "documents-as-nodes" follow-up flagged in
+> **Status: step 1 built (in-repo); steps 2–4 proposed.** This note designs the
+> replacement for the profile's `deliverables` concept: a generated `.docx` is
+> identified by the **graph node it covers**, not by a `(unit, deliverable)`
+> coordinate. It is the "documents-as-nodes" follow-up flagged in
 > [`authorable-catalog.md`](authorable-catalog.md) (D4 / the deliverables removal),
 > and it retires `deliverables`, `get_prompt`, and the filename-classification
 > half of `reconcile`.
+>
+> **Step 1 (built).** The history is re-keyed by `nodeId`: `record_document_content`
+> / `log_generation` take a `nodeId` (validated against the active graph) instead
+> of `(unit, deliverable)`; `reconcile` is now **discover-only** (diffs the bucket
+> against history by `relPath`, no filename classification); `list_documents`
+> pages/filters by node. A pre-node-keyed (v2) `history.json` is ignored on load —
+> its docs re-surface as untracked for a one-time re-link (the "fresh reconcile"
+> migration below). Each entry keeps a **transitional** `unit` hint (the scope
+> node's ordinal, stamped at record time) purely so CI-maths example-domain
+> rotation keeps working until generation goes graph-native (step 4); it is not
+> parsed from the filename and carries no deliverable. `deliverables` itself is
+> untouched in step 1 — its removal is step 2.
 
 ## Why `deliverables` stopped making sense
 
@@ -152,9 +164,11 @@ history file's keys change.
 
 ## Build order (when this is greenlit)
 
-1. **Re-key the history** — `{ nodeId, relPath, content }`; `list_documents` /
-   `log_generation` / `record_document_content` take `nodeId`; `reconcile` drops
-   classification and becomes discover-only. (Storage + server tools.)
+1. **Re-key the history** *(built)* — `{ nodeId, relPath, content }`;
+   `list_documents` / `log_generation` / `record_document_content` take `nodeId`;
+   `reconcile` drops classification and becomes discover-only. (Storage + server
+   tools.) A transitional `unit` ordinal hint is stamped from the node at record
+   time so domain rotation survives until step 4.
 2. **Remove `deliverables`** — from the profile schema, the three profiles,
    `build.ts`, `DeliverableSpec`, `badDeliverable`, and the capabilities mirror.
 3. **Retire `get_prompt`** — move residual heuristics into the guides; delete the

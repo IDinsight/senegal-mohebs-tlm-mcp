@@ -21,7 +21,7 @@ import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import type { StorageAdapter, HistoryFile, CurriculumModel } from "../../types.js";
 
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [], getObjectMd5: async () => null, downloadDocx: async () => Buffer.from(""),
   createUploadUrl: async () => ({ url: "", objectKey: "", contentType: "", expiresAt: "" }),

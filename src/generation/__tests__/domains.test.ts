@@ -3,7 +3,7 @@ import type { HistoryEntry } from "../../types.js";
 
 function makeEntry(unit: number, domains: string[]): HistoryEntry {
   return {
-    id: `${unit}:manual`, unit, type: "manual", relPath: `ch${unit}.docx`,
+    id: `node-${unit}`, nodeId: `node-${unit}`, unit, relPath: `ch${unit}.docx`,
     md5: "abc", updated: "2025-01-01", source: "pipeline", recordedAt: "2025-01-01",
     content: { exampleDomains: domains },
   };

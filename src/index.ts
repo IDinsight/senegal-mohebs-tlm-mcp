@@ -57,9 +57,9 @@ async function main() {
   await applyStartupContext();
   if (getActiveContext()) {
     try {
-      const r = await reconcile(getActiveAdapter().deliverables);
+      const r = await reconcile();
       console.error(`${LOG} reconciled: ${r.tracked.length} tracked, ${r.untracked.length} untracked, ${r.dropped.length} dropped.`);
-      if (r.untracked.length) console.error(`${LOG} untracked (need ingestion): ${r.untracked.map((u) => `${u.id} (${u.reason})`).join(", ")}`);
+      if (r.untracked.length) console.error(`${LOG} untracked (need linking): ${r.untracked.map((u) => `${u.relPath} (${u.reason})`).join(", ")}`);
     } catch (e) { console.error(`${LOG} startup reconcile failed:`, (e as Error).message); }
   } else {
     const avail = listAvailableContexts().map((c) => `${c.grade}/${c.subject}`).join(", ") || "(none found)";

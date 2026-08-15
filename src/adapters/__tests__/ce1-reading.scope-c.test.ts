@@ -31,7 +31,7 @@ import type { StorageAdapter, HistoryFile, CurriculumModel } from "../../types.j
 
 const HAS_PART = "hasPart"; // canonical LC content containment
 
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [],
   getObjectMd5: async () => null,

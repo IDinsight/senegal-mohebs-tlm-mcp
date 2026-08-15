@@ -26,19 +26,30 @@ export type DocumentContent = {
   terminologyUsed?: string[];
 };
 
+// A generated document's identity is the graph node it covers — its "scope node"
+// (a Chapitre/Semaine/Lesson) — not a (unit, deliverable) coordinate. See
+// docs/design-notes/graph-linked-documents.md. `id === nodeId`.
 export type HistoryEntry = {
-  id: string;                 // `${scope}:${deliverableKey}` (CI maths: `${unit}:manual`)
-  unit: number;               // scope value (CI maths: chapter number; CE1 reading: week); numeric for every subject shipped so far
-  type: DeliverableKey;
+  id: string;                 // == nodeId (kept as `id` for the shared upsert/paging helpers)
+  nodeId: string;             // the scope node this document covers
   relPath: string;
   md5: string;
   updated: string;
   source: "pipeline" | "parsed";
   recordedAt: string;
   content: DocumentContent;
+  // TRANSITIONAL: the scope node's ordinal (chapter/week number), stamped at
+  // record time from the graph. Kept only so CI-maths example-domain rotation
+  // keeps working; it is removed when generation goes graph-native (step 4),
+  // once rotation reads the ordinal straight from the node.
+  unit?: number;
 };
 
-export type HistoryFile = { version: 2; entries: HistoryEntry[] };
+// Bumped to 3 for the node-keyed schema. A pre-node-keyed (v2) history can't be
+// auto-mapped to node ids without the graph, so it is ignored on load and the
+// bucket docs re-surface as untracked for re-linking (the "fresh reconcile"
+// migration in graph-linked-documents.md).
+export type HistoryFile = { version: 3; entries: HistoryEntry[] };
 
 export type StoredObject = {
   relPath: string;
@@ -46,10 +57,10 @@ export type StoredObject = {
   updated: string | null;
 };
 
+// A .docx object found in the documents bucket. Discovery no longer classifies
+// (deliverables are gone from this path) — reconcile() diffs these against
+// history BY relPath, and the curator links each untracked doc to its node.
 export type DiscoveredDoc = {
-  id: string;
-  unit: number;
-  type: DeliverableKey;
   relPath: string;
   md5: string | null;
   updated: string | null;

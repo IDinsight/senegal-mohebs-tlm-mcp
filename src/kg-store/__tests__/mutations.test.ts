@@ -43,7 +43,7 @@ import { __setActorForTest, type Actor } from "../../actor.js";
 // Tests that specifically care about the authz gate live in authz.test.ts.
 const TEST_CURATOR: Actor = { id: "test-curator-uid", email: "curator@test", role: "curator", unknown: false };
 
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [],
   getObjectMd5: async () => null,

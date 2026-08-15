@@ -12,7 +12,7 @@ gs://<FIREBASE_STORAGE_BUCKET>/
     history.json
 ```
 `previews/` is a **sibling** of `documents/`, never inside it — reconciliation only scans `documents/`, so a preview object can never enter the tracked history (see *Preview generation* below).
-Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within a grade/subject**; the scope is the first integer in the subfolder name, and the active subject's adapter classifies the filename into a deliverable (for CI maths: a file named "Fiches de leçons …" is the lesson-sheets doc, anything else is the manual).
+Document identity is the **graph node the document covers** — its *scope node* (a `Chapitre`/`Semaine`/`Lesson`), keyed by that node's id **within a grade/subject** (see [`../design-notes/graph-linked-documents.md`](../design-notes/graph-linked-documents.md)). The filename is **no longer parsed for identity**: `relPath` stays a human-readable location, and a doc is linked to its node at record time. The which-Course-which-node split *is* the old manual-vs-lessons split (a chapter's pupil manual covers its `Chapitre` under the Student's Book; its lesson sheets cover the chapter's `Lesson`/week node under the Teacher's Guide).
 
 ## The generation flow (cross-host, no shared disk)
 
@@ -20,13 +20,13 @@ Document identity is `scope:deliverable` (e.g. `5:manual`, `5:lessons`) **within
 1. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology guidance, coverage, and (for the teacher guide) the manual to build on. `unit` is the scope value (for CI maths, the chapter number) and `deliverable` is a deliverable key (`manual`/`lessons`). For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
 2. Generate the `.docx`.
 3. `create_upload_url(relPath, confirm)` → the server returns a short-lived **signed URL**. Upload the file with an HTTP `PUT` (Content-Type `application/vnd.openxmlformats-officedocument.wordprocessingml.document`). No large payloads go through the MCP channel. **Requires confirmation** — see below.
-4. `log_generation(unit, deliverable, relPath, content, confirm)` — the server reads the uploaded object's md5 from storage and records what you produced. History updated; no local file needed. **Requires confirmation** — see below.
+4. `log_generation(nodeId, relPath, content, confirm)` — the server checks `nodeId` names a real scope node in the active graph, reads the uploaded object's md5 from storage, and records what you produced against that node. History updated; no local file needed. **Requires confirmation** — see below.
 
 > **Confirmation gate.** The three tools that write outward — `create_upload_url` (gates the upload), `log_generation`, and `record_document_content` — never act without approval, using the strongest gate the client supports:
 > - **Client supports MCP elicitation** → the server asks the **user** directly via an elicitation dialog. This is a hard gate: the agent cannot bypass it (even passing `confirm: true` won't skip it — a declined dialog blocks the action).
 > - **Otherwise** → an agent-mediated two-step: the first call performs no side effect and returns the shared confirmation envelope `{ needsConfirmation: true, action, message }` (`action` states the stakes; `message` tells the agent to re-call with `confirm: true`); the agent asks the user, then re-calls with `confirm: true`.
 >
-> Input validation (e.g. unknown deliverable) runs before the gate, so bad calls fail first. All read-only tools are ungated. Note: in a fully headless run (no user, no elicitation) these tools cannot get approval by design — drive them only where a human is reachable.
+> Input validation (e.g. a `nodeId` that names no node in the active graph) runs before the gate, so bad calls fail first. All read-only tools are ungated. Note: in a fully headless run (no user, no elicitation) these tools cannot get approval by design — drive them only where a human is reachable.
 >
 > **Two lifecycles share only the envelope shape.** Document tools write **live** to the bucket / history — the confirm is the ONLY gate, and the `action` field says "writes NOW … no draft, no undo". Graph mutations (see below) **stage a draft edit** — the same envelope, but the `action` says "STAGES a draft edit … nothing reaches generation until you separately publish". Uniform mechanics; deliberately different stakes.
 
@@ -55,10 +55,10 @@ An expert who has staged a draft edit can generate a **preview** of the teaching
 ## Ingesting a doc authored elsewhere (e.g. an expert wrote chapter 2)
 
 1. The file is in the bucket (uploaded any way you like), under the grade/subject's `documents/`.
-2. `reconcile` surfaces it as untracked.
+2. `reconcile` surfaces it as untracked (by `relPath` — it no longer classifies filenames).
 3. `get_document_text(relPath)` returns its plain text (server downloads from the bucket and extracts via mammoth — it never calls an LLM).
-4. Extract the structured content and call `record_document_content(...)` (**requires confirmation** — call with `confirm: true` after the user approves). Tracked from then on.
+4. Extract the structured content and call `record_document_content(nodeId, relPath, content, confirm)` to **link** the doc to the scope node it covers (**requires confirmation** — call with `confirm: true` after the user approves). Tracked from then on.
 
 ## Reconciliation
 
-Run on startup (when a context is active) and via the `reconcile` tool: present + md5 matches history → tracked (skipped); new/changed md5 → untracked (needs ingestion); in history but gone from the bucket → dropped; duplicates for one identity → the object matching the tracked md5 wins, else most-recently-updated.
+Run on startup (when a context is active) and via the `reconcile` tool. It is **discover-only** — it lists the bucket's `.docx` objects and diffs them against history **by `relPath`**, with no filename classification: present + md5 matches history → **tracked**; `relPath` in no entry → **untracked (new)**; `relPath` known but md5 differs → **untracked (changed)**; in history but the object is gone from the bucket → **dropped** (the stale entry is removed). The curator/LLM links each untracked doc to its node via `record_document_content`. (A pre-node-keyed `history.json` — the old `(unit, deliverable)` schema — is ignored on load, so its docs re-surface as untracked for a one-time re-link; the bucket objects are untouched.)

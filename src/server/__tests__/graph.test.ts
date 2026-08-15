@@ -164,7 +164,7 @@ describe("walkGraph pagination + overflow flags", () => {
 });
 
 // ── Integration: the tool cores against the seeded store ──────────────────────
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [], getObjectMd5: async () => null, downloadDocx: async () => Buffer.from(""),
   createUploadUrl: async () => ({ url: "", objectKey: "", contentType: "", expiresAt: "" }),

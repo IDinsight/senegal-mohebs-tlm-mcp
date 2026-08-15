@@ -33,7 +33,7 @@ import type { KgNodeStore, StoredMeta } from "../types.js";
 
 // Same storage stub the parity harness uses — history + bucket are orthogonal
 // to the KG lifecycle, so we neutralise them.
-const emptyHistory: HistoryFile = { version: 2, entries: [] };
+const emptyHistory: HistoryFile = { version: 3, entries: [] };
 const fakeStorage: StorageAdapter = {
   listDocuments: async () => [],
   getObjectMd5: async () => null,
