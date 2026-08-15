@@ -126,7 +126,7 @@ bucket's responsibility does this tool serve?":
 **A — logic (graph).** The tools that author, curate, and read the logic + content
 held in the graph:
 
-- `add_node`, `move_node`, `reposition`, `set_content`
+- `add_node`, `move_node`, `edit_node`
 - `create_node`, `link_nodes`, `unlink_nodes`, `delete_node`
 - `upsert_property`, `diff_draft`, `publish_draft`, `discard_draft`
 - `list_units`, `get_curriculum`, `get_terminology`, `terminology_sections`

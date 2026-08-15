@@ -37,7 +37,7 @@ export function buildServer(): McpServer {
   registerDocumentTools(server);     // reconcile, upload/download, record/log
   registerLifecycleTools(server);    // diff_draft, publish_draft, discard_draft
   registerStructuralTools(server);   // create_edges, delete_edges, delete_nodes (edge + deletion verbs)
-  registerRecipeTools(server);       // reposition, set_content (ordinal + content edits)
+  registerRecipeTools(server);       // edit_node (content / position / title edits — replaced reposition + set_content)
   registerAuthoringTools(server);    // add_nodes (the single node-creation tool — one or many; replaced the per-label typed adds)
   registerCatalogTools(server);      // list_catalog, use_routine (shared routine catalog — browse + copy-onto-lesson)
   registerCapabilityTools(server);   // get_capabilities (read-only mirror of what the caller can do)

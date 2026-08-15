@@ -97,7 +97,7 @@ later needs no code change.
 (The `upsert_property` wording-edit tool and its `wordingAliases` surface — which
 this reader had briefly kept working through a `normalizedStatementType` fallback —
 were subsequently **removed** entirely. A node's text and ordinal are now edited
-only through the generic verbs `set_content` / `reposition`; there is no separate
+only through the generic verb `edit_node`; there is no separate
 wording tool, and the profile no longer declares a wording surface.)
 
 Two consequences: kinds are now the graph's own words (`Chapitre`, `Objectif

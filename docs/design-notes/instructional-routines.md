@@ -132,7 +132,7 @@ Deltas for the manual routine: **+13 nodes** (1 parent + 6 steps + 6 Materials),
 **+37 edges** (12 `hasPart` + 25 `usesRoutine`) → CI/maths **770 nodes / 1304 edges**.
 
 Because the nodes are canonical and copy an existing node's identity, the same
-subtree can equally be authored through the generic `add_node` + `set_content`
+subtree can equally be authored through the generic `add_node` + `edit_node`
 verbs rather than a splice script — the splice is just faster for a one-shot bulk add.
 
 ## Next phases (not in this PR)
