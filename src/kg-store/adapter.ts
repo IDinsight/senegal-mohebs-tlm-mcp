@@ -35,3 +35,17 @@ export function kgNamespace(a: string, b: string, c?: string): string {
   const [workspace, grade, subject] = c === undefined ? [DEFAULT_WORKSPACE, a, b] : [a, b, c];
   return `${basePrefix()}${workspace}/${grade}/${subject}`;
 }
+
+// Inverse of kgNamespace: recover the teaching context a namespace names. Strips
+// the bucket prefix and splits into workspace/grade/subject. Returns null for
+// anything that isn't a 3-segment curriculum namespace — notably the reserved
+// catalog partitions (grade segment `_catalog`), which are not teaching contexts.
+export function parseNamespace(ns: string): { workspace: string; grade: string; subject: string } | null {
+  const prefix = basePrefix();
+  const body = prefix && ns.startsWith(prefix) ? ns.slice(prefix.length) : ns;
+  const parts = body.split("/");
+  if (parts.length !== 3) return null;
+  const [workspace, grade, subject] = parts;
+  if (grade === "_catalog") return null;
+  return { workspace, grade, subject };
+}

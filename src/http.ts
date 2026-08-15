@@ -32,7 +32,7 @@ import { listExportNamespaces, exportNamespace } from "./kg-export.js";
 import { CONFIG, basePrefix, kgSource, DEFAULT_WORKSPACE } from "./config.js";
 import { newSessionState, runInSession, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
-import { activateContext } from "./activate.js";
+import { activateContext, refreshAvailableContexts } from "./activate.js";
 import { consentPage } from "./consent.js";
 import { resolveActor, withMemberships, runAsActor, type Actor } from "./actor.js";
 import { resolveMemberships } from "./workspaces/index.js";
@@ -224,6 +224,17 @@ async function main() {
   // uncaught exception (e.g. an aborted GCS stream) would otherwise kill the
   // whole process and take EVERY session down at once — the crash-loop we saw.
   installProcessGuards(LOG);
+
+  // In firestore mode, discover installed contexts from the STORE once at
+  // boot (the context list is process-global, not per-session). Best-effort:
+  // on a store error, listAvailableContexts falls back to the sources/ scan.
+  if (kgSource() === "firestore") {
+    try {
+      await refreshAvailableContexts();
+    } catch (e) {
+      console.error(`${LOG} could not list namespaces from the store (falling back to the sources/ scan):`, (e as Error).message);
+    }
+  }
 
   const app = express();
   app.use(express.json({ limit: "8mb" }));

@@ -34,6 +34,10 @@ export function createMemoryKgStore(): KgNodeStore {
     async readConfig(namespace, slot) { return ensureNs(namespace).slots[slot].config; },
     async readPointer(namespace) { return ensureNs(namespace).pointer; },
 
+    // Only namespaces that have a pointer — a bare read via ensureNs() lazily
+    // creates an empty entry, so filter those out (they were never seeded).
+    async listNamespaces() { return [...namespaces.entries()].filter(([, n]) => n.pointer != null).map(([ns]) => ns); },
+
     async writeSlot(namespace, slot, batch, audit) {
       const n = ensureNs(namespace);
       // Replace-wholesale so a re-write for the same slot converges to identical

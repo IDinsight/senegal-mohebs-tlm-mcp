@@ -27,9 +27,23 @@ import { sessionState } from "./session.js";
 
 const isDir = (p: string) => { try { return statSync(p).isDirectory(); } catch { return false; } };
 
-// Discover installed contexts by scanning sources/<workspace>/<grade>/<subject>/.
-// The workspace is the new top folder level (see docs/design-notes/workspaces.md).
+// Installed contexts, when discovered from the KG store rather than from disk.
+// The store is the source of truth for WHICH graphs exist, but this module is a
+// dependency-light leaf that must not import kg-store — so the app layer reads
+// the store's namespaces and PUSHES the parsed list here via setAvailableContexts.
+// Until it does (bundle mode, or before the startup snapshot loads), listAvailable-
+// Contexts falls back to scanning the on-disk sources/ tree.
+let storeContexts: ActiveContext[] | null = null;
+
+// Install (or clear, with null) the store-derived context list. Called once at
+// startup and again after an import adds a namespace.
+export function setAvailableContexts(contexts: ActiveContext[] | null): void { storeContexts = contexts; }
+
+// Discover installed contexts. Prefers the store-derived snapshot when present;
+// otherwise scans sources/<workspace>/<grade>/<subject>/ on disk (the workspace
+// is the top folder level — see docs/design-notes/workspaces.md).
 export function listAvailableContexts(): ActiveContext[] {
+  if (storeContexts) return storeContexts;
   const root = CONFIG.sourcesDir;
   if (!existsSync(root)) return [];
   const out: ActiveContext[] = [];
