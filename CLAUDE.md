@@ -23,6 +23,7 @@ npm run start          # stdio MCP server (dist/index.js)
 npm run start:http     # HTTP MCP server (dist/http.js) — remote/Cloud Run mode
 npm run seed:kg-store  # seed Firestore from sources/ (needs KG_SOURCE=firestore + creds)
 npm run parity:kg-store  # assert firestore reads == bundle reads, per context
+npm run export:kg-store  # re-export a store's PUBLISHED slot back to sources/ (self-test offline; `-- --live [grade subject]` writes real sources/)
 ```
 
 Tests use `vitest` and never touch real Firebase/Firestore: a **memory KG store** (`createMemoryKgStore` + `__setKgStoreForTest`) and a **fake StorageAdapter** (`__setStorageForTest`) are injected, and `KG_SOURCE="firestore"` exercises the lifecycle path. Follow `src/kg-store/__tests__/lifecycle.test.ts` / `src/server/__tests__/preview.test.ts` for new suites.
