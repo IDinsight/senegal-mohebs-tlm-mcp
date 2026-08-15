@@ -21,7 +21,7 @@ import {
   runGraphMutation, mintNodeId, edgeId as makeEdgeId,
   __resetMutationsForTest, __resetDraftTokensForTest,
 } from "../../kg-store/index.js";
-import { addNode, moveNode, reposition, setContent } from "../index.js";
+import { addNode, moveNode, reposition, setContent, editNode } from "../index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import type { MutationGraph, GraphMutation, StoredMeta, KgNodeStore } from "../../kg-store/index.js";
@@ -247,5 +247,47 @@ describe("move_node + reposition + set_content", () => {
     expect(confirm?.phase).toBe("apply");
     const node = (await readDraft())!.nodes.find((candidate) => candidate.id === lessonId)!;
     expect((node.properties.raw as any).content).toBe("scripted body");
+  });
+});
+
+describe("edit_node (composite field edit — replaced reposition + set_content, adds title)", () => {
+  it("edits content + position + title in ONE apply / one audit record", async () => {
+    const { lessonId } = pick(await readPublished());
+    const { confirm } = await runRecipe(editNode, { namespace: ns, nodeId: lessonId, content: "new body", position: 42, title: "Nouveau titre" });
+    expect(confirm?.phase).toBe("apply");
+
+    const node = (await readDraft())!.nodes.find((candidate) => candidate.id === lessonId)!;
+    expect((node.properties.raw as any).content).toBe("new body");
+    expect(node.properties.order).toBe(42);
+    expect((node.properties.raw as any).metadata.order).toBe(42);   // maths ordinal mirror
+    // A Lesson is a content leaf, so its display name lives in `text` (+ raw.description).
+    expect(node.properties.text).toBe("Nouveau titre");
+    expect((node.properties.raw as any).description).toBe("Nouveau titre");
+
+    // One combined mutation → exactly one apply record.
+    const applyRecords = await store.listAudit({ namespace: ns, eventType: "apply" });
+    expect(applyRecords.length).toBe(1);
+  });
+
+  it("writes a grouping's title into the `title` field (not `text`)", async () => {
+    const { chapterId } = pick(await readPublished());
+    const { confirm } = await runRecipe(editNode, { namespace: ns, nodeId: chapterId, title: "Chapitre renommé" });
+    expect(confirm?.phase).toBe("apply");
+    const node = (await readDraft())!.nodes.find((candidate) => candidate.id === chapterId)!;
+    expect(node.properties.title).toBe("Chapitre renommé");
+  });
+
+  it("blocks when no field is provided", async () => {
+    const { lessonId } = pick(await readPublished());
+    const { preview } = await runRecipe(editNode, { namespace: ns, nodeId: lessonId });
+    expect(preview.phase).toBe("blocked");
+  });
+
+  it("blocks empty content and a nonexistent node", async () => {
+    const { lessonId } = pick(await readPublished());
+    const emptyContent = await runRecipe(editNode, { namespace: ns, nodeId: lessonId, content: "" });
+    expect(emptyContent.preview.phase).toBe("blocked");
+    const missing = await runRecipe(editNode, { namespace: ns, nodeId: "does-not-exist", title: "x" });
+    expect(missing.preview.phase).toBe("blocked");
   });
 });

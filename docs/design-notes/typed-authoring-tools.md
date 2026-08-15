@@ -9,8 +9,9 @@
 > tool description, so nothing was lost. Read the per-tool sections below as
 > historical; the LC grounding they describe still applies to `add_nodes`'
 > `kind` + `properties`. The edge/delete verbs (`create_edges` — which likewise
-> retired the single `create_edge` — plus `delete_edges`/`delete_nodes`) and
-> `reposition`/`set_content` are unchanged.
+> retired the single `create_edge` — plus `delete_edges`/`delete_nodes`) are
+> unchanged; `reposition`/`set_content` were consolidated into `edit_node`
+> (which also added title editing).
 > Boilerplate is still copied from a sibling node (`kg-recipes/lc.ts`). Current
 > surface: [`graph-native-authoring.md`](graph-native-authoring.md).
 

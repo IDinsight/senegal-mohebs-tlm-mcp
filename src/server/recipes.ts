@@ -1,13 +1,13 @@
 /*
- * Module: server · tool group: ordinal + content edits
+ * Module: server · tool group: node field edits (edit_node)
  *
- * Two generic, subject-agnostic graph edits that aren't node/edge creation:
- * `reposition` (set a node's ordinal) and `set_content` (rewrite a Material's
- * load-bearing content). Node CREATION is now the typed authoring tools
- * (server/authoring.ts); these two remain generic because ordinal and content
- * are the same concept for every label.
+ * edit_node is the single field-edit verb: change a node's content, position,
+ * and/or display title in one atomic draft edit. It consolidated the separate
+ * set_content + reposition tools and added title editing (which had no verb after
+ * upsert_property was removed). Node CREATION is add_nodes (server/authoring.ts);
+ * re-parenting is move_node.
  *
- * Both share the graph-mutation envelope: a dry-run returns a diff + warnings +
+ * It shares the graph-mutation envelope: a dry-run returns a diff + warnings +
  * confirmationToken (no state change); the confirm re-checks the token and
  * applies to the DRAFT only.
  */
@@ -18,7 +18,7 @@ import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { runGraphMutation, kgNamespace, type MutationGraph } from "../kg-store/index.js";
-import { reposition, setContent } from "../kg-recipes/index.js";
+import { editNode } from "../kg-recipes/index.js";
 import type { SubjectAdapter } from "../types.js";
 
 function bind(adapter: SubjectAdapter): { namespace: string; coverage: (g: MutationGraph) => string[] } {
@@ -29,54 +29,28 @@ function bind(adapter: SubjectAdapter): { namespace: string; coverage: (g: Mutat
 }
 
 export function registerRecipeTools(server: McpServer) {
-  // ── reposition ──────────────────────────────────────────────────────────────
   server.registerTool(
-    "reposition",
+    "edit_node",
     {
-      title: "Set a node's position",
+      title: "Edit a node's fields",
       description:
-        "Set a node's `position` — its ordinal among its siblings — in ONE atomic draft edit. Only valid on labels that carry a position in LC (LessonGrouping, Lesson, Activity, and routine steps); Course/Material/StandardsFrameworkItem have none. Membership is the containment edge, so this NEVER cascades. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
+        "Edit a node IN PLACE in ONE atomic draft edit — the single field-edit verb (it replaced set_content + reposition and added title editing). Pass `nodeId` and AT LEAST ONE of: `content` (load-bearing text, canonical LC Material.content), `position` (ordinal among siblings — membership is the containment edge, so this NEVER cascades; only labels that carry a position in LC — LessonGrouping/Lesson/Activity/routine steps — have one), `title` (display name — normalized to the node's title/text field per its label), `title_en` (English mirror). A nonexistent `nodeId` is BLOCKED; to remove content, delete the node instead. Edit in place — do NOT delete + re-add (that cascades the subtree, drops every incident edge, and mints a new id). REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
         nodeId: z.string(),
-        position: z.number(),
+        content: z.string().optional(),
+        position: z.number().optional(),
+        title: z.string().optional(),
+        title_en: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { nodeId: string; position: number; confirm?: boolean; confirmationToken?: string }) => {
+    guarded(async (a: { nodeId: string; content?: string; position?: number; title?: string; title_en?: string; confirm?: boolean; confirmationToken?: string }) => {
       const { namespace, coverage } = bind(getActiveAdapter());
       const result = await runGraphMutation({
         namespace,
-        mutation: reposition,
-        args: { namespace, nodeId: a.nodeId, position: a.position },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-        coverage,
-      });
-      return asJson(result);
-    }),
-  );
-
-  // ── set_content ─────────────────────────────────────────────────────────────
-  server.registerTool(
-    "set_content",
-    {
-      title: "Replace a node's content",
-      description:
-        "Replace a node's load-bearing `content` (canonical LC Material.content) in ONE atomic draft edit — the dedicated verb for editing a node's content. A nonexistent `nodeId` is BLOCKED; to remove content entirely, delete the node instead. REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
-      inputSchema: {
-        nodeId: z.string(),
-        content: z.string(),
-        confirm: z.boolean().optional(),
-        confirmationToken: z.string().optional(),
-      },
-    },
-    guarded(async (a: { nodeId: string; content: string; confirm?: boolean; confirmationToken?: string }) => {
-      const { namespace, coverage } = bind(getActiveAdapter());
-      const result = await runGraphMutation({
-        namespace,
-        mutation: setContent,
-        args: { namespace, nodeId: a.nodeId, content: a.content },
+        mutation: editNode,
+        args: { namespace, nodeId: a.nodeId, content: a.content, position: a.position, title: a.title, title_en: a.title_en },
         confirm: a.confirm,
         token: a.confirmationToken,
         coverage,

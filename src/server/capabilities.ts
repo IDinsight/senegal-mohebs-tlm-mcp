@@ -99,14 +99,14 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   // is built. Node CREATION is the typed authoring tools (see `typedAdds`).
   const recipes = {
     available: true,
-    note: "Generic composite mutations over canonical LC: one intent → one diff → one confirmation token → one atomic draft write → one audit event. reposition sets a node's ordinal; set_content rewrites a Material's load-bearing content. Node creation is the typed authoring tools (see editable.typedAdds).",
+    note: "Generic composite mutations over canonical LC: one intent → one diff → one confirmation token → one atomic draft write → one audit event. edit_node edits a node's content / position / title in place (it replaced set_content + reposition and added title editing). Node creation is add_nodes (see editable.batch); re-parenting is move_node.",
     list: RECIPES.map((r) => ({ name: r.name, summary: r.summary, params: r.params })),
   };
 
   const editable = {
     scope: "batched node/edge authoring + generic recipes",
     note:
-      "Nodes are created via `add_nodes` (one or many — see `batch`, with the per-kind property catalog in `batch.kindProperties`); edges via `create_edges` (one or many); deletions via delete_edges / delete_nodes (see `structural.verbs`); a node's ordinal and load-bearing content via the generic recipes (see `recipes` — reposition / set_content).",
+      "Nodes are created via `add_nodes` (one or many — see `batch`, with the per-kind property catalog in `batch.kindProperties`); edges via `create_edges` (one or many); deletions via delete_edges / delete_nodes (see `structural.verbs`); a node's content / position / title are edited in place via `edit_node` (see `recipes`).",
     structural: {
       verbs: ["create_edges", "delete_edges", "delete_nodes"],
       // delete_nodes ALWAYS cascades the dependent subtree; the dry-run warns
