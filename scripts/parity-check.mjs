@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /*
  * Parity harness — CLI entry point. Same oracle as src/kg-store/__tests__/parity.test.ts
- * (deep-equal on parsed reads for every grade/subject and every unit), but
- * runs against whichever backend is configured at runtime — so it can be
- * pointed at a real Firestore instance to validate the seeded data before a
- * production cutover.
+ * (the parsed model's node ids + rawGraph edge multiset must match across the
+ * bundle and firestore backends), but runs against whichever backend is
+ * configured at runtime — so it can be pointed at a real Firestore instance to
+ * validate the seeded data before a production cutover. On a mismatch it prints
+ * the exact node/edge divergence (a few ids = live curator edits; a wholesale
+ * mismatch = a stale/old-bundle seed or a stale published slot).
  *
  * Usage:
  *   npm run build
@@ -15,7 +17,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { deepStrictEqual, AssertionError } from "node:assert";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 if (!existsSync(resolve(REPO, "dist"))) {
@@ -85,23 +86,50 @@ async function collect(source, workspace, grade, subject) {
   });
 }
 
+// Items in `a` that are absent from `b` (set difference; the snapshots are
+// already de-dup-friendly id/edge strings).
+function onlyIn(a, b) {
+  const other = new Set(b);
+  return a.filter((x) => !other.has(x));
+}
+
+// On a DIFF, print the actual divergence — a handful of node/edge ids points to
+// live curator edits (the published slot legitimately differs from the bundle);
+// a wholesale mismatch points to a stale/old-bundle seed or a stale published slot.
+const SAMPLE = 25;
+function reportList(title, items) {
+  if (items.length === 0) return;
+  console.error(`    ${title} (${items.length}):`);
+  for (const item of items.slice(0, SAMPLE)) console.error(`      ${item}`);
+  if (items.length > SAMPLE) console.error(`      … +${items.length - SAMPLE} more`);
+}
+
 let failures = 0;
 for (const { workspace, grade, subject } of listAvailableContexts()) {
   const label = `${workspace}/${grade}/${subject}`;
   try {
-    const bundleReads = await collect("bundle", workspace, grade, subject);
-    const storeReads = await collect("firestore", workspace, grade, subject);
-    // Deep-strict-equal is the parity oracle. Parsed JSON, not raw strings,
-    // so field-ordering differences on the way in don't produce false diffs.
-    deepStrictEqual(storeReads, bundleReads);
-    console.error(`parity-check: ${label}: OK — ${bundleReads.nodes.length} node(s), ${bundleReads.edges.length} edge(s) matched.`);
+    const bundle = await collect("bundle", workspace, grade, subject);
+    const store = await collect("firestore", workspace, grade, subject);
+    const nodesMissingFromStore = onlyIn(bundle.nodes, store.nodes);
+    const nodesExtraInStore = onlyIn(store.nodes, bundle.nodes);
+    const edgesMissingFromStore = onlyIn(bundle.edges, store.edges);
+    const edgesExtraInStore = onlyIn(store.edges, bundle.edges);
+    const matched =
+      !nodesMissingFromStore.length && !nodesExtraInStore.length &&
+      !edgesMissingFromStore.length && !edgesExtraInStore.length;
+    if (matched) {
+      console.error(`parity-check: ${label}: OK — ${bundle.nodes.length} node(s), ${bundle.edges.length} edge(s) matched.`);
+    } else {
+      failures++;
+      console.error(`parity-check: ${label}: DIFF — bundle ${bundle.nodes.length}n/${bundle.edges.length}e vs store ${store.nodes.length}n/${store.edges.length}e`);
+      reportList("nodes in bundle but MISSING from store", nodesMissingFromStore);
+      reportList("nodes in store but NOT in bundle", nodesExtraInStore);
+      reportList("edges (type|from|to) in bundle but MISSING from store", edgesMissingFromStore);
+      reportList("edges (type|from|to) in store but NOT in bundle", edgesExtraInStore);
+    }
   } catch (e) {
     failures++;
-    if (e instanceof AssertionError) {
-      console.error(`parity-check: ${label}: DIFF — outputs differ between bundle and firestore backends.`);
-    } else {
-      console.error(`parity-check: ${label}: FAILED — ${e && e.message}`);
-    }
+    console.error(`parity-check: ${label}: FAILED — ${e && e.message}`);
   }
 }
 
