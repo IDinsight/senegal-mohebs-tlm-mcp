@@ -214,9 +214,9 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     source: kgSource() === "firestore" ? "store" : "in-repo-literal",
     editable: kgSource() === "firestore",
     canEdit: kgSource() === "firestore" && actions.canEditDraft,
-    tools: ["get_profile", "edit_profile"],
+    tools: ["get_profile", "get_graph_guide", "edit_profile"],
     note:
-      "The subject profile is the declarative record that configures parsing, deliverables, and coverage for this grade/subject. In firestore mode it is AUTHORED DATA in the store's config cell (get_profile reads it; edit_profile replaces it through the two-phase draft/publish loop, validated against its schema at authoring time), so a profile change needs no redeploy. It rides the SAME draft as curriculum edits — diff_draft/publish_draft surface a staged profile change as `profileDiff`. In bundle/dev mode the profile is the in-repo literal and edit_profile is unavailable.",
+      "The subject profile is a { core, guide } record: the machine `core` (config that drives parsing, deliverables, coverage) plus an authored `guide` markdown the authoring/generating LLM reads to interpret and modify the graph (phase 2c — reads consume only the core; the guide never sits on the read hot path). In firestore mode it is AUTHORED DATA in the store's config cell: get_profile reads the record, get_graph_guide reads just the guide markdown (call it before you walk/edit the graph), and edit_profile replaces the record through the two-phase draft/publish loop — the core validated against its schema and the guide length-checked at authoring time, so a change needs no redeploy. It rides the SAME draft as curriculum edits — diff_draft/publish_draft surface a staged profile change as `profileDiff`. In bundle/dev mode the profile is the in-repo record and edit_profile is unavailable.",
   };
 
   return {

@@ -6,10 +6,12 @@
 > to both CI-maths Courses, and a generated chapter was verified to take its style from
 > the formatter. The subject-profile **config layer** (phase 2b) is built too:
 > profiles are authored data in the store, edited through the curator loop with the
-> schema guard at authoring time (`get_profile` / `edit_profile`). Still a **proposal**:
-> the **graph-guide MD layer** (phase 2c — the profile as prose an LLM reads), the MCP
-> **resources** browse surface (D5), reading's routine catalog (blocked on its content
-> layer), and re-copy/detach ergonomics. This note extends
+> schema guard at authoring time (`get_profile` / `edit_profile`). Phase 2c
+> increment 1 is built too: the profile is a `{ core, guide }` record — a machine
+> `core` plus an authored markdown `guide` the LLM reads via `get_graph_guide`.
+> Still a **proposal**: migrating coverage rules into guide prose (phase 2c next),
+> the MCP **resources** browse surface (D5), reading's routine catalog (blocked on
+> its content layer), and re-copy/detach ergonomics. This note extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
 > **D2 was revised from by-reference to copy-on-use during implementation** (see below).
@@ -146,12 +148,16 @@ time**. A profile change is finally "no redeploy". (D4.)
   promote a profile edit that landed since their dry-run. `get_capabilities`
   carries a `profile` mirror (`canEdit` from the same apply gate).
 
-## Phase 2c — the profile as a "graph guide" the LLM reads (proposal)
+## Phase 2c — the profile as a "graph guide" the LLM reads
 
-> **Status: proposal, not built.** This section is the design pass for turning the
-> profile from *config a machine executes* into *guidance a person authors and an
-> LLM reads*. It builds directly on the Phase 2b config cell and changes no read
-> semantics.
+> **Status: increment 1 built (in-repo) — the split + the guide surface.** The
+> profile is now a `{ core, guide }` record: a machine `core` the parser/classifier
+> consume and an authored markdown `guide` the LLM reads via `get_graph_guide`.
+> Reads are unchanged (built from `core`; a legacy flat cell still resolves). Still
+> **proposed**: migrating the advisory coverage rules from `core` into guide prose
+> (the coverage-as-prose review), and authoring guides for the remaining subjects
+> (a starter `ci/maths` guide ships). This section is the design; the increment-1
+> notes are inline below.
 
 The Phase 2b profile is **configuration for deterministic server code** — the
 parser, the coverage checker, the deliverable classifier. But the larger part of
@@ -195,19 +201,28 @@ don't consume it, a wrong or vague guide can mislead an author but can never bre
 a read or corrupt the parse (unlike a malformed machine core, which `edit_profile`
 still Zod-guards and `activateContext` still refuses).
 
-### The layered profile
+### The layered profile — increment 1 (built)
 
-The Phase 2b config cell (opaque JSON) carries two fields:
+The Phase 2b config cell (opaque JSON) now carries a `{ core, guide }` **record**:
 
-- a **`core`** — the thin machine-readable config Reader A consumes, Zod-validated
-  exactly as today; and
-- a **`guide`** — the authored markdown Reader B reads.
+- a **`core`** — the thin machine-readable config Reader A consumes
+  (`SubjectProfile`), Zod-validated exactly as today; and
+- an optional **`guide`** — the authored markdown Reader B reads (length-capped so
+  the cell stays under Firestore's doc limit).
 
-Both ride the same draft/publish loop and are edited through `edit_profile`; a new
-read tool surfaces the guide to the LLM, exactly as `get_prompt` / `get_terminology`
-already surface per-subject text today (that substrate exists —
-`sources/<subject>/PROMPT_*.md`, `terminology.json`, and their tools). The cell
-stays opaque to `kg-store`, so this is a payload change, not new store machinery.
+Both ride the same draft/publish loop. `get_profile` returns the whole record;
+`edit_profile` replaces it (the core Zod-validated, the guide length-checked at
+authoring time); **`get_graph_guide`** surfaces just the markdown to the LLM,
+exactly as `get_prompt` / `get_terminology` already surface per-subject text (that
+substrate exists — `sources/<subject>/PROMPT_*.md`, `terminology.json`, and their
+tools). The cell stays opaque to `kg-store`, so this was a payload change, not new
+store machinery.
+
+**Backward compatibility is load-bearing:** the phase-2b seed wrote *flat*
+`SubjectProfile` cells to the live store. The record reader treats a payload with
+no `core` key as a legacy flat core (`{ core: raw }`), so the live server keeps
+resolving until re-seeded — no forced re-seed to avoid breakage. A starter
+`ci/maths` guide ships in-repo; the other subjects start with no guide.
 
 ### What this lets us delete, and what stays code
 
@@ -222,18 +237,20 @@ thin core." That is the honest form of "no per-subject code": the *mechanisms*
 stay generic code; the *subject knowledge*, including its interpretation guidance,
 becomes authored data — most of it prose.
 
-### Open for the design pass
+### Open (next increments)
 
-- The exact split: which fields the `core` keeps (parse descriptor, deliverable
-  match) vs what the guide narrates (ontology, vocab map, hierarchy, coverage
-  intent). Aim to keep `core` at what a machine *must* execute, nothing a human
-  would rather read as prose.
-- Coverage-as-prose: a new opt-in "review this draft against the guide" LLM tool,
-  or folded into the existing `diff_draft` flow? The former keeps the hot path
-  untouched and makes the LLM cost explicit.
-- Guide validation: it is free text, so the guard is "it can't break reads" (by
-  construction — reads never consume it), not a schema. The `core` keeps its Zod
-  guard.
+- **Coverage-as-prose (the next increment).** Move the advisory coverage rules
+  from `core` into the guide, checked by a new opt-in "review this draft against
+  the guide" LLM tool rather than folded into `diff_draft` — that keeps the hot
+  path untouched and makes the LLM cost explicit. This is where coded per-subject
+  rules actually get deleted.
+- **Author the remaining guides.** Only `ci/maths` ships a starter guide; the
+  reading and Nigeria subjects need theirs authored (via `edit_profile`, so no
+  redeploy).
+- *Settled in increment 1:* the field split (`core` = parse descriptor +
+  deliverable match + capabilities + coverage-for-now; `guide` = the prose), and
+  guide validation (free text, capped; the guard is "it can't break reads" by
+  construction — reads never consume it; the `core` keeps its Zod guard).
 
 **Decision (D8):** a **layered profile** — thin machine-readable `core` for the
 deterministic parser/classifier + an authored markdown `guide` for the

@@ -120,8 +120,8 @@ export type ParseProfile = z.infer<typeof parseSchema>;
 export type PruneSpec = z.infer<typeof pruneSchema>;
 export type CoverageRuleSpec = z.infer<typeof coverageRuleSchema>;
 
-// Validate a profile literal (or, later, a stored record). Throws a readable
-// error naming the offending path so a bad profile fails loudly at the boundary,
+// Validate a profile literal (the machine `core`). Throws a readable error
+// naming the offending path so a bad profile fails loudly at the boundary,
 // never as a silent mis-parse deep in a read.
 export function validateProfile(raw: unknown, context = "subject profile"): SubjectProfile {
   const result = subjectProfileSchema.safeParse(raw);
@@ -132,4 +132,41 @@ export function validateProfile(raw: unknown, context = "subject profile"): Subj
     throw new Error(`Invalid ${context}: ${issues}`);
   }
   return result.data;
+}
+
+// ── The layered profile record (phase 2c) ────────────────────────────────────
+// The AUTHORED/STORED profile is a two-field record: a machine-readable `core`
+// (the SubjectProfile above, consumed by the deterministic parser/classifier)
+// plus an optional `guide` — authored markdown the AUTHORING/GENERATING LLM
+// reads to interpret and modify the graph. The two never mix: reads consume only
+// `core`; the guide never sits on the read hot path. See
+// docs/design-notes/authorable-catalog.md phase 2c.
+export type ProfileRecord = { core: SubjectProfile; guide?: string };
+
+// The guide is free text, capped so the config cell (two slots' worth of
+// core + guide, on the pointer doc) stays well under Firestore's 1MB doc limit.
+export const MAX_GUIDE_CHARS = 100_000;
+
+// Accept BOTH the new { core, guide } record AND a legacy FLAT SubjectProfile
+// (what phase 2b seeded before this split), so a not-yet-re-seeded namespace
+// keeps resolving. A payload is new-shape iff it has a `core` key — no flat
+// profile has one. Returns the still-unvalidated core + guide.
+function splitRecord(raw: unknown): { core: unknown; guide: unknown } {
+  if (raw !== null && typeof raw === "object" && "core" in (raw as Record<string, unknown>)) {
+    const r = raw as Record<string, unknown>;
+    return { core: r.core, guide: r.guide };
+  }
+  return { core: raw, guide: undefined }; // legacy flat profile
+}
+
+// Validate a stored/authored profile record. Validates `core` with the same Zod
+// guard as validateProfile, and checks the optional `guide` is a string within
+// the length cap. Throws a readable error at the boundary.
+export function validateProfileRecord(raw: unknown, context = "subject profile"): ProfileRecord {
+  const { core, guide } = splitRecord(raw);
+  const validCore = validateProfile(core, context);
+  if (guide === undefined) return { core: validCore };
+  if (typeof guide !== "string") throw new Error(`Invalid ${context}: guide must be a markdown string.`);
+  if (guide.length > MAX_GUIDE_CHARS) throw new Error(`Invalid ${context}: guide is ${guide.length} chars, over the ${MAX_GUIDE_CHARS}-char limit.`);
+  return { core: validCore, guide };
 }

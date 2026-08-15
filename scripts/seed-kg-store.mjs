@@ -45,7 +45,7 @@ if (!existsSync(DIST)) {
 
 const { CONFIG } = await import(new URL("../dist/config.js", import.meta.url));
 const { listAvailableContexts, subjectDir } = await import(new URL("../dist/context/index.js", import.meta.url));
-const { resolveAdapter, getRegisteredProfile } = await import(new URL("../dist/adapters/index.js", import.meta.url));
+const { resolveAdapter, getRegisteredProfile, getRegisteredGuide } = await import(new URL("../dist/adapters/index.js", import.meta.url));
 const { serializeModel } = await import(new URL("../dist/curriculum/index.js", import.meta.url));
 const { kgNamespace, createMemoryKgStore, createFirestoreKgStore } = await import(new URL("../dist/kg-store/index.js", import.meta.url));
 
@@ -125,13 +125,14 @@ for (const { workspace, grade, subject } of pairs) {
     // slot "a" becomes a stale side copy. Flag that state to the operator.
     const existingPointer = await store.readPointer(namespace);
     await store.writeSlot(namespace, "a", { nodes, edges, meta });
-    // Phase 2b: seed the SUBJECT PROFILE into the same slot's config cell, so a
-    // firestore server builds its adapter from the store (not the in-repo
-    // literal) and a curator can later edit the profile live via edit_profile.
-    // The profile is the in-repo literal for this (grade, subject) — the seed's
-    // source of truth, same as the bundle is for the graph.
-    const profile = getRegisteredProfile(grade, subject);
-    if (profile) await store.writeConfig(namespace, "a", profile);
+    // Phase 2b/2c: seed the SUBJECT PROFILE RECORD into the same slot's config
+    // cell, so a firestore server builds its adapter from the store (not the
+    // in-repo literal) and a curator can edit it live via edit_profile. The
+    // record is { core, guide }: the machine `core` (in-repo literal) plus the
+    // authored graph `guide` markdown (phase 2c), when the subject ships one.
+    const core = getRegisteredProfile(grade, subject);
+    const guide = getRegisteredGuide(grade, subject);
+    if (core) await store.writeConfig(namespace, "a", guide !== undefined ? { core, guide } : { core });
     await store.ensurePointer(namespace, "a");
     const afterPointer = await store.readPointer(namespace);
     const note = existingPointer && afterPointer && afterPointer.publishedSlot !== "a"
