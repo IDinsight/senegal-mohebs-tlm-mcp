@@ -246,13 +246,10 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.structural.cascade).toBe("always-with-warning");
   });
 
-  it("editable.typedAdds lists the 9 typed authoring tools plus the batched add_nodes", async () => {
+  it("the retired typed adds are gone; node creation is add_nodes", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.editable.typedAdds).toEqual([
-      "add_course", "add_lesson_grouping", "add_lesson", "add_activity", "add_assessment",
-      "add_material", "add_learning_component", "add_standard_framework_item", "add_instructional_routine",
-      "add_nodes",
-    ]);
+    expect(caps.editable.typedAdds).toBeUndefined();
+    expect(caps.editable.batch.tools).toContain("add_nodes");
   });
 
   it("discovery advertises walk_graph + namespace_stats, with canWalkDraft mirroring the draft-read gate", async () => {
@@ -271,6 +268,9 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.batch.params).toEqual(["returnMode", "idempotencyKey"]);
     expect(caps.editable.batch.defaultReturnMode).toBe("summary");
     expect(caps.editable.batch.returnModes).toEqual(["summary", "full"]);
+    // The per-kind property catalog folded in from the retired typed adds.
+    expect(caps.editable.batch.kindProperties.Material).toContain("content");
+    expect(caps.editable.batch.kindProperties.StandardsFrameworkItem).toContain("statementType");
   });
 
   it("editable.coverageWarnings.enabled mirrors whether the adapter has a coverage hook (#13)", async () => {
