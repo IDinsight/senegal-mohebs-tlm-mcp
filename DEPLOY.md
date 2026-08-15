@@ -71,8 +71,13 @@ user to the consent page above.
 ## Smoke checks after deploy
 
 ```bash
-curl -s https://<service-url>/healthz                                  # → ok
+curl -s https://<service-url>/health                                   # → ok  (NOT /healthz — see note)
 curl -s https://<service-url>/.well-known/oauth-protected-resource     # → AS pointer
 curl -si -X POST https://<service-url>/mcp -H 'content-type: application/json' -d '{}' \
   | head -3                                                            # → 401 + WWW-Authenticate
 ```
+
+> **Note:** use `/health`, not `/healthz`, for external checks. Google's Front End
+> reserves the literal path `/healthz` and returns its own 404 before the request
+> reaches the container, so `/healthz` is only reachable by a container-internal
+> probe. `/health` is the same handler on a non-reserved path.
