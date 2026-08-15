@@ -124,6 +124,45 @@ describe("walkGraph (pure BFS)", () => {
   });
 });
 
+// A wide star: one root with 60 children, to exercise the default page size.
+const WIDE: RawGraphSnapshot = {
+  nodes: [
+    { id: "root", labels: ["Course"], properties: {} },
+    ...Array.from({ length: 60 }, (_unused, index) => ({ id: `c${index}`, labels: ["Lesson"], properties: {} })),
+  ],
+  relationships: Array.from({ length: 60 }, (_unused, index) => ({
+    id: `hasPart:root->c${index}`, type: "hasPart", start: "root", end: `c${index}`, properties: {},
+  })),
+} as unknown as RawGraphSnapshot;
+const wideModel = { rawGraph: WIDE } as unknown as CurriculumModel;
+
+describe("walkGraph pagination + overflow flags", () => {
+  it("defaults to a 50-node page and flags truncatedByLimit (not depth truncated)", () => {
+    const result = walkGraph(wideModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"] });
+    if ("error" in result) throw new Error(result.error);
+    expect(result.nodes.length).toBe(50);        // default limit, not all 61
+    expect(result.truncatedByLimit).toBe(true);  // more remain on the next page
+    expect(result.truncated).toBe(false);        // depth cap did NOT cut it
+    expect(result.nextCursor).not.toBeNull();
+  });
+
+  it("returns everything and clears the flags when the limit covers the walk", () => {
+    const result = walkGraph(wideModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], limit: 500 });
+    if ("error" in result) throw new Error(result.error);
+    expect(result.nodes.length).toBe(61);        // root + 60 children
+    expect(result.truncatedByLimit).toBe(false);
+    expect(result.nextCursor).toBeNull();
+  });
+
+  it("keeps truncatedByLimit (page) distinct from truncated (depth)", () => {
+    // Small graph, maxDepth 1: the depth cap cuts it, but the page limit does not.
+    const result = walkGraph(sampleModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], maxDepth: 1 });
+    if ("error" in result) throw new Error(result.error);
+    expect(result.truncated).toBe(true);
+    expect(result.truncatedByLimit).toBe(false);
+  });
+});
+
 // ── Integration: the tool cores against the seeded store ──────────────────────
 const emptyHistory: HistoryFile = { version: 2, entries: [] };
 const fakeStorage: StorageAdapter = {

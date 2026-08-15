@@ -45,8 +45,9 @@ export type WalkArgs = {
 
 export type WalkResult = {
   nodes: NodeOut[];
-  edges?: EdgeOut[];      // omitted entirely when includeEdges is false
-  truncated: boolean;     // maxDepth cut the walk before exhaustion (nodes exist beyond the cap)
+  edges?: EdgeOut[];        // omitted entirely when includeEdges is false
+  truncated: boolean;       // DEPTH cap cut the walk (nodes exist beyond maxDepth)
+  truncatedByLimit: boolean; // the PAGE limit cut this response (more nodes remain — paginate via nextCursor)
   nextCursor: string | null;
 };
 
@@ -54,7 +55,10 @@ export type WalkResult = {
 // is deliberately shallow (a course → its lessons is 2–3 hops).
 const DEFAULT_DEPTH = 3;
 const MAX_DEPTH_CAP = 10;
-const DEFAULT_LIMIT = 100;
+// A small default page keeps a broad walk (e.g. 156 SFIs off a framework root)
+// under the token cap — pagination via nextCursor is the expected path, not a
+// bigger limit. Ceiling stays at 500 for callers who knowingly want a big page.
+const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 500;
 
 const clamp = (value: number, low: number, high: number): number => Math.min(high, Math.max(low, value));
@@ -225,6 +229,9 @@ export function walkGraph(model: CurriculumModel, args: WalkArgs): { error: stri
   const result: WalkResult = {
     nodes,
     truncated: traversal.truncated,
+    // truncatedByLimit is about THIS page (more matching nodes remain), separate
+    // from `truncated` (the depth cap hid nodes deeper than maxDepth).
+    truncatedByLimit: hasMore,
     nextCursor: hasMore && pageIds.length > 0
       ? encodeCursor({ depth: traversal.depthOf.get(pageIds[pageIds.length - 1])!, id: pageIds[pageIds.length - 1] })
       : null,
