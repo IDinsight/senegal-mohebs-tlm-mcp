@@ -35,7 +35,6 @@ import { toRawEnvelope, courseSubgraph } from "../curriculum/index.js";
 import { getStorageAdapter } from "../storage/index.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
-import { kgSource } from "../config.js";
 import type { CurriculumModel } from "../types.js";
 
 // The single, fixed label every preview surface carries so the material can
@@ -43,14 +42,12 @@ import type { CurriculumModel } from "../types.js";
 export const PREVIEW_LABEL = "PREVIEW — generated from an unpublished draft, not a published deliverable";
 
 // Resolve the curriculum from the DRAFT slot — the same slot diff_draft reads —
-// or null when there is no draft to preview. Draft/published slots only exist
-// in KG_SOURCE=firestore mode; in bundle mode there is no draft concept, so we
-// return null (→ the caller surfaces the clear "no draft" notice). The
-// deserialize step is the same store-bridge path activate.ts uses for published.
+// or null when there is no draft to preview (→ the caller surfaces the clear "no
+// draft" notice). The deserialize step is the same store-bridge path activate.ts
+// uses for published.
 export async function resolveDraftModel(
   ns: string,
 ): Promise<{ model: CurriculumModel; draftSlot: string; draftVersion: string | null } | null> {
-  if (kgSource() !== "firestore") return null;
   const store = getKgStore();
   const pointer = await store.readPointer(ns);
   if (!pointer || !pointer.draftSlot) return null;

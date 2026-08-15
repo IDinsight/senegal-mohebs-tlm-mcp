@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { CONFIG } from "../config.js";
 import { noAccents } from "../utils/index.js";
-import { sourcePath, sessionCache } from "../context/index.js";
+import { assetPath, sessionCache } from "../context/index.js";
 
 type TermEntry = { francais: string; wolof: string | null; exemple: string | null; section: string | null };
 
@@ -20,7 +20,7 @@ function termLoad(): TermEntry[] {
   // get_terminology / terminology_sections return [] instead of crashing.
   let raw: any;
   try {
-    raw = JSON.parse(readFileSync(sourcePath(CONFIG.terminologyFile), "utf8"));
+    raw = JSON.parse(readFileSync(assetPath(CONFIG.terminologyFile), "utf8"));
   } catch {
     return entries;
   }

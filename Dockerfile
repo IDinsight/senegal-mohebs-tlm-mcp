@@ -12,6 +12,8 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY --from=build /app/dist ./dist
-COPY sources ./sources
+# Static per-subject assets (the terminology glossary fallback). The KG itself
+# lives only in Firestore now; test fixtures are not shipped in the image.
+COPY assets ./assets
 EXPOSE 8080
 CMD ["node", "dist/http.js"]

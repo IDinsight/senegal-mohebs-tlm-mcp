@@ -13,10 +13,9 @@
     "check:cycles": "node scripts/check-cycles.mjs",
     "test": "vitest run",
     "start:http": "node dist/http.js",
-    "seed:kg-store": "npm run build && node scripts/seed-kg-store.mjs",
-    "seed:catalog": "npm run build && node scripts/seed-catalog.mjs",
-    "parity:kg-store": "npm run build && node scripts/parity-check.mjs",
-    "export:kg-store": "npm run build && node scripts/export-store-to-bundle.mjs"
+    "import:kg-store": "npm run build && node scripts/import-kg.mjs",
+    "export:kg-store": "npm run build && node scripts/export-kg.mjs",
+    "seed:catalog": "npm run build && node scripts/seed-catalog.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

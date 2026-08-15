@@ -6,13 +6,12 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import { CONFIG } from "../../config.js";
-import { subjectDir } from "../../context/index.js";
+import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import { resolveAdapter } from "../../adapters/index.js";
 import { coursesOf, courseSubgraph, standardsFor } from "../courses.js";
 
 const modelFor = (grade: string, subject: string) => {
-  const raw = JSON.parse(readFileSync(resolve(subjectDir("senegal", grade, subject), CONFIG.kgFile), "utf8"));
+  const raw = JSON.parse(readFileSync(resolve(subjectDir("senegal", grade, subject), KG_FIXTURE), "utf8"));
   return resolveAdapter(grade, subject)!.parse(raw);
 };
 

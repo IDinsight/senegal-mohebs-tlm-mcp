@@ -1,11 +1,13 @@
 # Firestore is the only KG store
 
-> **Status: Phase A built (in-repo); Phases B–E planned.** This note records the
-> decision to make Firestore the **single** knowledge-graph store and retire the
-> `bundle` (on-disk `sources/`) read path, the seed/parity treadmill, and the
-> `KG_SOURCE` toggle. The graph is exported on demand (a backup / interchange
-> artifact) and a new graph is imported on demand; nothing is kept in lockstep
-> with the store anymore.
+> **Status: built (in-repo).** Firestore is now the **single** knowledge-graph
+> store: the `bundle` (on-disk `sources/`) read path, the seed/parity treadmill,
+> and the `KG_SOURCE` toggle are gone. The graph is exported on demand (a backup /
+> interchange artifact via `export-kg`) and a new graph is imported on demand
+> (`import-kg`); nothing is kept in lockstep with the store anymore. `sources/` is
+> deleted — the realistic graphs the suite needs live under `test/fixtures/` as
+> plain committed test data, and the one surviving on-disk runtime asset
+> (`terminology.json`) moved to `assets/`.
 
 ## Why
 
@@ -26,9 +28,9 @@ only interchange is an explicit export (backup) and import (bootstrap / new grap
 | F3 | Import / export surface | **Operator scripts.** Repurpose `seed-kg-store.mjs` → `import-kg.mjs` (a provided LC-graph JSON + optional profile/guide → a namespace's published slot); keep the export script as the backup. No new runtime tool surface. |
 | F4 | Context discovery | **From the store.** `listAvailableContexts()` enumerates the store's namespaces (via `listNamespaces()`), not an on-disk `sources/` scan. |
 
-## Plan (phases)
+## Plan (phases — all built)
 
-- **A — store-backed context discovery** *(built)*. Adds `listNamespaces()` to the
+- **A — store-backed context discovery**. Adds `listNamespaces()` to the
   store (interface + Firestore + memory), a `parseNamespace()` inverse of
   `kgNamespace()` (filtering the `_catalog` partitions), a settable snapshot in
   the `context/state.ts` leaf (`setAvailableContexts`), and an app-layer
@@ -57,10 +59,17 @@ only interchange is an explicit export (backup) and import (bootstrap / new grap
 ## Rollout
 
 The deployed server already runs `KG_SOURCE=firestore`, so there is **no data
-migration** — removing the toggle matches live, and the Docker image simply stops
-shipping `sources/`. Phase A is safe to deploy on its own: store-backed discovery
-takes over when the startup snapshot loads, with the disk scan as a fallback if
-the store read fails.
+migration** — the live store already holds the graphs and profile cells; removing
+the toggle matches live, and the Docker image simply stops shipping `sources/`.
+Context discovery now comes from the store at startup (`refreshAvailableContexts`),
+so verify the deployed server lists its namespaces (`senegal/ci/maths`,
+`senegal/ce1/reading`) after deploy — a namespace with a pointer but no registered
+in-repo adapter would list but fail to activate, and vice-versa.
+
+**Follow-ups (not blocking):** the `process.env.KG_SOURCE` lines left in test
+setups are now no-ops and can be swept out; `seed-catalog.mjs` was repointed to
+read routine subtrees from `test/fixtures/` (the catalog itself is already seeded
+live).
 
 ## Related
 

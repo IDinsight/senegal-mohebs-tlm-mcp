@@ -2,7 +2,7 @@
 
 An MCP server that gives the Senegalese **MOHEBS** teaching-materials pipeline a **shared memory layer** — so AI-generated documents stay consistent (characters, terminology, concept coverage) and deliberately varied (rotating example domains: fruits → legumes → …), across **any grade and subject**.
 
-It works on one **grade + subject** at a time (e.g. `ci` / `maths`); you pick the pair with `set_context`. **Sources** (knowledge graph, terminology, prompts) are **local**, read-only inputs you edit in place. Generated `.docx` files and their history live in **Firebase Storage** (the shared source of truth, so the generating agent, the server, and you never need a shared disk). Curriculum data can additionally live in a **Firestore node/edge store** with a draft → review → publish curator loop. Auth is a Supabase JWT.
+It works on one **grade + subject** at a time (e.g. `ci` / `maths`); you pick the pair with `set_context`. The **knowledge graph lives in a Firestore node/edge store** — the single source of truth — with a draft → review → publish curator loop; you add a graph with `import-kg` and back it up with `export-kg`. Generated `.docx` files and their history live in **Firebase Storage** (so the generating agent, the server, and you never need a shared disk). The only local per-subject input is the `terminology.json` glossary fallback (under `assets/`). Auth is a Supabase JWT.
 
 > **Going deeper:** the full operational manual is [`docs/technical-reference/`](docs/technical-reference/); the architecture summary + working conventions are in [`CLAUDE.md`](CLAUDE.md); the production runbook is [`DEPLOY.md`](DEPLOY.md).
 
@@ -10,26 +10,23 @@ It works on one **grade + subject** at a time (e.g. `ci` / `maths`); you pick th
 
 | Thing | Location |
 |---|---|
-| Knowledge graph, terminology, the two prompts | **Local** `sources/<grade>/<subject>/` (you edit these) |
+| Knowledge graph (curriculum) | **Firestore** node/edge store — the source of truth (`import-kg` / `export-kg`) |
+| `terminology.json` glossary fallback | **Local** `assets/<workspace>/<grade>/<subject>/` |
 | Generated `.docx` (manuals + lesson sheets) + `history.json` | **Firebase Storage** `<grade>/<subject>/…` |
-| Curriculum node/edge store (optional) | **Firestore** (`KG_SOURCE=firestore`) |
 
 Object hashing uses the GCS object **md5** from metadata — the server never hashes a local file, which removes the cross-host mismatch that used to break `log_generation`.
 
-## Sources layout
+## Where the graph lives
 
-Each grade/subject folder holds the same canonical filenames:
+The knowledge graph is **only** in the Firestore store — there is no on-disk `sources/` copy and no `KG_SOURCE` toggle (see [firestore-only-store](docs/design-notes/firestore-only-store.md)). Add a graph on demand:
 
-```
-sources/ci/maths/
-  knowledge_graph.json          # { nodes, relationships } — converged LC metadata scheme
-  terminology.json
-  PROMPT_generate_chapter.md
-  PROMPT_generate_lessons.md
-  example_domains.json          # optional; falls back to a built-in pool
+```bash
+npm run import:kg-store -- <workspace> <grade> <subject> path/to/knowledge_graph.json
 ```
 
-`get_context` discovers installed pairs by scanning the tree. Dropping in a folder provides the *data*; making the tools work also needs a registered **adapter** (`src/adapters/`, one behavior module per subject) — a folder with no adapter is rejected by `set_context`. See [Adding a grade/subject](docs/technical-reference/architecture-and-extending.md#adding-a-new-gradesubject).
+The JSON is a raw Learning-Commons envelope (`{ nodes, relationships }`). `get_context` discovers installed pairs from the **store** (the namespaces that have a graph). Making the tools work also needs a registered **subject profile** (`src/adapters/profiles/`, one declarative literal per subject) — a namespace with no registered adapter is rejected by `set_context`. See [Adding a grade/subject](docs/technical-reference/architecture-and-extending.md#adding-a-new-gradesubject).
+
+The only per-subject files on disk are static assets under `assets/<workspace>/<grade>/<subject>/` — currently just the optional `terminology.json` (FR/Wolof glossary fallback). Realistic graphs for the test suite live under `test/fixtures/` as committed test data.
 
 ## Quickstart
 
@@ -43,18 +40,18 @@ npm run start:http     # HTTP MCP server (dist/http.js) — remote / Cloud Run
 
 **Required env:** `SERVICE_ACCOUNT_KEY_PATH` (Firebase service-account JSON) · `FIREBASE_STORAGE_BUCKET`.
 
-**Common optional env:** `TLM_GRADE` / `TLM_SUBJECT` (pre-select a pair at startup) · `TLM_BUCKET_PREFIX` (namespace everything under a prefix) · `TLM_SOURCES_DIR` · `KG_SOURCE` (`bundle` default | `firestore`) · `TLM_DOMAIN_NEIGHBORHOOD_K`. Full list and semantics: [technical reference → Configuration](docs/technical-reference/).
+**Common optional env:** `TLM_GRADE` / `TLM_SUBJECT` (pre-select a pair at startup) · `TLM_WORKSPACE` · `TLM_BUCKET_PREFIX` (namespace everything under a prefix) · `TLM_ASSETS_DIR` · `TLM_DOMAIN_NEIGHBORHOOD_K`. Full list and semantics: [technical reference → Configuration](docs/technical-reference/).
 
-## Firestore KG store + curator loop (optional)
+## Firestore KG store + curator loop
 
-Curriculum + KG data can live in a generic Firestore node/edge store with a **double-buffered draft/published** model and a curator/approver **edit → review → publish** loop (wording edits via `upsert_property`, structural changes via composite recipes `add_lesson`/`add_chapter`/`move_lesson`/`split_chapter`/`renumber`, all two-phase-confirmed and audited). Seed and verify:
+The knowledge graph lives in a generic Firestore node/edge store with a **double-buffered draft/published** model and a curator/approver **edit → review → publish** loop (generic graph verbs `add_node`/`move_node`/`edit_node` and batched `add_nodes`/`create_edges`, all two-phase-confirmed and audited). Import a graph, and export it for backup/interchange:
 
 ```bash
-KG_SOURCE=firestore npm run seed:kg-store       # seed Firestore from sources/
-KG_SOURCE=firestore npm run parity:kg-store     # assert firestore reads == bundle reads
+npm run import:kg-store -- <workspace> <grade> <subject> knowledge_graph.json   # add a namespace
+npm run export:kg-store -- <workspace> <grade> <subject> out.json               # dump it back out
 ```
 
-Full lifecycle, roles, recipes, integrity rules, and audit: [technical reference → KG node/edge store](docs/technical-reference/store.md).
+Full lifecycle, roles, verbs, integrity rules, and audit: [technical reference → KG node/edge store](docs/technical-reference/store.md).
 
 ## The generation flow (in brief)
 

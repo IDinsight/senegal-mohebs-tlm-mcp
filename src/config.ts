@@ -15,12 +15,12 @@ const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fromRoot = (p: string) => resolve(PKG_ROOT, p);
 
 export const CONFIG = {
-  // Sources root (override with TLM_SOURCES_DIR). Under it, one folder per grade,
-  // then per subject, resolved at runtime for the active context (context/state.ts).
-  // The per-subject filenames below are fixed conventions — the same in every
-  // subject folder.
-  sourcesDir: env.TLM_SOURCES_DIR ? resolve(env.TLM_SOURCES_DIR) : fromRoot("sources"),
-  kgFile: "knowledge_graph.json",
+  // Static per-subject on-disk assets root (override with TLM_ASSETS_DIR). Under
+  // it, one folder per workspace/grade/subject, resolved for the active context
+  // (context/state.ts). The KG itself is NOT here — it lives only in the store;
+  // this holds the terminology glossary fallback (and the legacy prompt files
+  // pending their migration into the graph guides). Filenames are fixed conventions.
+  assetsDir: env.TLM_ASSETS_DIR ? resolve(env.TLM_ASSETS_DIR) : fromRoot("assets"),
   terminologyFile: "terminology.json",
   exampleDomainsFile: "example_domains.json",
   // Firebase Storage (shared source of truth for documents + history).
@@ -51,19 +51,6 @@ export function superAdmins(): string[] {
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-}
-
-// Where curriculum + KG reads pull from. "bundle" keeps the legacy behavior
-// (readFileSync from sources/); "firestore" hydrates the normalized
-// CurriculumModel from the generic node/edge store seeded by
-// scripts/seed-kg-store.mjs. Reversible flag — flip either way without a
-// rebuild. Unknown values collapse to "bundle".
-//
-// Resolved lazily (not memoised into CONFIG) so parity tests can toggle
-// KG_SOURCE per case with `process.env.KG_SOURCE = ...` inside one run.
-export type KgSource = "bundle" | "firestore";
-export function kgSource(): KgSource {
-  return (process.env.KG_SOURCE ?? "bundle").trim().toLowerCase() === "firestore" ? "firestore" : "bundle";
 }
 
 export const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";

@@ -38,7 +38,7 @@ const leafStandards = (model: CurriculumModel): CurriculumUnit[] =>
   [...model.byId.values()].filter((u) => u.properties.normalizedStatementType === "Standard");
 
 describe("generic parseGraph — maths (new shape)", () => {
-  const model = parseGraph(load("sources/senegal/ci/maths/knowledge_graph.json"), MATHS);
+  const model = parseGraph(load("test/fixtures/senegal/ci/maths/knowledge_graph.json"), MATHS);
 
   it("classifies the maths spine by its own canonical fields", () => {
     // Groupings are named by groupName (Chapitre/Semaine); lessons are `Lesson`s;
@@ -111,7 +111,7 @@ describe("generic parseGraph — maths (new shape)", () => {
 });
 
 describe("generic parseGraph — reading (Scope B — daily sessions)", () => {
-  const model = parseGraph(load("sources/senegal/ce1/reading/knowledge_graph.json"), READING);
+  const model = parseGraph(load("test/fixtures/senegal/ce1/reading/knowledge_graph.json"), READING);
 
   it("classifies weeks, sessions, standard leaves", () => {
     expect(model.unitsOfKind("Semaine").length).toBeGreaterThan(0);

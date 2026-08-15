@@ -23,11 +23,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
-import { getActiveAdapter, getRegisteredProfile, getRegisteredGuide, validateProfileRecord } from "../adapters/index.js";
+import { getActiveAdapter, validateProfileRecord } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
 import { authorize } from "../authz.js";
-import { kgSource } from "../config.js";
 import { kgNamespace, getKgStore, editProfileWithConfirm, type StoredConfig } from "../kg-store/index.js";
 
 // The authored `guide` markdown from a stored config value, whatever its shape:
@@ -57,13 +56,6 @@ function makeValidator(namespace: string) {
   };
 }
 
-// The in-repo record for bundle/dev mode: the core literal + its authored guide.
-function inRepoRecord(grade: string, subject: string): StoredConfig {
-  const core = getRegisteredProfile(grade, subject);
-  const guide = getRegisteredGuide(grade, subject);
-  return guide !== undefined ? { core, guide } : { core };
-}
-
 // ── Tool cores (exported for tests, wrapped by the tools below) ───────────────
 // Each returns the plain response object; the tool wraps it in asJson + guarded.
 // The active adapter / workspace / actor come from session state, so callers
@@ -73,14 +65,9 @@ export async function readProfile(slot?: "published" | "draft"): Promise<Record<
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
-  if (kgSource() !== "firestore") {
-    // Dev/bundle: the in-repo record is the profile; there is no draft.
-    return { source: "in-repo-literal", slot: "published", namespace, profile: inRepoRecord(adapter.grade, adapter.subject) };
-  }
-
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
-  if (!pointer) return { error: `No seed found for namespace '${namespace}'. Run the seed first.` };
+  if (!pointer) return { error: `No graph in the store for namespace '${namespace}'. Import it first.` };
 
   if (slot === "draft") {
     // Reading the unpublished draft is the same trust tier as diff_draft.
@@ -97,14 +84,9 @@ export async function readGraphGuide(slot?: "published" | "draft"): Promise<Reco
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
-  if (kgSource() !== "firestore") {
-    const guide = getRegisteredGuide(adapter.grade, adapter.subject);
-    return { source: "in-repo-literal", namespace, hasGuide: guide !== undefined, guide: guide ?? null };
-  }
-
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
-  if (!pointer) return { error: `No seed found for namespace '${namespace}'. Run the seed first.` };
+  if (!pointer) return { error: `No graph in the store for namespace '${namespace}'. Import it first.` };
 
   let readSlot = pointer.publishedSlot;
   if (slot === "draft") {
@@ -120,10 +102,6 @@ export async function readGraphGuide(slot?: "published" | "draft"): Promise<Reco
 export async function runEditProfile(profile: Record<string, unknown>, confirm?: boolean, token?: string): Promise<unknown> {
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
-
-  if (kgSource() !== "firestore") {
-    return { error: "edit_profile is only available in firestore mode. In bundle/dev mode the subject profile is the in-repo record — edit src/adapters/profiles/ and re-seed." };
-  }
 
   return editProfileWithConfirm(namespace, profile, {
     confirm, token,
@@ -200,12 +178,9 @@ export async function reviewDraft(): Promise<Record<string, unknown>> {
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
-  if (kgSource() !== "firestore") {
-    return { notApplicable: true, message: "review_draft targets the firestore draft/publish curator loop; it is not available in bundle/dev mode." };
-  }
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
-  if (!pointer) return { error: `No seed found for namespace '${namespace}'. Run the seed first.` };
+  if (!pointer) return { error: `No graph in the store for namespace '${namespace}'. Import it first.` };
 
   // Review the DRAFT when one is open (the pre-publish use case), else published.
   let target = pointer.publishedSlot;

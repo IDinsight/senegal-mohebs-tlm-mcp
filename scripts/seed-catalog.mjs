@@ -22,7 +22,7 @@
  * Env: same Firebase auth as seed-kg-store (SERVICE_ACCOUNT_KEY_PATH / _JSON,
  * FIREBASE_STORAGE_BUCKET, TLM_SOURCES_DIR, TLM_BUCKET_PREFIX).
  */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,9 +34,24 @@ if (!existsSync(DIST)) {
   process.exit(1);
 }
 
-const { CONFIG } = await import(new URL("../dist/config.js", import.meta.url));
-const { listAvailableContexts, subjectDir } = await import(new URL("../dist/context/index.js", import.meta.url));
 const { createMemoryKgStore, createFirestoreKgStore } = await import(new URL("../dist/kg-store/index.js", import.meta.url));
+// The KG lives only in the store now, so the routine subtrees are scraped from
+// the committed test/fixtures/ graphs (the same graphs, as plain data). Scan the
+// fixtures tree for every <workspace>/<grade>/<subject>/knowledge_graph.json.
+const FIXTURES = resolve(REPO, "test/fixtures");
+function fixtureGraphs() {
+  const out = [];
+  if (!existsSync(FIXTURES)) return out;
+  for (const ws of readdirSync(FIXTURES)) {
+    for (const grade of readdirSync(resolve(FIXTURES, ws))) {
+      for (const subject of readdirSync(resolve(FIXTURES, ws, grade))) {
+        const p = resolve(FIXTURES, ws, grade, subject, "knowledge_graph.json");
+        if (existsSync(p)) out.push(p);
+      }
+    }
+  }
+  return out;
+}
 const { assembleCatalog, catalogNamespace, SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID } = await import(new URL("../dist/kg-recipes/index.js", import.meta.url));
 
 const dryRun = process.argv.slice(2).includes("--dry-run");
@@ -181,9 +196,7 @@ const MATHS_ILLUSTRATION_FORMATTER = {
 // subtrees), to be spliced under the SHARED catalog with the shared formatters.
 const subjectSources = [];
 let subjectHashes = "";
-for (const { workspace, grade, subject } of listAvailableContexts()) {
-  const bundlePath = resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile);
-  if (!existsSync(bundlePath)) continue;
+for (const bundlePath of fixtureGraphs()) {
   const bytes = readFileSync(bundlePath);
   subjectHashes += createHash("sha256").update(bytes).digest("hex");
   const parsed = JSON.parse(bytes.toString("utf8"));

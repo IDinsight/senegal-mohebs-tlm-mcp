@@ -15,7 +15,7 @@
  */
 import { suggestFreshDomain, domainUsage } from "../generation/index.js";
 import { parseGraph, resolvePrune, type GraphParseDescriptor } from "../curriculum/index.js";
-import { makeEnsure, detectEnvelope } from "./engine.js";
+import { makeEnsure } from "./engine.js";
 import type { SubjectProfile } from "./profile.js";
 import type { SubjectAdapter, CurriculumModel } from "../types.js";
 
@@ -30,15 +30,13 @@ function toDescriptor(parse: SubjectProfile["parse"]): GraphParseDescriptor {
 export function buildAdapterFromProfile(profile: SubjectProfile, grade: string, subject: string): SubjectAdapter {
   const descriptor = toDescriptor(profile.parse);
   const parse = (raw: unknown): CurriculumModel => parseGraph(raw, descriptor);
-  const ensure = makeEnsure(parse);
 
   const adapter: SubjectAdapter = {
     grade, subject,
     id: profile.id,
     capabilities: profile.capabilities,
-    detect: detectEnvelope,
     parse,
-    model: ensure,
+    model: makeEnsure(),
   };
 
   // Capability-gated generation helpers: present only when the subject rotates

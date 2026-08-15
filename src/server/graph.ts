@@ -25,7 +25,6 @@ import { walkGraph, computeGraphStats, type WalkDirection } from "../curriculum/
 import { resolveDraftModel } from "./preview.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
-import { kgSource } from "../config.js";
 import type { CurriculumModel } from "../types.js";
 
 function activeNamespace(): string {
@@ -148,12 +147,8 @@ export async function namespaceStats(): Promise<Record<string, unknown>> {
 }
 
 // Live draft state: whether a draft is open and, if so, how many nodes/edges it
-// changes vs published (a cheap diff over two small slots, no traversal). Bundle
-// mode has no draft concept, so it always reports closed.
+// changes vs published (a cheap diff over two small slots, no traversal).
 async function draftState(namespace: string): Promise<{ open: boolean; editsStaged?: number }> {
-  if (kgSource() !== "firestore") {
-    return { open: false };
-  }
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
   if (!pointer || !pointer.draftSlot) {

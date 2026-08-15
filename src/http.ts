@@ -29,7 +29,7 @@ import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/p
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
 import { listExportNamespaces, exportNamespace } from "./kg-export.js";
-import { CONFIG, basePrefix, kgSource, DEFAULT_WORKSPACE } from "./config.js";
+import { CONFIG, basePrefix, DEFAULT_WORKSPACE } from "./config.js";
 import { newSessionState, runInSession, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
 import { activateContext, refreshAvailableContexts } from "./activate.js";
@@ -225,15 +225,13 @@ async function main() {
   // whole process and take EVERY session down at once — the crash-loop we saw.
   installProcessGuards(LOG);
 
-  // In firestore mode, discover installed contexts from the STORE once at
-  // boot (the context list is process-global, not per-session). Best-effort:
-  // on a store error, listAvailableContexts falls back to the sources/ scan.
-  if (kgSource() === "firestore") {
-    try {
-      await refreshAvailableContexts();
-    } catch (e) {
-      console.error(`${LOG} could not list namespaces from the store (falling back to the sources/ scan):`, (e as Error).message);
-    }
+  // Discover installed contexts from the store once at boot (the context list is
+  // process-global, not per-session). Best-effort: on a store error the list
+  // stays empty and the first tool call re-prompts.
+  try {
+    await refreshAvailableContexts();
+  } catch (e) {
+    console.error(`${LOG} could not list namespaces from the store:`, (e as Error).message);
   }
 
   const app = express();
@@ -379,16 +377,12 @@ async function main() {
         tool: toolName,
         grade: a?.grade ?? null,
         subject: a?.subject ?? null,
-        // Which backend served curriculum/KG reads for this call. Sourced
-        // from the config flag, not any client-controlled input — so the
-        // audit log records the actual data path, not a claimed one.
-        kgSource: kgSource(),
       }));
     }
   });
 
   app.listen(PORT, () => {
-    console.error(`${LOG} listening on :${PORT} (${sessions.size} sessions, sources: ${CONFIG.sourcesDir})`);
+    console.error(`${LOG} listening on :${PORT} (${sessions.size} sessions, assets: ${CONFIG.assetsDir})`);
   });
 }
 
