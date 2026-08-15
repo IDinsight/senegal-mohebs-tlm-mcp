@@ -160,9 +160,9 @@ time**. A profile change is finally "no redeploy". (D4.)
 > prose and a new **`review_draft`** tool bundles them with the deterministic coded
 > warnings + a structural snapshot for the model to reason over — the coded rules
 > are **kept** as the automatic backstop (their removal is a later call). Still
-> **proposed**: retiring the coded coverage rules once the prose review proves out,
-> and authoring guides for the remaining subjects (a starter `ci/maths` guide ships).
-> This section is the design; the increment notes are inline below.
+> **proposed**: retiring the coded coverage rules once the prose review proves out.
+> (Guides are now authored for all three subjects — CI maths, CE1 reading, Nigeria
+> maths.) This section is the design; the increment notes are inline below.
 
 The Phase 2b profile is **configuration for deterministic server code** — the
 parser, the coverage checker, the deliverable classifier. But the larger part of
@@ -269,9 +269,10 @@ not something to do blind.
   its wiring into edit / `diff_draft` / publish could be deleted, moving those
   expectations to prose-only. Deferred because it removes the deterministic
   auto-warnings from the live loop.
-- **Author the remaining guides.** Only `ci/maths` ships a starter guide; the
-  reading and Nigeria subjects need theirs authored (via `edit_profile`, so no
-  redeploy).
+- *Guides authored for all three subjects.* `ci/maths` (two-parent axis + bilan),
+  `ce1/reading` (bilingual week→day→session, one-parent, skill-area alignment), and
+  `primary-1-3/maths` (standards-only NERDC hierarchy, browse-not-author). Further
+  edits go through `edit_profile`, no redeploy.
 - *Settled in increment 1:* the field split (`core` = parse descriptor +
   deliverable match + capabilities + coverage-for-now; `guide` = the prose), and
   guide validation (free text, capped; the guard is "it can't break reads" by

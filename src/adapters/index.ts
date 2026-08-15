@@ -26,8 +26,8 @@ import { validateProfile, validateProfileRecord, type SubjectProfile } from "./p
 export { validateProfile, validateProfileRecord, MAX_GUIDE_CHARS } from "./profile.js";
 export type { SubjectProfile, ProfileRecord } from "./profile.js";
 import { CI_MATHS_PROFILE, CI_MATHS_GUIDE } from "./profiles/ci-maths.js";
-import { CE1_READING_PROFILE } from "./profiles/ce1-reading.js";
-import { NIGERIA_MATHS_PROFILE } from "./profiles/nigeria-maths.js";
+import { CE1_READING_PROFILE, CE1_READING_GUIDE } from "./profiles/ce1-reading.js";
+import { NIGERIA_MATHS_PROFILE, NIGERIA_MATHS_GUIDE } from "./profiles/nigeria-maths.js";
 
 // Registry: (grade/subject) → subject PROFILE (data). A subject is added by
 // authoring a profile literal and registering it here — no per-subject behavior
@@ -68,6 +68,8 @@ export function getRegisteredProfile(grade: string, subject: string): SubjectPro
 // the config cell alongside the core; the guide is for the LLM, never for reads.
 const GUIDES: Record<string, string> = {
   "ci/maths": CI_MATHS_GUIDE,
+  "ce1/reading": CE1_READING_GUIDE,
+  "primary-1-3/maths": NIGERIA_MATHS_GUIDE,
 };
 export function getRegisteredGuide(grade: string, subject: string): string | undefined {
   return GUIDES[`${grade}/${subject}`];

@@ -94,11 +94,11 @@ describe("firestore mode", () => {
     });
   });
 
-  it("get_graph_guide reports no guide for a subject that ships none (ce1/reading)", async () => {
+  it("get_graph_guide returns the seeded guide for ce1/reading", async () => {
     await inContext(reading, CURATOR, async () => {
       const res = await readGraphGuide();
-      expect(res.hasGuide).toBe(false);
-      expect(res.guide).toBeNull();
+      expect(res.hasGuide).toBe(true);
+      expect(String(res.guide)).toContain("CE1 Reading — graph guide");
     });
   });
 
