@@ -86,6 +86,10 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
     return label;
   };
   const orderOf = (n: RawNode): number | null => {
+    // Standards (StandardsFrameworkItem) are a reference hierarchy — they carry
+    // NO ordinal and sequence by graph traversal. Any ordinal on a standard in
+    // the source (e.g. the maths spine's metadata.order) is deliberately ignored.
+    if (n.labels?.[0] === SFI) return null;
     if (d.numberFrom == null) return null;
     if (d.numberFrom === "order") {
       const o = n.properties?.metadata?.order;
