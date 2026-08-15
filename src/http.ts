@@ -240,7 +240,14 @@ async function main() {
   const app = express();
   app.use(express.json({ limit: "8mb" }));
 
-  app.get("/healthz", (_req, res) => { res.status(200).send("ok"); });
+  // Health check. `/health` is the externally-reachable one: Google's Front End
+  // reserves the literal path `/healthz` and 404s it before it reaches the
+  // container (every neighbouring path — `/health`, `/healthz/` — passes through
+  // fine), so an external smoke check / uptime monitor must hit `/health`.
+  // `/healthz` stays for a container-internal HTTP probe, which bypasses GFE.
+  const health = (_req: express.Request, res: express.Response) => { res.status(200).send("ok"); };
+  app.get("/health", health);
+  app.get("/healthz", health);
 
   const authEnabled = !!SUPABASE_URL;
   // One verifier instance, shared by /mcp's bearer middleware and the read-only
