@@ -126,12 +126,11 @@ describe("firestore mode", () => {
     });
   });
 
-  it("review_draft bundles the guide, coded warnings, and structural facts (published)", async () => {
+  it("review_draft bundles the guide and structural facts (published)", async () => {
     await inContext(maths, CURATOR, async () => {
       const res = await reviewDraft();
       expect(res.reviewing).toBe("published");
       expect(String(res.guide)).toContain("Coverage expectations");
-      expect(Array.isArray(res.coverageWarnings)).toBe(true);
       const facts = res.structuralFacts as { nodesByType: Record<string, number>; containers: unknown[]; contentMultiParent: unknown[] };
       expect(facts.nodesByType.Chapitre).toBeGreaterThan(0);
       expect(facts.nodesByType.Lesson).toBeGreaterThan(0);

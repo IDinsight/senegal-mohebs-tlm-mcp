@@ -22,11 +22,6 @@ describe("SubjectProfile validation", () => {
     }
   });
 
-  it("rejects an unknown coverage rule, naming the offending path", () => {
-    const bad = { ...CI_MATHS_PROFILE, coverage: [{ rule: "no-such-rule", kinds: ["chapter"] }] };
-    expect(() => validateProfile(bad, "profile for ci/maths")).toThrow(/profile for ci\/maths/);
-  });
-
   it("rejects an out-of-range numberFrom", () => {
     const bad = { ...CI_MATHS_PROFILE, parse: { ...CI_MATHS_PROFILE.parse, numberFrom: "ordinal" } };
     expect(() => validateProfile(bad)).toThrow(/numberFrom/);
@@ -47,13 +42,6 @@ describe("buildAdapterFromProfile — synthesized behavior", () => {
     expect(classify("Fiches de leçons - Chapitre 1.docx")).toBe("lessons");
     expect(classify("FICHE DE LECON 3.docx")).toBe("lessons");
     expect(classify("Manuel eleve chapitre 1.docx")).toBe("manual");
-  });
-
-  it("omits the coverage hook when the profile declares no rules (Nigeria)", () => {
-    const withCoverage = buildAdapterFromProfile(CI_MATHS_PROFILE, "ci", "maths");
-    const without = buildAdapterFromProfile(NIGERIA_MATHS_PROFILE, "primary-1-3", "maths");
-    expect(typeof withCoverage.coverageWarnings).toBe("function");
-    expect(without.coverageWarnings).toBeUndefined();
   });
 
   it("attaches the domain-rotation helpers only when the capability is on", () => {

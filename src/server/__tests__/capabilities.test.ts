@@ -281,14 +281,6 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.lifecycle.returnModes).toEqual(["summary", "full"]);
   });
 
-  it("editable.coverageWarnings.enabled mirrors whether the adapter has a coverage hook (#13)", async () => {
-    const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
-    expect(caps.editable.coverageWarnings.enabled).toBe(typeof adapter.coverageWarnings === "function");
-    // Maths ships a coverage hook, so this is true for the target context.
-    expect(caps.editable.coverageWarnings.enabled).toBe(true);
-  });
-
   it("editable.recipes IS a MIRROR of the generic RECIPES registry — no hand-authored copy", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     // Generic verbs are available on every subject (no per-subject profile/allowlist).

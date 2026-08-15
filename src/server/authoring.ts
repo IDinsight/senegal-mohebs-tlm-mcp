@@ -27,13 +27,9 @@ import { runBatchMutation, type ReturnMode } from "./batch.js";
 import { idempotencyPayloadHash } from "./idempotency.js";
 import type { SubjectAdapter } from "../types.js";
 
-// Namespace + coverage hook the active subject binds to (same as the other
-// mutation tool groups).
-function bind(adapter: SubjectAdapter): { namespace: string; coverage: (g: MutationGraph) => string[] } {
-  return {
-    namespace: kgNamespace(activeWorkspace(), adapter.grade, adapter.subject),
-    coverage: (g) => adapter.coverageWarnings?.(g as never) ?? [],
-  };
+// The namespace the active subject binds to (same as the other mutation tool groups).
+function bind(adapter: SubjectAdapter): { namespace: string } {
+  return { namespace: kgNamespace(activeWorkspace(), adapter.grade, adapter.subject) };
 }
 
 // One item of an add_nodes batch, as it arrives from the caller. `kind` is the
@@ -101,7 +97,7 @@ export async function runAddNodes(a: {
   returnMode?: ReturnMode;
   idempotencyKey?: string;
 }): Promise<Record<string, unknown>> {
-  const { namespace, coverage } = bind(getActiveAdapter());
+  const { namespace } = bind(getActiveAdapter());
 
   // Mint one real id per item on the dry-run; on confirm reuse the exact ids the
   // caller echoes back, so the args-hash matches the previewed batch.
@@ -133,7 +129,6 @@ export async function runAddNodes(a: {
     args: { namespace, items: builtItems },
     confirm: a.confirm,
     token: a.confirmationToken,
-    coverage,
     returnMode: a.returnMode ?? "summary",
     idempotencyKey: a.idempotencyKey,
     payloadHash: idempotencyPayloadHash(builtItems),

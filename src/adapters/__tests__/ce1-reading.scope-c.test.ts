@@ -49,7 +49,6 @@ let store: KgNodeStore;
 const contexts = listAvailableContexts();
 const ns = kgNamespace("ce1", "reading");
 const adapter = () => resolveAdapter("ce1", "reading")!;
-const coverage = (graph: MutationGraph): string[] => adapter().coverageWarnings?.(graph as never) ?? [];
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
@@ -81,9 +80,9 @@ async function readPublished(): Promise<MutationGraph> {
 const modelOf = (graph: MutationGraph): CurriculumModel => adapter().parse(toRawEnvelope({ nodes: graph.nodes, edges: graph.edges }));
 
 async function runRecipe<A>(mutation: GraphMutation<A>, args: A) {
-  const preview = await runGraphMutation({ namespace: ns, mutation, args, coverage });
+  const preview = await runGraphMutation({ namespace: ns, mutation, args });
   if (preview.phase !== "preview") return { preview, confirm: null };
-  const confirm = await runGraphMutation({ namespace: ns, mutation, args, confirm: true, token: preview.confirmationToken, coverage });
+  const confirm = await runGraphMutation({ namespace: ns, mutation, args, confirm: true, token: preview.confirmationToken });
   return { preview, confirm };
 }
 
@@ -114,14 +113,14 @@ describe("add_node — Activity under a session lesson", () => {
     const activityId = mintNodeId();
     const args = { namespace: ns, parentId: lessonId, label: "Activity", newNodeId: activityId, title: "Étape 1 : Découvrir le vocabulaire", properties: { studentGroupingType: "group", timeRequired: "10 mn", educationalUse: "Instruction" } };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args });
     if (preview.phase !== "preview") {
       throw new Error("expected preview");
     }
     expect(preview.diff.nodes.added.map((n) => n.id)).toEqual([activityId]);
     expect(preview.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId(HAS_PART, lessonId, activityId));
 
-    const confirm = await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken, coverage });
+    const confirm = await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken });
     expect(confirm.phase).toBe("apply");
 
     const node = (await readDraft()).nodes.find((n) => n.id === activityId)!;
@@ -136,7 +135,7 @@ describe("add_node — Activity under a session lesson", () => {
 
   it("blocks when the parent does not exist", async () => {
     const args = { namespace: ns, parentId: "does-not-exist", label: "Activity", newNodeId: mintNodeId(), title: "x" };
-    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args });
     expect(preview.phase).toBe("blocked");
     if (preview.phase === "blocked") {
       expect(preview.errors.join()).toMatch(/parent .* does not exist/i);

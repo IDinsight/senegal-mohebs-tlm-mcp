@@ -17,15 +17,12 @@ import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
-import { runGraphMutation, kgNamespace, type MutationGraph } from "../kg-store/index.js";
+import { runGraphMutation, kgNamespace } from "../kg-store/index.js";
 import { editNode } from "../kg-recipes/index.js";
 import type { SubjectAdapter } from "../types.js";
 
-function bind(adapter: SubjectAdapter): { namespace: string; coverage: (g: MutationGraph) => string[] } {
-  return {
-    namespace: kgNamespace(activeWorkspace(), adapter.grade, adapter.subject),
-    coverage: (g) => adapter.coverageWarnings?.(g as never) ?? [],
-  };
+function bind(adapter: SubjectAdapter): { namespace: string } {
+  return { namespace: kgNamespace(activeWorkspace(), adapter.grade, adapter.subject) };
 }
 
 export function registerRecipeTools(server: McpServer) {
@@ -46,14 +43,13 @@ export function registerRecipeTools(server: McpServer) {
       },
     },
     guarded(async (a: { nodeId: string; content?: string; position?: number; title?: string; title_en?: string; confirm?: boolean; confirmationToken?: string }) => {
-      const { namespace, coverage } = bind(getActiveAdapter());
+      const { namespace } = bind(getActiveAdapter());
       const result = await runGraphMutation({
         namespace,
         mutation: editNode,
         args: { namespace, nodeId: a.nodeId, content: a.content, position: a.position, title: a.title, title_en: a.title_en },
         confirm: a.confirm,
         token: a.confirmationToken,
-        coverage,
       });
       return asJson(result);
     }),

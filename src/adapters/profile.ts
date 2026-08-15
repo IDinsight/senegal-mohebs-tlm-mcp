@@ -60,7 +60,9 @@ const parseSchema = z
   .object({
     // A node's kind comes from its own canonical LC fields (groupName for
     // groupings, statementType for standards, label for content) — no per-subject
-    // kind table, so nothing to declare here beyond the ordinal + edge wiring.
+    // kind table. `numberFrom` is where the ordinal lives: maths's standards spine
+    // carries it in metadata.order, reading's Lessons in `position` — a genuine
+    // per-subject difference, so it stays a knob.
     numberFrom: z.enum(["order", "position", "description"]).optional(),
     containerEdge: edgeSchema.optional(),
     supportEdge: edgeSchema.optional(),
@@ -69,33 +71,6 @@ const parseSchema = z
     prune: pruneSchema.optional(),
   })
   .strict();
-
-// ── Coverage rules (was coverageWarnings(graph)) ─────────────────────────────
-// A list of named generic rules, each parameterised by the kinds it applies to.
-// The rule bodies live in curriculum/coverage.ts; the profile only selects and
-// parameterises them. `noun` lets a subject keep its own word for an assessment
-// (maths says "bilan") while the rule stays subject-agnostic.
-const coverageRuleSchema = z.discriminatedUnion("rule", [
-  z.object({ rule: z.literal("empty-container"), kinds: z.array(z.string()).min(1) }).strict(),
-  z.object({ rule: z.literal("multi-parent"), childKinds: z.array(z.string()).optional() }).strict(),
-  z
-    .object({
-      rule: z.literal("exactly-one-assessment-child"),
-      parentKind: z.string(),
-      childKind: z.string(),
-      containment: z.string().optional(),
-      noun: z.string().optional(),
-    })
-    .strict(),
-  z
-    .object({
-      rule: z.literal("single-content-parent"),
-      childKind: z.string(),
-      parentKind: z.string(),
-      containment: z.string().optional(),
-    })
-    .strict(),
-]);
 
 const capabilitiesSchema = z
   .object({
@@ -109,7 +84,6 @@ export const subjectProfileSchema = z
     capabilities: capabilitiesSchema,
     parse: parseSchema,
     deliverables: z.array(deliverableSchema),
-    coverage: z.array(coverageRuleSchema).optional(),
   })
   .strict();
 
@@ -118,13 +92,25 @@ export type DeliverableProfile = z.infer<typeof deliverableSchema>;
 export type DeliverableMatch = z.infer<typeof deliverableMatchSchema>;
 export type ParseProfile = z.infer<typeof parseSchema>;
 export type PruneSpec = z.infer<typeof pruneSchema>;
-export type CoverageRuleSpec = z.infer<typeof coverageRuleSchema>;
+
+// Migration shim: drop keys the schema no longer declares so a core seeded
+// BEFORE they were retired still validates against the now-strict schema (the
+// deploy→re-seed window reads old cells). Only `coverage` is stripped — any
+// OTHER unknown key still fails `.strict()`, so typo protection holds. Remove
+// this once every namespace has been re-seeded.
+//   - `coverage` — retired: coverage is prose in the guide (review_draft).
+function dropRetiredKeys(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const core = { ...(raw as Record<string, unknown>) };
+  delete core.coverage;
+  return core;
+}
 
 // Validate a profile literal (the machine `core`). Throws a readable error
 // naming the offending path so a bad profile fails loudly at the boundary,
 // never as a silent mis-parse deep in a read.
 export function validateProfile(raw: unknown, context = "subject profile"): SubjectProfile {
-  const result = subjectProfileSchema.safeParse(raw);
+  const result = subjectProfileSchema.safeParse(dropRetiredKeys(raw));
   if (!result.success) {
     const issues = result.error.issues
       .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)

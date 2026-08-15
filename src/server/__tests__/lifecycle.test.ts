@@ -6,8 +6,7 @@
  * tests (curator-loop) don't cover:
  *   • summary (the default) drops the whole-draft diff for a compact `counts`
  *     object; "full" keeps the diff (and the staged profileDiff).
- *   • warnings ride VERBATIM in both modes on publish — an approver must see
- *     coverage flags before promoting.
+ *   • the staged profileDiff is dropped in summary, kept in full.
  *   • the commit results (already diff-free) keep their audit fields.
  *   • an empty draft still returns the "nothing to do" notice.
  *
@@ -101,14 +100,13 @@ afterAll(() => {
 });
 
 describe("publish_draft returnMode", () => {
-  it("summary (default) dry-run: confirmationToken + counts + warnings, no diff", async () => {
+  it("summary (default) dry-run: confirmationToken + counts, no diff", async () => {
     await stageOneEditAsCurator();
     const dryRun = await withActiveContextAs(APPROVER, () => runPublishDraft({}));
     expect(dryRun.phase).toBe("preview");
     expect(typeof dryRun.confirmationToken).toBe("string");
     // One node repositioned → exactly one nodesChanged, nothing else.
     expect(dryRun.counts).toEqual({ nodesAdded: 0, edgesAdded: 0, nodesChanged: 1, nodesRemoved: 0, edgesRemoved: 0 });
-    expect(Array.isArray(dryRun.warnings)).toBe(true);
     // The big payloads are dropped in summary.
     expect(dryRun.diff).toBeUndefined();
     expect(dryRun.profileDiff).toBeUndefined();
@@ -125,16 +123,7 @@ describe("publish_draft returnMode", () => {
     expect(dryRun.counts).toEqual({ nodesAdded: 0, edgesAdded: 0, nodesChanged: 1, nodesRemoved: 0, edgesRemoved: 0 });
   });
 
-  it("warnings are identical (verbatim) in summary and full modes", async () => {
-    await stageOneEditAsCurator();
-    const { summary, full } = await withActiveContextAs(APPROVER, async () => ({
-      summary: await runPublishDraft({}),
-      full: await runPublishDraft({ returnMode: "full" }),
-    }));
-    expect(summary.warnings).toEqual(full.warnings);
-  });
-
-  it("commit (summary): auditId + publishedSlot + warningsAtPublish, no diff", async () => {
+  it("commit (summary): auditId + publishedSlot, no diff", async () => {
     await stageOneEditAsCurator();
     const commit = await withActiveContextAs(APPROVER, async () => {
       const dryRun = await runPublishDraft({});
@@ -144,7 +133,6 @@ describe("publish_draft returnMode", () => {
     expect(commit.ok).toBe(true);
     expect(typeof commit.auditId).toBe("string");
     expect(commit.publishedSlot).toBe("b");           // draft slot promoted
-    expect(Array.isArray(commit.warningsAtPublish)).toBe(true);
     expect(commit.diff).toBeUndefined();
   });
 });

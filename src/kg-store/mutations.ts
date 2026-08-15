@@ -294,19 +294,12 @@ export type RunGraphMutationArgs<Args> = {
   // — a safe no-op after a lost-response retry. Omit it and confirm keeps its
   // strict one-time-token behaviour (a replay is rejected).
   idempotencyKey?: string;
-  // Optional subject-aware coverage hook (#13). When provided, it is called on
-  // the post-apply graph and its output is merged into the dry-run `warnings`.
-  // Injected by the server layer from the active adapter's `coverageWarnings`
-  // so kg-store stays subject-agnostic — the framework never knows what a
-  // "chapter" or "bilan" is. Warnings NEVER block; they ride the normal preview
-  // envelope exactly like a mutation's own validate warnings.
-  coverage?: (graph: MutationGraph) => string[];
 };
 
 export async function runGraphMutation<Args>(
   input: RunGraphMutationArgs<Args>,
 ): Promise<GraphPreviewResult | GraphBlockedResult | GraphApplyResult | GraphUnauthorizedResult> {
-  const { namespace, mutation, args, confirm, token, coverage, idempotencyKey } = input;
+  const { namespace, mutation, args, confirm, token, idempotencyKey } = input;
   const store = getKgStore();
 
   // Compose the stakes-accurate action string exactly once. Every path that
@@ -487,13 +480,8 @@ export async function runGraphMutation<Args>(
   const custom = mutation.validate
     ? mutation.validate(snap.graph, after, args)
     : { errors: [], warnings: [] };
-  // Coverage warnings (#13) are subject-shaped completeness hints on the
-  // PROPOSED result. They only inform — never gate the token — so they join
-  // `warnings`, never `errors`. Computed on `after` so the curator sees the
-  // consequence of THIS edit (e.g. "the chapter you just emptied has no bilan").
-  const coverageWarnings = coverage ? coverage(after) : [];
   const errors = [...structural.errors, ...custom.errors];
-  const warnings = [...structural.warnings, ...custom.warnings, ...coverageWarnings];
+  const warnings = [...structural.warnings, ...custom.warnings];
   if (errors.length > 0) {
     // Sample the first error for the reason field — the full array is
     // reflected in the response but audit records stay lightweight.

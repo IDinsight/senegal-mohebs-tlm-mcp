@@ -15,21 +15,16 @@ export const CE1_READING_PROFILE: SubjectProfile = {
   capabilities: { exampleDomainRotation: false },
 
   // Kinds are canonical: a week is a LessonGrouping named `Semaine`, a day one
-  // named `Jour`; sessions are `Lesson`s and standards are `Standard`s. No role table.
+  // named `Jour`; sessions are `Lesson`s and standards are `Standard`s. No role
+  // table. The ordinal (week/day number) is the canonical LC `position` — reading's
+  // Lessons carry only `position`, so the ordinal source is "position".
   parse: {
-    numberFrom: "position", // canonical LC: week/day number is the grouping's `position`
+    numberFrom: "position",
     prune: { strategy: "content-reachable-from-roots", rootKinds: ["Semaine"] },
   },
 
   deliverables: [
     { key: "teacher_guide", label: "Guide de l'enseignant·e (teacher guide)", scopeKind: "Semaine", match: "default", dependsOn: [], promptFile: "PROMPT_generate_lessons.md" },
-  ],
-
-  // Subject-neutral shapes only. A reading session/component has exactly one
-  // parent (unlike a maths lesson, which has a week axis too), so multi-parent applies.
-  coverage: [
-    { rule: "empty-container", kinds: ["Semaine", "Jour"] },
-    { rule: "multi-parent", childKinds: ["Lesson", "LearningComponent"] },
   ],
 };
 

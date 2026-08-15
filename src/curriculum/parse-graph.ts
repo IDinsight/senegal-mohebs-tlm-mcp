@@ -28,11 +28,12 @@ export type GraphParseDescriptor = {
   // no per-subject kind table: the graph's own values ARE the kinds. See
   // docs/design-notes/authorable-catalog.md.
   //
-  // Where a unit's ordinal comes from: "order" = metadata.order (maths);
-  // "position" = the canonical LC `position` prop (reading, post canonical-LC);
-  // "description" = a bare-number description (legacy reading weeks). Omit when
-  // the source carries no ordinal (e.g. the NERDC spine) — every unit's `order`
-  // is then null and the adapter reads sequence from source/traversal order.
+  // Where a unit's ordinal comes from: "order" = metadata.order (maths — its
+  // StandardsFrameworkItem spine carries the ordinal there, with no `position`);
+  // "position" = the canonical LC `position` prop (reading — its Lessons carry
+  // only `position`). The two subjects genuinely differ, so this stays a knob.
+  // Omit when the source carries no ordinal (e.g. the NERDC spine) — every unit's
+  // `order` is then null and the adapter reads sequence from source/traversal order.
   numberFrom?: "order" | "position" | "description";
   // Edge types. Defaults match canonical LC. Each accepts one type or several:
   // canonical LC splits containment across `hasChild` (standards hierarchy) and
