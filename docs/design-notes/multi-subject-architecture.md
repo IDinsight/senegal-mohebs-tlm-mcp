@@ -197,7 +197,6 @@ type SubjectProfile = {
   deliverables: DeliverableSpec[];
   capabilities: {
     exampleDomainRotation: boolean;  // CI maths storybook variety; false for CE1 reading
-    characterConsistency: boolean;   // CI maths; false for CE1 reading
     // add flags as features prove subject-specific
   };
 };

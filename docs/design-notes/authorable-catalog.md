@@ -410,10 +410,17 @@ files are gone.
 - **Detach drift (D2).** Detached lesson-local copies do not receive later fixes to the
   shared entry — by design, but curators need to *see* that a block is detached and
   which shared version it forked from. The attach record should carry that provenance.
-- **`characterConsistency` is currently dead.** The audit found this capability is
-  declared by every adapter but read nowhere. Decide whether it becomes a real
-  generation input (it is the "character consistency" half of the logic-in-the-graph
-  principle) or is removed — don't carry it into the config layer unexamined.
+- **`characterConsistency` — removed.** This capability was declared by every
+  profile but read nowhere, and its concern (keep the cast + art style consistent
+  across a subject's materials) is already handled — better — as **authored prompt
+  prose** ("reuse the established characters", the HOUSE ART STYLE block) in every
+  generation prompt. Wiring a boolean to gate that prose would re-introduce the
+  inlined-house-style-in-code pattern this whole note dismantles; character/art
+  consistency is Bucket-B/C and belongs in authored data (prompt today, a formatter
+  or routine catalog entry tomorrow), not a code flag. It was deleted rather than
+  carried into the config layer, where a curator could toggle a setting that does
+  nothing. (`exampleDomainRotation` stays — it gates a real behaviour: the
+  `suggest_fresh_domain` / `domain_usage` helper tools.)
 - **Scale honesty.** With three subjects and a couple of routines, the catalog earns
   its keep from the *authoring UX* and the multi-tenant direction, not from
   deduplication alone. Keep phase 3's first cut small (the shared house style + the two

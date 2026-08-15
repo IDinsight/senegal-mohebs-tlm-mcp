@@ -100,7 +100,6 @@ const coverageRuleSchema = z.discriminatedUnion("rule", [
 const capabilitiesSchema = z
   .object({
     exampleDomainRotation: z.boolean(),
-    characterConsistency: z.boolean(),
   })
   .strict();
 

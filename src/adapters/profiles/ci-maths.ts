@@ -13,7 +13,7 @@ import type { SubjectProfile } from "../profile.js";
 
 export const CI_MATHS_PROFILE: SubjectProfile = {
   id: "ci-maths/nodes-relationships-v1",
-  capabilities: { exampleDomainRotation: true, characterConsistency: true },
+  capabilities: { exampleDomainRotation: true },
 
   // Kinds come straight from the graph's canonical fields: a chapter is a
   // LessonGrouping named `Chapitre`, a week one named `Semaine`; a lesson is a

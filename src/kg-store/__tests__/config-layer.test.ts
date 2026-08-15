@@ -101,7 +101,7 @@ afterAll(() => {
 function editedProfile(): StoredConfig {
   const p = structuredClone(baseProfile()) as Record<string, unknown>;
   const caps = p.capabilities as Record<string, unknown>;
-  caps.characterConsistency = !caps.characterConsistency;
+  caps.exampleDomainRotation = !caps.exampleDomainRotation;
   return p as StoredConfig;
 }
 
@@ -163,8 +163,9 @@ describe("editProfileWithConfirm — two-phase", () => {
     await runAsActor(CURATOR, async () => {
       const preview = await editProfileWithConfirm(ns, editedProfile(), { validate });
       if (preview.phase !== "preview") throw new Error("expected preview");
+      // A confirm carrying a DIFFERENT profile than the one previewed (distinct id).
       const different = structuredClone(baseProfile()) as Record<string, unknown>;
-      (different.capabilities as Record<string, unknown>).exampleDomainRotation = false;
+      different.id = "ci-maths/some-other-profile";
       const res = await editProfileWithConfirm(ns, different as StoredConfig, { confirm: true, token: preview.confirmationToken, validate });
       expect(res.phase === "apply" && res.ok === false && res.reason === "argsMismatch").toBe(true);
     });
@@ -274,7 +275,7 @@ describe("activateContext builds the adapter from the stored profile (firestore 
       const res = await activateContext(ctx.workspace, ctx.grade, ctx.subject);
       expect(res.ok).toBe(true);
       const adapter = getActiveAdapter();
-      expect(adapter.capabilities.characterConsistency).toBe((edited as Record<string, unknown>).capabilities && (edited as { capabilities: { characterConsistency: boolean } }).capabilities.characterConsistency);
+      expect(adapter.capabilities.exampleDomainRotation).toBe((edited as { capabilities: { exampleDomainRotation: boolean } }).capabilities.exampleDomainRotation);
     });
 
     // A malformed stored profile is refused (would otherwise mis-parse a whole workspace).
