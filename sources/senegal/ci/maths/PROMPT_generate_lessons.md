@@ -50,8 +50,10 @@ You read the curriculum from a **knowledge graph** through **MCP tools**, in can
 Learning-Commons form (a **content tree** — Course → grouping → lesson — and a **standards
 spine** each lesson *teaches*). Read the graph directly; never work from memory.
 
-- **`list_courses`** — call this **first**. The teacher guide is the course **"Guide de
-  l'enseignant"**. Take its `id`.
+- **`namespace_stats`** — call this **first**. Its `roots` array lists the subject's content
+  roots (each `{ id, labels, description }`). The teacher guide is the Course root — the entry
+  whose `labels` include `"Course"` and whose `description` is **"Guide de l'enseignant"**. Take
+  its `id`.
 - **`walk_graph(fromId=<courseId>, direction="out", edgeTypes=["hasPart","hasChild","usesRoutine"], maxDepth=10)`**
   — the teacher-guide subtree as raw LC nodes + edges: its
   **groupings** and their **lessons** (`Lesson`, in `position` order), plus the shared

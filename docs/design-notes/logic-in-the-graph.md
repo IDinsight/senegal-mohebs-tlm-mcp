@@ -160,7 +160,7 @@ exist purely to serve a Bucket-C heuristic.
 
 ## Realized — the adapter projection is trimmed
 
-Once both maths prompts read curriculum from the graph (`list_courses` / `walk_graph`
+Once both maths prompts read curriculum from the graph (`namespace_stats` / `walk_graph`
 / `get_standards`) instead of the adapter's cooked context, that projection had no
 callers and was **removed**. Gone from `SubjectAdapter` and all three adapters:
 `slice`, `listUnits`, `progression`, `requiredCoverage`, `scopeValues`, and

@@ -1,7 +1,7 @@
 /*
  * Module: curriculum · generic Course readers
  *
- * Subject-agnostic graph readers behind list_courses (coursesOf),
+ * Subject-agnostic graph readers: coursesOf (the Course nodes — used by namespace_stats' root discovery + tests; the list_courses tool was retired),
  * preview_generation (courseSubgraph — the draft course-subtree read), and
  * get_standards (standardsFor). The generic walk_graph tool covers the same
  * traversals for ad-hoc reads; these stay as the named readers those tools use.

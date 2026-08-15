@@ -29,7 +29,7 @@ export function buildServer(): McpServer {
   registerHealthTools(server);       // ping (no datastore — transport liveness probe)
   registerContextTools(server);      // set_context, get_context
   registerWorkspaceTools(server);    // list_workspaces, create_workspace, add/remove/list_member (tenant admin)
-  registerCurriculumTools(server);   // list_courses, get_standards (generic node readers), terminology
+  registerCurriculumTools(server);   // get_standards (generic node reader), terminology
   registerGraphTools(server);        // walk_graph (generic BFS traversal), namespace_stats (orientation snapshot)
   registerGenerationTools(server);   // get_prompt, get_generation_context
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)

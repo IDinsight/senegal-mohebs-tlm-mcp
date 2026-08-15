@@ -114,7 +114,7 @@ export async function previewGeneration(course: string): Promise<Record<string, 
   // standards spine (get_standards) resolves against published as usual.
   const sub = courseSubgraph(resolved.model, course);
   if (!sub) {
-    return { preview: true, error: `Course '${course}' not found in the draft. Call list_courses for available course ids.` };
+    return { preview: true, error: `Course '${course}' not found in the draft. Call namespace_stats (its roots) for available course ids.` };
   }
 
   // Audit a PREVIEW event — distinct from apply/publish/generation, and never
@@ -172,7 +172,7 @@ export function registerPreviewTools(server: McpServer) {
     {
       title: "Preview generation from the draft",
       description:
-        "Return the containment subtree under one Course resolved from the UNPUBLISHED DRAFT (not published) — the draft-resolved course-subtree read (walk_graph reads the published graph; this reads the draft) — so you can generate a PREVIEW of the teaching material a staged edit would produce, before publishing. This closes the editing loop: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change). Curators and approvers only. If no draft exists, returns a clear 'no draft to preview' notice. 'course' is a Course id (from list_courses). IMPORTANT: the returned subtree is a PREVIEW — generate the .docx from it, then surface it via create_preview_upload_url (segregated, short-lived, non-canonical). NEVER log_generation or create_upload_url a preview: those write to the canonical bucket/history and would defeat the isolation.",
+        "Return the containment subtree under one Course resolved from the UNPUBLISHED DRAFT (not published) — the draft-resolved course-subtree read (walk_graph reads the published graph; this reads the draft) — so you can generate a PREVIEW of the teaching material a staged edit would produce, before publishing. This closes the editing loop: dry-run shows the graph DIFF, preview shows the resulting MATERIAL. Read-only on the draft (no graph change). Curators and approvers only. If no draft exists, returns a clear 'no draft to preview' notice. 'course' is a Course id (from namespace_stats roots). IMPORTANT: the returned subtree is a PREVIEW — generate the .docx from it, then surface it via create_preview_upload_url (segregated, short-lived, non-canonical). NEVER log_generation or create_upload_url a preview: those write to the canonical bucket/history and would defeat the isolation.",
       inputSchema: { course: z.string() },
     },
     guarded(async (a: { course: string }) => asJson(await previewGeneration(a.course))),

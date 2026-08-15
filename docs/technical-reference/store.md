@@ -250,7 +250,7 @@ Advertised in `get_capabilities` under `actions.canReadAudit` and the `audit` bl
 
 ### Parity check
 
-`get_generation_context`, `walk_graph`, and `list_courses` must return structurally identical output for every grade/subject against both backends. Run:
+`get_generation_context`, `walk_graph`, and `namespace_stats` must return structurally identical output for every grade/subject against both backends. Run:
 
 ```bash
 npm run parity:kg-store                  # offline: memory store seeded from bundle

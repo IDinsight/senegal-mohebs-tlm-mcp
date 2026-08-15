@@ -31,7 +31,7 @@ You read the curriculum from a **knowledge graph** (canonical Learning-Commons f
 **content tree** and a **standards spine** each session *teaches*). Read the graph directly.
 
 - **`set_context(grade="ce1", subject="reading")`** — call once, first.
-- **`list_courses`** → **`walk_graph(fromId=<courseId>, direction="out", edgeTypes=["hasPart","hasChild","usesRoutine"], maxDepth=10)`** — the teacher-guide course's subtree as raw LC
+- **`namespace_stats`** (from its `roots`, pick the Course — the entry whose `labels` include `"Course"` — and take its `id`) → **`walk_graph(fromId=<courseId>, direction="out", edgeTypes=["hasPart","hasChild","usesRoutine"], maxDepth=10)`** — the teacher-guide course's subtree as raw LC
   nodes + edges: its **week** groupings, their **`Jour 1–5`** day groupings, the day's **session
   lessons** (`Lesson`, in `position` order), and the shared **"Fiche de leçon"** `InstructionalRoutine`.
   This is the authoritative **structure** — produce exactly the sessions it returns, in order, with
