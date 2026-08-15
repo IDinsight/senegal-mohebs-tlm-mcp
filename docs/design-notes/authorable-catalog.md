@@ -6,14 +6,14 @@
 > to both CI-maths Courses, and a generated chapter was verified to take its style from
 > the formatter. The subject-profile **config layer** (phase 2b) is built too:
 > profiles are authored data in the store, edited through the curator loop with the
-> schema guard at authoring time (`get_profile` / `edit_profile`). Phase 2c
-> increments 1–2 are built too: the profile is a `{ core, guide }` record (machine
-> `core` + authored markdown `guide` the LLM reads via `get_graph_guide`), and
-> coverage expectations live in the guide with a `review_draft` tool that pairs
-> them with the deterministic coded warnings (kept as the backstop). Still a
-> **proposal**: retiring the coded coverage rules, the MCP **resources** browse
-> surface (D5), reading's routine catalog (blocked on its content layer), and
-> re-copy/detach ergonomics. This note extends
+> schema guard at authoring time (`get_profile` / `edit_profile`). Phase 2c is
+> built: the profile is a `{ core, guide }` record (machine `core` + authored
+> markdown `guide` the LLM reads via `get_graph_guide`), and coverage lives
+> **entirely** in the guide's prose, checked on demand by `review_draft` — the
+> coded coverage rules are **retired** (no more automatic coverage warnings on
+> edits / `diff_draft` / publish). Still a **proposal**: the MCP **resources**
+> browse surface (D5), reading's routine catalog (blocked on its content layer),
+> and re-copy/detach ergonomics. This note extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
 > **D2 was revised from by-reference to copy-on-use during implementation** (see below).
@@ -158,17 +158,17 @@ time**. A profile change is finally "no redeploy". (D4.)
 
 ## Phase 2c — the profile as a "graph guide" the LLM reads
 
-> **Status: increments 1–2 built (in-repo).** (1) The split + the guide surface:
+> **Status: increments 1–3 built (in-repo).** (1) The split + the guide surface:
 > the profile is a `{ core, guide }` record — a machine `core` the parser/classifier
 > consume and an authored markdown `guide` the LLM reads via `get_graph_guide`.
 > Reads are unchanged (built from `core`; a legacy flat cell still resolves). (2)
-> Coverage-as-prose, **additive**: the guide carries the coverage *expectations* in
-> prose and a new **`review_draft`** tool bundles them with the deterministic coded
-> warnings + a structural snapshot for the model to reason over — the coded rules
-> are **kept** as the automatic backstop (their removal is a later call). Still
-> **proposed**: retiring the coded coverage rules once the prose review proves out.
-> (Guides are now authored for all three subjects — CI maths, CE1 reading, Nigeria
-> maths.) This section is the design; the increment notes are inline below.
+> Coverage-as-prose: the guide carries the coverage *expectations* in prose and a
+> new **`review_draft`** tool bundles them with a structural snapshot for the model
+> to reason over. (3) The coded coverage rules are **retired** — coverage lives
+> entirely in the guide prose; edits / `diff_draft` / publish no longer emit
+> automatic coverage warnings. (Guides are authored for all three subjects — CI
+> maths, CE1 reading, Nigeria maths.) This section is the design; the increment
+> notes are inline below.
 
 The Phase 2b profile is **configuration for deterministic server code** — the
 parser, the coverage checker, the deliverable classifier. But the larger part of
@@ -261,20 +261,24 @@ and the **calling model** reasons over the facts against the guide, catching the
 prose-only expectations the coded rules don't cover (alignment, contiguity). It is
 read-only, firestore-mode, and reviewing an open draft is curator/approver-gated.
 
-This is **additive on purpose** (the chosen approach): the coded rules stay as the
-automatic, deterministic backstop that warns on every edit / `diff_draft` /
-publish. `review_draft` adds an on-demand, richer pass on top. Retiring the coded
-rules in favour of prose-only is left as a deliberate later call, once the review
-path proves out — deleting a deterministic safety net on the live curator loop is
-not something to do blind.
+Increment 2 shipped this **additively** — the coded rules stayed as a deterministic
+backstop while `review_draft` proved out.
+
+### Increment 3 — the coded coverage rules retired (built)
+
+The prose review having proven out, the coded coverage machinery is now **gone**:
+`curriculum/coverage.ts` (`runCoverageRules` + the four rule shapes), the
+`coverageWarnings` adapter hook, the `coverage` rule list on the profile, and all
+its wiring into the mutation framework, `diff_draft`, and the publish audit
+(`warningsAtPublish`) are deleted. Coverage now lives **entirely** in the guide's
+prose, checked on demand by `review_draft`. The behavioural change: edits,
+`diff_draft`, and publish no longer emit automatic coverage warnings — completeness
+is a review step (`review_draft`), never an automatic or blocking one. The read
+model is untouched (coverage was always off the read hot path); parity +
+faithful-re-export stay green.
 
 ### Open (next increments)
 
-- **Retire the coded coverage rules (deferred).** Once `review_draft` proves out,
-  the `core.coverage` rules + `runCoverageRules` + the `coverageWarnings` hook and
-  its wiring into edit / `diff_draft` / publish could be deleted, moving those
-  expectations to prose-only. Deferred because it removes the deterministic
-  auto-warnings from the live loop.
 - *Guides authored for all three subjects.* `ci/maths` (two-parent axis + bilan),
   `ce1/reading` (bilingual week→day→session, one-parent, skill-area alignment), and
   `primary-1-3/maths` (standards-only NERDC hierarchy, browse-not-author). Further

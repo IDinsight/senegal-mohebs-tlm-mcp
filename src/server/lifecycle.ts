@@ -44,14 +44,6 @@ function activeNamespace(): string {
   return kgNamespace(activeWorkspace(), a.grade, a.subject);
 }
 
-// The active adapter's coverage hook (#13) as a plain callback for the
-// subject-agnostic framework. Returns [] when the adapter declares none, so
-// the framework always gets a function and never special-cases absence.
-function activeCoverage(): (graph: import("../kg-store/index.js").MutationGraph) => string[] {
-  const a = getActiveAdapter();
-  return (graph) => a.coverageWarnings?.(graph) ?? [];
-}
-
 // ── returnMode shaping for publish_draft / discard_draft ────────────────────
 // A whole-draft diff is 200+ KB on even a modest draft (the 252-edit one that
 // motivated this), which overflows the token cap and hides the confirmationToken
@@ -61,11 +53,9 @@ function activeCoverage(): (graph: import("../kg-store/index.js").MutationGraph)
 // consistent. Only the dry-run (preview) carries a diff to strip; the commit
 // results are already diff-free, so they pass through untouched in both modes.
 //
-// Warnings are load-bearing at publish — an approver must see coverage flags
-// before promoting — so publish keeps them VERBATIM in both modes. The staged
-// profileDiff is dropped in summary like the graph diff (both are large detail);
-// the "(includes a subject-profile change)" note already rides the action/message,
-// so summary still signals that a profile edit is pending.
+// The staged profileDiff is dropped in summary like the graph diff (both are
+// large detail); the "(includes a subject-profile change)" note already rides
+// the action/message, so summary still signals that a profile edit is pending.
 
 function shapePublishDraft(result: PublishConfirmResult, returnMode: ReturnMode): Record<string, unknown> {
   // unauthorized / commit carry no whole-draft diff — return as-is.
@@ -82,7 +72,6 @@ function shapePublishDraft(result: PublishConfirmResult, returnMode: ReturnMode)
     publishedVersion: result.publishedVersion,
     draftVersion: result.draftVersion,
     counts: countsOf(result.diff!),
-    warnings: result.warnings ?? [],
     confirmationToken: result.confirmationToken,
   };
   if (returnMode === "full") {
@@ -121,7 +110,7 @@ export async function runPublishDraft(
   const ns = activeNamespace();
   // Coverage hook so the dry-run shows completeness warnings and the publish
   // audit records any present at publish time (#13). Warnings never block.
-  const result = await publishDraftWithConfirm(ns, { confirm: a.confirm, token: a.confirmationToken, coverage: activeCoverage() });
+  const result = await publishDraftWithConfirm(ns, { confirm: a.confirm, token: a.confirmationToken });
   return shapePublishDraft(result, a.returnMode ?? "summary");
 }
 
@@ -163,10 +152,7 @@ export function registerLifecycleTools(server: McpServer) {
         });
         return asJson({ phase: "unauthorized", action: "readDraft", reason: authz.reason });
       }
-      // Pass the active adapter's coverage hook so the whole-draft view carries
-      // completeness warnings (#13) — the approver's pre-publish "this chapter
-      // has no bilan" surface.
-      return asJson(await diffDraft(ns, activeCoverage()));
+      return asJson(await diffDraft(ns));
     }),
   );
 
@@ -179,8 +165,8 @@ export function registerLifecycleTools(server: McpServer) {
     {
       title: "Publish the draft to LIVE",
       description:
-        "Promote the current draft on the active grade/subject to published — generation reads published, so this is the step that makes edits VISIBLE. REQUIRES CONFIRMATION: dry-run returns a summary of the change (counts + coverage warnings) and a confirmationToken; ask the user to approve, then call again with confirm:true and the token. Approver only. If the draft has moved since dry-run (someone else edited), the confirm is rejected — dry-run again to see the new summary. Self-authored edits are recorded on the publish audit either way; strict separation-of-duties can be enabled via TLM_ALLOW_SELF_APPROVE=0. " +
-        "`returnMode` (default 'summary') controls the dry-run response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} + `warnings` instead of the whole-draft diff (which is 200+ KB on a large draft and can overflow the token cap); 'full' also attaches the whole `diff` (and any staged profileDiff). To inspect the full diff before publishing, call diff_draft. Coverage warnings are kept VERBATIM in both modes.",
+        "Promote the current draft on the active grade/subject to published — generation reads published, so this is the step that makes edits VISIBLE. REQUIRES CONFIRMATION: dry-run returns a summary of the change (counts) and a confirmationToken; ask the user to approve, then call again with confirm:true and the token. Approver only. If the draft has moved since dry-run (someone else edited), the confirm is rejected — dry-run again to see the new summary. Self-authored edits are recorded on the publish audit either way; strict separation-of-duties can be enabled via TLM_ALLOW_SELF_APPROVE=0. To check the draft against the subject's coverage expectations before publishing, run review_draft. " +
+        "`returnMode` (default 'summary') controls the dry-run response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the whole-draft diff (which is 200+ KB on a large draft and can overflow the token cap); 'full' also attaches the whole `diff` (and any staged profileDiff). To inspect the full diff before publishing, call diff_draft.",
       inputSchema: {
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),

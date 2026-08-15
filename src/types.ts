@@ -159,17 +159,6 @@ export type Capabilities = {
 // `StructuralAliases` / `LcNodeTemplate`, and no wording-alias surface — a node's
 // text is edited through those verbs. See docs/design-notes/graph-native-authoring.md.
 
-/**
- * A read-only view of the raw graph (nodes + edges, no storage slot tag) that
- * the coverage hook inspects. Structurally identical to the kg-store's
- * `MutationGraph` / `Omit<StoredNode,"slot">`, but declared here so `types.ts`
- * (a leaf) doesn't import from `kg-store`. The kg-store's own graph type is a
- * structural match, so the framework can pass its post-apply graph straight in.
- */
-export type GraphNodeView = { id: string; type: string; namespace: string; properties: Record<string, unknown> };
-export type GraphEdgeView = { id: string; type: string; from: string; to: string; namespace: string; properties: Record<string, unknown> };
-export type GraphView = { nodes: GraphNodeView[]; edges: GraphEdgeView[] };
-
 export interface SubjectAdapter {
   readonly grade: string;
   readonly subject: string;
@@ -183,24 +172,10 @@ export interface SubjectAdapter {
   // `structuralAliases`, `availableRecipes`, or `lcNodeTemplate` — the recipes
   // read a created node's identity skeleton (labels, normalized type, ordinal
   // path) from the graph itself. See kg-recipes/lc.ts.
-
-  /**
-   * Coverage / consistency WARNINGS for a proposed graph state (#13). Optional
-   * — an adapter with no completeness expectations omits it. Returns
-   * human-readable warnings (NEVER errors: warnings inform the reviewer and
-   * never block confirmation or publish). Called by the mutation framework on
-   * a dry-run's post-apply graph and by `diff_draft` on the whole draft.
-   *
-   * This is where UNIT-SHAPED rules live — "this chapter has no lessons", "no
-   * bilan", "this lesson's number disagrees with the chapter it's linked to".
-   * The adapter is the only layer that knows what a unit IS for its subject,
-   * so the subject-agnostic `validateStructural` (which does the universal,
-   * id-based referential checks) never carries any of this. Reusable helpers
-   * for the subject-neutral shapes (empty container, multi-parent) live in
-   * `curriculum/coverage.ts`; subject-specific rules (bilan, number drift) are
-   * written here in the adapter.
-   */
-  coverageWarnings?(graph: GraphView): string[];
+  //
+  // Coverage/completeness is no longer an adapter hook: the coded rules were
+  // retired (phase 2c) in favour of the subject's coverage EXPECTATIONS authored
+  // as prose in the graph guide, reviewed on demand by `review_draft`.
 
   // Raw envelope → normalized CurriculumModel; parse() owns all raw-schema
   // knowledge (via its GraphParseDescriptor). detect() is the bundle-mode schema

@@ -150,7 +150,6 @@ function describeTarget(r: AuditRecord): string {
     case "publish": {
       const bits = [`promoted ${r.promotedApplyIds?.length ?? 0} apply(ies)`];
       if (r.selfAuthored) bits.push("self-approved");
-      if (r.warningsAtPublish?.length) bits.push(`${r.warningsAtPublish.length} warning(s)`);
       return bits.join(" · ");
     }
     case "discard":

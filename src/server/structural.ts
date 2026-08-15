@@ -27,13 +27,6 @@ function activeNamespace(): string {
   return kgNamespace(activeWorkspace(), a.grade, a.subject);
 }
 
-// The active adapter's coverage hook as a callback for the framework, so a
-// structural edit's dry-run surfaces completeness warnings. [] when none.
-function activeCoverage(): (graph: import("../kg-store/index.js").MutationGraph) => string[] {
-  const a = getActiveAdapter();
-  return (graph) => a.coverageWarnings?.(graph) ?? [];
-}
-
 const JsonValue = z.any();
 
 // The create_edges core, exported so tests drive the real logic. Normalizes each
@@ -54,7 +47,6 @@ export async function runCreateEdges(a: {
     args: { namespace, edges: normalizedEdges },
     confirm: a.confirm,
     token: a.confirmationToken,
-    coverage: activeCoverage(),
     returnMode: a.returnMode ?? "summary",
     idempotencyKey: a.idempotencyKey,
     payloadHash: idempotencyPayloadHash(normalizedEdges),
@@ -114,7 +106,6 @@ export function registerStructuralTools(server: McpServer) {
         args: { edgeId: a.edgeId },
         confirm: a.confirm,
         token: a.confirmationToken,
-        coverage: activeCoverage(),
       });
       return asJson(result);
     }),
@@ -141,7 +132,6 @@ export function registerStructuralTools(server: McpServer) {
         args: { nodeId: a.nodeId },
         confirm: a.confirm,
         token: a.confirmationToken,
-        coverage: activeCoverage(),
       });
       return asJson(result);
     }),

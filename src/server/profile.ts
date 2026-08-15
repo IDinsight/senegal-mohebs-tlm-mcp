@@ -31,16 +31,11 @@ import { kgSource } from "../config.js";
 import { kgNamespace, getKgStore, editProfileWithConfirm, type StoredConfig } from "../kg-store/index.js";
 
 // Every kind a profile core's rules key on — the referential-check targets. A
-// coverage/deliverable rule naming a kind no node carries is valid Zod but
-// matches nothing, so it earns a (non-blocking) warning.
+// deliverable naming a scopeKind no node carries is valid Zod but matches
+// nothing, so it earns a (non-blocking) warning.
 function referencedKinds(core: SubjectProfile): string[] {
   const kinds = new Set<string>();
   for (const d of core.deliverables) kinds.add(d.scopeKind);
-  for (const rule of core.coverage ?? []) {
-    if (rule.rule === "empty-container") rule.kinds.forEach((k) => kinds.add(k));
-    else if (rule.rule === "multi-parent") (rule.childKinds ?? []).forEach((k) => kinds.add(k));
-    else { kinds.add(rule.parentKind); kinds.add(rule.childKind); }
-  }
   return [...kinds];
 }
 
@@ -248,7 +243,6 @@ export async function reviewDraft(): Promise<Record<string, unknown>> {
     store.readConfig(namespace, target),
   ]);
   const guide = guideOf(config) ?? null;
-  const coverageWarnings = adapter.coverageWarnings ? adapter.coverageWarnings({ nodes, edges } as never) : [];
   const structuralFacts = computeStructuralFacts(nodes as FactNode[], edges as FactEdge[]);
 
   return {
@@ -256,12 +250,10 @@ export async function reviewDraft(): Promise<Record<string, unknown>> {
     reviewing,
     hasGuide: guide !== null,
     guide,
-    coverageWarnings,
     structuralFacts,
     instruction:
       `Review this ${reviewing} graph against the guide's coverage expectations (in \`guide\`). ` +
-      "`coverageWarnings` are the DETERMINISTIC checks the server already ran — advisory, they never block a publish. " +
-      "Use `structuralFacts` (a subject-agnostic snapshot: node/edge counts; each container's child-type histogram per containment axis + its assessment-child count; and nodes with more than one content parent) to check the guide's prose expectations that the coded rules do NOT cover (e.g. 'every teaching lesson is aligned', 'chapters are contiguous'). " +
+      "Use `structuralFacts` (a subject-agnostic snapshot: node/edge counts; each container's child-type histogram per containment axis + its assessment-child count; and nodes with more than one content parent) to check the guide's prose expectations (e.g. 'each chapter has exactly one bilan', 'every teaching lesson is aligned', 'chapters are contiguous'). " +
       "Report each expectation the graph violates, citing node ids; if all hold, say so plainly. This is a review, not an edit — it changes nothing.",
   };
 }
@@ -314,7 +306,7 @@ export function registerProfileTools(server: McpServer) {
     {
       title: "Review the draft against the graph guide",
       description:
-        "Review the current DRAFT (or published, when no draft is open) against the subject's GRAPH GUIDE coverage expectations — a read-only pre-publish check. Returns the `guide` (the authored expectations), `coverageWarnings` (the server's DETERMINISTIC coded checks — advisory, they never block publish), a subject-agnostic `structuralFacts` snapshot of the graph (node/edge counts; each container's child-type histogram + assessment-child count; content multi-parent nodes), and an `instruction`. YOU (the model) then reason over the facts against the guide's prose to find violations the coded rules don't cover (e.g. unaligned lessons, non-contiguous chapters) and report them — this tool computes the inputs, it does not itself render a verdict. Reviewing an open draft is curator/approver-gated. firestore mode only. Changes nothing.",
+        "Review the current DRAFT (or published, when no draft is open) against the subject's GRAPH GUIDE coverage expectations — a read-only pre-publish check. Returns the `guide` (the authored expectations), a subject-agnostic `structuralFacts` snapshot of the graph (node/edge counts; each container's child-type histogram + assessment-child count; content multi-parent nodes), and an `instruction`. YOU (the model) then reason over the facts against the guide's prose to find violations (e.g. an empty chapter, no bilan, an unaligned lesson, non-contiguous chapters) and report them — this tool computes the inputs, it does not itself render a verdict. (Coverage is no longer coded server-side rules; it lives entirely in the guide prose reviewed here.) Reviewing an open draft is curator/approver-gated. firestore mode only. Changes nothing.",
       inputSchema: {},
     },
     guarded(async () => asJson(await reviewDraft())),

@@ -205,7 +205,6 @@ async function withActiveContext<T>(actor: Actor | null, fn: () => Promise<T>): 
   });
 }
 
-const coverage = (graph: MutationGraph): string[] => resolveAdapter("ci", "maths")!.coverageWarnings?.(graph as never) ?? [];
 
 // Stage a real draft edit (a new Lesson under the first chapter) so draft-slot
 // reads have something to reflect. Returns the new node's id.
@@ -214,9 +213,9 @@ async function stageALessonEdit(): Promise<string> {
   const chapter = nodes.find((node) => (node.labels ?? []).includes("LessonGrouping") && (node.properties?.raw as Record<string, unknown> | undefined)?.groupName === "Chapitre")!;
   const newNodeId = mintNodeId();
   const args = { namespace: ns, parentId: chapter.id, label: "Lesson", newNodeId, title: "Draft-only lesson" };
-  const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args, coverage });
+  const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args });
   if (preview.phase !== "preview") throw new Error("expected preview");
-  await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken, coverage });
+  await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken });
   return newNodeId;
 }
 

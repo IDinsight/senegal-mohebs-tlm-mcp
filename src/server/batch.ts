@@ -96,7 +96,6 @@ export type RunBatchArgs<Args> = {
   args: Args;
   confirm?: boolean;
   token?: string;
-  coverage: (graph: MutationGraph) => string[];
   returnMode: ReturnMode;
   idempotencyKey?: string;
   payloadHash: string;   // stable hash of the tool request (excl. returnMode)
@@ -108,7 +107,7 @@ export type RunBatchArgs<Args> = {
 // summary; a same-key-different-payload retry is a mismatch; a miss applies and
 // records. Without a key, behaviour is unchanged (a token replay -> REPLAY).
 export async function runBatchMutation<Args>(opts: RunBatchArgs<Args>): Promise<Record<string, unknown>> {
-  const { namespace, mutation, args, confirm, token, coverage, returnMode, idempotencyKey, payloadHash, extra } = opts;
+  const { namespace, mutation, args, confirm, token, returnMode, idempotencyKey, payloadHash, extra } = opts;
 
   if (confirm && idempotencyKey) {
     const found = lookupIdempotent(namespace, idempotencyKey, payloadHash);
@@ -130,7 +129,7 @@ export async function runBatchMutation<Args>(opts: RunBatchArgs<Args>): Promise<
     // miss → apply below and record on success.
   }
 
-  const result = await runGraphMutation({ namespace, mutation, args, confirm, token, coverage });
+  const result = await runGraphMutation({ namespace, mutation, args, confirm, token });
   const shaped = shapeResult(result, returnMode, extra);
 
   if (confirm && idempotencyKey && result.phase === "apply" && result.ok) {

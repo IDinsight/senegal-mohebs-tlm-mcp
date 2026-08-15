@@ -213,14 +213,6 @@ export type AuditRecord = {
    */
   selfAuthored?: boolean;
   /**
-   * publish-only (#13): the coverage/consistency warnings present on the draft
-   * at publish time (e.g. "chapter has no bilan"). Warnings NEVER block a
-   * publish — the approver's call — but recording them here gives the audit
-   * trail a note that the approver published despite them. Empty array when
-   * the draft was clean; omitted when no coverage hook was available.
-   */
-  warningsAtPublish?: string[];
-  /**
    * read-only (read_audit, #16): a compact JSON string of the filters/mode/
    * cursor the reviewer used. Deliberately NOT a before/after or snapshot —
    * a `read` event exists only to answer "who reviewed the trail, with what

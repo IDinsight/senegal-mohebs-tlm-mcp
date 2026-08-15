@@ -40,7 +40,6 @@ const contexts = listAvailableContexts();
 const ns = kgNamespace("ci", "maths");
 const readingNs = kgNamespace("ce1", "reading");
 const adapter = () => resolveAdapter("ci", "maths")!;
-const coverage = (graph: MutationGraph): string[] => adapter().coverageWarnings?.(graph as never) ?? [];
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
@@ -75,11 +74,11 @@ async function readDraft(namespace = ns): Promise<MutationGraph | null> {
 
 // Confirm helper: preview → replay the token. Returns both phases.
 async function run<A>(mutation: GraphMutation<A>, args: A) {
-  const preview = await runGraphMutation({ namespace: ns, mutation, args, coverage });
+  const preview = await runGraphMutation({ namespace: ns, mutation, args });
   if (preview.phase !== "preview") {
     return { preview, confirm: null };
   }
-  const confirm = await runGraphMutation({ namespace: ns, mutation, args, confirm: true, token: preview.confirmationToken, coverage });
+  const confirm = await runGraphMutation({ namespace: ns, mutation, args, confirm: true, token: preview.confirmationToken });
   return { preview, confirm };
 }
 
@@ -124,7 +123,7 @@ describe("add_nodes (batched)", () => {
     const items = lessonItems(parentId, 3);
     const args = { namespace: ns, items };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: addNodes, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNodes, args });
     if (preview.phase !== "preview") throw new Error("expected preview");
 
     // One combined diff: all three nodes + their three hasPart edges.
@@ -134,7 +133,7 @@ describe("add_nodes (batched)", () => {
     }
     expect(await readDraft()).toBeNull(); // dry-run stages nothing
 
-    const confirm = await runGraphMutation({ namespace: ns, mutation: addNodes, args, confirm: true, token: preview.confirmationToken, coverage });
+    const confirm = await runGraphMutation({ namespace: ns, mutation: addNodes, args, confirm: true, token: preview.confirmationToken });
     expect(confirm.phase).toBe("apply");
 
     // Exactly ONE apply audit record for the whole batch, carrying the combined diff.
@@ -156,7 +155,7 @@ describe("add_nodes (batched)", () => {
     const goodItem = lessonItems(parentId, 1)[0];
     const badItem: AddNodesItem = { label: "NotARealLabel", parentId, newNodeId: mintNodeId(), title: "nope" };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: addNodes, args: { namespace: ns, items: [goodItem, badItem] }, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNodes, args: { namespace: ns, items: [goodItem, badItem] } });
     expect(preview.phase).toBe("blocked");
     if (preview.phase !== "blocked") throw new Error("expected blocked");
     expect(preview.errors.some((error) => error.includes("add_nodes[1]"))).toBe(true);
@@ -173,7 +172,7 @@ describe("add_nodes (batched)", () => {
     const newGrouping: AddNodesItem = { label: "LessonGrouping", parentId: courseId, newNodeId: mintNodeId(), title: "Fresh unit" };
     const childOfNewGrouping: AddNodesItem = { label: "Lesson", parentId: newGrouping.newNodeId, newNodeId: mintNodeId(), title: "child" };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: addNodes, args: { namespace: ns, items: [newGrouping, childOfNewGrouping] }, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNodes, args: { namespace: ns, items: [newGrouping, childOfNewGrouping] } });
     expect(preview.phase).toBe("blocked");
     if (preview.phase !== "blocked") throw new Error("expected blocked");
     expect(preview.errors.some((error) => error.includes("EXISTING parent"))).toBe(true);
@@ -225,12 +224,12 @@ describe("create_edges (batched)", () => {
     const edges = freshEdges(published, 3);
     const args = { namespace: ns, edges };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args });
     if (preview.phase !== "preview") throw new Error("expected preview");
     expect(preview.diff.edges.added.length).toBe(3);
     expect(preview.diff.nodes.added.length).toBe(0); // edges only
 
-    const confirm = await runGraphMutation({ namespace: ns, mutation: createEdges, args, confirm: true, token: preview.confirmationToken, coverage });
+    const confirm = await runGraphMutation({ namespace: ns, mutation: createEdges, args, confirm: true, token: preview.confirmationToken });
     expect(confirm.phase).toBe("apply");
 
     const applyRecords = await store.listAudit({ namespace: ns, eventType: "apply" });
@@ -242,7 +241,7 @@ describe("create_edges (batched)", () => {
     const published = await readPublished();
     const [edge] = freshEdges(published, 1);
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: { namespace: ns, edges: [edge, edge] }, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: { namespace: ns, edges: [edge, edge] } });
     expect(preview.phase).toBe("blocked");
     if (preview.phase !== "blocked") throw new Error("expected blocked");
     expect(preview.errors.some((error) => error.includes("create_edges[1]") && error.includes("already exists"))).toBe(true);
@@ -253,7 +252,7 @@ describe("create_edges (batched)", () => {
     const existing = published.edges[0];
     const duplicate: CreateEdgesItem = { edgeType: existing.type, fromId: existing.from, toId: existing.to };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: { namespace: ns, edges: [duplicate] }, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: { namespace: ns, edges: [duplicate] } });
     expect(preview.phase).toBe("blocked");
   });
 
@@ -262,7 +261,7 @@ describe("create_edges (batched)", () => {
     const good = freshEdges(published, 1)[0];
     const bad: CreateEdgesItem = { edgeType: good.edgeType, fromId: "does-not-exist", toId: good.toId };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: { namespace: ns, edges: [good, bad] }, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: { namespace: ns, edges: [good, bad] } });
     expect(preview.phase).toBe("blocked");
     expect(await readDraft()).toBeNull();
   });

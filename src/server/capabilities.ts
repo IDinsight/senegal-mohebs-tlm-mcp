@@ -136,11 +136,12 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       note:
         "add_nodes creates one node or many; create_edges wires many edges — each a whole batch as ONE atomic draft edit (one diff, one token, one audit record). add_nodes REPLACED the per-label typed adds (add_lesson/add_material/…): pass `kind` (the LC label) + a `properties` bag; `kindProperties` lists what each kind accepts. returnMode defaults to 'summary' — a compact `counts` object instead of the full diff (~200 KB for an 84-item batch); pass 'full' to also get the diff. idempotencyKey (a client-chosen UUID) makes a RETRIED confirm a safe replay (same key + same payload → the first apply's summary with replayed:true, no double-apply/audit; different payload → IDEMPOTENCY_KEY_MISMATCH). Keys are namespace-scoped and expire after 24h; omit for strict single-use tokens.",
     },
-    coverageWarnings: {
-      // Whether the active subject's adapter emits completeness warnings.
-      enabled: typeof adapter.coverageWarnings === "function",
+    coverage: {
+      // Coverage is no longer coded rules on the adapter — it is the subject's
+      // expectations authored as PROSE in the graph guide, reviewed on demand.
+      tool: "review_draft",
       note:
-        "Coverage warnings are INFORMATIONAL — they surface structural incompleteness a reviewer should see (e.g. a chapter with no lessons or no bilan, or a lesson linked to more than one chapter). They appear on an edit's dry-run and on diff_draft, and are recorded on the publish audit, but they NEVER block confirmation or publish — completeness is the human reviewer's call, not the machine's.",
+        "Coverage/completeness is now authored as prose in the subject's graph guide (get_graph_guide) and checked on demand by review_draft — a read-only pre-publish pass that hands the guide's expectations + a structural snapshot to the model to reason over. The old deterministic coded coverage rules (empty chapter, one bilan, …) were retired; edits and diff_draft no longer emit automatic coverage warnings. Completeness is a review step, never a block.",
     },
   };
 
@@ -229,7 +230,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     canEdit: kgSource() === "firestore" && actions.canEditDraft,
     tools: ["get_profile", "get_graph_guide", "edit_profile", "review_draft"],
     note:
-      "The subject profile is a { core, guide } record: the machine `core` (config that drives parsing, deliverables, coverage) plus an authored `guide` markdown the authoring/generating LLM reads to interpret and modify the graph (phase 2c — reads consume only the core; the guide never sits on the read hot path). In firestore mode it is AUTHORED DATA in the store's config cell: get_profile reads the record, get_graph_guide reads just the guide markdown (call it before you walk/edit the graph), and edit_profile replaces the record through the two-phase draft/publish loop — the core validated against its schema and the guide length-checked at authoring time, so a change needs no redeploy. It rides the SAME draft as curriculum edits — diff_draft/publish_draft surface a staged profile change as `profileDiff`. review_draft is a read-only pre-publish check that bundles the guide's coverage expectations, the deterministic coded warnings, and a subject-agnostic structural snapshot for the model to reason over (the guide's prose expectations that the coded rules don't cover). In bundle/dev mode the profile is the in-repo record and edit_profile is unavailable.",
+      "The subject profile is a { core, guide } record: the machine `core` (config that drives parsing and deliverables) plus an authored `guide` markdown the authoring/generating LLM reads to interpret and modify the graph (phase 2c — reads consume only the core; the guide never sits on the read hot path). In firestore mode it is AUTHORED DATA in the store's config cell: get_profile reads the record, get_graph_guide reads just the guide markdown (call it before you walk/edit the graph), and edit_profile replaces the record through the two-phase draft/publish loop — the core validated against its schema and the guide length-checked at authoring time, so a change needs no redeploy. It rides the SAME draft as curriculum edits — diff_draft/publish_draft surface a staged profile change as `profileDiff`. review_draft is a read-only pre-publish check that bundles the guide's coverage expectations with a subject-agnostic structural snapshot for the model to reason over. In bundle/dev mode the profile is the in-repo record and edit_profile is unavailable.",
   };
 
   return {

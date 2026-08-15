@@ -14,7 +14,7 @@
  * registry). So nothing downstream of the adapter changes.
  */
 import { suggestFreshDomain, domainUsage } from "../generation/index.js";
-import { parseGraph, runCoverageRules, resolvePrune, type GraphParseDescriptor } from "../curriculum/index.js";
+import { parseGraph, resolvePrune, type GraphParseDescriptor } from "../curriculum/index.js";
 import { noAccents } from "../utils/index.js";
 import { makeEnsure, detectEnvelope } from "./engine.js";
 import type { SubjectProfile, DeliverableProfile } from "./profile.js";
@@ -67,13 +67,6 @@ export function buildAdapterFromProfile(profile: SubjectProfile, grade: string, 
     parse,
     model: ensure,
   };
-
-  // Coverage is optional — a subject with no completeness expectations (e.g. a
-  // standards-only reference framework) omits it, and the adapter omits the hook.
-  if (profile.coverage) {
-    const rules = profile.coverage;
-    adapter.coverageWarnings = (graph) => runCoverageRules(graph, rules);
-  }
 
   // Capability-gated generation helpers: present only when the subject rotates
   // example domains (the tool boundary in src/server/ci-maths.ts also checks the

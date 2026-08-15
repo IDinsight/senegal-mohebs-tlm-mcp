@@ -69,7 +69,6 @@ type ApplyArgs = { entryId: string; targetId: string; mintedIdMap?: Record<strin
 async function applyCatalogEntry(a: ApplyArgs) {
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
-  const coverage = (g: MutationGraph) => adapter.coverageWarnings?.(g as never) ?? [];
 
   const catalogs = await Promise.all(catalogScopes().map((s) => readCatalog(s.namespace)));
   const source = catalogs.find((graph) => graph.nodes.some((n) => n.id === a.entryId));
@@ -84,7 +83,6 @@ async function applyCatalogEntry(a: ApplyArgs) {
     args: { namespace, targetId: a.targetId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId },
     confirm: a.confirm,
     token: a.confirmationToken,
-    coverage,
   });
   return asJson(a.confirm ? result : withMintedMap(result, clone.idMap));
 }

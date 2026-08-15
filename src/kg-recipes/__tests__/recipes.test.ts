@@ -44,7 +44,6 @@ let store: KgNodeStore;
 const contexts = listAvailableContexts();
 const ns = kgNamespace("ci", "maths");
 const adapter = () => resolveAdapter("ci", "maths")!;
-const coverage = (graph: MutationGraph): string[] => adapter().coverageWarnings?.(graph as never) ?? [];
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
@@ -79,9 +78,9 @@ async function readDraft(): Promise<MutationGraph | null> {
 const modelOf = (graph: MutationGraph): CurriculumModel => adapter().parse(toRawEnvelope({ nodes: graph.nodes, edges: graph.edges }));
 
 async function runRecipe<A>(mutation: GraphMutation<A>, args: A) {
-  const preview = await runGraphMutation({ namespace: ns, mutation, args, coverage });
+  const preview = await runGraphMutation({ namespace: ns, mutation, args });
   if (preview.phase !== "preview") return { preview, confirm: null };
-  const confirm = await runGraphMutation({ namespace: ns, mutation, args, confirm: true, token: preview.confirmationToken, coverage });
+  const confirm = await runGraphMutation({ namespace: ns, mutation, args, confirm: true, token: preview.confirmationToken });
   return { preview, confirm };
 }
 
@@ -120,7 +119,7 @@ describe("add_node", () => {
     const lessonId = mintNodeId();
     const args = { namespace: ns, parentId: chapterId, label: "Lesson", newNodeId: lessonId, title: "Nouvelle leçon", alignTo: expectationId };
 
-    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: addNode, args });
     if (preview.phase !== "preview") throw new Error("expected preview");
     expect(preview.diff.nodes.added.map((node) => node.id)).toEqual([lessonId]);
     const added = preview.diff.edges.added.map((edge) => edge.id);
@@ -128,7 +127,7 @@ describe("add_node", () => {
     expect(added).toContain(makeEdgeId(ALIGN, lessonId, expectationId));  // alignment
     expect(await readDraft()).toBeNull(); // dry-run stages nothing
 
-    const confirm = await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken, coverage });
+    const confirm = await runGraphMutation({ namespace: ns, mutation: addNode, args, confirm: true, token: preview.confirmationToken });
     expect(confirm.phase).toBe("apply");
 
     const draft = (await readDraft())!;
@@ -163,9 +162,9 @@ describe("add_node", () => {
 
   it("blocks a nonexistent parent and a non-SFI alignTo", async () => {
     const { chapterId } = pick(await readPublished());
-    const bad = await runGraphMutation({ namespace: ns, mutation: addNode, args: { namespace: ns, parentId: "nope", label: "Lesson", newNodeId: mintNodeId() }, coverage });
+    const bad = await runGraphMutation({ namespace: ns, mutation: addNode, args: { namespace: ns, parentId: "nope", label: "Lesson", newNodeId: mintNodeId() } });
     expect(bad.phase).toBe("blocked");
-    const badAlign = await runGraphMutation({ namespace: ns, mutation: addNode, args: { namespace: ns, parentId: chapterId, label: "Lesson", newNodeId: mintNodeId(), alignTo: chapterId }, coverage });
+    const badAlign = await runGraphMutation({ namespace: ns, mutation: addNode, args: { namespace: ns, parentId: chapterId, label: "Lesson", newNodeId: mintNodeId(), alignTo: chapterId } });
     expect(badAlign.phase).toBe("blocked");
     if (badAlign.phase === "blocked") expect(badAlign.errors.join()).toMatch(/StandardsFrameworkItem|standard/i);
   });

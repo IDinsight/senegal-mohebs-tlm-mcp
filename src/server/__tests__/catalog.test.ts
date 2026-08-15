@@ -34,7 +34,6 @@ const priorEnv = process.env.KG_SOURCE;
 let store: KgNodeStore;
 const ns = kgNamespace("ci", "maths");
 const adapter = () => resolveAdapter("ci", "maths")!;
-const coverage = (g: MutationGraph): string[] => adapter().coverageWarnings?.(g as never) ?? [];
 
 // A catalog fixture in store shape (non-spine: LC props under properties.raw):
 // root ─hasPart→ entry ─hasPart→ {s1 ─hasPart→ m1, s2 ─hasPart→ m2}.
@@ -148,7 +147,7 @@ describe("use_routine", () => {
     // Dry-run: mint the id-map (as the tool does on the first call).
     const clone = cloneRoutineSubtree(catalog, "cat-entry", ns, () => mintNodeId())!;
     const args = { namespace: ns, targetId: lessonId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
-    const preview = await runGraphMutation({ namespace: ns, mutation: useRoutine, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: useRoutine, args });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
     expect(preview.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId("usesRoutine", lessonId, clone.newEntryId));
     expect(preview.diff.nodes.added.map((n) => n.id).sort()).toEqual([...clone.nodes.map((n) => n.id)].sort());
@@ -157,7 +156,7 @@ describe("use_routine", () => {
     // Confirm: rebuild the identical clone from the returned id-map (as the tool does).
     const clone2 = cloneRoutineSubtree(catalog, "cat-entry", ns, (old) => clone.idMap[old])!;
     const args2 = { namespace: ns, targetId: lessonId, clonedNodes: clone2.nodes, clonedEdges: clone2.edges, newEntryId: clone2.newEntryId };
-    const confirm = await runGraphMutation({ namespace: ns, mutation: useRoutine, args: args2, confirm: true, token: preview.confirmationToken, coverage });
+    const confirm = await runGraphMutation({ namespace: ns, mutation: useRoutine, args: args2, confirm: true, token: preview.confirmationToken });
     expect(confirm.phase).toBe("apply");
 
     const draft = (await readDraft())!;
@@ -176,7 +175,7 @@ describe("use_routine", () => {
     const catalog = await readCatalog(SHARED_CATALOG_NAMESPACE);
     const clone = cloneRoutineSubtree(catalog, "cat-entry", ns, () => mintNodeId())!;
     const args = { namespace: ns, targetId: chapterId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
-    const res = await runGraphMutation({ namespace: ns, mutation: useRoutine, args, coverage });
+    const res = await runGraphMutation({ namespace: ns, mutation: useRoutine, args });
     expect(res.phase).toBe("blocked");
   });
 });
@@ -189,11 +188,11 @@ describe("use_formatter", () => {
 
     const clone = cloneRoutineSubtree(catalog, "cat-fmt", ns, () => mintNodeId())!;
     const args = { namespace: ns, targetId: courseId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
-    const preview = await runGraphMutation({ namespace: ns, mutation: useRoutine, args, coverage });
+    const preview = await runGraphMutation({ namespace: ns, mutation: useRoutine, args });
     if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
     expect(preview.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId("usesRoutine", courseId, clone.newEntryId));
 
-    const confirm = await runGraphMutation({ namespace: ns, mutation: useRoutine, args, confirm: true, token: preview.confirmationToken, coverage });
+    const confirm = await runGraphMutation({ namespace: ns, mutation: useRoutine, args, confirm: true, token: preview.confirmationToken });
     expect(confirm.phase).toBe("apply");
     const draft = (await readDraft())!;
     // The formatter's spec Material came along, linked to the Course.
