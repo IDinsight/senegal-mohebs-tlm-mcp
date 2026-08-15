@@ -52,6 +52,22 @@ graph; read this to know the conventions and intent before you walk or edit it.
   \`groupName\` names its axis: \`Chapitre\` (content) or \`Semaine\` (schedule). A
   \`Lesson\` is one taught lesson.
 
+## Querying the graph
+
+- Every walk is paginated. Use \`limit:50\` and page with \`cursor\` — do not
+  raise \`limit\`.
+- Set \`includeEdges:false\` unless you specifically need the edges to
+  reconstruct a subgraph.
+- Narrow with \`nodeTypes\` and \`edgeTypes\`. \`direction:'both'\` without
+  \`nodeTypes\` reaches the whole graph; avoid it.
+- Common recipes:
+    * All SFIs in a domain: fromId=<domainId>, direction='out',
+      edgeTypes=['hasChild'], nodeTypes=['StandardsFrameworkItem'].
+    * All lessons in a course: fromId=<courseId>, direction='out',
+      edgeTypes=['hasPart','hasChild'], nodeTypes=['Lesson'].
+    * A lesson's current alignments: fromId=<lessonId>, direction='out',
+      edgeTypes=['hasEducationalAlignment'], maxDepth=1.
+
 ## How the layers connect
 
 A \`Lesson\` aligns to the OS it teaches with a \`hasEducationalAlignment\` edge to that
