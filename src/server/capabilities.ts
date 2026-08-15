@@ -24,7 +24,6 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
 import { authorize, effectiveRole, type AuthAction } from "../authz.js";
-import { kgSource } from "../config.js";
 import {
   kgNamespace, getKgStore, STRUCTURAL_RULES,
 } from "../kg-store/index.js";
@@ -222,15 +221,14 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
 
   // ── profile: the subject profile as authored config (phase 2b). `canEdit`
   // mirrors the SAME apply gate any draft edit enforces (actions.canEditDraft →
-  // authorize(actor, "apply", ns)) and cannot drift. In bundle/dev mode the
-  // profile is the in-repo literal (edit_profile is unavailable there).
+  // authorize(actor, "apply", ns)) and cannot drift.
   const profile = {
-    source: kgSource() === "firestore" ? "store" : "in-repo-literal",
-    editable: kgSource() === "firestore",
-    canEdit: kgSource() === "firestore" && actions.canEditDraft,
+    source: "store",
+    editable: true,
+    canEdit: actions.canEditDraft,
     tools: ["get_profile", "get_graph_guide", "edit_profile", "review_draft"],
     note:
-      "The subject profile is a { core, guide } record: the machine `core` (config that drives parsing) plus an authored `guide` markdown the authoring/generating LLM reads to interpret and modify the graph (phase 2c — reads consume only the core; the guide never sits on the read hot path). In firestore mode it is AUTHORED DATA in the store's config cell: get_profile reads the record, get_graph_guide reads just the guide markdown (call it before you walk/edit the graph), and edit_profile replaces the record through the two-phase draft/publish loop — the core validated against its schema and the guide length-checked at authoring time, so a change needs no redeploy. It rides the SAME draft as curriculum edits — diff_draft/publish_draft surface a staged profile change as `profileDiff`. review_draft is a read-only pre-publish check that bundles the guide's coverage expectations with a subject-agnostic structural snapshot for the model to reason over. In bundle/dev mode the profile is the in-repo record and edit_profile is unavailable.",
+      "The subject profile is a { core, guide } record: the machine `core` (config that drives parsing) plus an authored `guide` markdown the authoring/generating LLM reads to interpret and modify the graph (phase 2c — reads consume only the core; the guide never sits on the read hot path). It is AUTHORED DATA in the store's config cell: get_profile reads the record, get_graph_guide reads just the guide markdown (call it before you walk/edit the graph), and edit_profile replaces the record through the two-phase draft/publish loop — the core validated against its schema and the guide length-checked at authoring time, so a change needs no redeploy. It rides the SAME draft as curriculum edits — diff_draft/publish_draft surface a staged profile change as `profileDiff`. review_draft is a read-only pre-publish check that bundles the guide's coverage expectations with a subject-agnostic structural snapshot for the model to reason over.",
   };
 
   return {

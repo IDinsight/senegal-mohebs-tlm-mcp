@@ -9,8 +9,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { CONFIG } from "../../config.js";
-import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../../context/index.js";
+import { listAvailableContexts, newSessionState, runInSession } from "../../context/index.js";
+import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import { resolveAdapter, getRegisteredProfile, getRegisteredGuide } from "../../adapters/index.js";
 import { serializeModel } from "../../curriculum/index.js";
 import { __setKgStoreForTest, createMemoryKgStore, kgNamespace } from "../../kg-store/index.js";
@@ -50,7 +50,7 @@ const recordOf = (grade: string, subject: string): StoredConfig => {
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const c of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(c.workspace, c.grade, c.subject), CONFIG.kgFile), "utf8"));
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(c.workspace, c.grade, c.subject), KG_FIXTURE), "utf8"));
     const adapter = resolveAdapter(c.grade, c.subject);
     if (!adapter) continue;
     const nsC = kgNamespace(c.workspace, c.grade, c.subject);
@@ -147,24 +147,6 @@ describe("firestore mode", () => {
     });
     await inContext(maths, UNKNOWN, async () => {
       expect(String((await reviewDraft()).error)).toMatch(/restricted/i);
-    });
-  });
-});
-
-describe("bundle mode", () => {
-  beforeEach(() => { process.env.KG_SOURCE = "bundle"; });
-
-  it("get_graph_guide returns the in-repo guide; edit_profile is unavailable", async () => {
-    await inContext(maths, CURATOR, async () => {
-      const guide = await readGraphGuide();
-      expect(guide.source).toBe("in-repo-literal");
-      expect(guide.hasGuide).toBe(true);
-
-      const edit = await runEditProfile({ core: {} }) as { error?: string };
-      expect(String(edit.error)).toMatch(/only available in firestore/i);
-
-      const review = await reviewDraft();
-      expect(review.notApplicable).toBe(true);
     });
   });
 });

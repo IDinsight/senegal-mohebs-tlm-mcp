@@ -18,7 +18,7 @@ vi.mock("../../config.js", () => ({
 }));
 
 vi.mock("../../context/index.js", () => ({
-  sourcePath: () => "/nonexistent/example_domains.json",
+  assetPath: () => "/nonexistent/example_domains.json",
 }));
 
 import { listEntries } from "../../storage/index.js";

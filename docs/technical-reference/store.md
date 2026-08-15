@@ -7,31 +7,24 @@ same key the docs bucket and history use):
 
 - `kg_nodes` — one document per curriculum unit: `{ id, type, namespace, properties }`. `type` is the adapter-produced kind (CI maths: `chapter, lesson, component, task`; CE1 reading: `week, standard, component`). `properties` carries the normalized fields (`code, title, text, order, isAssessment`) plus the raw graph passthrough under `raw`. Ids are the verbatim UUIDs from the bundled KGs — never regenerated.
 - `kg_edges` — one document per adapter-produced link: `{ id, type, from, to, namespace, properties }`. `type` is either `hasChild` (parent→child hierarchy) or `buildsTowards` (CI maths cross-chapter progression). `properties` records `orderInParent` / `sequenceInFrom` / `sequenceInTo` so child and progression ordering round-trip byte-identically.
-- `kg_meta` — one doc per namespace holding the seed provenance stamp: `{ contentHash, seededAt, adapterId, nodeCount, edgeCount }`. The seed writes it last, so its presence is the signal that the namespace was successfully seeded; `activateContext` refuses to load an unseeded namespace when `KG_SOURCE=firestore`.
+- `kg_meta` — one doc per namespace holding the import provenance stamp: `{ contentHash, seededAt, adapterId, nodeCount, edgeCount }`. `import-kg` writes it, and `activateContext` refuses to load a namespace whose published slot has no meta (a corrupt/half-written graph).
 
 The store is still **read-only from the outside in this phase** — no MCP write tools, no user-facing lifecycle tools, no permissioning. But it now has a **draft/published split** under the hood so later steps have somewhere to write. See [Draft/published state](#draftpublished-state) below.
 
-### Seed
+### Import / export
+
+Firestore is the **only** KG store (see [`../design-notes/firestore-only-store.md`](../design-notes/firestore-only-store.md)) — there is no `bundle`/`KG_SOURCE` mode and no seed-from-`sources/` step. A graph is added on demand and backed up on demand:
 
 ```bash
-npm run seed:kg-store                    # seed every installed grade/subject
-npm run seed:kg-store -- ci maths        # seed a single pair
-npm run seed:kg-store -- --dry-run       # in-memory store; no writes
+npm run import:kg-store -- <workspace> <grade> <subject> <graph.json>   # write a new namespace's published slot
+npm run export:kg-store -- <workspace> <grade> <subject> [out.json]     # dump a namespace's published graph
 ```
 
-Idempotent: a re-run converges to the same state (no duplicates, no stragglers). Needs the same Firebase credentials the server uses (`SERVICE_ACCOUNT_KEY_PATH` or `SERVICE_ACCOUNT_KEY_JSON`, and `FIREBASE_STORAGE_BUCKET`).
-
-### Cutover
-
-```bash
-KG_SOURCE=firestore npm run start:http   # or npm start for stdio
-```
-
-`KG_SOURCE=bundle` (the default) keeps the server behaving exactly as before — the bundle loader stays in place, so the flag is a clean toggle in either direction. The per-call actor log line records the active `kgSource`, so the audit stream shows which data path served each tool call.
+Both need the Firebase credentials the server uses (`SERVICE_ACCOUNT_KEY_PATH` or `SERVICE_ACCOUNT_KEY_JSON`, and `FIREBASE_STORAGE_BUCKET`), and `TLM_BUCKET_PREFIX` matched to the runtime prefix so the namespace lines up. `import-kg` writes slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op on an existing pointer), and seeds the subject-profile config cell from `--profile <path>` or the in-repo literal. The exported JSON is a raw Learning-Commons envelope (`{ nodes, relationships }`) — feed it back to `import-kg` to restore or clone a graph. Context discovery is store-backed: the server lists its namespaces at startup, so an imported graph shows up on the next boot.
 
 ### Draft/published state
 
-Each namespace (firestore backend only — bundle mode is unchanged) holds up to **two slots** of curriculum data, `a` and `b`, plus one small **pointer doc** (`kg_pointers/<nsSlug>`) that says which slot is currently `publishedSlot` and which (optionally) is the in-progress `draftSlot`. Reads follow the pointer: `activate.ts` resolves `publishedSlot` first and hydrates the `CurriculumModel` from that slot. **Generation always reads published**, so an in-progress draft can never leak into produced materials.
+Each namespace holds up to **two slots** of curriculum data, `a` and `b`, plus one small **pointer doc** (`kg_pointers/<nsSlug>`) that says which slot is currently `publishedSlot` and which (optionally) is the in-progress `draftSlot`. Reads follow the pointer: `activate.ts` resolves `publishedSlot` first and hydrates the `CurriculumModel` from that slot. **Generation always reads published**, so an in-progress draft can never leak into produced materials.
 
 - **create draft** copies published → the free slot, then sets `draftSlot` in the pointer LAST. A half-copied draft is invisible to readers. Idempotent: calling it when a draft already exists is a no-op.
 - **publish draft** is a single-doc pointer flip (`publishedSlot := draftSlot; draftSlot := null`). Firestore's single-doc write guarantee makes it atomic — readers see either the pre-publish snapshot or the post-publish snapshot, never a mix.
@@ -39,7 +32,7 @@ Each namespace (firestore backend only — bundle mode is unchanged) holds up to
 
 Node and edge ids are the LC UUIDs verbatim (nodes) and deterministic `edgeId(type, from, to)` values (edges). Both survive create/publish byte-for-byte, so later diff-by-id and cross-version references remain sound.
 
-The pointer doc also carries two per-slot side cells: the `meta` provenance stamp and the **subject-profile config** (`configA`/`configB`, phase 2b). The profile is opaque JSON to the store (its schema lives in the adapters layer) and is a `{ core, guide }` record (phase 2c): the machine `core` (parsing config) plus an authored markdown `guide` the LLM reads via `get_graph_guide`. A legacy flat cell (pre-2c seed) is read as a bare core. Both cells ride the same lifecycle as the slots they belong to: `create draft` copies published → draft, `publish` promotes with the pointer flip, `discard` clears the draft cell. In firestore mode `activate.ts` builds the subject adapter from the published profile cell (falling back to the in-repo literal when a namespace predates the config layer), and the `get_profile` / `edit_profile` MCP tools read and stage it through the same two-phase loop as a graph edit — so a subject's parsing config is authored data, no redeploy. See [`authorable-catalog.md`](../design-notes/authorable-catalog.md) (phase 2b).
+The pointer doc also carries two per-slot side cells: the `meta` provenance stamp and the **subject-profile config** (`configA`/`configB`, phase 2b). The profile is opaque JSON to the store (its schema lives in the adapters layer) and is a `{ core, guide }` record (phase 2c): the machine `core` (parsing config) plus an authored markdown `guide` the LLM reads via `get_graph_guide`. A legacy flat cell (pre-2c seed) is read as a bare core. Both cells ride the same lifecycle as the slots they belong to: `create draft` copies published → draft, `publish` promotes with the pointer flip, `discard` clears the draft cell. `activate.ts` builds the subject adapter from the published profile cell (falling back to the in-repo literal when a namespace has no cell), and the `get_profile` / `edit_profile` MCP tools read and stage it through the same two-phase loop as a graph edit — so a subject's parsing config is authored data, no redeploy. See [`authorable-catalog.md`](../design-notes/authorable-catalog.md) (phase 2b).
 
 These lifecycle functions live on the internal `KgNodeStore` interface — **no user-facing MCP tools are exposed yet**. Tool-facing wrappers for `create_draft` / `publish_draft` / `discard_draft` (and a `diff_draft`) land in a later step (#10). Preview generation against a draft (#15) will use the draft-read path that this step lays down but doesn't expose.
 
@@ -235,7 +228,7 @@ curator: edit_node(..., confirm:true, confirmationToken:…) → applied atomica
 
 **Concurrency of edits is an open decision for the next step.** With no write tools this step doesn't exercise contention. When writes land (#5/#11), the team will need to pick a strategy — optimistic version counter on each edit, an explicit "who holds the draft" lock, or per-user drafts. The two-slot foundation supports any of them; nothing about it locks in the choice.
 
-**Re-seeding after a publish.** The seed always writes into slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op if one already exists). Once a curator publishes (which flips `publishedSlot` to `b`), a re-seed writes to `a` — which is now a stale side copy, not the live published data. The seed logs a WARNING when it detects this; reconciling it deliberately (typically by making the fresh bundle the next draft rather than the next seed) is the operator's call.
+**Re-importing after a publish.** `import-kg` always writes into slot `a` and only initialises the pointer the first time (`ensurePointer` is a no-op if one already exists). Once a curator publishes (which flips `publishedSlot` to `b`), a re-import writes to `a` — now a stale side copy, not the live published data. `import-kg` logs a WARNING when the namespace already exists; reconciling it deliberately (typically by staging the fresh graph as the next draft rather than re-importing) is the operator's call.
 
 ### `read_audit` — reviewing the trail (approver-only, read-only)
 
@@ -250,14 +243,6 @@ curator: edit_node(..., confirm:true, confirmationToken:…) → applied atomica
 
 Advertised in `get_capabilities` under `actions.canReadAudit` and the `audit` block, both mirroring the same gate the tool enforces.
 
-### Parity check
+### Interchange (export → import round-trip)
 
-`get_generation_context`, `walk_graph`, and `namespace_stats` must return structurally identical output for every grade/subject against both backends. Run:
-
-```bash
-npm run parity:kg-store                  # offline: memory store seeded from bundle
-npm run parity:kg-store -- --live        # against live Firestore (needs a prior seed)
-npm test                                 # includes src/kg-store/__tests__/parity.test.ts
-```
-
-Diffs fail the harness. The oracle deep-equals the parsed reads — key ordering doesn't cause false diffs, but the response shape itself must not change. A secondary manual check (regenerating a manual and a lessons deliverable with the flag flipped and confirming the pre-LLM generation context is identical) is documented in the roadmap; the LLM output itself is not byte-stable and is not the parity oracle.
+There is no bundle-vs-store parity check any more — the store is the only source of truth, so there is nothing to keep in sync (`parity:kg-store` and the parity/faithful-re-export suites are retired). The one round-trip that still matters is **export → import**: `export-kg` reproduces the raw LC envelope (`toRawEnvelope` is exact, since the store holds the full raw graph), and feeding that JSON to `import-kg` reconstructs an equivalent namespace. That is the backup/restore and clone-a-graph path.

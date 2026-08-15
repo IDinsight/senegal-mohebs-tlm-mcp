@@ -1,8 +1,8 @@
 // ── Module: kg-store · internal ──────────────────────────────────────────────
-// The generic node/edge store that curriculum + KG read paths hydrate from
-// when KG_SOURCE=firestore. Deliberately shape-agnostic: two collections,
-// each with an id/type/namespace/slot/properties tuple — no CI-CI-maths-specific
-// fields bake into storage.
+// The generic node/edge store that curriculum + KG read paths hydrate from — the
+// single source of truth for the graph. Deliberately shape-agnostic: two
+// collections, each with an id/type/namespace/slot/properties tuple — no
+// CI-maths-specific fields bake into storage.
 //
 // State model (draft vs published): each namespace can hold at most two
 // slots' worth of data ("a" and "b"). A single per-namespace pointer doc

@@ -12,7 +12,6 @@
  * import adapters/* or storage/* back — the adapter resolution + schema guard
  * that need those live in the app-layer activate.ts (at the repo root).
  */
-import { readdirSync, existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { CONFIG, basePrefix } from "../config.js";
 import { slug } from "../utils/index.js";
@@ -25,47 +24,20 @@ import { sessionState } from "./session.js";
 // the old onContextChange listener registry, which was process-global and
 // therefore unsafe once multiple sessions share the process.
 
-const isDir = (p: string) => { try { return statSync(p).isDirectory(); } catch { return false; } };
+// Installed contexts, discovered from the KG store (the source of truth for
+// WHICH graphs exist). This module is a dependency-light leaf that must not
+// import kg-store — so the app layer reads the store's namespaces and PUSHES the
+// parsed list here via setAvailableContexts (activate.ts::refreshAvailableContexts,
+// called at startup and after an import). Until it does, the list is empty.
+let storeContexts: ActiveContext[] = [];
 
-// Installed contexts, when discovered from the KG store rather than from disk.
-// The store is the source of truth for WHICH graphs exist, but this module is a
-// dependency-light leaf that must not import kg-store — so the app layer reads
-// the store's namespaces and PUSHES the parsed list here via setAvailableContexts.
-// Until it does (bundle mode, or before the startup snapshot loads), listAvailable-
-// Contexts falls back to scanning the on-disk sources/ tree.
-let storeContexts: ActiveContext[] | null = null;
+// Install (or reset, with null) the store-derived context list.
+export function setAvailableContexts(contexts: ActiveContext[] | null): void { storeContexts = contexts ?? []; }
 
-// Install (or clear, with null) the store-derived context list. Called once at
-// startup and again after an import adds a namespace.
-export function setAvailableContexts(contexts: ActiveContext[] | null): void { storeContexts = contexts; }
-
-// Discover installed contexts. Prefers the store-derived snapshot when present;
-// otherwise scans sources/<workspace>/<grade>/<subject>/ on disk (the workspace
-// is the top folder level — see docs/design-notes/workspaces.md).
-export function listAvailableContexts(): ActiveContext[] {
-  if (storeContexts) return storeContexts;
-  const root = CONFIG.sourcesDir;
-  if (!existsSync(root)) return [];
-  const out: ActiveContext[] = [];
-  for (const workspace of readdirSync(root)) {
-    const wsPath = resolve(root, workspace);
-    if (!isDir(wsPath)) continue;
-    for (const grade of readdirSync(wsPath)) {
-      const gradePath = resolve(wsPath, grade);
-      if (!isDir(gradePath)) continue;
-      for (const subject of readdirSync(gradePath)) {
-        if (isDir(resolve(gradePath, subject))) out.push({ workspace, grade, subject });
-      }
-    }
-  }
-  return out.sort((a, b) =>
-    a.workspace.localeCompare(b.workspace) || a.grade.localeCompare(b.grade) || a.subject.localeCompare(b.subject));
-}
+// The installed contexts — whatever the store snapshot last reported.
+export function listAvailableContexts(): ActiveContext[] { return storeContexts; }
 
 export function getActiveContext(): ActiveContext | null { return sessionState().active; }
-
-export const subjectDir = (workspace: string, grade: string, subject: string) =>
-  resolve(CONFIG.sourcesDir, workspace, grade, subject);
 
 // Low-level bind: slugify, validate against installed sources, set the active
 // context, and drop the session's context-derived caches. Adapter resolution
@@ -77,7 +49,7 @@ export function setActiveContext(workspace: string, grade: string, subject: stri
   const w = slug(workspace), g = slug(grade), s = slug(subject);
   const available = listAvailableContexts();
   const match = available.find((c) => c.workspace === w && c.grade === g && c.subject === s);
-  if (!match) return { ok: false, error: `No sources installed for workspace '${workspace}' / grade '${grade}' / subject '${subject}'.`, available };
+  if (!match) return { ok: false, error: `No graph found in the store for workspace '${workspace}' / grade '${grade}' / subject '${subject}'. Import it first.`, available };
   const st = sessionState();
   const changed = !st.active || st.active.workspace !== match.workspace || st.active.grade !== match.grade || st.active.subject !== match.subject;
   st.active = match;
@@ -92,11 +64,13 @@ export function requireContext(): ActiveContext {
 }
 
 // -- Context-scoped path + object-key helpers --------------------------------
-export function activeSubjectDir(): string {
+// The active subject's on-disk ASSET directory (terminology glossary, legacy
+// prompt files). The KG is not here — it lives only in the store.
+export function activeAssetDir(): string {
   const { workspace, grade, subject } = requireContext();
-  return resolve(CONFIG.sourcesDir, workspace, grade, subject);
+  return resolve(CONFIG.assetsDir, workspace, grade, subject);
 }
-export const sourcePath = (name: string) => resolve(activeSubjectDir(), name);
+export const assetPath = (name: string) => resolve(activeAssetDir(), name);
 
 // The active workspace — the tenant segment production namespace/storage keys
 // hang off. Throws (via requireContext) if no context is set.

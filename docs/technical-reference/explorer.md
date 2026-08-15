@@ -135,13 +135,12 @@ EVERY raw edge verbatim (`ci/maths`: 501 nodes / 877 edges; `ce1/reading`: 1968 
   `relatesTo`, `buildsTowards` — with a `seq` recording raw order. In the explorer, both
   `supports` and `hasEducationalAlignment` fold (reversed) into the display containment tree.
 
-**Reads are unchanged.** Hydration rebuilds the raw envelope (`toRawEnvelope`) and re-runs the same
-`adapter.parse`, so the read model is the identical spine — guarded byte-for-byte by
-`parity:kg-store`. Non-spine nodes are dropped by `parse` at read time exactly as in a bundle read.
+**Reads.** Hydration rebuilds the raw envelope (`toRawEnvelope`) and runs
+`adapter.parse` to derive the spine model. Non-spine nodes are dropped by `parse` at read time.
 
-**Re-export.** Because the store IS the raw graph, `toRawEnvelope(storedNodes, storedEdges)`
-reproduces the source `knowledge_graph.json` (guarded by `src/curriculum/__tests__/faithful-reexport.test.ts`)
-— the store can replace the bundle. The explorer surfaces the whole graph: spine categories plus a
+**Export.** Because the store IS the raw graph, `toRawEnvelope(storedNodes, storedEdges)`
+reproduces the raw `{ nodes, relationships }` envelope — that is what `export-kg` writes and
+`import-kg` reads back. The explorer surfaces the whole graph: spine categories plus a
 neutral `framework` legend bucket for non-spine nodes and the `supports`/`relatesTo` cross-links.
 See `docs/design-notes/kg-explorer-findings.md` §1 for the original spine-only analysis (superseded).
 

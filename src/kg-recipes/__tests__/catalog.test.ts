@@ -8,8 +8,7 @@ import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine, catalogNamespace, SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID } from "../catalog.js";
 import { edgeId, type MutationEdge, type MutationGraph, type MutationNode } from "../../kg-store/index.js";
-import { CONFIG } from "../../config.js";
-import { subjectDir } from "../../context/index.js";
+import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import type { RawGraphSnapshot } from "../../types.js";
 
 // A formatter source in RAW shape (an InstructionalRoutine entry + one Material,
@@ -114,7 +113,7 @@ describe("assembleCatalog", () => {
   });
 
   it("extracts the real CI-maths routines into two browsable catalog entries (what the seed produces)", () => {
-    const bundle = JSON.parse(readFileSync(resolve(subjectDir("senegal", "ci", "maths"), CONFIG.kgFile), "utf8"));
+    const bundle = JSON.parse(readFileSync(resolve(subjectDir("senegal", "ci", "maths"), KG_FIXTURE), "utf8"));
     const entries = listCatalogEntries(assembleCatalog([{ nodes: bundle.nodes, relationships: bundle.relationships }]), "shared");
     const byName = Object.fromEntries(entries.map((e) => [e.name, e]));
     expect(entries).toHaveLength(2);

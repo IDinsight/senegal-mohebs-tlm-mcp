@@ -8,7 +8,7 @@
  */
 import { readFileSync, existsSync } from "node:fs";
 import { CONFIG } from "../config.js";
-import { sourcePath } from "../context/index.js";
+import { assetPath } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
 
 const DEFAULT_POOL = ["fruits", "legumes", "animals", "tam-tams", "pirogues", "cordes", "paniers", "calebasses", "ballons", "ardoises"];
@@ -16,7 +16,7 @@ const DEFAULT_POOL = ["fruits", "legumes", "animals", "tam-tams", "pirogues", "c
 export const DOMAIN_NEIGHBORHOOD_K = Math.max(1, parseInt(process.env.TLM_DOMAIN_NEIGHBORHOOD_K ?? "3", 10) || 3);
 
 function domainPool(): string[] {
-  const p = sourcePath(CONFIG.exampleDomainsFile);
+  const p = assetPath(CONFIG.exampleDomainsFile);
   if (existsSync(p)) { try { const raw = JSON.parse(readFileSync(p, "utf8")); if (Array.isArray(raw)) return raw.map(String); if (Array.isArray(raw?.domains)) return raw.domains.map(String); } catch {} }
   return DEFAULT_POOL;
 }

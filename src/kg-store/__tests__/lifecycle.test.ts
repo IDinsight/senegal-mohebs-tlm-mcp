@@ -21,8 +21,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { CONFIG } from "../../config.js";
-import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../../context/index.js";
+import { listAvailableContexts, newSessionState, runInSession } from "../../context/index.js";
+import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel } from "../../curriculum/index.js";
 import { __setKgStoreForTest, createMemoryKgStore, kgNamespace } from "../index.js";
@@ -53,7 +53,7 @@ const contexts = listAvailableContexts();
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(workspace, grade, subject));
@@ -207,37 +207,5 @@ describe("draft/published lifecycle (memory backend)", () => {
       const postFlip = pointer?.publishedSlot === "b" && pointer?.draftSlot === null;
       expect(preFlip || postFlip).toBe(true);
     }
-  });
-});
-
-describe("bundle mode is untouched by the lifecycle", () => {
-  it("activate.ts never calls the store when KG_SOURCE=bundle", async () => {
-    // Tripwire store: any call throws, so the assertion below fails loudly if
-    // activate.ts ever accidentally reaches for the store in bundle mode.
-    const tripwire: KgNodeStore = {
-      kind: "memory",
-      listNodes: async () => { throw new Error("bundle mode must not touch listNodes"); },
-      listEdges: async () => { throw new Error("bundle mode must not touch listEdges"); },
-      readMeta: async () => { throw new Error("bundle mode must not touch readMeta"); },
-      readConfig: async () => { throw new Error("bundle mode must not touch readConfig"); },
-      readPointer: async () => { throw new Error("bundle mode must not touch readPointer"); },
-      listNamespaces: async () => { throw new Error("bundle mode must not touch listNamespaces"); },
-      writeSlot: async () => { throw new Error("bundle mode must not touch writeSlot"); },
-      writeConfig: async () => { throw new Error("bundle mode must not touch writeConfig"); },
-      ensurePointer: async () => { throw new Error("bundle mode must not touch ensurePointer"); },
-      createDraft: async () => { throw new Error("bundle mode must not touch createDraft"); },
-      publishDraft: async () => { throw new Error("bundle mode must not touch publishDraft"); },
-      discardDraft: async () => { throw new Error("bundle mode must not touch discardDraft"); },
-      appendAudit: async () => { throw new Error("bundle mode must not touch appendAudit"); },
-      listAudit: async () => { throw new Error("bundle mode must not touch listAudit"); },
-    };
-    __setKgStoreForTest(tripwire);
-    process.env.KG_SOURCE = "bundle";
-    const state = newSessionState();
-    await runInSession(state, async () => {
-      const ctx = contexts[0];
-      const activation = await activateContext(ctx.workspace, ctx.grade, ctx.subject);
-      expect(activation.ok).toBe(true);
-    });
   });
 });

@@ -170,11 +170,8 @@ export interface SubjectAdapter {
   // as prose in the graph guide, reviewed on demand by `review_draft`.
 
   // Raw envelope → normalized CurriculumModel; parse() owns all raw-schema
-  // knowledge (via its GraphParseDescriptor). detect() is the bundle-mode schema
-  // guard set_context runs before activating — now a generic envelope check
-  // (adapters/engine.ts::detectEnvelope); the subject was already chosen by the
-  // grade/subject key, so no subject-specific signal is needed.
-  detect(raw: unknown): boolean;
+  // knowledge (via its GraphParseDescriptor). It runs on the graph the store
+  // hydrated at activation.
   parse(raw: unknown): CurriculumModel;
 
   // The active CurriculumModel (memoized; published slot in firestore mode, the

@@ -14,7 +14,6 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { asJson } from "./shared.js";
-import { kgSource } from "../config.js";
 import { getActiveContext } from "../context/index.js";
 
 // Process start, captured at module load — uptime is a cheap "did we just cold
@@ -42,7 +41,6 @@ export function registerHealthTools(server: McpServer) {
         ok: true,
         status: "ok",
         transport: "up",
-        kgSource: kgSource(),        // sourced from config, not any client input
         activeContext,
         uptimeSec: Math.round((Date.now() - startedAt) / 1000),
         serverTime: new Date().toISOString(),

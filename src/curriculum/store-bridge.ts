@@ -18,9 +18,9 @@ import { edgeId } from "../kg-store/index.js";
 type LogicalNode = Omit<StoredNode, "slot">;
 type LogicalEdge = Omit<StoredEdge, "slot">;
 
-// Session-bag key under which activate.ts stashes the deserialized model when
-// KG_SOURCE=firestore. Adapter closures read from this synchronously, so a
-// context switch that clears the bag automatically drops the preloaded model.
+// Session-bag key under which activate.ts stashes the model it deserialized from
+// the store. Adapter closures read from this synchronously, so a context switch
+// that clears the bag automatically drops the preloaded model.
 export const PRELOADED_MODEL_KEY = "curriculum.preloadedModel";
 
 // Deterministic edge id — defined in the kg-store leaf (kg-store/types.ts) so

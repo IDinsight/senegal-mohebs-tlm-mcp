@@ -25,8 +25,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { CONFIG } from "../../config.js";
-import { listAvailableContexts, subjectDir, newSessionState, runInSession } from "../../context/index.js";
+import { listAvailableContexts, newSessionState, runInSession } from "../../context/index.js";
+import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel } from "../../curriculum/index.js";
 import {
@@ -66,7 +66,7 @@ const ns = kgNamespace(targetCtx.grade, targetCtx.subject);
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
-    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), CONFIG.kgFile), "utf8"));
+    const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
     const adapter = resolveAdapter(grade, subject);
     if (!adapter) continue;
 
