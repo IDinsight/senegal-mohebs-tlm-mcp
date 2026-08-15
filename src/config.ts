@@ -18,8 +18,7 @@ export const CONFIG = {
   // Sources root (override with TLM_SOURCES_DIR). Under it, one folder per grade,
   // then per subject, resolved at runtime for the active context (context/state.ts).
   // The per-subject filenames below are fixed conventions — the same in every
-  // subject folder. Prompt filenames are NOT here: they belong to each subject's
-  // deliverables (DeliverableSpec.promptFile), read by the get_prompt tool.
+  // subject folder.
   sourcesDir: env.TLM_SOURCES_DIR ? resolve(env.TLM_SOURCES_DIR) : fromRoot("sources"),
   kgFile: "knowledge_graph.json",
   terminologyFile: "terminology.json",

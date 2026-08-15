@@ -26,13 +26,6 @@ export const CI_MATHS_PROFILE: SubjectProfile = {
     // into buildsTowards/buildsFrom).
     dependencyEdge: "hasDependency",
   },
-
-  // Teacher guide filenames contain "fiche(s) de leçon"; the pupil manual is the
-  // default (everything else). Mutually exclusive → each file is exactly one.
-  deliverables: [
-    { key: "manual", label: "Manuel de l'élève (pupil book)", scopeKind: "Chapitre", match: "default", dependsOn: [], promptFile: "PROMPT_generate_chapter.md" },
-    { key: "lessons", label: "Fiches de leçons (teacher guide)", scopeKind: "Chapitre", match: { filenameContainsAny: ["fiches de leçons", "fiche de leçon"] }, dependsOn: ["manual"], promptFile: "PROMPT_generate_lessons.md" },
-  ],
 };
 
 // The authored GRAPH GUIDE for CI maths (phase 2c): markdown the authoring /

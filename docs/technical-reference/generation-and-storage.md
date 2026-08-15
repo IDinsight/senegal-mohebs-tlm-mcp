@@ -17,7 +17,7 @@ Document identity is the **graph node the document covers** — its *scope node*
 ## The generation flow (cross-host, no shared disk)
 
 0. `set_context(grade, subject)` — pick what you're working on. `get_context` lists the installed pairs and the current selection.
-1. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology guidance, coverage, and (for the teacher guide) the manual to build on. `unit` is the scope value (for CI maths, the chapter number) and `deliverable` is a deliverable key (`manual`/`lessons`). For example-domain variety it returns `exampleDomains: { suggested, avoidNearby }`: `suggested` is a fresh object family to use, and `avoidNearby` maps each *nearby* chapter number (within ±`TLM_DOMAIN_NEIGHBORHOOD_K`) to the domains it used — so adjacent chapters don't repeat the same family. This is a bounded window, not the whole book; use `domain_usage` for the full log.
+1. Read the curriculum **from the graph** for the node you're generating: `get_graph_guide` for the subject's conventions, then `walk_graph` / `get_standards` from the scope node down (its routine and formatter come with it via `usesRoutine`). There is no per-deliverable prompt tool — generation guidance is assembled from the guide + the node's attached routine/formatter + the graph. (CI maths storybook variety still has `suggest_fresh_domain` / `domain_usage` for a fresh object family per chapter.)
 2. Generate the `.docx`.
 3. `create_upload_url(relPath, confirm)` → the server returns a short-lived **signed URL**. Upload the file with an HTTP `PUT` (Content-Type `application/vnd.openxmlformats-officedocument.wordprocessingml.document`). No large payloads go through the MCP channel. **Requires confirmation** — see below.
 4. `log_generation(nodeId, relPath, content, confirm)` — the server checks `nodeId` names a real scope node in the active graph, reads the uploaded object's md5 from storage, and records what you produced against that node. History updated; no local file needed. **Requires confirmation** — see below.
@@ -34,7 +34,7 @@ Document identity is the **graph node the document covers** — its *scope node*
 
 An expert who has staged a draft edit can generate a **preview** of the teaching material that edit would produce — reading the **draft** instead of published — **without touching published, the canonical documents bucket, or the canonical generation history.** This closes the editing loop: the dry-run (per-mutation diff) and `diff_draft` show the **graph change**; preview shows the **result** — the material that change yields.
 
-- **`preview_generation(unit, deliverable)`** — the draft-resolved analog of `get_generation_context`. It resolves the unit's curriculum from the **draft slot** (the same slot `diff_draft` reads) via the store-bridge and the subject adapter, then runs the adapter's *own* `buildGenerationContext` on that model. Same inputs and same output shape as the published path, but the returned context is **tagged `preview`** and carries the label *"PREVIEW — generated from an unpublished draft, not a published deliverable."* Read-only on the draft — it does **not** mutate the graph.
+- **`preview_generation(course)`** — the draft-resolved read. It resolves the curriculum from the **draft slot** (the same slot `diff_draft` reads) via the store-bridge and the subject adapter, then returns the containment subtree under that `course` — the same shape `walk_graph` exposes on published, but from the draft model. The result is **tagged `preview`** and carries the label *"PREVIEW — generated from an unpublished draft, not a published deliverable."* Read-only on the draft — it does **not** mutate the graph.
 - **`create_preview_upload_url(relPath)`** — the preview **output** path. Signs short-lived (10 min) write + read URLs for a throwaway `.docx` under the **segregated `previews/` prefix**. Never the canonical `documents/` bucket, never `log_generation`, never `list_documents`/`reconcile`. `PUT` the generated file to `uploadUrl`, hand the human `downloadUrl`.
 
 **Isolation guarantees** (all covered by `src/server/__tests__/preview.test.ts`):
@@ -46,7 +46,7 @@ An expert who has staged a draft edit can generate a **preview** of the teaching
 
 **Who?** Same trust tier as `diff_draft`: **curators and approvers** may preview; unknown / no-role callers are blocked (and the denial is audited). It is read-like, so there is no two-phase confirm and no token.
 
-**Scope.** A preview always targets **one unit + one deliverable** — there is no implicit whole-curriculum preview (generation is LLM-driven and costly).
+**Scope.** A preview always targets **one Course** — there is no implicit whole-workspace preview (generation is LLM-driven and costly).
 
 **Deferred.** A draft-vs-published output *comparison* (previewing both for the same scope so the expert sees exactly what changes in the material) is a follow-on — it doubles LLM cost, and the graph-level change is already available via `diff_draft`.
 

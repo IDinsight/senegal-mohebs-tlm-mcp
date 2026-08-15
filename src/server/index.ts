@@ -11,7 +11,6 @@ import { registerContextTools } from "./context.js";
 import { registerWorkspaceTools } from "./workspaces.js";
 import { registerCurriculumTools } from "./curriculum.js";
 import { registerGraphTools } from "./graph.js";
-import { registerGenerationTools } from "./generation.js";
 import { registerPreviewTools } from "./preview.js";
 import { registerCiMathsTools } from "./ci-maths.js";
 import { registerDocumentTools } from "./documents.js";
@@ -32,7 +31,6 @@ export function buildServer(): McpServer {
   registerWorkspaceTools(server);    // list_workspaces, create_workspace, add/remove/list_member (tenant admin)
   registerCurriculumTools(server);   // get_standards (generic node reader), terminology
   registerGraphTools(server);        // walk_graph (generic BFS traversal), namespace_stats (orientation snapshot)
-  registerGenerationTools(server);   // get_prompt, get_generation_context
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)
   registerCiMathsTools(server);      // suggest_fresh_domain, domain_usage (CI maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log

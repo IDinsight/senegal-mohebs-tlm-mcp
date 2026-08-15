@@ -14,7 +14,7 @@
  *      key under previews/, never the canonical documents/ keyspace.
  *   5. ROLE matrix: curator + approver may preview; signed-in-no-role and
  *      unknown are blocked (and the denial is audited).
- *   6. SCOPING: an unknown deliverable is rejected; a preview is scoped to the
+ *   6. SCOPING: an unknown course is rejected; a preview is scoped to the
  *      one unit asked for (no implicit whole-curriculum path).
  *   7. PARITY: the published buildGenerationContext output is unchanged for
  *      existing callers.

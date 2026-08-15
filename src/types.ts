@@ -1,15 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Deliverables & history
+// Document history
 // ─────────────────────────────────────────────────────────────────────────────
-
-// A deliverable key identifies one kind of document a subject produces
-// (e.g. "manual", "lessons"). It is an open string drawn from the active
-// SubjectAdapter's deliverable list — NOT a fixed union — because the set of
-// deliverables varies per grade/subject. Kept as a named alias for readability.
-export type DeliverableKey = string;
-
-// Back-compat alias. Historically a closed "manual" | "lessons" union; now open.
-export type DocType = DeliverableKey;
 
 export type CharacterRef = {
   name: string;
@@ -123,18 +114,8 @@ export interface CurriculumModel {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Deliverables + capabilities — axes 2–3. §5.3.
+// Capabilities — the subject-behaviour flags. §5.3.
 // ─────────────────────────────────────────────────────────────────────────────
-export type DeliverableSpec = {
-  key: DeliverableKey;                       // replaces the old DocType enum value
-  label: string;                             // human name, e.g. "Manuel de l'élève"
-  scopeKind: string;                         // which unit-kind ONE document covers
-  classify: (filename: string) => boolean;   // recognize an uploaded file as this deliverable
-  dependsOn: DeliverableKey[];               // deliverables required first ([] = standalone)
-  promptFile: string | null;                 // generation prompt basename in the subject folder
-  pathHint?: string;                         // optional relPath convention for uploads
-};
-
 export type Capabilities = {
   exampleDomainRotation: boolean;   // CI maths storybook variety; false for CE1 reading
 };
@@ -156,8 +137,9 @@ export type Capabilities = {
 //   - `model()` — the parsed CurriculumModel (memoized). The cooked per-unit
 //     projection (slice/listUnits/…) and buildGenerationContext were removed once
 //     generation moved to the generic graph readers (walk_graph / get_standards);
-//   - deliverables, capabilities, and the optional coverage hook, all
-//     synthesized from the profile.
+//   - `capabilities`, synthesized from the profile. (Deliverables were removed —
+//     a document's identity is now the graph node it covers; see
+//     docs/design-notes/graph-linked-documents.md.)
 //
 // Optional subject-specific functions (declared on the interface but not every
 // adapter implements them). Present only when the corresponding capability is
@@ -174,7 +156,6 @@ export interface SubjectAdapter {
   readonly grade: string;
   readonly subject: string;
   readonly id: string;                          // stable adapter id, e.g. "ci-maths/nodes-relationships-v1"
-  readonly deliverables: DeliverableSpec[];
   readonly capabilities: Capabilities;
 
   // The composite curriculum recipes are now GENERIC, graph-derived verbs in the

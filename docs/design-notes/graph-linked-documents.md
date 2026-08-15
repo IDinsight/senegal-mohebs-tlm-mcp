@@ -1,6 +1,6 @@
 # Graph-linked documents — a document's identity is the node it covers
 
-> **Status: step 1 built (in-repo); steps 2–4 proposed.** This note designs the
+> **Status: steps 1–2 built (in-repo); steps 3–4 proposed.** This note designs the
 > replacement for the profile's `deliverables` concept: a generated `.docx` is
 > identified by the **graph node it covers**, not by a `(unit, deliverable)`
 > coordinate. It is the "documents-as-nodes" follow-up flagged in
@@ -19,6 +19,18 @@
 > rotation keeps working until generation goes graph-native (step 4); it is not
 > parsed from the filename and carries no deliverable. `deliverables` itself is
 > untouched in step 1 — its removal is step 2.
+>
+> **Step 2 (built).** `deliverables` is removed from the profile: the schema field,
+> the three profile literals, `build.ts`'s `classifiers()`, `DeliverableSpec` /
+> `DeliverableKey` / `DocType`, `SubjectAdapter.deliverables`, and `badDeliverable`
+> are all deleted. Because `get_prompt` read `DeliverableSpec.promptFile`, it is
+> retired with them (its file removed from the tool registry); the `PROMPT_*.md`
+> files stay in `sources/` for now — their residual Bucket-C heuristics are
+> migrated into the guides as the remainder of step 3, then deleted. A
+> **transitional** Zod preprocess strips a legacy `deliverables` key so
+> already-seeded profile cells keep activating through the re-seed. `preview_generation`
+> already took a `course` id (no code change); only its stale "unit + deliverable"
+> capability text was corrected.
 
 ## Why `deliverables` stopped making sense
 
@@ -169,10 +181,14 @@ history file's keys change.
    `reconcile` drops classification and becomes discover-only. (Storage + server
    tools.) A transitional `unit` ordinal hint is stamped from the node at record
    time so domain rotation survives until step 4.
-2. **Remove `deliverables`** — from the profile schema, the three profiles,
-   `build.ts`, `DeliverableSpec`, `badDeliverable`, and the capabilities mirror.
-3. **Retire `get_prompt`** — move residual heuristics into the guides; delete the
-   `PROMPT_*.md` files and the tool.
+2. **Remove `deliverables`** *(built)* — from the profile schema, the three
+   profiles, `build.ts`, `DeliverableSpec`, `badDeliverable`, and the capabilities
+   mirror. Retiring the `get_prompt` **tool** came with it (it read
+   `DeliverableSpec.promptFile`); a transitional preprocess strips a legacy
+   `deliverables` cell key through the re-seed.
+3. **Retire `get_prompt`** — the tool is gone (step 2); the remainder is to move
+   the residual Bucket-C heuristics from the `PROMPT_*.md` files into the guides
+   (a live-data authoring task via `edit_profile`), then delete the files.
 4. **Point generation at the scope node** — `preview_generation` + the generation
    flow key on a node id.
 

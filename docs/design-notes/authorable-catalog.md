@@ -279,12 +279,15 @@ faithful-re-export stay green.
 
 ### Open (next increments)
 
-- **Remove `deliverables` → graph-linked documents.** The profile's `deliverables`
-  concept is superseded: a generated document is identified by the **graph node it
-  covers**, not a `(unit, deliverable)` coordinate (the manual-vs-lessons split is
-  the which-Course split, structurally). This retires `deliverables`, `get_prompt`,
-  and the filename-classification half of `reconcile`. Designed in
-  [`graph-linked-documents.md`](graph-linked-documents.md) (proposal).
+- **Remove `deliverables` → graph-linked documents (steps 1–2 built).** The
+  profile's `deliverables` concept is superseded: a generated document is
+  identified by the **graph node it covers**, not a `(unit, deliverable)`
+  coordinate (the manual-vs-lessons split is the which-Course split, structurally).
+  Built: the history is re-keyed by `nodeId`, `reconcile` is discover-only, and
+  `deliverables` / `DeliverableSpec` / `badDeliverable` / the `get_prompt` **tool**
+  are removed. Remaining: migrate the residual Bucket-C prompt heuristics into the
+  guides and delete the `PROMPT_*.md` files (step 3), and point generation at the
+  scope node (step 4). See [`graph-linked-documents.md`](graph-linked-documents.md).
 - *Guides authored for all three subjects.* `ci/maths` (two-parent axis + bilan),
   `ce1/reading` (bilingual week→day→session, one-parent, skill-area alignment), and
   `primary-1-3/maths` (standards-only NERDC hierarchy, browse-not-author). Further

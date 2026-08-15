@@ -22,10 +22,6 @@ export const CE1_READING_PROFILE: SubjectProfile = {
     numberFrom: "position",
     prune: { strategy: "content-reachable-from-roots", rootKinds: ["Semaine"] },
   },
-
-  deliverables: [
-    { key: "teacher_guide", label: "Guide de l'enseignant·e (teacher guide)", scopeKind: "Semaine", match: "default", dependsOn: [], promptFile: "PROMPT_generate_lessons.md" },
-  ],
 };
 
 // The authored GRAPH GUIDE for CE1 reading (phase 2c) — markdown the LLM reads to

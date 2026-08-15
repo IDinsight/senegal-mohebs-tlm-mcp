@@ -21,8 +21,6 @@ export const NIGERIA_MATHS_PROFILE: SubjectProfile = {
   // where the generic reader takes an SFI's kind from, so nothing extra is
   // declared. The LearningComponent layer is keyed by its label. No ordinal field.
   parse: {},
-
-  deliverables: [],
 };
 
 // The authored GRAPH GUIDE for Nigeria maths (phase 2c) — markdown the LLM reads

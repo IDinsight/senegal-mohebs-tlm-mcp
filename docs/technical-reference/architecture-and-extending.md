@@ -10,7 +10,7 @@ Adding a subject takes its **sources** (data) and an **adapter** (code). If the 
 
 2. **Reuse or write an adapter** (`src/adapters/`):
    - *Same graph shape as an existing subject* → register the new `(grade, subject)` key against that subject's builder in `src/adapters/index.ts`. That's the many-to-one case.
-   - *Different shape* → add `src/adapters/<subject>.ts` exporting a `buildXxxAdapter(grade, subject): SubjectAdapter`. The adapter carries everything: raw-envelope `detect`/`parse`, the LC→friendly projection (`listUnits`/`slice`/`progression`/`requiredCoverage`/`scopeValues`), the `deliverables` list (`key`, `label`, `scopeKind`, `classify(filename)`, `dependsOn`, `promptFile` — one per document kind), the `capabilities` flags (`exampleDomainRotation`), and `buildGenerationContext(scope, deliverableKey)`. Optional CI maths-style helpers (`suggestFreshDomain`, `domainUsage`) are only added when the subject enables the matching capability.
+   - *Different shape* → author a new `SubjectProfile` literal under `src/adapters/profiles/` (the generic `build.ts` factory turns it into a `SubjectAdapter`). A profile carries the parse descriptor (`numberFrom`, the containment/support edges, an optional named `prune` strategy) and the `capabilities` flags (`exampleDomainRotation`). It no longer carries a `deliverables` list — a document's identity is the graph node it covers. Optional CI maths-style helpers (`suggestFreshDomain`, `domainUsage`) are only wired when the subject enables the matching capability.
 
 3. **Register it** in `src/adapters/index.ts` under the `"<grade>/<subject>"` key (in the `REGISTRY` object). Grade × subject: e.g. `"ci/maths"` and `"cp/maths"` may point at the same builder or different ones — that's a per-pair choice, not an assumption.
 
@@ -18,7 +18,7 @@ Adding a subject takes its **sources** (data) and an **adapter** (code). If the 
 
 **No schema.** Adapters carry behavior only. If your subject needs write-safety rules (uniqueness, required properties, edge-type constraints), those will live in the write tools when they land — not on the adapter. The stored `id` for every node/edge is the raw LC IRI, verbatim; friendly properties (`chapitreNum`, `semaine`, `statementCode`) live inside `properties.raw` and must NOT be used as write-target identities.
 
-**Rules the build enforces:** imports point *down* the layers above; **service modules (`storage`/`curriculum`/`generation`/`kg-store`) must not import `adapters`** — pass what they need in as arguments (as `reconcile(deliverables)` and `discoverDocuments(deliverables)` do); cross-module imports go through the module's `index.ts`. `npm run check:cycles` fails the build on any import cycle.
+**Rules the build enforces:** imports point *down* the layers above; **service modules (`storage`/`curriculum`/`generation`/`kg-store`) must not import `adapters`** — pass what they need in as arguments (the tool layer resolves the active adapter/model and threads it in); cross-module imports go through the module's `index.ts`. `npm run check:cycles` fails the build on any import cycle.
 
 > **CE1 reading** is wired as a worked second subject (scope: one teacher guide **per week**), registered as `ce1/reading` — its adapter parses a `nodes`/`relationships` + `hasChild` graph. See `docs/design-notes/multi-subject-architecture.md` §11 phase 4 for what its KG needed and the open follow-ups (no `terminology.json` yet; evaluation grids pending).
 
@@ -29,6 +29,6 @@ The storage layer sits behind a small `StorageAdapter` interface. The reconcile 
 ## Assumptions still baked in (tell me to change any)
 
 - One grade/subject is active at a time; switching drops the KG, terminology, and history caches so the next call reloads for the new context.
-- Deliverable classification is per-subject (a profile's `DeliverableSpec.classify`). For CI maths: within a chapter subfolder, anything not "Fiches de leçons …" is the pupil manual.
+- Documents are **not** classified by filename any more: a document's identity is the graph node it covers (its scope node), recorded via `record_document_content(nodeId, …)`. `reconcile` diffs the bucket against history by `relPath` and reports untracked docs for linking. See [`../design-notes/graph-linked-documents.md`](../design-notes/graph-linked-documents.md).
 - Glossary derives from the KG, with the FR/Wolof file as fallback; characters are derived from what you log/ingest.
 - "Latest" among duplicates is the object whose md5 matches history, else the most recently updated.

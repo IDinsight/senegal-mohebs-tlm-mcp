@@ -6,7 +6,7 @@
  *   - list_catalog  — browse the entries a curator can pick, from BOTH scopes,
  *                     each tagged with its scope + kind (read-only, ungated).
  *   - use_routine   — COPY a routine entry onto a lesson.
- *   - use_formatter — COPY a formatter entry (a house-style spec) onto a deliverable.
+ *   - use_formatter — COPY a formatter entry (a house-style spec) onto a Course.
  *                     Both share one path: the entry's subtree is cloned with fresh
  *                     ids into the ACTIVE subject's draft and linked via `usesRoutine`;
  *                     the copy is independent of the library.
@@ -121,7 +121,7 @@ export function registerCatalogTools(server: McpServer) {
     "use_formatter",
     {
       title: "Use a catalog formatter",
-      description: "Apply a catalog FORMATTER (a house-style spec) to a deliverable by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (the Course / deliverable root) via `usesRoutine`, so generation for that deliverable applies the style. The copy is independent — later edits to the library formatter do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap; call again with confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
+      description: "Apply a catalog FORMATTER (a house-style spec) to a Course by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (the Course — the root of the document it produces) via `usesRoutine`, so generation for that Course applies the style. The copy is independent — later edits to the library formatter do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap; call again with confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
       inputSchema: APPLY_INPUT,
     },
     guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),

@@ -35,7 +35,7 @@ export { reconcile, listEntries, recordContent, extractDocxText, __setStorageFor
 export { suggestFreshDomain } from "./generation/index.js";
 export { searchTerminology } from "./curriculum/index.js";
 export { buildServer } from "./server/index.js";
-export type { StorageAdapter, StoredObject, HistoryFile, DocType, SubjectAdapter } from "./types.js";
+export type { StorageAdapter, StoredObject, HistoryFile, SubjectAdapter } from "./types.js";
 
 const LOG = "[senegal-mohebs-tlm]";
 

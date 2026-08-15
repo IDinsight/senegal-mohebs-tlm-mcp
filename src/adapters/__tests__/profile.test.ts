@@ -5,8 +5,8 @@
  * behavior module to a declarative profile read by one generic builder. That
  * trade only holds if a malformed profile fails LOUDLY at the boundary (the
  * design note's "runtime vs compile-time validation" risk) — so these tests pin
- * the guard, plus the two synthesized bits a reviewer can't see by eye: the
- * deliverable `classify` complement and the optional coverage hook.
+ * the guard, plus the synthesized bit a reviewer can't see by eye: the
+ * capability-gated domain-rotation helpers.
  */
 import { describe, it, expect } from "vitest";
 import { validateProfile, type SubjectProfile } from "../profile.js";
@@ -34,16 +34,6 @@ describe("SubjectProfile validation", () => {
 });
 
 describe("buildAdapterFromProfile — synthesized behavior", () => {
-  it("a 'default' deliverable matches iff no specific deliverable does (the maths complement)", () => {
-    const a = buildAdapterFromProfile(CI_MATHS_PROFILE, "ci", "maths");
-    const classify = (f: string) => a.deliverables.find((d) => d.classify(f))?.key;
-    // A teacher-guide filename hits the specific "lessons" matcher (accent/
-    // case-insensitive); anything else falls to the "manual" default.
-    expect(classify("Fiches de leçons - Chapitre 1.docx")).toBe("lessons");
-    expect(classify("FICHE DE LECON 3.docx")).toBe("lessons");
-    expect(classify("Manuel eleve chapitre 1.docx")).toBe("manual");
-  });
-
   it("attaches the domain-rotation helpers only when the capability is on", () => {
     const maths = buildAdapterFromProfile(CI_MATHS_PROFILE, "ci", "maths");
     const reading = buildAdapterFromProfile(CE1_READING_PROFILE, "ce1", "reading");

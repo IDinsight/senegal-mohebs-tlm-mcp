@@ -158,7 +158,7 @@ describe("editProfileWithConfirm — two-phase", () => {
 
   it("blocks a malformed core at dry-run with no token", async () => {
     await runAsActor(CURATOR, async () => {
-      const bad = { core: { ...(baseCore()), deliverables: "not-an-array" } } as StoredConfig;
+      const bad = { core: { ...(baseCore()), capabilities: "not-an-object" } } as StoredConfig;
       const res = await editProfileWithConfirm(ns, bad, { validate });
       expect(res.phase).toBe("blocked");
       if (res.phase !== "blocked") throw new Error("expected blocked");
