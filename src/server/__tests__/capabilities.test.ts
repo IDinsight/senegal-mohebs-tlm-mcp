@@ -239,9 +239,9 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.rules.structural).toEqual([...STRUCTURAL_RULES]);
   });
 
-  it("editable.structural reports the graph primitives (incl. batched create_edges) and always-with-warning cascade", async () => {
+  it("editable.structural reports create_edges + the deletion verbs and always-with-warning cascade", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.editable.structural.verbs).toEqual(["create_edge", "create_edges", "delete_edges", "delete_nodes"]);
+    expect(caps.editable.structural.verbs).toEqual(["create_edges", "delete_edges", "delete_nodes"]);
     // delete_nodes always cascades the dependent subtree; the dry-run warns.
     expect(caps.editable.structural.cascade).toBe("always-with-warning");
   });

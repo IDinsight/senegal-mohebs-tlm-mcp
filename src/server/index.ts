@@ -36,7 +36,7 @@ export function buildServer(): McpServer {
   registerCiMathsTools(server);      // suggest_fresh_domain, domain_usage (CI maths-specific)
   registerDocumentTools(server);     // reconcile, upload/download, record/log
   registerLifecycleTools(server);    // diff_draft, publish_draft, discard_draft
-  registerStructuralTools(server);   // create_edge, delete_edges, delete_nodes (raw graph primitives)
+  registerStructuralTools(server);   // create_edges, delete_edges, delete_nodes (edge + deletion verbs)
   registerRecipeTools(server);       // reposition, set_content (ordinal + content edits)
   registerAuthoringTools(server);    // add_nodes (the single node-creation tool — one or many; replaced the per-label typed adds)
   registerCatalogTools(server);      // list_catalog, use_routine (shared routine catalog — browse + copy-onto-lesson)
