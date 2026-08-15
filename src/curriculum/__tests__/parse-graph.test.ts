@@ -89,13 +89,14 @@ describe("generic parseGraph — maths (new shape)", () => {
     expect(scheduled.size).toBe(112);
   });
 
-  it("aligns each lesson to its standard, which carries the OS text/category/number", () => {
+  it("aligns each lesson to its standard, which carries the OS text/category", () => {
     // The OS (objectif spécifique) is a spine `Standard`; the Lesson `supports`
     // it (⇒ standard.childIds ∋ the Lesson).
     const standard = leafStandards(model).find((unit) => unit.code === "Leçon 15")!;
     expect(standard.text).toContain("trouver ce qui manque");
     expect(standard.properties.statementType).toBe("Résolution de problème");
-    expect(standard.order).toBe(15);
+    // Standards carry NO ordinal — they sequence by traversal, not metadata.order.
+    expect(standard.order).toBeNull();
     expect((standard.properties.metadata as any).en.description).toContain("find what is missing");
     // its aligned Lesson is a content node that carries the same lesson number
     const lesson = model.childrenOf(standard.id).find((unit) => unit.kind === "Lesson")!;
