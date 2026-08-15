@@ -175,44 +175,13 @@ export function cloneRoutineSubtree(catalog: MutationGraph, entryId: string, nam
   return { nodes, edges, newEntryId: idMap[entryId], idMap };
 }
 
-// ── Authored formatter entries ───────────────────────────────────────────────
-// Formatters are catalog entries (kind=formatter) whose Material holds a house-style
-// spec the generator applies. Unlike routines, they are NOT extracted from a subject
-// graph — they are authored here and fed to assembleCatalog as an extra "source"
-// (an InstructionalRoutine entry with a Material child, in RAW shape). `catalogKind`
-// on the entry's metadata is what makes list_catalog report kind "formatter".
-export const HOUSE_STYLE_FORMATTER: RawGraphSnapshot = {
-  nodes: [
-    {
-      id: "formatter-house-style",
-      labels: [ROUTINE_LABEL],
-      properties: {
-        description: "MOHEBS house style (docx)",
-        metadata: { role: "instructional-routine", catalogKind: "formatter", summary: "Apply to every generated .docx for a consistent look across subjects." },
-      },
-    },
-    {
-      id: "formatter-house-style-spec",
-      labels: [MATERIAL_LABEL],
-      properties: {
-        description: "House style spec",
-        materialType: "Reference",
-        metadata: { role: "instructional-routine-material" },
-        content: [
-          "House style for every generated .docx — apply consistently across subjects.",
-          "Palette: primary green #2E7D5E (titles, headings, key labels); light green #E8F3EE (section/step header fills); grey #666666 (subtitles, meta lines); orange #D4812A (callout/cue labels); white #FFFFFF text on green fills.",
-          "Typography: Calibri throughout; body 11–12 pt; headings bold (document title ~17–20 pt, section ~13–14 pt).",
-          "Page: A4 portrait; margins ≈1.7 cm top/bottom, 2.0 cm left/right (≈17 cm content width); compact spacing (single line spacing, minimal space-after, no blank spacer paragraphs).",
-          "Images: embed a downscaled JPEG — resize to ~1600 px on the long edge, quality ~82; target a few MB per document, never a full-resolution PNG.",
-          "Subject-specific layout (step-box tables, bilingual columns, activity image ratios) is NOT part of this shared style — it stays in the subject's prompt or a workspace formatter.",
-        ].join("\n\n"),
-      },
-    },
-  ],
-  relationships: [
-    { id: "formatter-house-style-haspart", type: "hasPart", start: "formatter-house-style", end: "formatter-house-style-spec", properties: {} },
-  ],
-};
+// ── Authored formatter entries live in the seed tooling, not here ────────────
+// The formatter house-style specs (the docx house style, the Senegalese art style, and
+// the CI-maths pupil-manual illustration layout) are authored DATA, not server
+// mechanism, so they live in `scripts/seed-catalog.mjs` and are fed to
+// assembleCatalog(..., authored) at seed time — exactly like the subject bundles under
+// sources/. This module keeps only the catalog machinery below (toCatalogStoreShape,
+// rehomeEntries, assembleCatalog), plus the read/clone helpers above.
 
 // ── Seeding the catalog ──────────────────────────────────────────────────────
 // Convert a raw LC graph (as read from a source knowledge_graph.json — `start`/`end`
@@ -231,14 +200,33 @@ function toCatalogStoreShape(raw: RawGraphSnapshot, namespace: string): Mutation
   return { nodes, edges };
 }
 
-// Build a catalog's stored graph from one or more source graphs (e.g. a subject's
-// knowledge_graph.json): a single root container, plus every source's routine subtrees
-// re-homed under it as entries. A source's entries are its top-level routines (an
-// `InstructionalRoutine` with no routine `hasPart` parent); each entry's subtree
-// (steps + Materials) comes along verbatim, ids preserved. Everything else in a source
-// (chapters, lessons, the spine) is dropped — the catalog holds only routines.
-// `namespace` is the target catalog (shared by default).
-export function assembleCatalog(sources: RawGraphSnapshot[], namespace = SHARED_CATALOG_NAMESPACE, rootId = CATALOG_ROOT_ID): MutationGraph {
+// Re-home one source's top-level routine subtrees under `rootId`, appending to
+// `nodes`/`edges`. A top-level routine is an `InstructionalRoutine` with no routine
+// `hasPart` parent; its subtree (steps + Materials) comes along verbatim, ids
+// preserved. `keepFormatters` decides whether formatter-kind entries are taken —
+// false for scraped subject bundles (a subject graph may CARRY formatter attachments,
+// but those are copies of authored entries and must not be re-scraped into the catalog),
+// true for the authored formatter literals that ARE the formatter entries.
+function rehomeEntries(source: RawGraphSnapshot, namespace: string, rootId: string, keepFormatters: boolean, nodes: MutationNode[], edges: MutationEdge[]): void {
+  const graph = toCatalogStoreShape(source, namespace);
+  const { byId, children, hasRoutineParent } = indexContainment(graph);
+  const entries = graph.nodes.filter((n) => isRoutine(n) && !hasRoutineParent.has(n.id) && (keepFormatters || kindOf(n) !== "formatter"));
+  for (const entry of entries) {
+    const ids = new Set(subtreeIds(entry.id, children));
+    for (const id of ids) { const n = byId.get(id); if (n) nodes.push(n); }
+    for (const e of graph.edges) if (e.type === CONTAINMENT && ids.has(e.from) && ids.has(e.to)) edges.push(e);
+    edges.push({ id: edgeId(CONTAINMENT, rootId, entry.id), type: CONTAINMENT, from: rootId, to: entry.id, namespace, properties: {} });
+  }
+}
+
+// Build a catalog's stored graph: a single root container plus re-homed entries.
+// `sources` are subject graphs (a subject's knowledge_graph.json) — scraped for their
+// ROUTINE subtrees only; any formatter a subject graph carries (a copy attached to its
+// Course via use_formatter) is deliberately NOT re-scraped, since the catalog's
+// formatters come solely from the authored literals in `authored`. `authored` are those
+// formatter/routine literals, taken whole (formatters kept). Everything else in a source
+// (chapters, lessons, the spine) is dropped. `namespace` is the target catalog.
+export function assembleCatalog(sources: RawGraphSnapshot[], namespace = SHARED_CATALOG_NAMESPACE, rootId = CATALOG_ROOT_ID, authored: RawGraphSnapshot[] = []): MutationGraph {
   const root: MutationNode = {
     id: rootId, type: ROUTINE_LABEL, namespace, labels: [ROUTINE_LABEL], spine: false,
     properties: { raw: { description: "Routine library", metadata: { role: "instructional-routine" } } },
@@ -246,17 +234,8 @@ export function assembleCatalog(sources: RawGraphSnapshot[], namespace = SHARED_
   const nodes: MutationNode[] = [root];
   const edges: MutationEdge[] = [];
 
-  for (const source of sources) {
-    const graph = toCatalogStoreShape(source, namespace);
-    const { byId, children, hasRoutineParent } = indexContainment(graph);
-    const entries = graph.nodes.filter((n) => isRoutine(n) && !hasRoutineParent.has(n.id));
-    for (const entry of entries) {
-      const ids = new Set(subtreeIds(entry.id, children));
-      for (const id of ids) { const n = byId.get(id); if (n) nodes.push(n); }
-      for (const e of graph.edges) if (e.type === CONTAINMENT && ids.has(e.from) && ids.has(e.to)) edges.push(e);
-      edges.push({ id: edgeId(CONTAINMENT, rootId, entry.id), type: CONTAINMENT, from: rootId, to: entry.id, namespace, properties: {} });
-    }
-  }
+  for (const source of sources) rehomeEntries(source, namespace, rootId, false, nodes, edges);
+  for (const source of authored) rehomeEntries(source, namespace, rootId, true, nodes, edges);
   return { nodes, edges };
 }
 

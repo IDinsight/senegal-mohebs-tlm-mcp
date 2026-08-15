@@ -18,7 +18,7 @@ export { setContent, type SetContentArgs } from "./set-content.js";
 export { editNode, type EditNodeArgs } from "./edit-node.js";
 export { RECIPES, type RecipeDescriptor, type RecipeParam } from "./registry.js";
 export {
-  catalogNamespace, SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, CATALOG_ROOT_ID, HOUSE_STYLE_FORMATTER,
+  catalogNamespace, SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, CATALOG_ROOT_ID,
   listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine,
   type CatalogEntry, type CatalogScope, type CatalogKind, type ClonedSubtree, type UseRoutineArgs,
 } from "./catalog.js";
