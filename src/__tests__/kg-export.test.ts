@@ -135,9 +135,10 @@ describe("kg-export — LC ontology (maths)", () => {
     expect(graph.edges.every((e) => typeof e.rel === "string" && e.rel.length > 0)).toBe(true);
     // Content containment folds to a hasChild TRAVERSAL edge but keeps its real
     // type — so Course→chapter badges as "hasPart", not a blanket "hasChild".
-    // (Two Courses now exist; pin the student book by its title.)
+    // (Two Courses now exist; pin the student book by its title. The Course also
+    // carries usesRoutine→formatter edges now, so scope to the containment edges.)
     const course = graph.nodes.find((n) => n.label === "Course" && n.desc === "Outil de l'élève")!;
-    const courseEdges = graph.edges.filter((e) => e.s === course.id);
+    const courseEdges = graph.edges.filter((e) => e.s === course.id && e.rel === "hasPart");
     expect(courseEdges.length).toBe(25);
     expect(courseEdges.every((e) => e.r === "hasChild" && e.rel === "hasPart")).toBe(true);
 

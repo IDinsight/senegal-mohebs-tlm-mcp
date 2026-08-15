@@ -32,7 +32,11 @@ const CASES = [
   // (1 parent + 6 step InstructionalRoutine + 6 Material; parent→steps→Material
   // via 12 hasPart) + 25 usesRoutine from each Student's-Book container Lesson
   // (metadata.role studentBookLesson) — the manual template is per-lesson, canonical.
-  { workspace: "senegal", grade: "ci", subject: "maths", nodes: 770, edges: 1304 },
+  // +6 nodes / +6 edges: three formatter InstructionalRoutine+Material subtrees
+  // (house style, art style, illustration layout) attached to the Student's-Book Course
+  // via use_formatter — each 1 InstructionalRoutine + 1 Material + 1 hasPart + 1
+  // usesRoutine-from-Course. Exported back into sources so a re-seed keeps them.
+  { workspace: "senegal", grade: "ci", subject: "maths", nodes: 776, edges: 1310 },
   // reading: post content-layer, Scope B — 462 session Lesson nodes (22/week ×
   // 21 guide weeks), 462 week→session hasChild edges, 441 session→standard
   // supports edges (all sessions but Remédiation).

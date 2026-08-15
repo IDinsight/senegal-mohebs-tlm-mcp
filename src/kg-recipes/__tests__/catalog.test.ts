@@ -6,11 +6,22 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine, SHARED_CATALOG_NAMESPACE, HOUSE_STYLE_FORMATTER } from "../catalog.js";
+import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine, catalogNamespace, SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID } from "../catalog.js";
 import { edgeId, type MutationEdge, type MutationGraph, type MutationNode } from "../../kg-store/index.js";
 import { CONFIG } from "../../config.js";
 import { subjectDir } from "../../context/index.js";
 import type { RawGraphSnapshot } from "../../types.js";
+
+// A formatter source in RAW shape (an InstructionalRoutine entry + one Material,
+// catalogKind:formatter). The production formatters live in scripts/seed-catalog.mjs;
+// these fixtures exercise the assembleCatalog mechanism without depending on that content.
+const rawFormatter = (id: string, name: string): RawGraphSnapshot => ({
+  nodes: [
+    { id, labels: ["InstructionalRoutine"], properties: { description: name, metadata: { role: "instructional-routine", catalogKind: "formatter" } } },
+    { id: `${id}-spec`, labels: ["Material"], properties: { content: "spec…", metadata: { role: "instructional-routine-material" } } },
+  ],
+  relationships: [{ id: `${id}-hp`, type: "hasPart", start: id, end: `${id}-spec`, properties: {} }],
+});
 
 const NS = "test/catalog";
 
@@ -113,11 +124,50 @@ describe("assembleCatalog", () => {
     expect(byName["Fiche de leçon — enseignement explicite (30 min)"].steps[0].timeRequired).toBe("PT4M");
   });
 
-  it("splices the authored house-style formatter as a kind:formatter entry", () => {
-    // The formatter is fed to assembleCatalog like any source; it lists as its own kind.
-    const [formatter] = listCatalogEntries(assembleCatalog([HOUSE_STYLE_FORMATTER]), "shared");
-    expect(formatter).toMatchObject({ kind: "formatter", name: "MOHEBS house style (docx)", materialCount: 1 });
+  it("adds an authored formatter (passed via `authored`) as a kind:formatter entry", () => {
+    // Formatters come through the `authored` param, taken whole; they list as their own kind.
+    const [formatter] = listCatalogEntries(assembleCatalog([], SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID, [rawFormatter("f1", "House style")]), "shared");
+    expect(formatter).toMatchObject({ kind: "formatter", name: "House style", materialCount: 1 });
     expect(formatter.steps).toEqual([]);   // a formatter carries a spec Material, not ordered steps
+  });
+
+  it("takes multiple authored formatters WHOLE while scraping a subject source for routines only", () => {
+    // The seed's shared shape: subject sources scraped for routines + formatters as `authored`.
+    const entries = listCatalogEntries(
+      assembleCatalog([rawSource], SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID, [rawFormatter("f1", "House style"), rawFormatter("f2", "Art style")]),
+      "shared",
+    );
+    expect(entries.filter((e) => e.kind === "routine").map((e) => e.id)).toEqual(["r-entry"]);
+    expect(entries.filter((e) => e.kind === "formatter").map((e) => e.name).sort()).toEqual(["Art style", "House style"]);
+  });
+
+  it("seeds a WORKSPACE catalog from an authored formatter, tagged with that scope", () => {
+    const [formatter] = listCatalogEntries(assembleCatalog([], catalogNamespace("senegal"), CATALOG_ROOT_ID, [rawFormatter("fmt", "Maths illustration layout")]), "workspace");
+    expect(formatter).toMatchObject({ kind: "formatter", scope: "workspace", name: "Maths illustration layout", materialCount: 1 });
+    expect(formatter.steps).toEqual([]);
+  });
+
+  it("does NOT scrape a formatter a subject graph carries (attached via use_formatter) into the catalog", () => {
+    // A subject bundle may hold a formatter COPY (top-level InstructionalRoutine with
+    // catalogKind:formatter, linked to its Course by usesRoutine). Scraping the bundle for
+    // routines must skip it — otherwise re-exporting attachments into sources/ would
+    // double-seed the catalog. Only the real routine survives as an entry.
+    const bundleWithAttachedFormatter: RawGraphSnapshot = {
+      nodes: [
+        { id: "r-entry", labels: ["InstructionalRoutine"], properties: { description: "Fiche", metadata: { role: "instructional-routine" } } },
+        { id: "r-m1", labels: ["Material"], properties: { content: "..." } },
+        { id: "fmt", labels: ["InstructionalRoutine"], properties: { description: "MOHEBS house style (docx)", metadata: { role: "instructional-routine", catalogKind: "formatter" } } },
+        { id: "fmt-spec", labels: ["Material"], properties: { content: "..." } },
+        { id: "course", labels: ["Course"], properties: { description: "Outil de l'élève" } },
+      ],
+      relationships: [
+        { id: "e1", type: "hasPart", start: "r-entry", end: "r-m1", properties: {} },
+        { id: "e2", type: "hasPart", start: "fmt", end: "fmt-spec", properties: {} },
+        { id: "e3", type: "usesRoutine", start: "course", end: "fmt", properties: {} },
+      ],
+    };
+    const entries = listCatalogEntries(assembleCatalog([bundleWithAttachedFormatter]), "shared");
+    expect(entries.map((e) => e.id)).toEqual(["r-entry"]);   // the formatter copy is skipped
   });
 });
 

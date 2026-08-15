@@ -35,26 +35,26 @@ You do **not** receive raw JSON files. The CI mathematics curriculum lives in a 
 
 ---
 
-## HOUSE ART STYLE — prepend verbatim to every image prompt
+## HOUSE ART STYLE — comes from the formatters, not this prompt
 
-Every generated image — amorce, "Je retiens", and all activity images — must share one fixed house style. **Paste the block below unchanged at the START of every `generate_image` / `edit_image` prompt**, then add the scene- or activity-specific description after it. Do not paraphrase it: verbatim reuse is what keeps all images in a chapter (and across chapters) looking like the same book. Leaving the style unspecified is what makes the generator drift (e.g. into watercolour), so this block is not optional.
+The **look** of every image (amorce, "Je retiens", all activity images) and the **layout**
+of the activity images now live in two **formatters** attached to the pupil-book `Course` —
+each a `usesRoutine` → `InstructionalRoutine` with `metadata.catalogKind "formatter"`,
+surfaced by `walk_graph`. Read both and follow their `Material.content`; do not restate their
+values here.
 
-```
-ART STYLE: flat 2-D vector cartoon illustration for a children's educational
-textbook. Bold, even dark-brown outlines of consistent weight around every
-character and object; flat, saturated colour fills with simple two-tone cel
-shading (one base colour plus one slightly darker, hard-edged shadow); crisp
-clean shapes; bright cheerful palette. Senegalese setting — warm sandy ground,
-clear blue sky, colourful wax-print clothing; friendly rounded character
-proportions with simple, expressive faces; dark-skinned Senegalese characters.
-The look should resemble a printed West-African primary-school reader / comic
-panel.
-Explicitly avoid: watercolour or painterly brush texture, soft gradients,
-sketchy or uneven linework, pencil or crayon texture, photographic realism,
-3-D rendering, muted or desaturated colours.
-```
+- **Shared art-style formatter — "Senegalese children's-textbook art style".** Carries the
+  fixed **ART STYLE block**. **Paste that block unchanged at the START of every
+  `generate_image` / `edit_image` prompt**, then add the scene- or activity-specific
+  description after it — verbatim reuse is what keeps all images looking like the same book,
+  and leaving the style unspecified is what makes the generator drift (e.g. into watercolour).
+  The formatter also carries the master-scene rule (the amorce is drawn first and fixes the
+  cast + palette; every other image is an independent composition in that world, not a crop).
+- **Maths illustration formatter — "pupil-manual illustration layout".** Carries the aspect
+  ratios, the two activity-image layouts, the big A / B / C badge styling, and the on-page
+  display sizes.
 
-The house style governs *how* the image is drawn, not *what* it must contain: keep every other rule below (aspect ratios, the big A / B / C badges, small countable quantities, the left-quarter stimulus for reference-based activities) exactly as specified. If you ever change the house look, edit only this block — every image inherits from it.
+The art style governs *how* an image is drawn, not *what* it must contain: the small-countable-quantities and self-contained/decidable rules below are the authoring judgment that still lives in this prompt.
 
 ---
 
@@ -84,10 +84,10 @@ handed directly to Gemini / nano-banana-pro as a generation prompt.>
 Once the chapter text is complete:
 
 1. **Set the model**: call `set_model` with `nano-banana-pro`.
-2. **Generate the opening-scene image first** (`amorce`) with `generate_image` at **`16:9`**, `2K`. Save the returned **Firebase signed URL**. Drawn with the HOUSE ART STYLE block prepended, this scene fixes the cast of characters and the specific palette for the chapter (the overall art style is fixed by the HOUSE ART STYLE block).
-3. **Generate every activity image** with `generate_image` at **`21:9`** (see ASPECT RATIO RULES) — every activity image is wide and short to keep the printed book compact. Use each block's description as the prompt, prepending the **HOUSE ART STYLE** block (above) verbatim so all images share the same look; the amorce further anchors the character appearance and palette.  (The bilan has no image, so nothing is generated for it.)
+2. **Generate the opening-scene image first** (`amorce`) with `generate_image` at the opening-scene ratio the **illustration formatter** gives, `2K`. Save the returned **Firebase signed URL**. Drawn with the art-style block prepended, this scene fixes the cast of characters and the specific palette for the chapter.
+3. **Generate every activity image** with `generate_image` at the activity-image ratio the illustration formatter gives. Use each block's description as the prompt, prepending the **art-style block** (from the shared art-style formatter) verbatim so all images share the same look; the amorce further anchors the character appearance and palette.  (The bilan has no image, so nothing is generated for it.)
 4. **Collect each Firebase signed URL** returned by `generate_image`.
-5. **Replace each `[IMAGE: <id>]` description block** in the docx with the actual fetched image at that position, centred. The amorce (`16:9`) sits ~14–16 cm wide; the "Je retiens" banner (`21:9`) spans the full text width but stays short; **every activity image (`21:9`) is exactly 5.25 cm high** — its width follows the 21:9 ratio (~12.3 cm) and it is centred. **Before embedding, downscale and re-encode each image** per the formatter's image rules (see IMAGE EMBEDDING & FILE SIZE below), never a full-resolution lossless PNG. Remove the description text once the image is embedded.
+5. **Replace each `[IMAGE: <id>]` description block** in the docx with the actual fetched image at that position, centred, **at the on-page display size the illustration formatter gives** for that image type (amorce width, activity-image height, "Je retiens" banner). **Before embedding, downscale and re-encode each image** per the shared house style's image rules, never a full-resolution lossless PNG. Remove the description text once the image is embedded.
 6. **After embedding, look at each activity image and verify it against its answer key** — the correct option must be present, at the intended letter, and be the *only* correct one; the drawn reference must match the prompt. Image models frequently swap panel contents or miscount, so regenerate any image where the option contents or counts don't match before finalising.
 7. If any image fails to generate or fetch, leave its labelled description block in place so the document stays complete and the gap is obvious.
 
@@ -101,23 +101,24 @@ Once the chapter text is complete:
 
 ---
 
-## ASPECT RATIO RULES
+## ASPECT RATIO RULES — from the illustration formatter
 
-The aspect ratio follows the **layout** an activity needs, which follows the golden rule (answer by looking). **Every activity image is `21:9`** — wide and short — because the government needs a compact book to keep printing costs down. Two activity layouts exist, both `21:9`:
+The aspect ratio, the two activity layouts (self-contained comparison vs reference-based
+left/right), the big coloured A / B / C badges, the "≤ ~5 objects, large and uncluttered"
+legibility rule, and the on-page display sizes all live in the **maths illustration
+formatter** — read it via `walk_graph` and follow its `Material.content`; do not restate the
+values here.
 
-- **Situation d'amorce**: `16:9` — a full, immersive scene.
-- **"Je retiens" image**: `21:9` — a wide, short concept strip.
-- **Self-contained comparison activity** (each option panel already contains *everything* being compared, e.g. "plus que / moins que / autant que", "autant que" by one-to-one matching): **`21:9`** — a single wide, short row of three panels A / B / C.
-- **Reference-based activity** (the question is defined against a set the child must see: inclusion of a candidate in a set, partition of a specific set, réunion of two specific baskets, or "compare to THIS set"): **`21:9`** — a **left/right** image. The **left quarter is the stimulus/reference**, drawn once and labelled (e.g. "Le grand panier", "Panier 1 + Panier 2"), occupying roughly the left 1/4 of the width. The **right 3/4 holds the three options A / B / C in a horizontal row** (left → A, centre → B, right → C). The child solves it by comparing each option on the right to the reference on the left — no memory required.
-- **Bilan**: **no image** — it sends students back to the amorce image already at the top of the chapter, in words (see BILAN section).
-
-Because these images are short/dense, the content must be **large and bold** so it stays legible:
-- Render the **A / B / C letters big and prominent** — bold, high-contrast, in clearly coloured circles or badges (A red, B blue, C green), each occupying a meaningful share of its panel. They must be readable when the image is only a few centimetres tall.
-- In a **self-contained comparison**, lay the three choices out **side by side** across the width (left → A, centre → B, right → C).
-- In a **reference-based** image, put the **stimulus in the left quarter** (its own band, roughly the left 1/4 of the width, set off with a thin frame or light strip and a short French label so the child knows it is "the basket to compare against", not a fourth choice), and the **three options A / B / C in a horizontal row across the right 3/4** (left → A, centre → B, right → C). The stimulus must be visually distinct from the options.
-- Each choice is **self-explanatory from the picture alone**: since the three options are never written out as text in the document, the objects and arrangement in each panel must make the choice unambiguous on their own.
-- Keep each choice's objects **large and uncluttered** — few objects (≤ ~5), clearly drawn, easy to count.
-- Short object labels (e.g. "tomates") stay small and secondary to the big A / B / C markers.
+What this prompt owns is the **pedagogical reason** an image takes one layout or the other,
+because that choice is driven by the golden rule (answer by looking), not by house style:
+- A **self-contained comparison** is right when each option panel already contains *everything*
+  being compared (e.g. "plus que / moins que / autant que", one-to-one matching).
+- A **reference-based** layout is right when the question is defined against a set the child
+  must see (inclusion of a candidate in a set, partition of a specific set, réunion of two
+  specific baskets, "compare to THIS set") — the drawn, labelled stimulus is what makes it
+  answerable by looking (see SELF-CONTAINED ACTIVITY IMAGES).
+- The **bilan** has no image — it sends pupils back in words to the amorce image already at the
+  top of the chapter (see BILAN section).
 
 ---
 
@@ -130,7 +131,7 @@ Everything a pupil needs to answer must be **visible inside that one activity im
 - If the question refers to "le grand panier", the great basket is **drawn in that image**, as the stimulus on the left.
 - If the question is about réunion of two baskets, **both source baskets are drawn** as the stimulus on the left, and the options on the right show possible results.
 - If the question is about partition of a set, **the set to be sorted is drawn** as the stimulus on the left, and the options on the right show possible sortings.
-- If the question compares two groups, each option panel **contains both groups** so the comparison is visible without any external reference (this is the self-contained comparison layout, `21:9`).
+- If the question compares two groups, each option panel **contains both groups** so the comparison is visible without any external reference (this is the self-contained comparison layout).
 
 ### Questions must be genuinely decidable — never self-answering
 A CI question must have a single, visually obvious correct answer and must not contain (or presuppose) its own answer.
@@ -149,28 +150,28 @@ A CI question must have a single, visually obvious correct answer and must not c
 
 ## IMAGE RELATIONSHIP RULE
 
-The images should feel like they belong to the same book and the same world, but they are **not required to be extracted from the opening scene**.
+The master-scene rule — the amorce is the master image that fixes the cast, palette and object
+vocabulary, and every other image is an **independent composition** in that same world (same
+objects, setting, children, art style), **not a crop or cut-out** of the amorce, with any drawn
+reference/stimulus a fresh depiction — lives in the **shared art-style formatter**; follow it.
 
-- The **situation d'amorce** image is the master scene: it sets the art style, the character designs, the palette, and the object vocabulary.
-- **Activity and "Je retiens" images are related in CONTENT** — they use the same kinds of objects, the same setting, the same children, the same art style — but each is an **independent illustration composed for its own concept**. They are NOT crops, zoom-ins, or literal cut-outs of the amorce image.
-- **A drawn reference/stimulus in an activity is a FRESH depiction, not a crop of the amorce.** For example, if the amorce shows Coumba's market basket of tomatoes, carrots and aubergines, a reference-based inclusion activity re-draws a "grand panier" in the same style as its left-quarter stimulus, then shows three candidate baskets in a row across the right — a new composition, consistent with the amorce, not a cut-out of it.
-- The **bilan** does **not** get its own image: it explicitly asks students to look again at the amorce situation, so it points back to the amorce image already at the top of the chapter rather than generating a new one.
-
-Because activity images are independent compositions, generating them directly with `generate_image` (rather than `edit_image` from the amorce) is fine and preferred — just prepend the HOUSE ART STYLE block verbatim to every prompt so the look stays consistent.
+The maths-specific consequence: because activity images are independent compositions, generate
+them directly with `generate_image` (rather than `edit_image` from the amorce) — just prepend the
+art-style block verbatim so the look stays consistent. Concretely, if the amorce shows Coumba's
+basket of tomatoes, carrots and aubergines, a reference-based inclusion activity **re-draws** a
+"grand panier" as its left-quarter stimulus and three candidate baskets across the right — a new
+composition consistent with the amorce, not a cut-out of it. The bilan reuses the amorce image and
+generates nothing of its own.
 
 ---
 
-## IMAGE EMBEDDING & FILE SIZE
+## IMAGE EMBEDDING & FILE SIZE — from the formatters
 
-Generate images at high quality (`2K`, per Pass 2), but **embed a downscaled, compressed copy** —
-never drop a full-resolution lossless PNG straight in (eight of them push a chapter to ~16 MB,
-which breaks Word's preview/PDF converter). **Follow the formatter's image rules** for the
-compression (resize the long edge, re-encode as JPEG, keep the file a few MB) — that shared spec
-lives in the formatter (see Document setup), not here.
-
-What is **subject-specific and stays here — the on-page display dimensions** (only the underlying
-pixel resolution/encoding changes): the amorce ~14–16 cm wide; every activity image 5.25 cm high
-(~12.3 cm at 21:9), centred; the "Je retiens" banner full text-width.
+Both halves of image embedding now live in the formatters — read them, don't restate the values:
+the **compression** (downscale the long edge, re-encode as JPEG, keep the file a few MB — never a
+full-resolution lossless PNG, which pushes a chapter to ~16 MB and breaks Word's preview/PDF
+converter) is in the shared house style; the **on-page display sizes** (amorce width, activity-image
+height, "Je retiens" banner) are in the maths illustration formatter.
 
 ---
 
@@ -180,12 +181,18 @@ pixel resolution/encoding changes): the amorce ~14–16 cm wide; every activity 
 
 ### Document setup
 
-**House style comes from the formatter.** The pupil-book `Course` carries a **formatter** — a
-`usesRoutine` → `InstructionalRoutine` with `metadata.catalogKind "formatter"`, surfaced by
-`walk_graph`. Read its `Material.content` and apply the shared palette, typography (Calibri, body
-+ heading sizes), page setup (A4, margins) and compact spacing it defines — those live only in the
-formatter, don't restate them. The art style, activity-image and layout rules elsewhere in this
-prompt apply on top.
+**House style comes from the formatters.** The pupil-book `Course` carries **three formatters** —
+each a `usesRoutine` → `InstructionalRoutine` with `metadata.catalogKind "formatter"`, surfaced by
+`walk_graph`. Read each one's `Material.content` and apply it; those values live only in the
+formatters, don't restate them:
+- **house style** — palette, typography (Calibri, body + heading sizes), page setup (A4, margins),
+  compact spacing, image compression;
+- **art style** — the verbatim ART STYLE block to prepend to every image prompt, and the
+  master-scene consistency rule;
+- **maths illustration layout** — image aspect ratios, the two activity layouts, A / B / C badge
+  styling, and on-page display sizes.
+The authoring heuristics in this prompt (self-contained/decidable questions, the two-pass workflow)
+apply on top.
 
 - **Headings structure**: chapter title = Heading 1 (centred); sections = Heading 2.
 - **Where the formatter colours go here**: the chapter title, section headings and key terms in
@@ -201,10 +208,10 @@ The student-facing part of every activity has exactly **three elements, in this 
 
 1. **Title**: "Activité N — [name]" as Heading 2 (the title may use the curriculum term, e.g. "Le sous-ensemble inclus").
 2. **Prompt**: one short, concrete question a teacher reads aloud, answerable by looking (see SELF-CONTAINED ACTIVITY IMAGES). 1 sentence where possible.
-3. **Image**: the image block (description in Pass 1 → embedded image in Pass 2), always `21:9`, in one of two layouts:
-   - **Self-contained comparison** → a wide `21:9` single row: three panels with large, bold A / B / C badges, each panel containing everything being compared.
-   - **Reference-based** → a `21:9` left/right image: a labelled **stimulus** in the left quarter (the set/baskets the question is about, ~left 1/4), and the three **A / B / C option panels** in a horizontal row across the right 3/4.
-   In both cases the **three answer choices appear ONLY inside the image** — each choice is one labelled panel (A / B / C) showing the objects for that option.
+3. **Image**: the image block (description in Pass 1 → embedded image in Pass 2), in one of the two layouts the illustration formatter defines:
+   - **Self-contained comparison** → a single row of three panels with large, bold A / B / C badges, each panel containing everything being compared.
+   - **Reference-based** → a left/right image: a labelled **stimulus** in the left quarter (the set/baskets the question is about), and the three **A / B / C option panels** in a horizontal row across the right 3/4.
+   In both cases the **three answer choices appear ONLY inside the image** — each choice is one labelled panel (A / B / C) showing the objects for that option. (Ratios and on-page sizes come from the illustration formatter.)
 
 **Do NOT write the three choices out as A / B / C text below the image.** The picture with its A/B/C panels is the complete set of choices; repeating them in words is redundant and is not wanted.
 
@@ -241,7 +248,7 @@ Apply it on top of each section's spec:
 
 ### Activités — image & design detail
 Each activity targets a specific lesson (OS) through its component(s) (from `get_standards`); each image is an independent, **self-contained** composition (see SELF-CONTAINED ACTIVITY IMAGES and IMAGE RELATIONSHIP RULE).
-- **Answerable by looking, not remembering** (golden rule): the image contains everything needed. Reference-based lessons (inclusion, partition, réunion, compare-to-a-set) use the left/right layout (drawn stimulus in the left quarter, three options in a row across the right 3/4); self-contained comparisons use the single-row layout. Both `21:9`.
+- **Answerable by looking, not remembering** (golden rule): the image contains everything needed. Reference-based lessons (inclusion, partition, réunion, compare-to-a-set) use the reference-based layout; self-contained comparisons use the single-row comparison layout (the layout mechanics + ratios come from the illustration formatter).
 - **No self-answering questions**: inclusion pits a separate candidate against a drawn reference; never "identify this subset that is already inside, is it inside?". One idea per question.
 - **CI calibration**: quantities ≤ ~5; the correct option decidable by direct visual matching against the stimulus; distractors are visible misconceptions.
 - Progressive: concrete/simple → abstract/complex. Prior knowledge may draw on earlier chapters.
@@ -291,12 +298,12 @@ Each activity targets a specific lesson (OS) through its component(s) (from `get
 
 **Pass 2 (illustrate):**
 - [ ] Model set with `set_model`
-- [ ] **HOUSE ART STYLE block prepended verbatim** to every image prompt (amorce, "Je retiens", and all activity images) — no paraphrasing, no unspecified style
-- [ ] Amorce image generated first at `16:9`
-- [ ] Every activity image generated at `21:9`: single row of three panels for self-contained comparison; left-quarter stimulus + three A/B/C options in a row across the right 3/4 for reference-based; "Je retiens" at `21:9`
+- [ ] **Art-style block prepended verbatim** (from the shared art-style formatter) to every image prompt (amorce, "Je retiens", and all activity images) — no paraphrasing, no unspecified style
+- [ ] Amorce generated first, then activity images, at the ratios the illustration formatter gives
+- [ ] Each activity image uses the layout the illustration formatter gives: single row of three panels for self-contained comparison; left-quarter stimulus + three A/B/C options across the right 3/4 for reference-based
 - [ ] Reference-based activity images show the labelled stimulus set apart from the A/B/C options (its own band in the left quarter), so it is not mistaken for a fourth choice
 - [ ] Bilan has NO image (it refers back in words to the amorce image already in the chapter)
-- [ ] A / B / C labels rendered LARGE and bold, side by side, readable at small height
+- [ ] A / B / C badges rendered LARGE and bold per the illustration formatter, readable at small height
 - [ ] Each activity image shows the stimulus (if any) and all three choices clearly enough to be understood without any accompanying text
 - [ ] **Each finished image checked against its answer key**: correct option present, at the intended letter, uniquely correct; counts and contents match the prompt; mis-generated images regenerated
 - [ ] Every `[IMAGE: id]` block replaced with the fetched image (failed ones left as labelled blocks)

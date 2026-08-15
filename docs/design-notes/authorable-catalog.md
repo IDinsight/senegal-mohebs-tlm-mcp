@@ -32,8 +32,14 @@ Live on the deployed server, seeded, and verified end-to-end (PRs #77, #78, #79)
   **formatters** (a house-style spec `Material`). Both are `InstructionalRoutine`
   entries under a root container; `kind` comes from `metadata.catalogKind`.
 - Seeded by `scripts/seed-catalog.mjs` (`npm run seed:catalog`), which extracts each
-  subject's routine subtrees and splices the authored `HOUSE_STYLE_FORMATTER` under one
-  root. The live shared catalog has **3 entries** (2 CI-maths routines + the house style).
+  subject's routine subtrees and splices the authored formatters under a root **per
+  namespace**. The shared catalog has **4 entries** (2 CI-maths routines + two
+  workspace-agnostic formatters: the docx house style and the Senegalese art style); the
+  **senegal workspace** catalog has **1** (the CI-maths pupil-manual illustration layout —
+  aspect ratios, activity-panel layouts, A/B/C badge styling, on-page sizes). The art-look
+  and layout formatters were split out of `PROMPT_generate_chapter.md`, which now points at
+  them (the shared art style is reusable across illustrated subjects; the maths layout is
+  subject-specific, hence workspace-scoped).
 
 **Applying — copy-on-use (D2).** `use_routine` copies a routine onto a **Lesson**;
 `use_formatter` copies a formatter onto a **Course/deliverable**. Both share one
