@@ -273,6 +273,14 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.batch.kindProperties.StandardsFrameworkItem).toContain("statementType");
   });
 
+  it("lifecycle advertises publish_draft / discard_draft returnMode controls", async () => {
+    const caps = await withActiveContext(CURATOR, callGetCapabilities);
+    expect(caps.lifecycle.tools).toEqual(["publish_draft", "discard_draft"]);
+    expect(caps.lifecycle.params).toEqual(["returnMode"]);
+    expect(caps.lifecycle.defaultReturnMode).toBe("summary");
+    expect(caps.lifecycle.returnModes).toEqual(["summary", "full"]);
+  });
+
   it("editable.coverageWarnings.enabled mirrors whether the adapter has a coverage hook (#13)", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;

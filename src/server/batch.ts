@@ -34,7 +34,9 @@ export type BatchCounts = {
   edgesRemoved: number;
 };
 
-const countsOf = (diff: GraphDiff): BatchCounts => ({
+// Exported so the draft-lifecycle tools (publish_draft / discard_draft) shape
+// their whole-draft summary with the identical five-field contract — no drift.
+export const countsOf = (diff: GraphDiff): BatchCounts => ({
   nodesAdded: diff.nodes.added.length,
   edgesAdded: diff.edges.added.length,
   nodesChanged: diff.nodes.changed.length,

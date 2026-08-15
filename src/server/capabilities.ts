@@ -144,6 +144,19 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     },
   };
 
+  // ── lifecycle: the draft promotion / discard tools and their response
+  // controls, advertised so callers can feature-detect returnMode (mirrors
+  // editable.batch). The role gates live in actions.canPublish /
+  // actions.canDiscardDraft — this block is about response SHAPE, not authz.
+  const lifecycle = {
+    tools: ["publish_draft", "discard_draft"],
+    params: ["returnMode"],
+    returnModes: ["summary", "full"],
+    defaultReturnMode: "summary",
+    note:
+      "publish_draft promotes the draft to live; discard_draft throws it away. Both are two-phase (dry-run → confirmationToken → confirm). returnMode defaults to 'summary' — a compact `counts` object (plus `warnings`, verbatim, on publish) instead of the whole-draft `diff`, which is 200+ KB on a large draft and can overflow the token cap and hide the confirmationToken; pass 'full' to also attach the diff (and any staged profileDiff). To inspect the full diff before promoting, call diff_draft — it is the diff endpoint; publish_draft/discard_draft return mutation summaries. Coverage warnings are preserved in BOTH modes: an approver must see them before publishing.",
+  };
+
   // ── rules: structural rules and confirm expectation. structural
   // is imported from validate.ts so a rule description change is one file.
   const rules = {
@@ -240,6 +253,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     },
     discovery,
     editable,
+    lifecycle,
     profile,
     preview,
     audit,
