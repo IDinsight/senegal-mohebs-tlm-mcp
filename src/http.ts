@@ -30,7 +30,7 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
 import { listExportNamespaces, exportNamespace } from "./kg-export.js";
 import { CONFIG, basePrefix, DEFAULT_WORKSPACE } from "./config.js";
-import { newSessionState, runInSession, type SessionState } from "./context/index.js";
+import { newSessionState, runInSession, listAvailableContexts, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
 import { activateContext, refreshAvailableContexts } from "./activate.js";
 import { consentPage } from "./consent.js";
@@ -227,9 +227,12 @@ async function main() {
 
   // Discover installed contexts from the store once at boot (the context list is
   // process-global, not per-session). Best-effort: on a store error the list
-  // stays empty and the first tool call re-prompts.
+  // stays empty and the first tool call re-prompts. Log what was discovered so an
+  // operator can confirm, from the startup logs, which namespaces the store holds.
   try {
     await refreshAvailableContexts();
+    const found = listAvailableContexts();
+    console.error(`${LOG} discovered ${found.length} context(s) from the store: ${found.map((c) => `${c.workspace}/${c.grade}/${c.subject}`).join(", ") || "(none)"}`);
   } catch (e) {
     console.error(`${LOG} could not list namespaces from the store:`, (e as Error).message);
   }
