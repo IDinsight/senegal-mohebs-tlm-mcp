@@ -17,7 +17,7 @@ import { __setKgStoreForTest, createMemoryKgStore, kgNamespace } from "../../kg-
 import { __setStorageForTest } from "../../storage/index.js";
 import { activateContext } from "../../activate.js";
 import { runAsActor, __setActorForTest, type Actor } from "../../actor.js";
-import { readProfile, readGraphGuide, runEditProfile } from "../profile.js";
+import { readProfile, readGraphGuide, runEditProfile, reviewDraft } from "../profile.js";
 import type { KgNodeStore, StoredConfig, StoredMeta } from "../../kg-store/index.js";
 import type { StorageAdapter, HistoryFile } from "../../types.js";
 
@@ -125,6 +125,31 @@ describe("firestore mode", () => {
       expect(res.phase).toBe("preview");
     });
   });
+
+  it("review_draft bundles the guide, coded warnings, and structural facts (published)", async () => {
+    await inContext(maths, CURATOR, async () => {
+      const res = await reviewDraft();
+      expect(res.reviewing).toBe("published");
+      expect(String(res.guide)).toContain("Coverage expectations");
+      expect(Array.isArray(res.coverageWarnings)).toBe(true);
+      const facts = res.structuralFacts as { nodesByType: Record<string, number>; containers: unknown[]; contentMultiParent: unknown[] };
+      expect(facts.nodesByType.Chapitre).toBeGreaterThan(0);
+      expect(facts.nodesByType.Lesson).toBeGreaterThan(0);
+      expect(facts.containers.length).toBeGreaterThan(0);
+      expect(Array.isArray(facts.contentMultiParent)).toBe(true);
+      expect(typeof res.instruction).toBe("string");
+    });
+  });
+
+  it("review_draft reviews an open draft, and gates it for a non-curator", async () => {
+    await store.createDraft(kgNamespace(maths.workspace, maths.grade, maths.subject));
+    await inContext(maths, CURATOR, async () => {
+      expect((await reviewDraft()).reviewing).toBe("draft");
+    });
+    await inContext(maths, UNKNOWN, async () => {
+      expect(String((await reviewDraft()).error)).toMatch(/restricted/i);
+    });
+  });
 });
 
 describe("bundle mode", () => {
@@ -138,6 +163,9 @@ describe("bundle mode", () => {
 
       const edit = await runEditProfile({ core: {} }) as { error?: string };
       expect(String(edit.error)).toMatch(/only available in firestore/i);
+
+      const review = await reviewDraft();
+      expect(review.notApplicable).toBe(true);
     });
   });
 });

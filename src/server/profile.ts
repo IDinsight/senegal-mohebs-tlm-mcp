@@ -156,6 +156,116 @@ export async function runEditProfile(profile: Record<string, unknown>, confirm?:
   });
 }
 
+// ── Coverage review (phase 2c, coverage-as-prose) ────────────────────────────
+// review_draft bundles the guide's coverage EXPECTATIONS (prose) with the
+// DETERMINISTIC coded warnings and a subject-agnostic structural snapshot, and
+// hands them to the CALLING LLM to review — the server never calls an LLM. The
+// coded rules stay (additive): the LLM adds value on the prose-only expectations
+// the rules don't cover. Facts are computed generically (node type + canonical
+// isAssessment + the containment edges), so no subject vocabulary lives here.
+
+type FactNode = { id: string; type: string; properties: Record<string, unknown> };
+type FactEdge = { type: string; from: string; to: string };
+const CONTAINMENT_EDGES = new Set(["hasPart", "hasChild"]);
+
+// Prefer a human title/text over the raw id, but never blank.
+function labelOf(n: FactNode): string {
+  const p = n.properties ?? {};
+  const t = typeof p.title === "string" && p.title ? p.title : typeof p.text === "string" && p.text ? p.text : null;
+  return t ?? n.id;
+}
+
+// A compact, subject-agnostic coverage view of a graph: counts by type, each
+// container's child-type histogram per containment axis + its assessment-child
+// count, and nodes with more than one CONTENT (hasPart) parent (the ambiguity
+// the coded single-content-parent rule flags).
+function computeStructuralFacts(nodes: FactNode[], edges: FactEdge[]) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const nodesByType: Record<string, number> = {};
+  for (const n of nodes) nodesByType[n.type] = (nodesByType[n.type] ?? 0) + 1;
+  const edgesByType: Record<string, number> = {};
+  for (const e of edges) edgesByType[e.type] = (edgesByType[e.type] ?? 0) + 1;
+
+  const kidsOf = new Map<string, Array<{ id: string; edge: string }>>();
+  for (const e of edges) {
+    if (!CONTAINMENT_EDGES.has(e.type)) continue;
+    (kidsOf.get(e.from) ?? kidsOf.set(e.from, []).get(e.from)!).push({ id: e.to, edge: e.type });
+  }
+  const containers: Array<Record<string, unknown>> = [];
+  for (const [pid, kids] of kidsOf) {
+    const p = byId.get(pid);
+    if (!p) continue;
+    const hasPartChildrenByType: Record<string, number> = {};
+    const hasChildChildrenByType: Record<string, number> = {};
+    let assessmentChildren = 0;
+    for (const k of kids) {
+      const c = byId.get(k.id);
+      if (!c) continue;
+      const bucket = k.edge === "hasPart" ? hasPartChildrenByType : hasChildChildrenByType;
+      bucket[c.type] = (bucket[c.type] ?? 0) + 1;
+      if (k.edge === "hasPart" && c.properties?.isAssessment === true) assessmentChildren++;
+    }
+    containers.push({ id: pid, type: p.type, title: labelOf(p), hasPartChildrenByType, hasChildChildrenByType, assessmentChildren });
+  }
+
+  const hasPartParents = new Map<string, number>();
+  for (const e of edges) if (e.type === "hasPart") hasPartParents.set(e.to, (hasPartParents.get(e.to) ?? 0) + 1);
+  const contentMultiParent: Array<Record<string, unknown>> = [];
+  for (const [cid, count] of hasPartParents) {
+    if (count <= 1) continue;
+    const c = byId.get(cid);
+    if (!c) continue;
+    contentMultiParent.push({ id: cid, type: c.type, title: labelOf(c), hasPartParentCount: count });
+  }
+
+  return { nodesByType, edgesByType, containers, contentMultiParent };
+}
+
+export async function reviewDraft(): Promise<Record<string, unknown>> {
+  const adapter = getActiveAdapter();
+  const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
+
+  if (kgSource() !== "firestore") {
+    return { notApplicable: true, message: "review_draft targets the firestore draft/publish curator loop; it is not available in bundle/dev mode." };
+  }
+  const store = getKgStore();
+  const pointer = await store.readPointer(namespace);
+  if (!pointer) return { error: `No seed found for namespace '${namespace}'. Run the seed first.` };
+
+  // Review the DRAFT when one is open (the pre-publish use case), else published.
+  let target = pointer.publishedSlot;
+  let reviewing: "draft" | "published" = "published";
+  if (pointer.draftSlot) {
+    const authz = authorize(currentActor(), "readDraft", namespace);
+    if (!authz.ok) return { error: `Reviewing the draft is restricted: ${authz.reason}` };
+    target = pointer.draftSlot;
+    reviewing = "draft";
+  }
+
+  const [nodes, edges, config] = await Promise.all([
+    store.listNodes(namespace, target),
+    store.listEdges(namespace, target),
+    store.readConfig(namespace, target),
+  ]);
+  const guide = guideOf(config) ?? null;
+  const coverageWarnings = adapter.coverageWarnings ? adapter.coverageWarnings({ nodes, edges } as never) : [];
+  const structuralFacts = computeStructuralFacts(nodes as FactNode[], edges as FactEdge[]);
+
+  return {
+    namespace,
+    reviewing,
+    hasGuide: guide !== null,
+    guide,
+    coverageWarnings,
+    structuralFacts,
+    instruction:
+      `Review this ${reviewing} graph against the guide's coverage expectations (in \`guide\`). ` +
+      "`coverageWarnings` are the DETERMINISTIC checks the server already ran — advisory, they never block a publish. " +
+      "Use `structuralFacts` (a subject-agnostic snapshot: node/edge counts; each container's child-type histogram per containment axis + its assessment-child count; and nodes with more than one content parent) to check the guide's prose expectations that the coded rules do NOT cover (e.g. 'every teaching lesson is aligned', 'chapters are contiguous'). " +
+      "Report each expectation the graph violates, citing node ids; if all hold, say so plainly. This is a review, not an edit — it changes nothing.",
+  };
+}
+
 export function registerProfileTools(server: McpServer) {
   server.registerTool(
     "get_profile",
@@ -195,5 +305,18 @@ export function registerProfileTools(server: McpServer) {
     },
     guarded(async (a: { profile: Record<string, unknown>; confirm?: boolean; confirmationToken?: string }) =>
       asJson(await runEditProfile(a.profile, a.confirm, a.confirmationToken))),
+  );
+
+  // Review the draft (or published, if no draft is open) against the guide's
+  // coverage expectations. Read-only; the CALLING LLM does the reasoning.
+  server.registerTool(
+    "review_draft",
+    {
+      title: "Review the draft against the graph guide",
+      description:
+        "Review the current DRAFT (or published, when no draft is open) against the subject's GRAPH GUIDE coverage expectations — a read-only pre-publish check. Returns the `guide` (the authored expectations), `coverageWarnings` (the server's DETERMINISTIC coded checks — advisory, they never block publish), a subject-agnostic `structuralFacts` snapshot of the graph (node/edge counts; each container's child-type histogram + assessment-child count; content multi-parent nodes), and an `instruction`. YOU (the model) then reason over the facts against the guide's prose to find violations the coded rules don't cover (e.g. unaligned lessons, non-contiguous chapters) and report them — this tool computes the inputs, it does not itself render a verdict. Reviewing an open draft is curator/approver-gated. firestore mode only. Changes nothing.",
+      inputSchema: {},
+    },
+    guarded(async () => asJson(await reviewDraft())),
   );
 }

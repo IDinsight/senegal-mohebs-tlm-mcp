@@ -7,11 +7,13 @@
 > the formatter. The subject-profile **config layer** (phase 2b) is built too:
 > profiles are authored data in the store, edited through the curator loop with the
 > schema guard at authoring time (`get_profile` / `edit_profile`). Phase 2c
-> increment 1 is built too: the profile is a `{ core, guide }` record — a machine
-> `core` plus an authored markdown `guide` the LLM reads via `get_graph_guide`.
-> Still a **proposal**: migrating coverage rules into guide prose (phase 2c next),
-> the MCP **resources** browse surface (D5), reading's routine catalog (blocked on
-> its content layer), and re-copy/detach ergonomics. This note extends
+> increments 1–2 are built too: the profile is a `{ core, guide }` record (machine
+> `core` + authored markdown `guide` the LLM reads via `get_graph_guide`), and
+> coverage expectations live in the guide with a `review_draft` tool that pairs
+> them with the deterministic coded warnings (kept as the backstop). Still a
+> **proposal**: retiring the coded coverage rules, the MCP **resources** browse
+> surface (D5), reading's routine catalog (blocked on its content layer), and
+> re-copy/detach ergonomics. This note extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
 > **D2 was revised from by-reference to copy-on-use during implementation** (see below).
@@ -150,14 +152,17 @@ time**. A profile change is finally "no redeploy". (D4.)
 
 ## Phase 2c — the profile as a "graph guide" the LLM reads
 
-> **Status: increment 1 built (in-repo) — the split + the guide surface.** The
-> profile is now a `{ core, guide }` record: a machine `core` the parser/classifier
+> **Status: increments 1–2 built (in-repo).** (1) The split + the guide surface:
+> the profile is a `{ core, guide }` record — a machine `core` the parser/classifier
 > consume and an authored markdown `guide` the LLM reads via `get_graph_guide`.
-> Reads are unchanged (built from `core`; a legacy flat cell still resolves). Still
-> **proposed**: migrating the advisory coverage rules from `core` into guide prose
-> (the coverage-as-prose review), and authoring guides for the remaining subjects
-> (a starter `ci/maths` guide ships). This section is the design; the increment-1
-> notes are inline below.
+> Reads are unchanged (built from `core`; a legacy flat cell still resolves). (2)
+> Coverage-as-prose, **additive**: the guide carries the coverage *expectations* in
+> prose and a new **`review_draft`** tool bundles them with the deterministic coded
+> warnings + a structural snapshot for the model to reason over — the coded rules
+> are **kept** as the automatic backstop (their removal is a later call). Still
+> **proposed**: retiring the coded coverage rules once the prose review proves out,
+> and authoring guides for the remaining subjects (a starter `ci/maths` guide ships).
+> This section is the design; the increment notes are inline below.
 
 The Phase 2b profile is **configuration for deterministic server code** — the
 parser, the coverage checker, the deliverable classifier. But the larger part of
@@ -237,13 +242,33 @@ thin core." That is the honest form of "no per-subject code": the *mechanisms*
 stay generic code; the *subject knowledge*, including its interpretation guidance,
 becomes authored data — most of it prose.
 
+### Increment 2 — coverage-as-prose, additive (built)
+
+The guide now carries the coverage **expectations** in prose (`ci/maths`: no empty
+chapter, one bilan per chapter, one chapter per lesson, every teaching lesson
+aligned, chapters contiguous), and a new **`review_draft`** tool bundles them with
+the server's deterministic **coded** warnings and a subject-agnostic
+`structuralFacts` snapshot (node/edge counts; each container's child-type
+histogram per axis + assessment-child count; content multi-parent nodes), plus an
+`instruction`. The server never calls an LLM — `review_draft` computes the inputs
+and the **calling model** reasons over the facts against the guide, catching the
+prose-only expectations the coded rules don't cover (alignment, contiguity). It is
+read-only, firestore-mode, and reviewing an open draft is curator/approver-gated.
+
+This is **additive on purpose** (the chosen approach): the coded rules stay as the
+automatic, deterministic backstop that warns on every edit / `diff_draft` /
+publish. `review_draft` adds an on-demand, richer pass on top. Retiring the coded
+rules in favour of prose-only is left as a deliberate later call, once the review
+path proves out — deleting a deterministic safety net on the live curator loop is
+not something to do blind.
+
 ### Open (next increments)
 
-- **Coverage-as-prose (the next increment).** Move the advisory coverage rules
-  from `core` into the guide, checked by a new opt-in "review this draft against
-  the guide" LLM tool rather than folded into `diff_draft` — that keeps the hot
-  path untouched and makes the LLM cost explicit. This is where coded per-subject
-  rules actually get deleted.
+- **Retire the coded coverage rules (deferred).** Once `review_draft` proves out,
+  the `core.coverage` rules + `runCoverageRules` + the `coverageWarnings` hook and
+  its wiring into edit / `diff_draft` / publish could be deleted, moving those
+  expectations to prose-only. Deferred because it removes the deterministic
+  auto-warnings from the live loop.
 - **Author the remaining guides.** Only `ci/maths` ships a starter guide; the
   reading and Nigeria subjects need theirs authored (via `edit_profile`, so no
   redeploy).
