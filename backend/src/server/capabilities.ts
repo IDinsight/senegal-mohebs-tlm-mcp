@@ -114,8 +114,8 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       cascade: "always-with-warning",
       note:
         "create_edges adds one edge or many (usesRoutine / buildsTowards / relatesTo / hasDependency / an extra hasEducationalAlignment); edge id is deterministic (`<type>:<from>-><to>`), duplicate detection spans the batch AND the draft, and edge-type LEGALITY across labels is not enforced (deferred to human review at publish). It replaced the single create_edge. " +
-        "delete_edges removes an edge by id. " +
-        "delete_nodes removes a node AND its dependent subtree (children, their children, …) plus every incident edge in one atomic mutation; the dry-run diff shows the full set that will vanish and WARNS with it — nothing is removed until you confirm, so seeing the cascade is the safety (no force flag). " +
+        "delete_edges removes one edge or many by id in one atomic batch (all-or-nothing). " +
+        "delete_nodes removes one node or many — each AND its dependent subtree (children, their children, …) plus every incident edge — in one atomic batch; the cascade spans all the ids at once, the dry-run diff shows the full set that will vanish and WARNS with it, and nothing is removed until you confirm, so seeing the cascade is the safety (no force flag). " +
         "To CREATE a node, use `add_nodes`, not create_edges.",
     },
     recipes,
@@ -123,7 +123,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     // callers can feature-detect returnMode + idempotencyKey and look up the
     // per-kind property vocabulary the retired typed adds used to document.
     batch: {
-      tools: ["add_nodes", "create_edges"],
+      tools: ["add_nodes", "create_edges", "delete_edges", "delete_nodes"],
       params: ["returnMode", "idempotencyKey"],
       returnModes: ["summary", "full"],
       defaultReturnMode: "summary",

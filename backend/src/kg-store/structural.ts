@@ -266,12 +266,14 @@ export type DeleteNodeArgs = {
 const CONTAINMENT = new Set(["hasChild", "hasPart"]);
 
 // Compute the full set of node ids removed by a force-cascade delete of
-// `rootId`: the root plus every containment-descendant all of whose containment
+// `rootIds`: the roots plus every containment-descendant all of whose containment
 // parents are themselves in the removed set. Iterates to a fixpoint so a
-// child whose last surviving parent gets removed later is still collected.
+// child whose last surviving parent gets removed later is still collected — and,
+// because ALL roots seed the set together, a child shared by two roots that are
+// BOTH being deleted cascades too (which per-root-then-union would miss).
 // Pure over the graph; shared by validate (to report) and apply (to enact).
-function cascadeRemovedNodeIds(base: MutationGraph, rootId: string): Set<string> {
-  const removed = new Set<string>([rootId]);
+function cascadeRemovedNodeIds(base: MutationGraph, rootIds: string[]): Set<string> {
+  const removed = new Set<string>(rootIds);
   // Parents of each node via containment, precomputed.
   const parentsByChild = new Map<string, string[]>();
   const childrenByParent = new Map<string, string[]>();
@@ -308,7 +310,7 @@ export const deleteNode: GraphMutation<DeleteNodeArgs> = {
     }
     // No error for a connected node — always cascade. WARN with what will vanish
     // so the caller sees the full set before confirming.
-    const removed = cascadeRemovedNodeIds(base, args.nodeId);
+    const removed = cascadeRemovedNodeIds(base, [args.nodeId]);
     const incident = base.edges.filter((e) => removed.has(e.from) || removed.has(e.to));
     const warnings: string[] = [];
     if (removed.size > 1 || incident.length > 0) {
@@ -323,7 +325,96 @@ export const deleteNode: GraphMutation<DeleteNodeArgs> = {
   },
   apply: (base, args) => {
     // Always cascade: prune the dependent subtree + every incident edge.
-    const removed = cascadeRemovedNodeIds(base, args.nodeId);
+    const removed = cascadeRemovedNodeIds(base, [args.nodeId]);
+    return {
+      nodes: base.nodes.filter((n) => !removed.has(n.id)),
+      edges: base.edges.filter((e) => !removed.has(e.from) && !removed.has(e.to)),
+    };
+  },
+};
+
+// ── delete_edges (batch) ───────────────────────────────────────────────────────
+// Remove ONE edge or MANY by id in one atomic mutation — the batch form of
+// unlink_nodes, so detaching a whole fan of edges is one dry-run + one confirm.
+// All-or-nothing: any missing id (or an id listed twice) blocks the whole batch,
+// like create_edges' duplicate check. Removing edges never orphans a node — the
+// dangling-edge rule only cares about surviving edges' endpoints.
+
+export type DeleteEdgesArgs = {
+  edgeIds: string[];
+};
+
+export const deleteEdges: GraphMutation<DeleteEdgesArgs> = {
+  name: "deleteEdges",
+  describe: ({ edgeIds }) => `delete ${edgeIds.length} edge(s) in one batch`,
+  validate: (base, _after, args) => {
+    const errors: string[] = [];
+    if (!Array.isArray(args.edgeIds) || args.edgeIds.length === 0) {
+      errors.push("delete_edges: 'edgeIds' must be a non-empty array.");
+      return { errors, warnings: [] };
+    }
+    const present = new Set(base.edges.map((e) => e.id));
+    const seen = new Set<string>();
+    args.edgeIds.forEach((id, index) => {
+      if (!present.has(id)) errors.push(`delete_edges[${index}]: edge '${id}' does not exist in the draft.`);
+      if (seen.has(id)) errors.push(`delete_edges[${index}]: edge '${id}' is listed more than once in this batch.`);
+      seen.add(id);
+    });
+    return { errors, warnings: [] };
+  },
+  apply: (base, args) => {
+    const remove = new Set(args.edgeIds);
+    return { nodes: base.nodes, edges: base.edges.filter((e) => !remove.has(e.id)) };
+  },
+};
+
+// ── delete_nodes (batch) ───────────────────────────────────────────────────────
+// Remove ONE node or MANY — each together with its dependent subtree — in one
+// atomic mutation. The cascade is computed over ALL requested roots at once (see
+// cascadeRemovedNodeIds), so a child shared by two roots that are both deleted
+// vanishes too. Still no force flag: the dry-run WARNS with the full set that will
+// go, and nothing is removed until confirm — seeing the cascade is the safety.
+
+export type DeleteNodesArgs = {
+  nodeIds: string[];
+};
+
+export const deleteNodes: GraphMutation<DeleteNodesArgs> = {
+  name: "deleteNodes",
+  describe: ({ nodeIds }) => `delete ${nodeIds.length} node(s) and their dependent subtrees`,
+  validate: (base, _after, args) => {
+    const errors: string[] = [];
+    if (!Array.isArray(args.nodeIds) || args.nodeIds.length === 0) {
+      errors.push("delete_nodes: 'nodeIds' must be a non-empty array.");
+      return { errors, warnings: [] };
+    }
+    const present = new Set(base.nodes.map((n) => n.id));
+    const seen = new Set<string>();
+    args.nodeIds.forEach((id, index) => {
+      if (!present.has(id)) errors.push(`delete_nodes[${index}]: node '${id}' does not exist in the draft.`);
+      if (seen.has(id)) errors.push(`delete_nodes[${index}]: node '${id}' is listed more than once in this batch.`);
+      seen.add(id);
+    });
+    if (errors.length > 0) return { errors, warnings: [] };
+
+    // WARN with the FULL set that will vanish — the union cascade across every
+    // requested root plus every incident edge — so the caller sees it first.
+    const removed = cascadeRemovedNodeIds(base, args.nodeIds);
+    const incident = base.edges.filter((e) => removed.has(e.from) || removed.has(e.to));
+    const dependents = removed.size - args.nodeIds.length; // beyond the listed roots
+    const warnings: string[] = [];
+    if (dependents > 0 || incident.length > 0) {
+      const extra = dependents > 0 ? ` and ${dependents} dependent node(s)` : "";
+      warnings.push(
+        `delete_nodes: removing ${args.nodeIds.length} node(s)${extra} will also drop ${incident.length} incident edge(s). ` +
+        `Removed nodes: ${[...removed].slice(0, 8).join(", ")}${removed.size > 8 ? ", …" : ""}. ` +
+        `Confirm only if this whole set should go.`,
+      );
+    }
+    return { errors: [], warnings };
+  },
+  apply: (base, args) => {
+    const removed = cascadeRemovedNodeIds(base, args.nodeIds);
     return {
       nodes: base.nodes.filter((n) => !removed.has(n.id)),
       edges: base.edges.filter((e) => !removed.has(e.from) && !removed.has(e.to)),

@@ -67,4 +67,10 @@ sequence is traversal order, not a \`position\`.
 - **No content authoring, no coverage.** This framework exists to be browsed and
   aligned against, not to hold generated materials — a reference framework has
   nothing to "complete", so there are no coverage expectations.
+- **Deleting is bulk and cascades.** \`delete_nodes\` / \`delete_edges\` each take an
+  ARRAY (one or many, one atomic draft edit, all-or-nothing). \`delete_nodes\` cascades
+  along \`hasChild\`: removing an SFI takes its descendants and their incident
+  \`supports\`/\`hasChild\` edges. The dry-run WARNS with the full set before you confirm
+  (no force flag). Rare here — this is a reference framework — but that is how
+  framework maintenance works.
 `;
