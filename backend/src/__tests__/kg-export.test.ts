@@ -155,6 +155,38 @@ describe("kg-export — LC ontology (maths)", () => {
     expect(parents[0].rel).toBe("illustrates");
   });
 
+  it("curriculum view lets a lesson walk out to its aligned standard, then to that standard's supporting components", async () => {
+    const graph = (await exportNamespace(mathsNs))!;
+    const view = graph.meta.viewConfig.views.find((v) => v.id === "curriculum") as any;
+    expect(view.shape).toBe("label-tree");
+    // The tail is the graph-native way to reach the alignment the content walk folds
+    // away: Lesson --hasEducationalAlignment--> SFI --supports--> LearningComponent.
+    expect(view.params.alignmentTail).toEqual([
+      { from: "Lesson", rel: "hasEducationalAlignment", dir: "in" },
+      { from: "StandardsFrameworkItem", rel: "supports", dir: "out" },
+    ]);
+
+    // Reproduce the client's tail walk over the REAL edge types (graphModel builds
+    // realIn/realOut the same way): a step's `dir` picks which endpoint is the node.
+    const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+    const realIn = new Map<string, string[]>();  // rel|to → [from]
+    const realOut = new Map<string, string[]>(); // rel|from → [to]
+    for (const e of graph.edges) {
+      (realOut.get(`${e.rel}|${e.s}`) ?? realOut.set(`${e.rel}|${e.s}`, []).get(`${e.rel}|${e.s}`)!).push(e.t);
+      (realIn.get(`${e.rel}|${e.t}`) ?? realIn.set(`${e.rel}|${e.t}`, []).get(`${e.rel}|${e.t}`)!).push(e.s);
+    }
+    const lessons = graph.nodes.filter((n) => n.label === "Lesson");
+    // At least one lesson reaches an SFI, and that SFI reaches ≥1 LearningComponent.
+    const chains = lessons
+      .map((lesson) => {
+        const sfis = (realIn.get(`hasEducationalAlignment|${lesson.id}`) ?? []).filter((id) => byId.get(id)?.label === "StandardsFrameworkItem");
+        const comps = sfis.flatMap((sfi) => (realOut.get(`supports|${sfi}`) ?? []).filter((id) => byId.get(id)?.label === "LearningComponent"));
+        return { sfis, comps };
+      })
+      .filter((c) => c.sfis.length > 0 && c.comps.length > 0);
+    expect(chains.length).toBeGreaterThan(0);
+  });
+
   it("node detail carries the raw LC properties generically (no subject fields on the node)", async () => {
     const graph = (await exportNamespace(mathsNs))!;
     const lesson = graph.nodes.find((n) => n.label === "Lesson")!;

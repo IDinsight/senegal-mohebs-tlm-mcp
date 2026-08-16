@@ -90,9 +90,17 @@ export type ViewSpec =
   // `reverse` walks `expandEdge` bottom-up (target→source), so the tree flows from
   // the leaf outward — the Learning-components view reads LearningComponent →
   // (supports) → framework item → framework, not the framework down.
+  // `alignmentTail` grafts extra branches onto content leaves that the plain
+  // containment walk folds away: an ordered chain of steps, each expanding a node
+  // of LC label `from` along a REAL edge type `rel` (`dir:"in"` follows it toward
+  // the node, `"out"` away from it). Curriculum uses it to let a Lesson walk out to
+  // the standard it aligns with, then to that standard's supporting components.
   | {
       id: string; label: { fr: string; en: string }; shape: "label-tree";
-      params: { includeLabels: string[]; expandEdge: string; rootKinds?: string[]; pruneToLabel?: string; reverse?: boolean };
+      params: {
+        includeLabels: string[]; expandEdge: string; rootKinds?: string[]; pruneToLabel?: string; reverse?: boolean;
+        alignmentTail?: Array<{ from: string; rel: string; dir: "in" | "out" }>;
+      };
     }
   // Learning progression: prereq → successor chains over one edge type. Roots are
   // nodes with an outgoing `edge` and no incoming one (chain starts).
@@ -319,7 +327,16 @@ function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig
       // Only Course / top LessonGrouping anchor the content tree; Lesson/Activity/
       // Material never head it (illustrative Activities are exemplars under
       // components and must not surface here as orphans).
-      params: { includeLabels: CONTENT_LABELS, expandEdge: "hasChild", rootKinds: ["Course", "LessonGrouping"] },
+      // The tail lets a Lesson walk out to the standard it teaches
+      // (hasEducationalAlignment) and, under that standard, the learning components
+      // that support it (supports) — the alignment the content walk folds away.
+      params: {
+        includeLabels: CONTENT_LABELS, expandEdge: "hasChild", rootKinds: ["Course", "LessonGrouping"],
+        alignmentTail: [
+          { from: "Lesson", rel: "hasEducationalAlignment", dir: "in" },
+          { from: "StandardsFrameworkItem", rel: "supports", dir: "out" },
+        ],
+      },
     });
   }
   if (edges.some((e) => e.rel === "buildsTowards")) {

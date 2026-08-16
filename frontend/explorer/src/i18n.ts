@@ -26,9 +26,9 @@ export const UI = {
     loginTitle: "Connexion",
     loginFail: "Échec de la connexion : ",
     hintGrouped:
-      "Cliquez sur un nœud pour ouvrir sa fiche ; le triangle déplie/replie. Vue en lecture seule du graphe publié.",
+      "Cliquez sur une ligne pour la déplier/replier ; l'icône œil ouvre la fiche du nœud. Vue en lecture seule du graphe publié.",
     hintGeneric:
-      "Vue générique : chaque type de nœud, puis ses nœuds, puis leurs relations sortantes. Cliquez pour ouvrir une fiche.",
+      "Vue générique : chaque type de nœud, puis ses nœuds, puis leurs relations sortantes. L'icône œil ouvre une fiche.",
     properties: "Propriétés",
     parent: "Parent",
     children: "Enfants",
@@ -36,6 +36,7 @@ export const UI = {
     builtFrom: "Construit à partir de (buildsTowards ←)",
     noRel: "Aucune relation supplémentaire.",
     close: "Fermer",
+    view: "Voir la fiche",
   },
   en: {
     title: "Explorer — Knowledge graphs",
@@ -60,9 +61,9 @@ export const UI = {
     loginTitle: "Sign in",
     loginFail: "Sign-in failed: ",
     hintGrouped:
-      "Click a node to open its detail panel; the triangle expands / collapses. Read-only view of the published graph.",
+      "Click a row to expand / collapse it; the eye icon opens the node's detail panel. Read-only view of the published graph.",
     hintGeneric:
-      "Generic view: each node type, then its nodes, then their outgoing relationships. Click to open a detail panel.",
+      "Generic view: each node type, then its nodes, then their outgoing relationships. The eye icon opens a detail panel.",
     properties: "Properties",
     parent: "Parent",
     children: "Children",
@@ -70,6 +71,7 @@ export const UI = {
     builtFrom: "Built from (buildsTowards ←)",
     noRel: "No additional relationships.",
     close: "Close",
+    view: "View details",
   },
 } satisfies Record<Lang, Record<string, string>>;
 

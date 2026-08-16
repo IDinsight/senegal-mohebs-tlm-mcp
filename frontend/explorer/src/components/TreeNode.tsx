@@ -1,5 +1,6 @@
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye } from "lucide-react";
 import { isSynth, type GraphModel } from "../lib/graphModel";
+import { makeT } from "../i18n";
 import type { Lang, ViewSpec } from "../types";
 
 // One node in the tree — real or synthetic — rendered recursively. Two modes:
@@ -36,6 +37,7 @@ export function TreeNode(props: Props) {
     filter,
   } = props;
 
+  const t = makeT(lang);
   const synthetic = isSynth(id);
   let kids = model.viewChildren(spec, id, sourceOn);
   if (filter) kids = kids.filter((k) => filter.keep.has(k));
@@ -57,18 +59,18 @@ export function TreeNode(props: Props) {
   const label = model.nodeLabel(id, lang);
   const isHit = !!filter && filter.hits.has(id);
 
+  // Clicking the row expands/collapses when there's something to unfold; a real
+  // leaf (nothing to toggle) opens its detail instead. The dedicated eye button is
+  // the explicit "view details" affordance for any real node.
   const onRowClick = () => {
-    if (synthetic) {
-      if (hasKids) onToggle(id);
-    } else {
-      onOpen(id);
-    }
+    if (hasKids) onToggle(id);
+    else if (!synthetic) onOpen(id);
   };
 
   return (
     <div className="my-px">
       <div
-        className={`flex cursor-pointer select-none items-center gap-[7px] rounded-md px-[7px] py-[5px] hover:bg-panel2 ${
+        className={`group flex cursor-pointer select-none items-center gap-[7px] rounded-md px-[7px] py-[5px] hover:bg-panel2 ${
           selected === id ? "bg-panel2 outline outline-1 outline-accent" : ""
         } ${linkRel ? "opacity-95" : ""}`}
         onClick={onRowClick}
@@ -113,6 +115,23 @@ export function TreeNode(props: Props) {
         >
           {label}
         </span>
+
+        {!synthetic && (
+          <button
+            type="button"
+            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-muted hover:bg-line hover:text-txt ${
+              selected === id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            }`}
+            title={t("view")}
+            aria-label={t("view")}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(id);
+            }}
+          >
+            <Eye size={13} />
+          </button>
+        )}
 
         {hasKids && (
           <span className="flex-shrink-0 text-[11px] text-muted">{kids.length}</span>
