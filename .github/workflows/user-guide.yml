@@ -1,12 +1,12 @@
 name: Deploy user guide
 
-# Builds the MkDocs site in user-guide/ and publishes it to GitHub Pages.
+# Builds the MkDocs site in frontend/user-guide/ and publishes it to GitHub Pages.
 # One-time repo setup: Settings → Pages → Build and deployment → Source = "GitHub Actions".
 on:
   push:
     branches: [main]
     paths:
-      - "user-guide/**"
+      - "frontend/user-guide/**"
       - ".github/workflows/user-guide.yml"
   workflow_dispatch:
 
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: user-guide
+        working-directory: frontend/user-guide
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,7 +34,7 @@ jobs:
       - run: mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: user-guide/site
+          path: frontend/user-guide/site
 
   deploy:
     needs: build
