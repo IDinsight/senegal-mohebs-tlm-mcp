@@ -4,6 +4,8 @@
 
 > **Update:** the raw field names below are pre-convergence (camelCase `chapitreNum`/`osTexte`). The KG is now snake_case with an LC metadata scheme (`metadata.role`/`metadata.order`/`metadata.en`); `src/kg-export.ts` reads the current names. Kept as a historical record.
 
+> **Update:** the "single hosted static page" / "forked uploaded explorer" described below is superseded. The frontend is now a component-based **React + TypeScript app (Vite, Tailwind CSS, Lucide)** under [`frontend/explorer/`](../../frontend/explorer/), built to `frontend/explorer/dist` and served by Firebase Hosting. Same look, interactions, and `/kg` data contract — see [`../technical-reference/explorer.md`](../technical-reference/explorer.md).
+
 **Status:** report before build · **Date:** 2026-07-31 · **Author:** (curator tooling)
 
 This note answers the Step-0 questions for the read-only "live KG explorer" (a hosted

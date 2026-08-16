@@ -29,8 +29,9 @@ import type { StoredNode, StoredEdge } from "./kg-store/index.js";
 import { listAvailableContexts } from "./context/index.js";
 
 // ── Display schema (what the explorer consumes) ──────────────────────────────
-// Node fields mirror the uploaded ci_kg_explorer_1.html DATA schema so the fork
-// renders them unchanged; edges use {s,t,r} + an order hint `o`.
+// The React explorer (frontend/explorer/, schema mirrored in
+// frontend/explorer/src/types.ts) consumes these node fields directly;
+// edges use {s,t,r} + an order hint `o`.
 export type DisplayNode = {
   id: string;
   label: string;                 // Learning-Commons ontology label — the node's identity
