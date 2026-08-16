@@ -10,7 +10,7 @@
  * nodeId/unit filters. A document is keyed by the scope node it covers (nodeId).
  */
 import { describe, it, expect } from "vitest";
-import { pageDocuments } from "../documents.js";
+import { pageDocuments, pageDocumentText, DOC_TEXT_DEFAULT_MAX_CHARS, DOC_TEXT_MAX_CHARS } from "../documents.js";
 import type { HistoryEntry } from "../../types.js";
 
 // Two documents per chapter (its manual + its lesson sheets, distinct scope
@@ -165,5 +165,65 @@ describe("pageDocuments", () => {
     expect(page.count).toBe(0);
     expect(page.total).toBe(0);
     expect(page.nextCursor).toBeNull();
+  });
+});
+
+describe("pageDocumentText", () => {
+  const REL = "chapitre_05/manuel.docx";
+
+  it("returns the whole document in one page when it fits, with nextOffset null", () => {
+    const full = "abc";
+    const page = pageDocumentText(REL, full);
+    expect(page).toMatchObject({ relPath: REL, offset: 0, returned: 3, total: 3, nextOffset: null, text: "abc" });
+  });
+
+  it("caps a page at maxChars and points nextOffset at the remainder", () => {
+    const full = "x".repeat(120);
+    const page = pageDocumentText(REL, full, 0, 50);
+    expect(page.returned).toBe(50);
+    expect(page.total).toBe(120);
+    expect(page.nextOffset).toBe(50);
+    expect(page.text).toBe("x".repeat(50));
+  });
+
+  it("reads the WHOLE document across pages via nextOffset with no overlap or gaps", () => {
+    const full = Array.from({ length: 250 }, (_unused, index) => String.fromCharCode(97 + (index % 26))).join("");
+    let offset: number | null = 0;
+    let collected = "";
+    let guard = 0;
+    while (offset !== null) {
+      const page: ReturnType<typeof pageDocumentText> = pageDocumentText(REL, full, offset, 60);
+      collected += page.text;
+      expect(page.offset).toBe(offset);          // each page starts exactly where the last said to resume
+      offset = page.nextOffset;
+      if (++guard > 100) throw new Error("pagination did not terminate");
+    }
+    expect(collected).toBe(full);                // reassembling the windows yields the original, byte-for-byte
+  });
+
+  it("defaults the window to DOC_TEXT_DEFAULT_MAX_CHARS", () => {
+    const full = "y".repeat(DOC_TEXT_DEFAULT_MAX_CHARS + 500);
+    const page = pageDocumentText(REL, full);
+    expect(page.returned).toBe(DOC_TEXT_DEFAULT_MAX_CHARS);
+    expect(page.nextOffset).toBe(DOC_TEXT_DEFAULT_MAX_CHARS);
+  });
+
+  it("clamps maxChars into [1, DOC_TEXT_MAX_CHARS]", () => {
+    const full = "z".repeat(DOC_TEXT_MAX_CHARS + 1000);
+    expect(pageDocumentText(REL, full, 0, 0).returned).toBe(1);                 // floored up to 1
+    expect(pageDocumentText(REL, full, 0, -10).returned).toBe(1);
+    expect(pageDocumentText(REL, full, 0, 9_999_999).returned).toBe(DOC_TEXT_MAX_CHARS); // capped
+  });
+
+  it("treats an offset past the end as a clean empty tail, not an error", () => {
+    const full = "short";
+    const page = pageDocumentText(REL, full, 1000, 50);
+    expect(page).toMatchObject({ offset: 5, returned: 0, total: 5, nextOffset: null, text: "" });
+  });
+
+  it("clamps a negative offset to the start", () => {
+    const page = pageDocumentText(REL, "hello world", -5, 5);
+    expect(page.offset).toBe(0);
+    expect(page.text).toBe("hello");
   });
 });

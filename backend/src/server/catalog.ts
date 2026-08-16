@@ -23,7 +23,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { asJson, guarded } from "./shared.js";
+import { asJson, asMarkdown, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
@@ -118,7 +118,9 @@ export function registerCatalogTools(server: McpServer) {
     guarded(async (a: { id: string }) => {
       for (const s of catalogScopes()) {
         const markdown = renderCatalogEntry(await readCatalog(s.namespace), a.id, s.scope);
-        if (markdown) return asJson({ id: a.id, scope: s.scope, markdown });
+        // The entry's authored spec IS markdown — return it tagged text/markdown
+        // (labelled by scope + id) so it renders, not as an escaped JSON string.
+        if (markdown) return asMarkdown(`catalog://${s.scope}/${a.id}`, markdown);
       }
       return asJson({ error: `Catalog entry '${a.id}' not found in the shared or workspace library. Call list_catalog for entry ids.` });
     }),

@@ -9,10 +9,26 @@
 
 // Wrap any value in the MCP text-content envelope tools must return.
 export const asJson = (data: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] });
-// A tool result is the text envelope, optionally flagged `isError` (the typed
-// error path below uses it). Declared explicitly — not `ReturnType<typeof
-// asJson>` — so the error envelope is assignable to the same handler type.
-export type ToolResult = { content: { type: "text"; text: string }[]; isError?: boolean };
+
+// A tool result is one or more content blocks, optionally flagged `isError` (the
+// typed error path below uses it). Most tools return a single `text` block (JSON,
+// via asJson); prose tools return a `resource` block so the payload carries a
+// mimeType (see asMarkdown/asText). Declared explicitly — not `ReturnType<typeof
+// asJson>` — so every helper below is assignable to the same handler type.
+type TextBlock = { type: "text"; text: string };
+type ResourceBlock = { type: "resource"; resource: { uri: string; mimeType?: string; text: string } };
+export type ToolResult = { content: (TextBlock | ResourceBlock)[]; isError?: boolean };
+
+// Return a textual payload tagged with a MIME type so the client knows how to
+// present it. A plain `text` block carries no media type, so document / markdown
+// output would otherwise reach the reader as an escaped JSON string; an EMBEDDED
+// RESOURCE is the MCP content block that does carry a mimeType. `uri` just labels
+// the resource's origin (a document path, a guide id) — it need not resolve.
+export const asResource = (uri: string, mimeType: string, text: string): ToolResult =>
+  ({ content: [{ type: "resource" as const, resource: { uri, mimeType, text } }] });
+// Markdown/plain-text a reader should see rendered, not as escaped JSON.
+export const asMarkdown = (uri: string, text: string): ToolResult => asResource(uri, "text/markdown", text);
+export const asText = (uri: string, text: string): ToolResult => asResource(uri, "text/plain", text);
 
 // ─── Structured, typed tool errors ───────────────────────────────────────────
 // The MCP SDK turns any throw inside a handler into a bare `error.message` tool
