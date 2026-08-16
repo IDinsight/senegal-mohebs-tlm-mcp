@@ -23,13 +23,27 @@ export type StatsRoot = { id: string; labels: string[]; description: string };
 export type GraphStats = {
   nodeCounts: Record<string, number>;   // keyed by the node's primary LC label
   edgeCounts: Record<string, number>;   // keyed by edge type
-  roots: StatsRoot[];
+  roots: StatsRoot[];                   // capped to MAX_ROOTS, interesting kinds first
+  rootsTotal: number;                   // full count before the cap (roots.length may be smaller)
   structuralFlags: string[];            // cheap "looks off" hints (e.g. no Course authored)
 };
 
 // Containment edges — the ones that give a node a structural parent. A node with
 // no INBOUND hasPart/hasChild is a root; alignment/support edges don't count.
 const CONTAINMENT_EDGES = new Set(["hasPart", "hasChild"]);
+
+// namespace_stats is an orientation call that must ALWAYS return small, but a
+// standards-only graph (e.g. Nigeria) has hundreds of `supports`-only
+// LearningComponents that are technically roots — noise that would blow the
+// response. So we surface the roots that matter for orientation first (the content
+// Course, the framework root, then groupings) and cap the list, reporting the true
+// total separately. The dropped tail is uninteresting leaves, never a Course.
+const MAX_ROOTS = 50;
+const ROOT_LABEL_RANK: Record<string, number> = { Course: 0, StandardsFramework: 1, LessonGrouping: 2 };
+const rootRank = (root: StatsRoot): number => {
+  const best = Math.min(...root.labels.map((label) => ROOT_LABEL_RANK[label] ?? 99), 99);
+  return best;
+};
 
 // A node's primary LC label (Course / Lesson / StandardsFrameworkItem / …). LC
 // nodes carry their main label first; count by it so a node isn't tallied under
@@ -60,7 +74,7 @@ function countBy<T>(items: T[], keyOf: (item: T) => string): Record<string, numb
 export function computeGraphStats(model: CurriculumModel): GraphStats {
   const raw = model.rawGraph;
   if (!raw) {
-    return { nodeCounts: {}, edgeCounts: {}, roots: [], structuralFlags: ["graph not available as a raw envelope"] };
+    return { nodeCounts: {}, edgeCounts: {}, roots: [], rootsTotal: 0, structuralFlags: ["graph not available as a raw envelope"] };
   }
 
   const nodeCounts = countBy(raw.nodes, primaryLabel);
@@ -74,11 +88,18 @@ export function computeGraphStats(model: CurriculumModel): GraphStats {
       hasStructuralParent.add(edge.end);
     }
   }
-  const roots: StatsRoot[] = raw.nodes
+  const allRoots: StatsRoot[] = raw.nodes
     .filter((node) => !hasStructuralParent.has(node.id))
     .map((node) => ({ id: node.id, labels: node.labels ?? [], description: displayText(node) }));
 
-  return { nodeCounts, edgeCounts, roots, structuralFlags: structuralFlags(raw, nodeCounts, roots) };
+  // Interesting kinds first (stable within a rank), then cap. Flags are computed
+  // from the FULL root set so "no Course" etc. stay accurate after the cap.
+  const roots = [...allRoots].sort((a, b) => rootRank(a) - rootRank(b)).slice(0, MAX_ROOTS);
+
+  return {
+    nodeCounts, edgeCounts, roots, rootsTotal: allRoots.length,
+    structuralFlags: structuralFlags(raw, nodeCounts, allRoots),
+  };
 }
 
 // A handful of cheap, honest "this might be incomplete" hints — orientation

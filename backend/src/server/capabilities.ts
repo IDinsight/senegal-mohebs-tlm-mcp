@@ -259,6 +259,15 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     audit,
     catalog,
     rules,
+    // The universal response-size backstop every tool passes through: a payload
+    // over the cap is replaced by a small RESPONSE_TOO_LARGE envelope (isError).
+    // Advertised so a caller can feature-detect it and knows to paginate/narrow.
+    responseCap: {
+      maxBytes: Number(process.env.TLM_MAX_RESPONSE_BYTES) > 0 ? Number(process.env.TLM_MAX_RESPONSE_BYTES) : 100 * 1024,
+      overflowCode: "RESPONSE_TOO_LARGE",
+      envVar: "TLM_MAX_RESPONSE_BYTES",
+      note: "Every tool response is capped. Well-behaved reads paginate (walk_graph, get_document_text, list_documents, read_audit, diff_draft limit) and never approach it; an oversized response returns { error: { code: 'RESPONSE_TOO_LARGE', bytes, cap }, shape, hint } instead of the payload.",
+    },
   };
 }
 

@@ -136,11 +136,20 @@ export async function namespaceStats(): Promise<Record<string, unknown>> {
   const draftFlags = draft.open ? [] : ["no draft open"];
   const coverageFlags = [...draftFlags, ...stats.structuralFlags];
 
+  // `roots` is capped for orientation (interesting kinds first); `rootsTotal` is
+  // the true count, and a note fires when the tail was dropped so the caller knows
+  // to walk_graph for the rest rather than assume `roots` is exhaustive.
+  const rootsNote = stats.rootsTotal > stats.roots.length
+    ? `Showing ${stats.roots.length} of ${stats.rootsTotal} roots (interesting kinds first); the rest are leaf nodes with no containment parent. Walk the graph for specific nodes.`
+    : undefined;
+
   return {
     namespace,
     nodeCounts: stats.nodeCounts,
     edgeCounts: stats.edgeCounts,
     roots: stats.roots,
+    rootsTotal: stats.rootsTotal,
+    ...(rootsNote ? { rootsNote } : {}),
     draft,
     coverageFlags,
   };
