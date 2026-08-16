@@ -21,12 +21,13 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
-import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, listCatalogEntries, useRoutine, type CatalogScope } from "../kg-recipes/index.js";
+import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, listCatalogEntries, renderCatalogEntry, useRoutine, type CatalogScope } from "../kg-recipes/index.js";
 
 // Read one catalog namespace's published slot as a plain MutationGraph. Empty when
 // that namespace has never been seeded (no pointer). Exported for tests.
@@ -125,5 +126,61 @@ export function registerCatalogTools(server: McpServer) {
       inputSchema: APPLY_INPUT,
     },
     guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
+  );
+}
+
+// The catalog scopes to browse, tolerant of no active context: the shared library
+// is always readable; the workspace library is added only when a context is set
+// (resources may be listed before set_context, when activeWorkspace() would throw).
+function catalogScopesSafe(): Array<{ scope: CatalogScope; namespace: string }> {
+  const scopes: Array<{ scope: CatalogScope; namespace: string }> = [{ scope: "shared", namespace: SHARED_CATALOG_NAMESPACE }];
+  try {
+    const ws = catalogNamespace(activeWorkspace());
+    if (ws !== SHARED_CATALOG_NAMESPACE) scopes.push({ scope: "workspace", namespace: ws });
+  } catch { /* no active workspace → shared library only */ }
+  return scopes;
+}
+
+const firstLine = (s: string): string => { const i = s.indexOf("\n"); return (i === -1 ? s : s.slice(0, i)).trim(); };
+
+// Browse surface (D5): expose each catalog entry as a readable MCP RESOURCE
+// (`catalog://{scope}/{id}`), rendered with its FULL authored spec — the step /
+// formatter Material content that list_catalog only counts. Resources are
+// read-only and ungated (browsing a shared/own library reveals no tenant data);
+// applying an entry still goes through the confirm-gated use_routine / use_formatter.
+export function registerCatalogResources(server: McpServer) {
+  server.registerResource(
+    "catalog-entry",
+    new ResourceTemplate("catalog://{scope}/{id}", {
+      list: async () => {
+        const scopes = catalogScopesSafe();
+        const perScope = await Promise.all(scopes.map(async (s) => listCatalogEntries(await readCatalog(s.namespace), s.scope)));
+        return {
+          resources: perScope.flat().map((e) => ({
+            uri: `catalog://${e.scope}/${e.id}`,
+            name: e.name || e.id,
+            title: e.name || e.id,
+            mimeType: "text/markdown",
+            description: `${e.kind} · ${e.scope} · ${e.steps.length} step(s), ${e.materialCount} material(s)${e.summary ? ` — ${firstLine(e.summary)}` : ""}`,
+          })),
+        };
+      },
+    }),
+    {
+      title: "Catalog entries",
+      description: "Reusable instructional routines and formatters (shared + workspace libraries), each rendered with its full authored spec. Browse-only; apply one to content with use_routine (→ a Lesson) or use_formatter (→ a Course).",
+      mimeType: "text/markdown",
+    },
+    async (uri, variables) => {
+      const scope: CatalogScope = String(variables.scope) === "workspace" ? "workspace" : "shared";
+      const id = String(variables.id);
+      let namespace = SHARED_CATALOG_NAMESPACE;
+      if (scope === "workspace") {
+        try { namespace = catalogNamespace(activeWorkspace()); }
+        catch { return { contents: [{ uri: uri.href, mimeType: "text/markdown", text: "Set a context (set_context) to read a workspace-scoped catalog entry." }] }; }
+      }
+      const md = renderCatalogEntry(await readCatalog(namespace), id, scope);
+      return { contents: [{ uri: uri.href, mimeType: "text/markdown", text: md ?? `Catalog entry '${id}' not found in the ${scope} library.` }] };
+    },
   );
 }
