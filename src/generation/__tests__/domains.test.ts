@@ -1,13 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { HistoryEntry } from "../../types.js";
 
+// The chapter number lives only in the nodeId now; the resolver reads it back
+// (a real deployment reads node.order from the active model).
 function makeEntry(unit: number, domains: string[]): HistoryEntry {
   return {
-    id: `node-${unit}`, nodeId: `node-${unit}`, unit, relPath: `ch${unit}.docx`,
+    id: `node-${unit}`, nodeId: `node-${unit}`, relPath: `ch${unit}.docx`,
     md5: "abc", updated: "2025-01-01", source: "pipeline", recordedAt: "2025-01-01",
     content: { exampleDomains: domains },
   };
 }
+
+const ordinalOf = (nodeId: string): number | null => {
+  const n = Number(nodeId.replace("node-", ""));
+  return Number.isFinite(n) ? n : null;
+};
 
 vi.mock("../../storage/index.js", () => ({
   listEntries: vi.fn(),
@@ -40,7 +47,7 @@ describe("neighborhoodDomains", () => {
   beforeEach(() => { mockListEntries.mockResolvedValue(entries); });
 
   it("returns only chapters within ±K of target, excluding target itself", async () => {
-    const result = await neighborhoodDomains(12, 2);
+    const result = await neighborhoodDomains(ordinalOf, 12, 2);
     expect(Object.keys(result).map(Number).sort((a, b) => a - b)).toEqual([10, 11, 13]);
     expect(result[10]).toEqual(["fruits"]);
     expect(result[11]).toEqual(["legumes"]);
@@ -49,7 +56,7 @@ describe("neighborhoodDomains", () => {
   });
 
   it("uses unit NUMBER distance, not array position", async () => {
-    const result = await neighborhoodDomains(15, 2);
+    const result = await neighborhoodDomains(ordinalOf, 15, 2);
     expect(Object.keys(result).map(Number).sort((a, b) => a - b)).toEqual([13]);
     expect(result[12]).toBeUndefined();
     expect(result[18]).toBeUndefined();
@@ -60,18 +67,18 @@ describe("neighborhoodDomains", () => {
       ...entries,
       { ...makeEntry(14, []), content: { exampleDomains: [] } } as HistoryEntry,
     ]);
-    const result = await neighborhoodDomains(13, 2);
+    const result = await neighborhoodDomains(ordinalOf, 13, 2);
     expect(result[14]).toBeUndefined();
     expect(result[12]).toEqual(["animals"]);
   });
 
   it("returns empty object when no neighbors exist within K", async () => {
-    const result = await neighborhoodDomains(18, 1);
+    const result = await neighborhoodDomains(ordinalOf, 18, 1);
     expect(result).toEqual({});
   });
 
   it("handles K=1 correctly", async () => {
-    const result = await neighborhoodDomains(12, 1);
+    const result = await neighborhoodDomains(ordinalOf, 12, 1);
     expect(Object.keys(result).map(Number).sort((a, b) => a - b)).toEqual([11, 13]);
   });
 
@@ -80,7 +87,7 @@ describe("neighborhoodDomains", () => {
       ...entries,
       makeEntry(11, ["ballons"]),
     ]);
-    const result = await neighborhoodDomains(12, 1);
+    const result = await neighborhoodDomains(ordinalOf, 12, 1);
     expect(result[11]).toEqual(expect.arrayContaining(["legumes", "ballons"]));
     expect(result[11]).toHaveLength(2);
   });
@@ -91,14 +98,14 @@ describe("suggestFreshDomain with avoidNearby", () => {
 
   it("avoids domains that appear in avoidNearby", async () => {
     const nearby = { 9: ["fruits"], 11: ["legumes"] };
-    const result = await suggestFreshDomain(nearby);
+    const result = await suggestFreshDomain(ordinalOf, nearby);
     expect(result).toBe("animals");
   });
 
   it("returns null when all candidates are in avoidNearby", async () => {
     const allDomains = ["fruits", "legumes", "animals", "tam-tams", "pirogues", "cordes", "paniers", "calebasses", "ballons", "ardoises"];
     const nearby = { 1: allDomains };
-    const result = await suggestFreshDomain(nearby);
+    const result = await suggestFreshDomain(ordinalOf, nearby);
     expect(result).toBeNull();
   });
 
@@ -107,14 +114,14 @@ describe("suggestFreshDomain with avoidNearby", () => {
       makeEntry(1, ["fruits", "legumes", "animals", "tam-tams", "pirogues", "cordes", "paniers", "calebasses", "ballons", "ardoises"]),
     ]);
     const nearby = { 9: ["fruits"], 11: ["legumes"] };
-    const result = await suggestFreshDomain(nearby);
+    const result = await suggestFreshDomain(ordinalOf, nearby);
     expect(result).not.toBe("fruits");
     expect(result).not.toBe("legumes");
     expect(result).toBe("animals");
   });
 
   it("works without avoidNearby (standalone tool behavior)", async () => {
-    const result = await suggestFreshDomain();
+    const result = await suggestFreshDomain(ordinalOf);
     expect(result).toBe("fruits");
   });
 });
@@ -127,7 +134,7 @@ describe("payload boundedness", () => {
     mockListEntries.mockResolvedValue(manyEntries);
 
     const radius = 3;
-    const result = await neighborhoodDomains(25, radius);
+    const result = await neighborhoodDomains(ordinalOf, 25, radius);
     const chapterNums = Object.keys(result).map(Number);
     for (const chapterNum of chapterNums) {
       expect(Math.abs(chapterNum - 25)).toBeLessThanOrEqual(radius);

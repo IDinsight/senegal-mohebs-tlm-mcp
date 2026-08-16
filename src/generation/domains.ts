@@ -2,14 +2,23 @@
  * Module: generation · internal
  *
  * Example-domain rotation, a CI maths capability: track which object families
- * (fruits, pirogues, …) each unit used, and suggest a fresh one so chapters
+ * (fruits, pirogues, …) each chapter used, and suggest a fresh one so chapters
  * don't repeat — while also avoiding domains used by nearby chapters. Composed
  * into the CI maths generation context; adapters without the capability ignore it.
+ *
+ * A document's chapter number is the ordinal of the scope node it covers, read
+ * from the graph at call time via an injected `ordinalOf` resolver (the history
+ * no longer stores it).
  */
 import { readFileSync, existsSync } from "node:fs";
 import { CONFIG } from "../config.js";
 import { assetPath } from "../context/index.js";
 import { listEntries } from "../storage/index.js";
+
+// Resolve a document's scope-node id to its chapter/week ordinal (null if the
+// node is not in the active graph). Injected from the adapter layer so this
+// service stays model-agnostic.
+type OrdinalOf = (nodeId: string) => number | null;
 
 const DEFAULT_POOL = ["fruits", "legumes", "animals", "tam-tams", "pirogues", "cordes", "paniers", "calebasses", "ballons", "ardoises"];
 
@@ -21,37 +30,43 @@ function domainPool(): string[] {
   return DEFAULT_POOL;
 }
 
-export async function domainUsage() {
+// `ordinalOf` maps a document's scope-node id to its chapter/week number, read
+// from the active graph (injected by the adapter). An entry whose node is gone
+// resolves to null and is skipped — it can't be placed on the rotation timeline.
+export async function domainUsage(ordinalOf: OrdinalOf) {
   const usage = new Map<string, Set<number>>();
-  // `unit` is the transitional scope-node ordinal (see HistoryEntry); an entry
-  // without one can't place a chapter, so it is skipped for rotation purposes.
-  for (const e of await listEntries()) { if (e.unit == null) continue; for (const d of e.content.exampleDomains ?? []) { const k = d.toLowerCase(); (usage.get(k) ?? usage.set(k, new Set()).get(k)!).add(e.unit); } }
+  for (const e of await listEntries()) {
+    const u = ordinalOf(e.nodeId);
+    if (u == null) continue;
+    for (const d of e.content.exampleDomains ?? []) { const k = d.toLowerCase(); (usage.get(k) ?? usage.set(k, new Set()).get(k)!).add(u); }
+  }
   return [...usage.entries()].map(([domain, ch]) => ({ domain, chapters: [...ch].sort((a, b) => a - b) }));
 }
 
-export async function neighborhoodDomains(unit: number, k: number = DOMAIN_NEIGHBORHOOD_K): Promise<Record<number, string[]>> {
+export async function neighborhoodDomains(ordinalOf: OrdinalOf, unit: number, k: number = DOMAIN_NEIGHBORHOOD_K): Promise<Record<number, string[]>> {
   const result: Record<number, string[]> = {};
   for (const e of await listEntries()) {
-    if (e.unit == null || e.unit === unit) continue;   // no ordinal → can't place; skip
+    const eu = ordinalOf(e.nodeId);
+    if (eu == null || eu === unit) continue;   // node gone or the target itself → skip
     const domains = e.content.exampleDomains ?? [];
     if (domains.length === 0) continue;
-    if (Math.abs(e.unit - unit) <= k) {
-      const existing = result[e.unit];
+    if (Math.abs(eu - unit) <= k) {
+      const existing = result[eu];
       if (existing) {
         const set = new Set(existing);
         for (const d of domains) if (!set.has(d)) existing.push(d);
       } else {
-        result[e.unit] = [...domains];
+        result[eu] = [...domains];
       }
     }
   }
   return result;
 }
 
-export async function suggestFreshDomain(avoidNearby?: Record<number, string[]>) {
+export async function suggestFreshDomain(ordinalOf: OrdinalOf, avoidNearby?: Record<number, string[]>) {
   const candidates = domainPool();
   const usage = new Map<string, number[]>();
-  for (const u of await domainUsage()) usage.set(u.domain, u.chapters);
+  for (const u of await domainUsage(ordinalOf)) usage.set(u.domain, u.chapters);
   if (candidates.length === 0) return null;
 
   const nearbySet = new Set<string>();

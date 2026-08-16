@@ -31,12 +31,11 @@ async function histLoad(): Promise<HistoryFile> {
 
 async function histSave() { await getStorageAdapter().writeHistory(await histLoad()); }
 
-// Ordered by the transitional ordinal when present (chapter/week number), then
-// by node id — a stable total order the pagination cursor pins to.
+// Ordered by node id — a stable total order storage can produce without knowing
+// graph ordinals. Callers that want ordinal order (list_documents) resolve each
+// node's ordinal from the active model and re-sort.
 export async function listEntries() {
-  return [...(await histLoad()).entries].sort(
-    (a, b) => (a.unit ?? Infinity) - (b.unit ?? Infinity) || a.nodeId.localeCompare(b.nodeId),
-  );
+  return [...(await histLoad()).entries].sort((a, b) => a.nodeId.localeCompare(b.nodeId));
 }
 
 export async function getEntry(nodeId: string) {
@@ -50,7 +49,7 @@ async function histUpsert(entry: HistoryEntry) {
   await histSave();
 }
 
-export async function recordContent(source: "pipeline" | "parsed", input: { nodeId: string; unit?: number; relPath: string; content: DocumentContent }) {
+export async function recordContent(source: "pipeline" | "parsed", input: { nodeId: string; relPath: string; content: DocumentContent }) {
   const md5 = await getStorageAdapter().getObjectMd5(input.relPath);
   if (md5 == null) {
     return { error: `Object not found in the bucket at documents/${input.relPath}. Upload it first via create_upload_url, then call this again.` };
@@ -59,7 +58,6 @@ export async function recordContent(source: "pipeline" | "parsed", input: { node
   const entry: HistoryEntry = {
     id: input.nodeId, nodeId: input.nodeId, relPath: input.relPath, md5,
     updated: now, source, recordedAt: now, content: input.content,
-    ...(input.unit != null ? { unit: input.unit } : {}),
   };
   await histUpsert(entry);
   return entry;
