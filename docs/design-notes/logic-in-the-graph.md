@@ -21,9 +21,10 @@ single art style). It should invent as little pedagogy as possible.
 
 ## Why — what's wrong with the status quo
 
-Today a single generation prompt does two unrelated jobs at once. Take
-[`PROMPT_generate_chapter.md`](../../sources/senegal/ci/maths/PROMPT_generate_chapter.md):
-~60% of it is pedagogical design (what sections a chapter has, what makes a good CI
+Today a single generation prompt does two unrelated jobs at once. Take the original
+`PROMPT_generate_chapter.md` (since **retired** — its content now lives in the CI maths
+graph guide, the chapter-structure routine, and the pupil-manual formatters):
+~60% of it was pedagogical design (what sections a chapter has, what makes a good CI
 activity, coverage rules) and ~40% is formatting (fonts, image sizes, the house art
 style). Mixing them has three costs:
 
