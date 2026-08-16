@@ -32,7 +32,7 @@ import { serializeModel } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
   runGraphMutation, publishDraftWithConfirm, diffDraft,
-  createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId,
+  createNode, linkNodes, unlinkNodes, deleteNode, deleteEdges, deleteNodes, mintNodeId,
   __resetMutationsForTest, __resetDraftTokensForTest,
 } from "../index.js";
 import { edgeId as makeEdgeId } from "../../curriculum/index.js";
@@ -345,6 +345,112 @@ describe("delete_node — non-cascading", () => {
       confirm: true, token: deletePreview.confirmationToken,
     });
     expect(applied).toMatchObject({ ok: true });
+  });
+});
+
+// ── delete_edges (batch) ─────────────────────────────────────────────────────
+
+describe("delete_edges — batch", () => {
+  it("removes MANY edges in one atomic mutation", async () => {
+    const graph = await readPublishedGraph(ns);
+    const targetIds = graph.edges.slice(0, 3).map((e) => e.id);
+    const preview = await runGraphMutation({
+      namespace: ns, mutation: deleteEdges, args: { edgeIds: targetIds },
+    });
+    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
+    expect(preview.diff.edges.removed.map((e) => e.id).sort()).toEqual([...targetIds].sort());
+
+    const applied = await runGraphMutation({
+      namespace: ns, mutation: deleteEdges, args: { edgeIds: targetIds },
+      confirm: true, token: preview.confirmationToken,
+    });
+    expect(applied).toMatchObject({ ok: true });
+    const draft = await readSlotGraph(ns, "b");
+    for (const id of targetIds) expect(draft.edges.some((e) => e.id === id)).toBe(false);
+  });
+
+  it("blocks the WHOLE batch when any edge id is missing (all-or-nothing)", async () => {
+    const graph = await readPublishedGraph(ns);
+    const real = graph.edges[0].id;
+    const blocked = await runGraphMutation({
+      namespace: ns, mutation: deleteEdges, args: { edgeIds: [real, "no-such-edge"] },
+    });
+    if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
+    expect(blocked.errors.some((e) => e.includes("does not exist"))).toBe(true);
+    // Nothing applied: the real edge still stands on the published graph.
+    const published = await readPublishedGraph(ns);
+    expect(published.edges.some((e) => e.id === real)).toBe(true);
+  });
+
+  it("blocks a batch that lists the same edge id twice", async () => {
+    const graph = await readPublishedGraph(ns);
+    const dup = graph.edges[0].id;
+    const blocked = await runGraphMutation({
+      namespace: ns, mutation: deleteEdges, args: { edgeIds: [dup, dup] },
+    });
+    if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
+    expect(blocked.errors.some((e) => e.includes("more than once"))).toBe(true);
+  });
+});
+
+// ── delete_nodes (batch) ─────────────────────────────────────────────────────
+
+describe("delete_nodes — batch", () => {
+  it("removes MANY isolated nodes in one atomic mutation", async () => {
+    // Two fresh isolated nodes (no incident edges), created + committed first.
+    const ids = [mintNodeId(), mintNodeId()];
+    for (const newNodeId of ids) {
+      const p = await runGraphMutation({
+        namespace: ns, mutation: createNode,
+        args: { kind: "Chapitre", properties: { title: "isolated" }, namespace: ns, newNodeId },
+      });
+      if (p.phase !== "preview") throw new Error("preview");
+      await runGraphMutation({
+        namespace: ns, mutation: createNode,
+        args: { kind: "Chapitre", properties: { title: "isolated" }, namespace: ns, newNodeId },
+        confirm: true, token: p.confirmationToken,
+      });
+    }
+
+    const preview = await runGraphMutation({
+      namespace: ns, mutation: deleteNodes, args: { nodeIds: ids },
+    });
+    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
+    expect(preview.diff.nodes.removed.map((n) => n.id).sort()).toEqual([...ids].sort());
+
+    const applied = await runGraphMutation({
+      namespace: ns, mutation: deleteNodes, args: { nodeIds: ids },
+      confirm: true, token: preview.confirmationToken,
+    });
+    expect(applied).toMatchObject({ ok: true });
+    const draft = await readSlotGraph(ns, "b");
+    for (const id of ids) expect(draft.nodes.some((n) => n.id === id)).toBe(false);
+  });
+
+  it("cascades each root's subtree and warns with the combined removed set", async () => {
+    const graph = await readPublishedGraph(ns);
+    // Two distinct connected roots (chapters with incident edges).
+    const roots = [...new Set(graph.edges.map((e) => e.from))].slice(0, 2);
+    const preview = await runGraphMutation({
+      namespace: ns, mutation: deleteNodes, args: { nodeIds: roots },
+    });
+    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
+    expect(preview.warnings.some((w) => w.includes("incident edge"))).toBe(true);
+    // Every removed node is gone AND no surviving edge points at a removed node.
+    const removed = new Set(preview.diff.nodes.removed.map((n) => n.id));
+    expect(removed.size).toBeGreaterThanOrEqual(roots.length);
+  });
+
+  it("blocks the WHOLE batch when any node id is missing (all-or-nothing)", async () => {
+    const graph = await readPublishedGraph(ns);
+    const real = graph.nodes[0].id;
+    const blocked = await runGraphMutation({
+      namespace: ns, mutation: deleteNodes, args: { nodeIds: [real, "iri:ghost"] },
+    });
+    if (blocked.phase !== "blocked") throw new Error(`expected blocked, got ${blocked.phase}`);
+    expect(blocked.errors.some((e) => e.includes("does not exist"))).toBe(true);
+    const published = await readPublishedGraph(ns);
+    expect(published.nodes.some((n) => n.id === real)).toBe(true);
   });
 });
 

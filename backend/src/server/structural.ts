@@ -17,7 +17,7 @@ import { z } from "zod";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
-import { runGraphMutation, kgNamespace, unlinkNodes, deleteNode } from "../kg-store/index.js";
+import { kgNamespace, deleteEdges, deleteNodes } from "../kg-store/index.js";
 import { createEdges } from "../kg-recipes/index.js";
 import { runBatchMutation, type ReturnMode } from "./batch.js";
 import { idempotencyPayloadHash } from "./idempotency.js";
@@ -50,6 +50,52 @@ export async function runCreateEdges(a: {
     returnMode: a.returnMode ?? "summary",
     idempotencyKey: a.idempotencyKey,
     payloadHash: idempotencyPayloadHash(normalizedEdges),
+    extra: {},
+  });
+}
+
+// The delete_edges core, exported so tests drive the real logic. Removes one edge
+// or many by id in one atomic batch; no minted ids, so `extra` is empty.
+export async function runDeleteEdges(a: {
+  edgeIds: string[];
+  confirm?: boolean;
+  confirmationToken?: string;
+  returnMode?: ReturnMode;
+  idempotencyKey?: string;
+}): Promise<Record<string, unknown>> {
+  const namespace = activeNamespace();
+  return runBatchMutation({
+    namespace,
+    mutation: deleteEdges,
+    args: { edgeIds: a.edgeIds },
+    confirm: a.confirm,
+    token: a.confirmationToken,
+    returnMode: a.returnMode ?? "summary",
+    idempotencyKey: a.idempotencyKey,
+    payloadHash: idempotencyPayloadHash(a.edgeIds),
+    extra: {},
+  });
+}
+
+// The delete_nodes core, exported so tests drive the real logic. Removes one node
+// or many — each with its dependent subtree (cascade) — in one atomic batch.
+export async function runDeleteNodes(a: {
+  nodeIds: string[];
+  confirm?: boolean;
+  confirmationToken?: string;
+  returnMode?: ReturnMode;
+  idempotencyKey?: string;
+}): Promise<Record<string, unknown>> {
+  const namespace = activeNamespace();
+  return runBatchMutation({
+    namespace,
+    mutation: deleteNodes,
+    args: { nodeIds: a.nodeIds },
+    confirm: a.confirm,
+    token: a.confirmationToken,
+    returnMode: a.returnMode ?? "summary",
+    idempotencyKey: a.idempotencyKey,
+    payloadHash: idempotencyPayloadHash(a.nodeIds),
     extra: {},
   });
 }
@@ -89,51 +135,43 @@ export function registerStructuralTools(server: McpServer) {
   server.registerTool(
     "delete_edges",
     {
-      title: "Delete an edge",
+      title: "Delete edges (one or many) in one batch",
       description:
-        "Remove one edge by its `edgeId`. Edge ids are deterministic (`edgeId = <type>:<from>-><to>`) — get one from a prior create_edges preview, from diff_draft, or from the graph. Removing an edge cannot orphan a node (the node just becomes less connected); the dangling-edge check only cares about surviving edges. Use this to detach a node before delete_nodes if you want to keep the (now-detached) subtree. REQUIRES CONFIRMATION.",
+        "Remove ONE edge or MANY by id in one atomic draft edit. Each `edgeIds[i]` is a deterministic edge id (`<type>:<from>-><to>`) — get them from a prior create_edges preview, from diff_draft, or from the graph. Removing an edge cannot orphan a node (the node just becomes less connected); the dangling-edge check only cares about surviving edges. Use this to detach a node before delete_nodes if you want to keep the (now-detached) subtree. ALL-OR-NOTHING: the dry-run validates every id and returns ONE confirmationToken; any missing id (or an id listed twice) blocks the whole batch (no partial delete). To confirm, call again with confirm:true and the token. " +
+        "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff; 'full' also attaches the whole `diff`. " +
+        "`idempotencyKey` (optional): a unique key (a UUID) makes a RETRIED confirm safe — same key + same payload replays the first apply's summary with `replayed:true` instead of REPLAY; same key + different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Namespace-scoped, 24h TTL. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
-        edgeId: z.string(),
+        edgeIds: z.array(z.string()),
+        returnMode: z.enum(["summary", "full"]).optional(),
+        idempotencyKey: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { edgeId: string; confirm?: boolean; confirmationToken?: string }) => {
-      const namespace = activeNamespace();
-      const result = await runGraphMutation({
-        namespace,
-        mutation: unlinkNodes,
-        args: { edgeId: a.edgeId },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-      });
-      return asJson(result);
-    }),
+    guarded(async (a: {
+      edgeIds: string[]; confirm?: boolean; confirmationToken?: string; returnMode?: ReturnMode; idempotencyKey?: string;
+    }) => asJson(await runDeleteEdges(a))),
   );
 
   // ── delete_nodes ───────────────────────────────────────────────────────────
   server.registerTool(
     "delete_nodes",
     {
-      title: "Delete a node (and its dependent subtree)",
+      title: "Delete nodes (one or many, each with its dependent subtree) in one batch",
       description:
-        "Remove one node by `nodeId`, together with its dependent subtree (its hasChild/hasPart descendants) and every edge touching any removed node — all in ONE atomic mutation. The dry-run diff shows the FULL set that will vanish and emits a WARNING listing it; nothing is deleted until you confirm, so seeing the cascade before confirming IS the safety (there is no separate force flag). The result is re-checked for referential integrity. A node deleted here is gone from the DRAFT; publish_draft makes it live. REQUIRES CONFIRMATION.",
+        "Remove ONE node or MANY by id in one atomic draft edit — each together with its dependent subtree (its hasChild/hasPart descendants) and every edge touching any removed node. The cascade is computed over ALL the ids at once, so a child shared by two nodes you delete together also vanishes. The dry-run diff shows the FULL set that will vanish and emits a WARNING listing it; nothing is deleted until you confirm, so seeing the cascade before confirming IS the safety (there is no separate force flag). ALL-OR-NOTHING: any missing id (or an id listed twice) blocks the whole batch. The result is re-checked for referential integrity. " +
+        "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff (a big cascade's full diff can be large); 'full' also attaches the whole `diff`. " +
+        "`idempotencyKey` (optional): a unique key (a UUID) makes a RETRIED confirm safe — same key + same payload replays the first apply's summary with `replayed:true` instead of REPLAY; same key + different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Namespace-scoped, 24h TTL. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
-        nodeId: z.string(),
+        nodeIds: z.array(z.string()),
+        returnMode: z.enum(["summary", "full"]).optional(),
+        idempotencyKey: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { nodeId: string; confirm?: boolean; confirmationToken?: string }) => {
-      const namespace = activeNamespace();
-      const result = await runGraphMutation({
-        namespace,
-        mutation: deleteNode,
-        args: { nodeId: a.nodeId },
-        confirm: a.confirm,
-        token: a.confirmationToken,
-      });
-      return asJson(result);
-    }),
+    guarded(async (a: {
+      nodeIds: string[]; confirm?: boolean; confirmationToken?: string; returnMode?: ReturnMode; idempotencyKey?: string;
+    }) => asJson(await runDeleteNodes(a))),
   );
 }
