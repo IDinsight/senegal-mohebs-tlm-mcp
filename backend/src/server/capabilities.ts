@@ -214,10 +214,10 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       defaults: { limit: 50, maxDepth: 3 },
       maxLimit: 500,
       // Two independent overflow flags callers should branch on.
-      pagination: "nextCursor + truncatedByLimit (page limit) vs truncated (depth cap)",
+      pagination: "nextCursor + truncatedByLimit (more nodes remain) vs truncated (depth cap) vs truncatedBySize (byte budget trimmed the page — see hint)",
     },
     note:
-      "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, PAGINATED BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. Page with limit (default 50, max 500) + nextCursor; do not raise the limit to fit a big result. truncatedByLimit means more nodes remain on further pages; truncated means the depth cap hid deeper nodes. slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk; its `roots` (each with id + labels + description) surfaces the Course content roots, so it replaced list_courses.",
+      "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, PAGINATED BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. Page with limit (default 50, max 500) + nextCursor; do not raise the limit to fit a big result. truncatedByLimit means more nodes remain on further pages; truncated means the depth cap hid deeper nodes; truncatedBySize means a response BYTE budget trimmed the page below `limit` (raising limit won't help — set includeEdges:false and narrow nodeTypes, then page via cursor; the `hint` field says so). slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk; its `roots` (each with id + labels + description) surfaces the Course content roots, so it replaced list_courses.",
   };
 
   // ── profile: the subject profile as authored config (phase 2b). `canEdit`
@@ -259,6 +259,15 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
     audit,
     catalog,
     rules,
+    // The universal response-size backstop every tool passes through: a payload
+    // over the cap is replaced by a small RESPONSE_TOO_LARGE envelope (isError).
+    // Advertised so a caller can feature-detect it and knows to paginate/narrow.
+    responseCap: {
+      maxBytes: Number(process.env.TLM_MAX_RESPONSE_BYTES) > 0 ? Number(process.env.TLM_MAX_RESPONSE_BYTES) : 100 * 1024,
+      overflowCode: "RESPONSE_TOO_LARGE",
+      envVar: "TLM_MAX_RESPONSE_BYTES",
+      note: "Every tool response is capped. Well-behaved reads paginate (walk_graph, get_document_text, list_documents, read_audit, diff_draft limit) and never approach it; an oversized response returns { error: { code: 'RESPONSE_TOO_LARGE', bytes, cap }, shape, hint } instead of the payload.",
+    },
   };
 }
 

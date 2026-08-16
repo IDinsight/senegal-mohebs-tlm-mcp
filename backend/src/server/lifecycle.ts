@@ -44,6 +44,43 @@ function activeNamespace(): string {
   return kgNamespace(activeWorkspace(), a.grade, a.subject);
 }
 
+// diff_draft cap: a whole-draft diff is 200+ KB on a large draft, so each of its
+// six arrays is sliced to `limit` (default 200, max 1000). Full per-kind `counts`
+// always ride along (computed from the UNcapped diff), and a `truncated` map
+// reports any array's true length when it was cut — so the response stays usable
+// and never hits the universal response backstop.
+const DIFF_DEFAULT_LIMIT = 200;
+const DIFF_MAX_LIMIT = 1000;
+
+function capWholeDraftDiff(result: Awaited<ReturnType<typeof diffDraft>>, limit?: number): Record<string, unknown> {
+  const diff = result.diff;
+  if (!result.hasDraft || !diff) return { ...result }; // { hasDraft: false } passes through untouched
+  const cap = Math.min(DIFF_MAX_LIMIT, Math.max(1, Math.trunc(limit ?? DIFF_DEFAULT_LIMIT)));
+  const truncated: Record<string, number> = {};
+  const capArray = <T>(arr: T[], label: string): T[] => {
+    if (arr.length > cap) truncated[label] = arr.length;
+    return arr.slice(0, cap);
+  };
+  const cappedDiff = {
+    nodes: {
+      added: capArray(diff.nodes.added, "nodes.added"),
+      removed: capArray(diff.nodes.removed, "nodes.removed"),
+      changed: capArray(diff.nodes.changed, "nodes.changed"),
+    },
+    edges: {
+      added: capArray(diff.edges.added, "edges.added"),
+      removed: capArray(diff.edges.removed, "edges.removed"),
+      changed: capArray(diff.edges.changed, "edges.changed"),
+    },
+  };
+  const out: Record<string, unknown> = { ...result, diff: cappedDiff, counts: countsOf(diff) };
+  if (Object.keys(truncated).length > 0) {
+    out.truncated = truncated;
+    out.truncatedNote = `Some diff arrays were capped at ${cap} entries (full sizes in \`counts\`/\`truncated\`). Raise \`limit\` (max ${DIFF_MAX_LIMIT}) to see more, or read \`counts\` for the totals.`;
+  }
+  return out;
+}
+
 // ── returnMode shaping for publish_draft / discard_draft ────────────────────
 // A whole-draft diff is 200+ KB on even a modest draft (the 252-edit one that
 // motivated this), which overflows the token cap and hides the confirmationToken
@@ -132,10 +169,11 @@ export function registerLifecycleTools(server: McpServer) {
     {
       title: "Diff draft vs published",
       description:
-        "The whole-draft diff for the active grade/subject: every node/edge that has changed on the draft compared to the currently-published version. Read-only, no state change. Distinct from the per-mutation diff you see when you dry-run an edit — this is the cumulative view an approver reads before publish_draft. Only curators and approvers may call this (a draft is pre-publish work-in-progress).",
-      inputSchema: {},
+        "The whole-draft diff for the active grade/subject: every node/edge that has changed on the draft compared to the currently-published version. Read-only, no state change. Distinct from the per-mutation diff you see when you dry-run an edit — this is the cumulative view an approver reads before publish_draft. Only curators and approvers may call this (a draft is pre-publish work-in-progress). " +
+        "Each of the six diff arrays is capped at `limit` (default 200, max 1000) so a large draft never overflows; full per-kind totals are always in `counts`, and `truncated` names any array that was cut with its true size. Raise `limit` to see more, or read `counts` for the totals.",
+      inputSchema: { limit: z.number().int().optional() },
     },
-    guarded(async () => {
+    guarded(async (a: { limit?: number }) => {
       const actor = currentActor();
       const ns = activeNamespace();
       const authz = authorize(actor, "readDraft", ns);
@@ -152,7 +190,7 @@ export function registerLifecycleTools(server: McpServer) {
         });
         return asJson({ phase: "unauthorized", action: "readDraft", reason: authz.reason });
       }
-      return asJson(await diffDraft(ns));
+      return asJson(capWholeDraftDiff(await diffDraft(ns), a.limit));
     }),
   );
 

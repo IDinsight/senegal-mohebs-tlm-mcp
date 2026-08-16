@@ -7,12 +7,87 @@
  * — they live in server/shared.ts inside the server module.
  */
 
-// Wrap any value in the MCP text-content envelope tools must return.
-export const asJson = (data: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] });
-// A tool result is the text envelope, optionally flagged `isError` (the typed
-// error path below uses it). Declared explicitly — not `ReturnType<typeof
-// asJson>` — so the error envelope is assignable to the same handler type.
-export type ToolResult = { content: { type: "text"; text: string }[]; isError?: boolean };
+// A tool result is one or more content blocks, optionally flagged `isError` (the
+// typed error path below uses it). Most tools return a single `text` block (JSON,
+// via asJson); prose tools return a `resource` block so the payload carries a
+// mimeType (see asMarkdown/asText). Declared explicitly — not `ReturnType<typeof
+// asJson>` — so every helper below is assignable to the same handler type.
+type TextBlock = { type: "text"; text: string };
+type ResourceBlock = { type: "resource"; resource: { uri: string; mimeType?: string; text: string } };
+export type ToolResult = { content: (TextBlock | ResourceBlock)[]; isError?: boolean };
+
+// ─── Universal response-size backstop ─────────────────────────────────────────
+// EVERY tool response is serialized through the helpers below, so a single cap
+// here guarantees NO tool — current or future — can hand the client a payload big
+// enough to blow its token budget. This is the last line of defence, not the
+// primary UX: well-behaved tools (walk_graph, get_document_text, list_documents,
+// …) paginate so they never approach it; the cap catches the unbounded read, the
+// misuse (limit:500 + includeEdges), and the tool nobody remembered to bound. The
+// ceiling is deliberately generous — above the largest legitimate response
+// (get_capabilities) — and tunable for ops via TLM_MAX_RESPONSE_BYTES.
+const DEFAULT_MAX_RESPONSE_BYTES = 100 * 1024; // ~100 KB pretty-printed ≈ ~25k tokens
+const maxResponseBytes = (): number => {
+  const override = Number(process.env.TLM_MAX_RESPONSE_BYTES);
+  return Number.isFinite(override) && override > 0 ? override : DEFAULT_MAX_RESPONSE_BYTES;
+};
+
+// A compact, one-level description of what overflowed — top-level keys with each
+// value's kind and size (array length, string length, object key count) — so the
+// caller sees WHY (e.g. `roots: array(650)`) and can narrow, without us echoing
+// any of the oversized payload back.
+function shapeOf(data: unknown): unknown {
+  const describe = (v: unknown): string =>
+    Array.isArray(v) ? `array(${v.length})`
+      : typeof v === "string" ? `string(${v.length} chars)`
+      : v && typeof v === "object" ? `object(${Object.keys(v).length} keys)`
+      : v === null ? "null" : typeof v;
+  if (Array.isArray(data)) return `array(${data.length})`;
+  if (data && typeof data === "object") {
+    return Object.fromEntries(Object.entries(data as Record<string, unknown>).map(([k, v]) => [k, describe(v)]));
+  }
+  return describe(data);
+}
+
+// The small replacement returned when a payload would exceed the cap. isError so
+// the caller knows it got no usable data, plus the byte math + shape + how to fix.
+function oversizeEnvelope(bytes: number, data: unknown): ToolResult {
+  const cap = maxResponseBytes();
+  const body = {
+    error: {
+      code: "RESPONSE_TOO_LARGE" as const,
+      message: `This tool's response (${bytes} bytes) exceeds the ${cap}-byte response cap and was withheld to protect your token budget.`,
+      bytes,
+      cap,
+    },
+    shape: shapeOf(data),
+    hint: "Narrow the request: add/lower a limit, page with a cursor, apply filters (nodeTypes/edgeTypes), request a smaller slice, or use a summary returnMode. Raise TLM_MAX_RESPONSE_BYTES only if a larger response is genuinely required.",
+  };
+  return { content: [{ type: "text", text: JSON.stringify(body, null, 2) }], isError: true };
+}
+
+// Wrap any value in the MCP text-content envelope tools must return — capped by
+// the universal backstop above.
+export const asJson = (data: unknown): ToolResult => {
+  const text = JSON.stringify(data, null, 2);
+  const bytes = Buffer.byteLength(text, "utf8");
+  return bytes <= maxResponseBytes() ? { content: [{ type: "text", text }] } : oversizeEnvelope(bytes, data);
+};
+
+// Return a textual payload tagged with a MIME type so the client knows how to
+// present it. A plain `text` block carries no media type, so document / markdown
+// output would otherwise reach the reader as an escaped JSON string; an EMBEDDED
+// RESOURCE is the MCP content block that does carry a mimeType. `uri` just labels
+// the resource's origin (a document path, a guide id) — it need not resolve. Also
+// capped by the backstop (a paginated caller stays well under it).
+export const asResource = (uri: string, mimeType: string, text: string): ToolResult => {
+  const bytes = Buffer.byteLength(text, "utf8");
+  return bytes <= maxResponseBytes()
+    ? { content: [{ type: "resource" as const, resource: { uri, mimeType, text } }] }
+    : oversizeEnvelope(bytes, { uri, mimeType, text });
+};
+// Markdown/plain-text a reader should see rendered, not as escaped JSON.
+export const asMarkdown = (uri: string, text: string): ToolResult => asResource(uri, "text/markdown", text);
+export const asText = (uri: string, text: string): ToolResult => asResource(uri, "text/plain", text);
 
 // ─── Structured, typed tool errors ───────────────────────────────────────────
 // The MCP SDK turns any throw inside a handler into a bare `error.message` tool

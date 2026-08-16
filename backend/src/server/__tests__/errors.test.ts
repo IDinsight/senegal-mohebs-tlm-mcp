@@ -7,11 +7,15 @@
  * covers classifyError's store-vs-internal split and the debug-only stack.
  */
 import { describe, it, expect, afterEach } from "vitest";
-import { guarded } from "../shared.js";
+import { guarded, type ToolResult } from "../shared.js";
 import { classifyError, CodedError } from "../../utils/index.js";
 import { ContextNotSetError } from "../../context/index.js";
 
-const body = (r: { content: { type: string; text: string }[] }) => JSON.parse(r.content[0].text);
+// These tools return JSON text blocks; read the text whichever block shape it is.
+const body = (r: ToolResult) => {
+  const block = r.content[0];
+  return JSON.parse("text" in block ? block.text : block.resource.text);
+};
 
 afterEach(() => { delete process.env.TLM_DEBUG; });
 

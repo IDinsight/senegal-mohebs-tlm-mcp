@@ -22,7 +22,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { asJson, guarded } from "./shared.js";
+import { asJson, asMarkdown, guarded } from "./shared.js";
 import { getActiveAdapter, validateProfileRecord } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
@@ -235,7 +235,14 @@ export function registerProfileTools(server: McpServer) {
         "Read the authored GRAPH GUIDE for the active grade/subject — markdown that explains how this subject's knowledge graph is shaped (its ontology, vocabulary, the intended hierarchy) and the conventions for authoring it. Read this BEFORE you walk or modify the graph so your edits follow the subject's conventions. Read-only. Returns { hasGuide, guide }; guide is null when the subject ships none yet. In firestore mode it comes from the published config cell (slot:'draft' for a staged edit, curator/approver only).",
       inputSchema: { slot: z.enum(["published", "draft"]).optional() },
     },
-    guarded(async (a: { slot?: "published" | "draft" }) => asJson(await readGraphGuide(a.slot))),
+    guarded(async (a: { slot?: "published" | "draft" }) => {
+      const result = await readGraphGuide(a.slot);
+      // When a guide exists it IS markdown — return it tagged text/markdown so it
+      // renders. The non-guide shapes (error, no-draft, no-guide-yet) stay JSON.
+      return typeof result.guide === "string"
+        ? asMarkdown(`tlm://graph-guide/${String(result.namespace ?? "active")}`, result.guide)
+        : asJson(result);
+    }),
   );
 
   server.registerTool(

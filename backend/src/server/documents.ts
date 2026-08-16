@@ -8,7 +8,7 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { asJson, guarded, requireConfirmation } from "./shared.js";
+import { asJson, asText, guarded, requireConfirmation } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { getStorageAdapter, extractDocxText, listEntries, recordContent, reconcile } from "../storage/index.js";
 import type { HistoryEntry } from "../types.js";
@@ -117,6 +117,41 @@ const contentSchema = {
   terminologyUsed: z.array(z.string()).optional().describe("Key math terms used."),
 };
 
+// ── get_document_text paging ──────────────────────────────────────────────────
+// A .docx must be downloaded + parsed whole (mammoth needs the full buffer), but
+// the EXTRACTED text can be arbitrarily large — a whole chapter manual is easily
+// tens of KB — so we hand it back a window at a time instead of one giant blob.
+// Default window 20k chars (~5k tokens), hard ceiling 50k, paged by `offset`:
+// the same read-a-range contract list_documents uses, applied to one document's
+// body. Read the whole document by paging until nextOffset is null.
+export const DOC_TEXT_DEFAULT_MAX_CHARS = 20_000;
+export const DOC_TEXT_MAX_CHARS = 50_000;
+
+export type DocumentTextPage = {
+  relPath: string;
+  offset: number;            // char index this window starts at
+  returned: number;          // chars in this window
+  total: number;             // total chars in the whole extracted document
+  nextOffset: number | null; // offset to pass next, or null when this is the tail
+  text: string;              // the window itself
+};
+
+const clampInt = (value: number, low: number, high: number): number =>
+  Math.min(high, Math.max(low, Math.trunc(value)));
+
+// Slice one window out of the full extracted text. Pure (no I/O) so it unit-tests
+// without a live docx; the handler downloads + extracts, then calls this. A stray
+// offset past the end yields an empty window with nextOffset null (a clean "no
+// more"), never an error.
+export function pageDocumentText(relPath: string, full: string, offset?: number, maxChars?: number): DocumentTextPage {
+  const total = full.length;
+  const start = clampInt(offset ?? 0, 0, total);
+  const windowSize = clampInt(maxChars ?? DOC_TEXT_DEFAULT_MAX_CHARS, 1, DOC_TEXT_MAX_CHARS);
+  const text = full.slice(start, start + windowSize);
+  const end = start + text.length;
+  return { relPath, offset: start, returned: text.length, total, nextOffset: end < total ? end : null, text };
+}
+
 export function registerDocumentTools(server: McpServer) {
   server.registerTool("reconcile", { title: "Reconcile bucket with history", description: "List the .docx documents in Firebase Storage and diff against history BY relPath: tracked docs (present + unchanged), UNTRACKED docs needing a link ('new' = no history entry, 'changed' = bytes differ from the recorded entry), and entries dropped because their object is gone. It no longer classifies filenames — link each untracked doc to the node it covers with record_document_content(nodeId, relPath, content).", inputSchema: {} },
     guarded(async () => asJson(await reconcile())));
@@ -136,8 +171,19 @@ export function registerDocumentTools(server: McpServer) {
   server.registerTool("create_download_url", { title: "Create document download URL", description: "Get a short-lived signed URL to download an EXISTING .docx from the bucket with an HTTP GET (no auth header needed). relPath is documents-relative, like 'chapitre_05/Manuel - Chapitre 5.docx' — the same path used by create_upload_url and get_document_text. Use this to fetch the original binary file (with its images and formatting intact) so you can edit it and re-upload via create_upload_url. Returns { url, objectKey, expiresAt, exists }; exists is false when there is no such object.", inputSchema: { relPath: z.string() } },
     guarded(async (a: { relPath: string }) => asJson(await getStorageAdapter().createDownloadUrl(a.relPath))));
 
-  server.registerTool("get_document_text", { title: "Get document text", description: "Extract the plain text of a document in the bucket (by its documents-relative path) so you can read an UNTRACKED document and then record its content. When identifying characters, read the WHOLE document — characters appear in the opening scene AND in the activities and bilan, not only the amorce.", inputSchema: { relPath: z.string() } },
-    guarded(async (a: { relPath: string }) => asJson({ relPath: a.relPath, text: await extractDocxText(a.relPath) })));
+  server.registerTool("get_document_text", { title: "Get document text", description: "Extract the plain text of a document in the bucket (by its documents-relative path) so you can read an UNTRACKED document and then record its content. PAGINATED so a long document never overflows the response: one call returns a window of up to `maxChars` characters (default 20000, max 50000) starting at `offset` (default 0), plus a small JSON envelope { offset, returned, total, nextOffset } and the window as a text/plain resource. To read the WHOLE document — you must, characters appear in the opening scene AND in the activities and bilan, not only the amorce — keep calling with offset:<nextOffset> until nextOffset is null.", inputSchema: { relPath: z.string(), offset: z.number().int().optional(), maxChars: z.number().int().optional() } },
+    // Two content blocks: a small JSON envelope (offset/total/nextOffset — how to
+    // page) and the window itself as a text/plain resource (labelled by its
+    // document path, so the reader gets rendered text, not a JSON-escaped blob).
+    guarded(async (a: { relPath: string; offset?: number; maxChars?: number }) => {
+      const { text, ...meta } = pageDocumentText(a.relPath, await extractDocxText(a.relPath), a.offset, a.maxChars);
+      return {
+        content: [
+          { type: "text" as const, text: JSON.stringify(meta, null, 2) },
+          ...asText(`tlm://document/${a.relPath}`, text).content,
+        ],
+      };
+    }));
 
   server.registerTool("record_document_content", { title: "Record parsed document content", description: "After reading an UNTRACKED document's text, store the structured content you extracted into history so it is never re-parsed. For characters, include every one found ANYWHERE in the document (opening scene and activities/bilan), each with details like {name, type}. The object must already be in the bucket. 'nodeId' is the scope node the document covers — the Chapitre/Semaine/Lesson (find it with walk_graph / namespace_stats). REQUIRES CONFIRMATION: called without confirm:true it only returns a needsConfirmation notice — ask the user to approve writing to history, then call again with confirm:true.", inputSchema: { nodeId: z.string(), relPath: z.string(), content: z.object(contentSchema), confirm: z.boolean().optional() } },
     guarded(async (a: { nodeId: string; relPath: string; content: any; confirm?: boolean }) => {

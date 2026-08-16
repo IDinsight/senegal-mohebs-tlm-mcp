@@ -160,6 +160,59 @@ describe("walkGraph pagination + overflow flags", () => {
     if ("error" in result) throw new Error(result.error);
     expect(result.truncated).toBe(true);
     expect(result.truncatedByLimit).toBe(false);
+    expect(result.truncatedBySize).toBe(false); // small nodes never hit the byte budget
+  });
+
+  // Fat nodes: a big `content` blob makes each node ~1 KB serialized, so a modest
+  // node COUNT still overflows — the byte trim, not `limit`, must cut the page.
+  const fatStar = (count: number, fill: string): CurriculumModel => ({
+    rawGraph: {
+      nodes: [
+        { id: "root", labels: ["Course"], properties: {} },
+        ...Array.from({ length: count }, (_unused, index) => ({ id: `f${index}`, labels: ["Lesson"], properties: { content: fill } })),
+      ],
+      relationships: Array.from({ length: count }, (_unused, index) => ({
+        id: `hasPart:root->f${index}`, type: "hasPart", start: "root", end: `f${index}`, properties: {},
+      })),
+    },
+  } as unknown as CurriculumModel);
+
+  it("trims a page to the byte budget and tells the caller how to shrink it", () => {
+    const fatModel = fatStar(20, "x".repeat(1000));
+    process.env.TLM_WALK_MAX_PAGE_BYTES = "3000"; // ~3 KB: only a few fat nodes fit
+    try {
+      const result = walkGraph(fatModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], limit: 50, includeEdges: false });
+      if ("error" in result) throw new Error(result.error);
+      expect(result.nodes.length).toBeGreaterThan(0);
+      expect(result.nodes.length).toBeLessThan(21);   // budget cut below the 21 available
+      expect(result.truncatedBySize).toBe(true);
+      expect(result.truncatedByLimit).toBe(true);     // more remain → paginate
+      expect(result.hint).toMatch(/byte budget/i);
+      expect(result.nextCursor).not.toBeNull();
+    } finally {
+      delete process.env.TLM_WALK_MAX_PAGE_BYTES;
+    }
+  });
+
+  it("still pages through every node when the byte budget trims each page", () => {
+    const fatModel = fatStar(12, "y".repeat(1000));
+    process.env.TLM_WALK_MAX_PAGE_BYTES = "3000";
+    try {
+      const collected: string[] = [];
+      let cursor: string | undefined;
+      for (let page = 0; page < 50; page++) {
+        const result = walkGraph(fatModel, { fromId: "root", direction: "out", edgeTypes: ["hasPart"], limit: 50, includeEdges: false, cursor });
+        if ("error" in result) throw new Error(result.error);
+        collected.push(...result.nodes.map((node) => node.id));
+        if (!result.nextCursor) break;
+        cursor = result.nextCursor;
+      }
+      const expected = ["root", ...Array.from({ length: 12 }, (_unused, index) => `f${index}`)].sort();
+      expect(collected.sort()).toEqual(expected); // every node, exactly once — no gap, no dup
+      expect(new Set(collected).size).toBe(collected.length);
+    } finally {
+      delete process.env.TLM_WALK_MAX_PAGE_BYTES;
+    }
   });
 });
 

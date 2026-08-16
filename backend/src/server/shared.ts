@@ -8,10 +8,10 @@
  * ("./shared.js").
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { asJson, buildConfirmEnvelope, classifyError, toolError, isDebug, type ToolResult } from "../utils/index.js";
+import { asJson, asMarkdown, asText, buildConfirmEnvelope, classifyError, toolError, isDebug, type ToolResult } from "../utils/index.js";
 import { ContextNotSetError } from "../context/index.js";
 
-export { asJson, toolError, type ToolResult };
+export { asJson, asMarkdown, asText, toolError, type ToolResult };
 
 const LOG = "[senegal-mohebs-tlm]";
 

@@ -47,8 +47,10 @@ export type WalkResult = {
   nodes: NodeOut[];
   edges?: EdgeOut[];        // omitted entirely when includeEdges is false
   truncated: boolean;       // DEPTH cap cut the walk (nodes exist beyond maxDepth)
-  truncatedByLimit: boolean; // the PAGE limit cut this response (more nodes remain — paginate via nextCursor)
+  truncatedByLimit: boolean; // more matching nodes remain — paginate via nextCursor (page cut by count OR by size)
+  truncatedBySize: boolean;  // the BYTE budget cut this page below `limit` — raising limit won't help (see `hint`)
   nextCursor: string | null;
+  hint?: string;             // present only when truncatedBySize — how to shrink each page
 };
 
 // A depth cap keeps a stray maxDepth from walking the whole graph; the default
@@ -60,6 +62,23 @@ const MAX_DEPTH_CAP = 10;
 // bigger limit. Ceiling stays at 500 for callers who knowingly want a big page.
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 500;
+
+// A page's node COUNT is not its token cost: a single content Lesson/Material can
+// carry a large `raw` + `content` blob, so `limit` fat nodes can overflow the
+// client even when `limit` itself is modest. So after the count slice we ALSO
+// trim the page to a serialized-byte budget (~40 KB pretty-printed ≈ ~10k tokens
+// of the reader's budget). Ops can retune via TLM_WALK_MAX_PAGE_BYTES.
+const DEFAULT_MAX_PAGE_BYTES = 40 * 1024;
+const maxPageBytes = (): number => {
+  const override = Number(process.env.TLM_WALK_MAX_PAGE_BYTES);
+  return Number.isFinite(override) && override > 0 ? override : DEFAULT_MAX_PAGE_BYTES;
+};
+
+// Told to the caller only when the byte budget (not the count) trimmed the page:
+// raising `limit` cannot help a size-bound page, so it points at the levers that
+// actually shrink each node's payload.
+const SIZE_TRIM_HINT =
+  "This page was trimmed to fit the response byte budget, so it holds fewer nodes than `limit` — raising `limit` will NOT help. To fit more per page: set includeEdges:false, narrow `nodeTypes` to only the labels you need, then keep paging with cursor:<nextCursor>.";
 
 const clamp = (value: number, low: number, high: number): number => Math.min(high, Math.max(low, value));
 
@@ -169,6 +188,64 @@ function traverse(raw: RawGraphSnapshot, args: WalkArgs, maxDepth: number): Trav
   return { depthOf, traversedEdges, truncated };
 }
 
+// ── Byte-aware paging ─────────────────────────────────────────────────────────
+// Build the node (+ traversed-edge) arrays for a set of page ids — the single
+// construction both the byte measurement and the final result use, so what we
+// measure is exactly what we return.
+function buildPage(
+  pageIds: string[],
+  nodeById: Map<string, RawNode>,
+  traversedEdges: Map<string, RawEdge>,
+  includeEdges: boolean,
+): { nodes: NodeOut[]; edges?: EdgeOut[] } {
+  const nodes = pageIds.map((id) => nodeOut(nodeById.get(id)!));
+  if (!includeEdges) {
+    return { nodes };
+  }
+  const pageNodeIds = new Set(pageIds);
+  const edges = [...traversedEdges.values()]
+    .filter((edge) => pageNodeIds.has(edge.start) || pageNodeIds.has(edge.end))
+    .map(edgeOut);
+  return { nodes, edges };
+}
+
+// Serialized size of a candidate page, measured the way asJson serializes it
+// (pretty-printed), so the budget reflects the reader's real token cost.
+const pageBytes = (page: { nodes: NodeOut[]; edges?: EdgeOut[] }): number =>
+  Buffer.byteLength(JSON.stringify(page, null, 2), "utf8");
+
+// Largest prefix length of `pageIds` whose built page fits `budget` bytes. Binary
+// search over prefix length (the page is a contiguous, size-monotonic window), so
+// O(log n) builds. Always returns ≥1 when there is any node: a single oversized
+// node still ships (it just can't be paged smaller — truncating its props would
+// corrupt the JSON), and the caller learns why from truncatedBySize + the hint.
+function fitByByteBudget(
+  pageIds: string[],
+  nodeById: Map<string, RawNode>,
+  traversedEdges: Map<string, RawEdge>,
+  includeEdges: boolean,
+  budget: number,
+): number {
+  if (pageIds.length === 0) return 0;
+  const bytesForPrefix = (count: number): number =>
+    pageBytes(buildPage(pageIds.slice(0, count), nodeById, traversedEdges, includeEdges));
+  if (bytesForPrefix(pageIds.length) <= budget) return pageIds.length;
+
+  let low = 1;
+  let high = pageIds.length;
+  let best = 1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (bytesForPrefix(mid) <= budget) {
+      best = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return best;
+}
+
 // ── The reader ────────────────────────────────────────────────────────────────
 // Returns { error } for a caller-visible problem (unknown fromId, bad cursor) so
 // the tool layer can surface a clear message, mirroring courseSubgraph's null.
@@ -221,30 +298,38 @@ export function walkGraph(model: CurriculumModel, args: WalkArgs): { error: stri
     ? orderedIds.findIndex((nodeId) => isAfterCursor(traversal.depthOf.get(nodeId)!, nodeId, cursor))
     : 0;
   const fromIndex = startIndex === -1 ? orderedIds.length : startIndex;
-  const pageIds = orderedIds.slice(fromIndex, fromIndex + limit);
-  const hasMore = fromIndex + limit < orderedIds.length;
 
-  const nodes = pageIds.map((nodeId) => nodeOut(nodeById.get(nodeId)!));
+  // Page in two steps: first the count window (`limit`), then trim THAT window to
+  // the byte budget, so a page never overflows the client on node payload size.
+  const countWindowIds = orderedIds.slice(fromIndex, fromIndex + limit);
+  const fitCount = fitByByteBudget(countWindowIds, nodeById, traversal.traversedEdges, includeEdges, maxPageBytes());
+  const pageIds = countWindowIds.slice(0, fitCount);
+
+  const truncatedBySize = fitCount < countWindowIds.length;
+  const hasMore = fromIndex + pageIds.length < orderedIds.length;
+
+  const page = buildPage(pageIds, nodeById, traversal.traversedEdges, includeEdges);
 
   const result: WalkResult = {
-    nodes,
+    nodes: page.nodes,
     truncated: traversal.truncated,
     // truncatedByLimit is about THIS page (more matching nodes remain), separate
     // from `truncated` (the depth cap hid nodes deeper than maxDepth).
     truncatedByLimit: hasMore,
+    truncatedBySize,
     nextCursor: hasMore && pageIds.length > 0
       ? encodeCursor({ depth: traversal.depthOf.get(pageIds[pageIds.length - 1])!, id: pageIds[pageIds.length - 1] })
       : null,
   };
 
-  if (includeEdges) {
-    // Return the traversed edges touching this page's nodes, so the caller can
-    // stitch the subgraph together. Across pages the union is the full traversed
-    // edge set; within a page each edge id appears once.
-    const pageNodeIds = new Set(pageIds);
-    result.edges = [...traversal.traversedEdges.values()]
-      .filter((edge) => pageNodeIds.has(edge.start) || pageNodeIds.has(edge.end))
-      .map(edgeOut);
+  // The traversed edges touching this page's nodes, so the caller can stitch the
+  // subgraph together. Across pages the union is the full traversed edge set;
+  // within a page each edge id appears once. Omitted when includeEdges is false.
+  if (page.edges) {
+    result.edges = page.edges;
+  }
+  if (truncatedBySize) {
+    result.hint = SIZE_TRIM_HINT;
   }
 
   return result;
