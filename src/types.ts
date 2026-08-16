@@ -29,11 +29,6 @@ export type HistoryEntry = {
   source: "pipeline" | "parsed";
   recordedAt: string;
   content: DocumentContent;
-  // TRANSITIONAL: the scope node's ordinal (chapter/week number), stamped at
-  // record time from the graph. Kept only so CI-maths example-domain rotation
-  // keeps working; it is removed when generation goes graph-native (step 4),
-  // once rotation reads the ordinal straight from the node.
-  unit?: number;
 };
 
 // Bumped to 3 for the node-keyed schema. A pre-node-keyed (v2) history can't be

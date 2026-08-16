@@ -1,6 +1,10 @@
 # Graph-linked documents — a document's identity is the node it covers
 
-> **Status: steps 1–2 built (in-repo); steps 3–4 proposed.** This note designs the
+> **Status: steps 1–4 built.** Steps 1–2 (history re-key + `deliverables`/`get_prompt`
+> removal) and step 3 (maths prompts retired into guide/routines/formatters) and
+> step 4 (the transitional `unit` dropped — domain rotation now reads a document's
+> chapter ordinal from its scope node in the graph; `preview_generation` /
+> `log_generation` were already node-keyed) are all live. This note designs the
 > replacement for the profile's `deliverables` concept: a generated `.docx` is
 > identified by the **graph node it covers**, not by a `(unit, deliverable)`
 > coordinate. It is the "documents-as-nodes" follow-up flagged in
@@ -193,8 +197,14 @@ history file's keys change.
 3. **Retire `get_prompt`** — the tool is gone (step 2); the remainder is to move
    the residual Bucket-C heuristics from the `PROMPT_*.md` files into the guides
    (a live-data authoring task via `edit_profile`), then delete the files.
-4. **Point generation at the scope node** — `preview_generation` + the generation
-   flow key on a node id.
+4. **Point generation at the scope node** *(done)* — `preview_generation` already
+   takes a Course (node) id and `log_generation` / `record_document_content` are
+   node-keyed (step 1), so the remaining work was to drop the transitional `unit`
+   hint: CI-maths example-domain rotation now resolves each document's chapter
+   ordinal from its scope node's `order` in the active graph (an `ordinalOf`
+   resolver injected from the adapter), `list_documents` resolves the ordinal the
+   same way for its sort/filter, `HistoryEntry.unit` is removed, and `listEntries`
+   sorts by nodeId.
 
 Each step is independently shippable; step 1 is the substantive one and can land
 before the profile change.

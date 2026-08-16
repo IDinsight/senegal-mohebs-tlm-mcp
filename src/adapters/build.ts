@@ -43,8 +43,11 @@ export function buildAdapterFromProfile(profile: SubjectProfile, grade: string, 
   // example domains (the tool boundary in src/server/ci-maths.ts also checks the
   // flag, so this just avoids advertising a helper the subject won't use).
   if (profile.capabilities.exampleDomainRotation) {
-    adapter.suggestFreshDomain = () => suggestFreshDomain();
-    adapter.domainUsage = () => domainUsage();
+    // A document's chapter number is its scope node's ordinal, read from this
+    // adapter's model at call time (the history no longer stores it).
+    const ordinalOf = (nodeId: string) => adapter.model().byId.get(nodeId)?.order ?? null;
+    adapter.suggestFreshDomain = () => suggestFreshDomain(ordinalOf);
+    adapter.domainUsage = () => domainUsage(ordinalOf);
   }
 
   return adapter;

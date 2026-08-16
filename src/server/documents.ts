@@ -2,8 +2,9 @@
  * Module: server · tool group: documents & history (bucket)
  *
  * Reconcile, list, signed upload/download URLs, text extraction, and recording
- * what was generated or ingested. "unit"/"deliverable" are the tool-facing names;
- * they map to the internal history schema's unit/type at the boundary below.
+ * what was generated or ingested. A document's identity is the graph node it
+ * covers (nodeId); its chapter/week ordinal is resolved from the active graph
+ * at query time (the `unit` filter/sort), not stored on the history entry.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -28,17 +29,18 @@ const MAX_PAGE = 100;
 
 // The advertised + enforced input schema (mirrors read_audit's limit/cursor
 // convention). Filter by the scope nodeId (a document's identity) or, for
-// convenience, by the transitional unit ordinal (CI maths: chapter number).
+// convenience, by the chapter/week ordinal (CI maths: chapter number) — the
+// ordinal is resolved from the scope node in the active graph, not stored.
 export const listDocumentsShape = {
   cursor: z.string().optional().describe("Opaque cursor from a prior page's nextCursor. Omit to start at the first document."),
   limit: z.number().int().min(1).max(MAX_PAGE).optional().describe(`Page size, 1..${MAX_PAGE} (default ${DEFAULT_PAGE}).`),
   nodeId: z.string().optional().describe("Filter to the document covering one scope node."),
-  unit: z.number().int().optional().describe("Filter to one unit ordinal (CI maths: chapter number)."),
+  unit: z.number().int().optional().describe("Filter to one chapter/week ordinal (CI maths: chapter number)."),
 };
 
 type DocCursor = { unit: number | null; nodeId: string };
 
-// A unit-less entry sorts after every numbered one; mirror listEntries' Infinity.
+// A node with no ordinal (or gone from the graph) sorts after every numbered one.
 const unitRank = (u: number | null | undefined): number => (u == null ? Infinity : u);
 
 const encodeCursor = (c: DocCursor): string => Buffer.from(JSON.stringify(c), "utf8").toString("base64");
@@ -56,19 +58,21 @@ function decodeCursor(s: string): DocCursor | null {
   }
 }
 
-// Strictly-after test in the (unit asc, nodeId asc) ordering: an entry is on the
-// "next page" iff its unit rank is larger, or the ranks tie and its nodeId sorts
-// later — mirroring the sort in storage/history.ts::listEntries.
-const isAfterCursor = (e: HistoryEntry, c: DocCursor): boolean =>
-  unitRank(e.unit) > unitRank(c.unit) || (unitRank(e.unit) === unitRank(c.unit) && e.nodeId.localeCompare(c.nodeId) > 0);
+// Strictly-after test in the (ordinal asc, nodeId asc) ordering: an entry is on
+// the "next page" iff its ordinal rank is larger, or the ranks tie and its
+// nodeId sorts later.
+const isAfterCursor = (ord: number | null, nodeId: string, c: DocCursor): boolean =>
+  unitRank(ord) > unitRank(c.unit) || (unitRank(ord) === unitRank(c.unit) && nodeId.localeCompare(c.nodeId) > 0);
 
-// Pure paging (+ optional nodeId/unit filtering) over the already-sorted
-// history. Exported so the paging contract can be unit-tested without standing
-// up the storage/adapter stack. `total` reflects the FILTERED set being paged
-// (the meaningful denominator for the cursor walk); `totalUnfiltered` reports
-// the whole history size so a caller can see a filter narrowed the result.
+// Pure paging (+ optional nodeId/unit filtering). `ordinalOf` maps each entry's
+// scope node to its chapter/week ordinal (null if the node is gone), so the
+// ordinal sort/filter/cursor need no stored field. Exported so the paging
+// contract can be unit-tested without standing up the storage/adapter stack.
+// `total` reflects the FILTERED set being paged; `totalUnfiltered` reports the
+// whole history size so a caller can see a filter narrowed the result.
 export function pageDocuments(
   all: HistoryEntry[],
+  ordinalOf: (nodeId: string) => number | null,
   args: { cursor?: string; limit?: number; nodeId?: string; unit?: number }
 ): { entries: HistoryEntry[]; count: number; total: number; totalUnfiltered: number; nextCursor: string | null } | { error: string } {
   const cursor = args.cursor != null ? decodeCursor(args.cursor) : null;
@@ -76,15 +80,20 @@ export function pageDocuments(
     return { error: "Invalid cursor — pass a cursor returned by a prior list_documents page, or omit it to start from the first document." };
   }
   const limit = Math.min(Math.max(1, Math.floor(args.limit ?? DEFAULT_PAGE)), MAX_PAGE);
+  // Resolve each entry's ordinal once, then order by (ordinal asc, nodeId asc)
+  // — storage lists by nodeId only, so the ordinal ordering is applied here.
+  const ordered = all
+    .map((e) => ({ e, ord: ordinalOf(e.nodeId) }))
+    .sort((a, b) => unitRank(a.ord) - unitRank(b.ord) || a.e.nodeId.localeCompare(b.e.nodeId));
   // Filters first (they define the set being paged), then the cursor slice.
-  const filtered = all.filter(
-    (e) => (args.nodeId == null || e.nodeId === args.nodeId) && (args.unit == null || e.unit === args.unit),
+  const filtered = ordered.filter(
+    ({ e, ord }) => (args.nodeId == null || e.nodeId === args.nodeId) && (args.unit == null || ord === args.unit),
   );
-  const rows = cursor ? filtered.filter((e) => isAfterCursor(e, cursor)) : filtered;
+  const rows = cursor ? filtered.filter(({ e, ord }) => isAfterCursor(ord, e.nodeId, cursor)) : filtered;
   const page = rows.slice(0, limit);
   const last = page[page.length - 1];
-  const nextCursor = rows.length > limit && last ? encodeCursor({ unit: last.unit ?? null, nodeId: last.nodeId }) : null;
-  return { entries: page, count: page.length, total: filtered.length, totalUnfiltered: all.length, nextCursor };
+  const nextCursor = rows.length > limit && last ? encodeCursor({ unit: last.ord ?? null, nodeId: last.e.nodeId }) : null;
+  return { entries: page.map((x) => x.e), count: page.length, total: filtered.length, totalUnfiltered: all.length, nextCursor };
 }
 
 // SUBJECT-SPECIFIC (CI-maths-leaning). The structured content recorded per
@@ -113,8 +122,10 @@ export function registerDocumentTools(server: McpServer) {
     guarded(async () => asJson(await reconcile())));
 
   server.registerTool("list_documents", { title: "List tracked documents", description: "Current history: one canonical entry per document, keyed by the scope node it covers (nodeId), with its known content, ordered by unit ordinal then nodeId. Paginated: pass limit (default 25, max 100) and an opaque cursor. Optional filters: nodeId (one scope node) and unit (a chapter/week ordinal). Returns { entries, count, total, totalUnfiltered, nextCursor }; nextCursor is null on the last page — pass it back to fetch the next page.", inputSchema: listDocumentsShape },
-    guarded(async (a: { cursor?: string; limit?: number; nodeId?: string; unit?: number }) =>
-      asJson(pageDocuments(await listEntries(), a))));
+    guarded(async (a: { cursor?: string; limit?: number; nodeId?: string; unit?: number }) => {
+      const byId = getActiveAdapter().model().byId;
+      return asJson(pageDocuments(await listEntries(), (id) => byId.get(id)?.order ?? null, a));
+    }));
 
   server.registerTool("create_upload_url", { title: "Create document upload URL", description: "Get a short-lived signed URL to upload a generated .docx to the bucket. Upload with an HTTP PUT, Content-Type application/vnd.openxmlformats-officedocument.wordprocessingml.document. relPath is like 'chapitre_05/Manuel - Chapitre 5.docx'. After uploading, call log_generation with the same relPath. REQUIRES CONFIRMATION: called without confirm:true it only returns a needsConfirmation notice — ask the user to approve the upload, then call again with confirm:true.", inputSchema: { relPath: z.string(), confirm: z.boolean().optional() } },
     guarded(async (a: { relPath: string; confirm?: boolean }) => {
@@ -130,25 +141,23 @@ export function registerDocumentTools(server: McpServer) {
 
   server.registerTool("record_document_content", { title: "Record parsed document content", description: "After reading an UNTRACKED document's text, store the structured content you extracted into history so it is never re-parsed. For characters, include every one found ANYWHERE in the document (opening scene and activities/bilan), each with details like {name, type}. The object must already be in the bucket. 'nodeId' is the scope node the document covers — the Chapitre/Semaine/Lesson (find it with walk_graph / namespace_stats). REQUIRES CONFIRMATION: called without confirm:true it only returns a needsConfirmation notice — ask the user to approve writing to history, then call again with confirm:true.", inputSchema: { nodeId: z.string(), relPath: z.string(), content: z.object(contentSchema), confirm: z.boolean().optional() } },
     guarded(async (a: { nodeId: string; relPath: string; content: any; confirm?: boolean }) => {
-      const scope = resolveScopeNode(a.nodeId); if ("error" in scope) return asJson(scope);
+      const err = scopeNodeError(a.nodeId); if (err) return asJson({ error: err });
       const needConfirm = await requireConfirmation(server, a.confirm, `record content into history for node ${a.nodeId} — this writes NOW to the live history (no draft, no undo)`);
-      return needConfirm ?? asJson(await recordContent("parsed", { nodeId: a.nodeId, unit: scope.unit, relPath: a.relPath, content: a.content }));
+      return needConfirm ?? asJson(await recordContent("parsed", { nodeId: a.nodeId, relPath: a.relPath, content: a.content }));
     }));
 
   server.registerTool("log_generation", { title: "Log a generated document", description: "Call after uploading a generated .docx to the bucket (via create_upload_url). Reads the object's hash from storage and records what you produced so it feeds future consistency + variety. Log each character with details like {name, type} (e.g. {name:'Awa', type:'child'}), not just the name. No local file needed. 'nodeId' is the scope node the document covers — the Chapitre/Semaine/Lesson. REQUIRES CONFIRMATION: called without confirm:true it only returns a needsConfirmation notice — ask the user to approve writing to history, then call again with confirm:true.", inputSchema: { nodeId: z.string(), relPath: z.string(), content: z.object(contentSchema), confirm: z.boolean().optional() } },
     guarded(async (a: { nodeId: string; relPath: string; content: any; confirm?: boolean }) => {
-      const scope = resolveScopeNode(a.nodeId); if ("error" in scope) return asJson(scope);
+      const err = scopeNodeError(a.nodeId); if (err) return asJson({ error: err });
       const needConfirm = await requireConfirmation(server, a.confirm, `log the generated document for node ${a.nodeId} into history — this writes NOW to the live history (no draft, no undo)`);
-      return needConfirm ?? asJson(await recordContent("pipeline", { nodeId: a.nodeId, unit: scope.unit, relPath: a.relPath, content: a.content }));
+      return needConfirm ?? asJson(await recordContent("pipeline", { nodeId: a.nodeId, relPath: a.relPath, content: a.content }));
     }));
 }
 
 // A document's identity is its scope node, so a write must name a real node in
-// the active graph. Resolve it here and surface its ordinal (the transitional
-// `unit` hint domain rotation still reads); reject an unknown id rather than
-// silently minting an orphan history entry.
-function resolveScopeNode(nodeId: string): { unit: number | undefined } | { error: string } {
-  const node = getActiveAdapter().model().byId.get(nodeId);
-  if (!node) return { error: `No node '${nodeId}' in the active graph. Pass the id of the scope node this document covers (a Chapitre/Semaine/Lesson) — find it with walk_graph / namespace_stats.` };
-  return { unit: node.order ?? undefined };
+// the active graph. Return an error message for an unknown id (reject rather than
+// silently mint an orphan history entry), or null when the node exists.
+function scopeNodeError(nodeId: string): string | null {
+  if (getActiveAdapter().model().byId.has(nodeId)) return null;
+  return `No node '${nodeId}' in the active graph. Pass the id of the scope node this document covers (a Chapitre/Semaine/Lesson) — find it with walk_graph / namespace_stats.`;
 }
