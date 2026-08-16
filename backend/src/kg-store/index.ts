@@ -12,8 +12,8 @@ export { publishDraft, discardDraft, diffDraft, publishDraftWithConfirm, discard
 export { editProfileWithConfirm, diffProfile, hashConfig, __resetConfigTokensForTest } from "./config-flow.js";
 export type { EditProfileResult, EditProfileOpts, ConfigDiff, WholeDraftProfileDiff } from "./config-flow.js";
 export { readAtPath, writeAtPath } from "./paths.js";
-export { createNode, linkNodes, unlinkNodes, deleteNode, mintNodeId } from "./structural.js";
-export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs } from "./structural.js";
+export { createNode, linkNodes, unlinkNodes, deleteNode, deleteEdges, deleteNodes, mintNodeId } from "./structural.js";
+export type { CreateNodeArgs, LinkNodesArgs, UnlinkNodesArgs, DeleteNodeArgs, DeleteEdgesArgs, DeleteNodesArgs } from "./structural.js";
 // The composite curriculum recipes moved OUT to the `kg-recipes` module (generic
 // verbs, no RecipeProfile). kg-store no longer knows them — it exposes only the
 // structural primitives + the two-phase framework that kg-recipes composes.

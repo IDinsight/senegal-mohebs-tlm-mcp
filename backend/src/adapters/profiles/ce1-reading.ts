@@ -76,6 +76,21 @@ Wolof is load-bearing, not decoration — preserve it when you author or edit a 
 - **Kinds are the graph's own words** — a grouping's \`groupName\` (\`Semaine\`/\`Jour\`),
   an SFI's \`statementType\` (the skill area), a content leaf's LC \`label\` (\`Lesson\`).
 
+## Removing content
+
+- **\`delete_nodes\` and \`delete_edges\` are bulk.** Both take an ARRAY of ids and
+  remove one or many in ONE atomic draft edit (one dry-run + one confirm) — not one
+  round-trip per item. All-or-nothing: a missing id, or an id listed twice, blocks
+  the whole batch.
+- **\`delete_nodes\` cascades along containment** (\`hasPart\`). Because reading has one
+  parent per node (see above), the cascade is clean: deleting a \`Jour\` takes its
+  sessions, deleting a \`Semaine\` takes its \`Jour\`s and their sessions — plus every
+  edge incident to a removed node. The dry-run WARNS with the FULL set that will
+  vanish; read it before confirming (no force flag).
+- **To keep a subtree, detach first:** \`delete_edges\` the \`hasPart\` edge into the
+  node, then \`delete_nodes\` it — the detached sessions survive.
+- Both are DRAFT edits — nothing is live until \`publish_draft\`.
+
 ## Coverage expectations
 
 There are no automatic coverage warnings on an edit, \`diff_draft\`, or publish —

@@ -264,7 +264,7 @@ describe("editable and rules come from the real sources (no hand-copied literals
 
   it("editable.batch advertises the batched writes' returnMode + idempotency controls", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.editable.batch.tools).toEqual(["add_nodes", "create_edges"]);
+    expect(caps.editable.batch.tools).toEqual(["add_nodes", "create_edges", "delete_edges", "delete_nodes"]);
     expect(caps.editable.batch.params).toEqual(["returnMode", "idempotencyKey"]);
     expect(caps.editable.batch.defaultReturnMode).toBe("summary");
     expect(caps.editable.batch.returnModes).toEqual(["summary", "full"]);

@@ -98,6 +98,25 @@ A chapter's assessment (the "bilan") is a \`Lesson\` with \`educationalUse: "Ass
   \`statementType\`, a content leaf's LC \`label\`. There is no separate subject "role"
   tag to set.
 
+## Removing content
+
+- **\`delete_nodes\` and \`delete_edges\` are bulk.** Both take an ARRAY of ids and
+  remove one or many in ONE atomic draft edit (one dry-run + one confirm) — not one
+  round-trip per item. All-or-nothing: a missing id, or an id listed twice, blocks
+  the whole batch.
+- **\`delete_nodes\` cascades along containment** (\`hasPart\`/\`hasChild\`): it removes
+  each node, every descendant whose parents are ALL in the deleted set, and every
+  edge incident to a removed node. The dry-run WARNS with the FULL set that will
+  vanish — read it before confirming; seeing the cascade is the safety (no force flag).
+- **The two-parent rule changes what cascades.** A lesson hangs under BOTH its
+  \`Chapitre\` (\`hasPart\`) and its \`Semaine\` (\`hasChild\`), so deleting the \`Chapitre\`
+  alone does NOT take its lessons — they still hang under their week, and only the
+  chapter's \`hasPart\` edges drop. To remove a lesson, delete the \`Lesson\` itself
+  (its own \`Activity\` tasks, which have only that parent, cascade with it).
+- **To keep a subtree, detach first:** \`delete_edges\` the containment edge into the
+  node, then \`delete_nodes\` it — the now-detached children survive.
+- Both are DRAFT edits — nothing is live until \`publish_draft\`.
+
 ## Coverage expectations
 
 A well-formed chapter satisfies these. There are no automatic coverage warnings on
