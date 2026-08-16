@@ -24,9 +24,13 @@
 > the three profile literals, `build.ts`'s `classifiers()`, `DeliverableSpec` /
 > `DeliverableKey` / `DocType`, `SubjectAdapter.deliverables`, and `badDeliverable`
 > are all deleted. Because `get_prompt` read `DeliverableSpec.promptFile`, it is
-> retired with them (its file removed from the tool registry); the `PROMPT_*.md`
-> files stay in `sources/` for now — their residual Bucket-C heuristics are
-> migrated into the guides as the remainder of step 3, then deleted. A
+> retired with them (its file removed from the tool registry). **Update (step 3
+> done for maths):** the two CI-maths `PROMPT_*.md` files are now **deleted** — their
+> Bucket-C heuristics moved into the CI-maths graph guide, their structure into the
+> chapter/lesson routines, and their subject-specific docx layout into per-deliverable
+> workspace formatters (the shared house style re-attached to the Teacher's Guide).
+> The CE1-reading `PROMPT_generate_lessons.md` remains until reading gets a
+> content-layer `Course` to carry its phase-spine routines + formatter. A
 > **transitional** Zod preprocess strips a legacy `deliverables` key so
 > already-seeded profile cells keep activating through the re-seed. `preview_generation`
 > already took a `course` id (no code change); only its stale "unit + deliverable"
