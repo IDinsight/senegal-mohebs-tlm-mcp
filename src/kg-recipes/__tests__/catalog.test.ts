@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import { listCatalogEntries, cloneRoutineSubtree, assembleCatalog, useRoutine, catalogNamespace, SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID } from "../catalog.js";
+import { listCatalogEntries, renderCatalogEntry, cloneRoutineSubtree, assembleCatalog, useRoutine, catalogNamespace, SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID } from "../catalog.js";
 import { edgeId, type MutationEdge, type MutationGraph, type MutationNode } from "../../kg-store/index.js";
 import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import type { RawGraphSnapshot } from "../../types.js";
@@ -75,6 +75,51 @@ describe("listCatalogEntries", () => {
     // so nothing lists as an entry. The catalog namespace always seeds a container.
     const loose: MutationGraph = { nodes: [routine("a", { description: "A" }), routine("b", { description: "B" })], edges: [] };
     expect(listCatalogEntries(loose, "shared")).toEqual([]);
+  });
+});
+
+describe("renderCatalogEntry", () => {
+  it("renders a routine entry: summary + ordered steps + each step's Material content", () => {
+    const g: MutationGraph = {
+      nodes: [
+        routine("root", { description: "Routine library" }),
+        routine("entry", { description: "Fiche de leçon", metadata: { summary: "French only." } }),
+        routine("s1", { description: "Déclencheur", position: 1, timeRequired: "PT4M" }),
+        routine("s2", { description: "Modelage", position: 2 }),
+        material("m1", { content: "Trigger spec." }),
+        material("m2", { content: "Model spec." }),
+      ],
+      edges: [hasPart("root", "entry"), hasPart("entry", "s1"), hasPart("entry", "s2"), hasPart("s1", "m1"), hasPart("s2", "m2")],
+    };
+    const md = renderCatalogEntry(g, "entry", "shared")!;
+    expect(md).toContain("# Fiche de leçon");
+    expect(md).toContain("routine · shared catalog");
+    expect(md).toContain("French only.");
+    expect(md).toContain("## Déclencheur  (PT4M)");
+    expect(md).toContain("Trigger spec.");
+    expect(md).toContain("Model spec.");
+    expect(md.indexOf("Déclencheur")).toBeLessThan(md.indexOf("Modelage"));   // ordinal order
+  });
+
+  it("renders a formatter entry's direct Material spec (no steps)", () => {
+    const g: MutationGraph = {
+      nodes: [
+        routine("root", { description: "Routine library" }),
+        routine("fmt", { description: "House style", metadata: { catalogKind: "formatter", summary: "Apply everywhere." } }),
+        material("spec", { content: "Palette: green." }),
+      ],
+      edges: [hasPart("root", "fmt"), hasPart("fmt", "spec")],
+    };
+    const md = renderCatalogEntry(g, "fmt", "workspace")!;
+    expect(md).toContain("# House style");
+    expect(md).toContain("formatter · workspace catalog");
+    expect(md).toContain("Apply everywhere.");
+    expect(md).toContain("Palette: green.");
+  });
+
+  it("returns null for an unknown id or a non-routine node", () => {
+    expect(renderCatalogEntry(catalogFixture(), "nope", "shared")).toBeNull();
+    expect(renderCatalogEntry(catalogFixture(), "m1", "shared")).toBeNull();
   });
 });
 

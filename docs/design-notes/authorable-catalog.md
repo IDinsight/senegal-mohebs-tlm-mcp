@@ -11,9 +11,10 @@
 > markdown `guide` the LLM reads via `get_graph_guide`), and coverage lives
 > **entirely** in the guide's prose, checked on demand by `review_draft` — the
 > coded coverage rules are **retired** (no more automatic coverage warnings on
-> edits / `diff_draft` / publish). Still a **proposal**: the MCP **resources**
-> browse surface (D5), reading's routine catalog (blocked on its content layer),
-> and re-copy/detach ergonomics. This note extends
+> edits / `diff_draft` / publish). The MCP **resources** browse surface (D5) is
+> now **shipped** too — each catalog entry is a `catalog://{scope}/{id}` resource
+> rendered with its full authored spec. Still a **proposal**: reading's routine
+> catalog (blocked on its content layer) and re-copy/detach ergonomics. This note extends
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
 > **D2 was revised from by-reference to copy-on-use during implementation** (see below).
@@ -309,9 +310,7 @@ single generic mechanism — derive the in-scope set by reachability from the
 `Course` root — retiring the prune and the widened-parse concern together. Left as
 its own change so it can be reviewed against the parity + faithful-re-export guards.
 
-**Not yet:** the **graph-guide MD layer** (phase 2c below), the MCP **resources**
-browse surface (D5 — `list_catalog` / `use_*` / `get_profile` are tools for now),
-reading's routine catalog (blocked on its missing content layer), and
+**Not yet:** reading's routine catalog (blocked on its missing content layer), and
 re-copy/detach ergonomics.
 
 ## The goal
@@ -594,7 +593,7 @@ files are gone.
 | D2 | Reference vs copy on pick | **Copy-on-use** (revised from by-reference; forced by a shared cross-namespace library — copy localizes the reference; tradeoff = drift) |
 | D3 | Catalog scope | **Both — shipped:** shared `_shared/_catalog` + per-workspace `<ws>/_catalog`; `list_catalog` unions + tags scope; edit gated per-namespace |
 | D4 | Where authored data lives | **Content → LC nodes** (catalog = a reserved-namespace routine graph); profile → **separate config layer, shipped** (a config cell on the pointer doc, riding the shared draft/publish loop; `get_profile` / `edit_profile`) |
-| D5 | Curator browse surface | **Tool for now** (`list_catalog`); MCP resources deferred. `use_routine` / `use_formatter` attach by copy |
+| D5 | Curator browse surface | **Shipped** — both a tool (`list_catalog`) and MCP **resources** (`catalog://{scope}/{id}`, each rendered with its full authored spec); `use_routine` / `use_formatter` attach by copy |
 | D6 | Build order | **Routine wiring first → profile to config → catalog → dissolve residue** |
 | D7 | Residual per-subject logic | **Generic mechanism switched by config** (no node-authorable prune language) |
 | D8 | Profile: config vs guide | **Layered (proposal)** — thin machine-readable `core` for the deterministic parser/classifier (Zod-guarded, on the read hot path) + an authored markdown `guide` the LLM reads; prose never on the read hot path. Advisory coverage migrates to guide prose; parser/classifier stay code |

@@ -136,6 +136,40 @@ function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, chi
   };
 }
 
+// One entry's FULL detail rendered as markdown, for the browse resource surface.
+// Where listCatalogEntries gives a shallow outline (step names + a material count),
+// this includes the load-bearing authored spec: a formatter's Material content, and
+// each routine step's Material content. Returns null when the id isn't a routine
+// entry in this graph.
+export function renderCatalogEntry(graph: MutationGraph, entryId: string, scope: CatalogScope): string | null {
+  const { byId, children } = indexContainment(graph);
+  const entry = byId.get(entryId);
+  if (!entry || !isRoutine(entry)) return null;
+
+  const childrenOf = (id: string) => (children.get(id) ?? []).map((c) => byId.get(c)).filter((n): n is MutationNode => !!n);
+  const lines: string[] = [`# ${str(rawOf(entry).description) || entryId}`, "", `*${kindOf(entry)} · ${scope} catalog*`, ""];
+  const summary = str(metaOf(entry).summary);
+  if (summary) lines.push(summary, "");
+
+  // A formatter's spec sits in the entry's direct Material children.
+  for (const m of childrenOf(entry.id).filter(isMaterial)) {
+    const content = str(rawOf(m).content);
+    if (content) lines.push(content, "");
+  }
+
+  // A routine's ordered steps, each with its Material content.
+  const steps = childrenOf(entry.id).filter(isRoutine).sort((a, b) => orderOf(a) - orderOf(b));
+  for (const step of steps) {
+    const timing = str(rawOf(step).timeRequired);
+    lines.push(`## ${str(rawOf(step).description)}${timing ? `  (${timing})` : ""}`, "");
+    for (const m of childrenOf(step.id).filter(isMaterial)) {
+      const content = str(rawOf(m).content);
+      if (content) lines.push(content, "");
+    }
+  }
+  return `${lines.join("\n").trimEnd()}\n`;
+}
+
 // Everything reachable from an entry via hasPart (the entry, its steps, their
 // Materials) — the subtree a copy carries.
 function subtreeIds(entryId: string, children: Map<string, string[]>): string[] {

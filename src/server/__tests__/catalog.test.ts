@@ -15,7 +15,7 @@ import {
   edgeId as makeEdgeId, __resetMutationsForTest, __resetDraftTokensForTest,
 } from "../../kg-store/index.js";
 import type { MutationGraph, StoredMeta, KgNodeStore, StoredNode, StoredEdge } from "../../kg-store/index.js";
-import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, listCatalogEntries, useRoutine } from "../../kg-recipes/index.js";
+import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, listCatalogEntries, renderCatalogEntry, useRoutine } from "../../kg-recipes/index.js";
 import { readCatalog } from "../catalog.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
@@ -135,6 +135,21 @@ describe("list_catalog", () => {
     expect(entries[0].scope).toBe("workspace");
     // The shared library is untouched by the workspace one — separate namespaces.
     expect((await readCatalog(SHARED_CATALOG_NAMESPACE)).nodes.some((n) => n.id === "ws-entry")).toBe(false);
+  });
+});
+
+describe("catalog browse resources", () => {
+  it("renders an entry's FULL spec from the store (what the resource read serves)", async () => {
+    const catalog = await readCatalog(SHARED_CATALOG_NAMESPACE);
+    // A routine entry: heading + ordered, timed steps.
+    const routineMd = renderCatalogEntry(catalog, "cat-entry", "shared")!;
+    expect(routineMd).toContain("# Fiche de leçon");
+    expect(routineMd).toContain("## Déclencheur  (PT4M)");
+    // A formatter entry: its spec Material content — the load-bearing text
+    // list_catalog only COUNTS, but the browse resource surfaces in full.
+    const fmtMd = renderCatalogEntry(catalog, "cat-fmt", "shared")!;
+    expect(fmtMd).toContain("# House style");
+    expect(fmtMd).toContain("palette + fonts + page setup");
   });
 });
 
