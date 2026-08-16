@@ -10,6 +10,10 @@ A remote **MCP server** ("Senegal Maths — TLM") that helps experts author teac
 
 Explain in **plain language** — avoid jargon, and define any technical term you must use. When explaining a concept or weighing a tradeoff, ground it in a **concrete example**: a small worked case, real numbers, or an analogy. Abstract prose on its own is hard to follow. Lead with the plain answer, then show it. This applies to every explanation, not only when asked.
 
+## Repo layout
+
+The server is a self-contained package under **`backend/`** (`backend/src`, `backend/scripts`, `backend/test`, `backend/assets`, its own `package.json`/`tsconfig.json`/`Dockerfile`); the KG explorer UI is its own package under `frontend/`. **Run every command below from `backend/`** (`cd backend` first), and read every `src/…`, `scripts/…`, `test/…`, `assets/…` path in this file as relative to `backend/`.
+
 ## Commands
 
 ```bash

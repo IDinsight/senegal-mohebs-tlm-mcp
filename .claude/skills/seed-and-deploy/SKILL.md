@@ -10,9 +10,10 @@ description: Roll out a change to the Firestore KG store or the deployed MCP ser
 firestore-only change (see
 [`docs/design-notes/firestore-only-store.md`](../../docs/design-notes/firestore-only-store.md)
 and [`docs/technical-reference/store.md`](../../docs/technical-reference/store.md)).
-The graphs now live under `test/fixtures/` (tests only) and in Firestore (live); the
-per-subject `assets/<ws>/<grade>/<subject>/` (terminology + prompt files) ship in the
-container image.
+The graphs now live under `backend/test/fixtures/` (tests only) and in Firestore (live); the
+per-subject `backend/assets/<ws>/<grade>/<subject>/` (terminology + prompt files) ship in the
+container image. **The server is a self-contained package under `backend/` — run every
+`npm run …` command in this skill from `backend/`** (`cd backend` first).
 
 ## Pick the path by what changed
 
@@ -20,7 +21,7 @@ container image.
 |---|---|---|
 | **Curriculum content, a subject profile, or a graph guide** | The **live curator loop** — edit with the graph tools / `edit_profile`, then `diff_draft` → `publish_draft`. Nothing reaches generation until you publish. | **No** |
 | **A whole graph** (new namespace, restore from backup, clone) | `export:kg-store` (back up first) then `import:kg-store` | No (data only) |
-| **A new subject** | Register its profile under `src/adapters/profiles/` (**code**) → deploy → `import:kg-store` its graph | Yes (the profile is code) |
+| **A new subject** | Register its profile under `backend/src/adapters/profiles/` (**code**) → deploy → `import:kg-store` its graph | Yes (the profile is code) |
 | **Server code** (parser, adapter engine, tools) | Cloud Run deploy (see [`DEPLOY.md`](../../DEPLOY.md)) | Yes |
 
 The common case — tweaking a guide, fixing a lesson, editing a profile — is a **data
