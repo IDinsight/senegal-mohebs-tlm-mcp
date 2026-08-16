@@ -602,7 +602,7 @@
           "en": {
             "description": "Pupil's manual — chapter structure"
           },
-          "summary": "<p>Structure fixe d'un chapitre du <strong>Manuel de l'élève</strong> (CI mathématiques). Le manuel est l'artefact destiné à l'élève ; un chapitre de manuel correspond à un chapitre du curriculum. Chaque chapitre enchaîne six sections : <strong>Titre → Situation d'amorce → Je retiens → Consigne générale → Activités → Bilan</strong>.</p>\n<p>Règles transversales : chapitres rédigés <strong>en français uniquement</strong> (jamais de wolof) ; <strong>règle d'or — un enfant de 6 ans répond en REGARDANT, pas en se souvenant</strong> (tout le nécessaire pour répondre est dessiné dans l'image de l'activité) ; <strong>QCM à trois choix A / B / C</strong>, les choix figurant <strong>uniquement dans l'image</strong> (jamais recopiés en texte) ; l'élève <strong>écrit seulement la lettre</strong> de la bonne réponse ; <strong>manuel non consommable</strong> (on n'écrit pas dans le manuel) ; <strong>fidélité au vocabulaire du curriculum</strong> (texte de l'OS et terminologie officielle, en français uniquement).</p>"
+          "summary": "Structure fixe d'un chapitre du **Manuel de l'élève** (CI mathématiques). Le manuel est l'artefact destiné à l'élève ; un chapitre de manuel correspond à un chapitre du curriculum. Chaque chapitre enchaîne six sections : **Titre → Situation d'amorce → Je retiens → Consigne générale → Activités → Bilan**.\n\nRègles transversales : chapitres rédigés **en français uniquement** (jamais de wolof) ; **règle d'or — un enfant de 6 ans répond en REGARDANT, pas en se souvenant** (tout le nécessaire pour répondre est dessiné dans l'image de l'activité) ; **QCM à trois choix A / B / C**, les choix figurant **uniquement dans l'image** (jamais recopiés en texte) ; l'élève **écrit seulement la lettre** de la bonne réponse ; **manuel non consommable** (on n'écrit pas dans le manuel) ; **fidélité au vocabulaire du curriculum** (texte de l'OS et terminologie officielle, en français uniquement)."
         }
       }
     },
@@ -4188,7 +4188,7 @@
           }
         },
         "name": "Bilan — spécification",
-        "content": "<h3>Bilan — retour à la situation d'amorce</h3>\n<p>La dernière leçon du chapitre est une <strong>révision</strong>. Le bilan est un QCM portant sur la <strong>scène d'amorce</strong>.</p>\n<ul>\n  <li>Les questions couvrent, ensemble, <strong>tous les OS non-bilan</strong> du chapitre (chaque OS exercé par au moins une question).</li>\n  <li><strong>Pas d'image propre</strong> : le bilan renvoie en mots à l'image d'amorce déjà présente en tête de chapitre.</li>\n  <li>Chaque question doit être décidable à partir de la seule scène d'amorce et ne pas être auto-répondante.</li>\n  <li>Clé de réponses fournie pour l'enseignant.</li>\n</ul>",
+        "content": "### Bilan — retour à la situation d'amorce\n\nLa dernière leçon du chapitre est une **révision**. Le bilan est un QCM portant sur la **scène d'amorce**.\n\n- Les questions couvrent, ensemble, **tous les OS non-bilan** du chapitre (chaque OS exercé par au moins une question).\n- **Pas d'image propre** : le bilan renvoie en mots à l'image d'amorce déjà présente en tête de chapitre.\n- Chaque question doit être décidable à partir de la seule scène d'amorce et ne pas être auto-répondante.\n- Clé de réponses fournie pour l'enseignant.",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -6718,7 +6718,7 @@
           }
         },
         "name": "JE FAIS — Déclencheur — consigne enseignant·e",
-        "content": "<h3>JE FAIS — Déclencheur (4 minutes)</h3>\n<p><em>But :</em> lancer la leçon et mobiliser les élèves. Le déclencheur s'adapte à la place de la leçon dans le chapitre.</p>\n<ul>\n  <li><strong>1re leçon du chapitre.</strong> Le maître présente la situation d'amorce <strong>avec des mots</strong> (aucune image n'est reproduite dans la fiche) ; il fait observer l'image <strong>dans le manuel de l'élève</strong> — <em>E dit : « Regardez bien l'image de votre manuel… »</em> ; il pose quelques questions orales simples de mise en train ; il rappelle les prérequis ; il annonce l'objectif.</li>\n  <li><strong>Leçons intermédiaires.</strong> Le maître part d'un exemple rapide <strong>esquissé au tableau</strong> à la craie ; il rappelle brièvement la leçon précédente ; il introduit la nouvelle notion.</li>\n  <li><strong>Dernière leçon (Bilan).</strong> Le maître revient explicitement à la situation d'amorce (avec des mots / l'image du manuel) ; il annonce que la leçon est une <strong>révision</strong> des apprentissages du chapitre.</li>\n</ul>\n<p>Terminer par : <em>E dit : « Aujourd'hui, nous allons apprendre à… »</em></p>",
+        "content": "### JE FAIS — Déclencheur (4 minutes)\n\n*But :* lancer la leçon et mobiliser les élèves. Le déclencheur s'adapte à la place de la leçon dans le chapitre.\n\n- **1re leçon du chapitre.** Le maître présente la situation d'amorce **avec des mots** (aucune image n'est reproduite dans la fiche) ; il fait observer l'image **dans le manuel de l'élève** — *E dit : « Regardez bien l'image de votre manuel… »* ; il pose quelques questions orales simples de mise en train ; il rappelle les prérequis ; il annonce l'objectif.\n- **Leçons intermédiaires.** Le maître part d'un exemple rapide **esquissé au tableau** à la craie ; il rappelle brièvement la leçon précédente ; il introduit la nouvelle notion.\n- **Dernière leçon (Bilan).** Le maître revient explicitement à la situation d'amorce (avec des mots / l'image du manuel) ; il annonce que la leçon est une **révision** des apprentissages du chapitre.\n\nTerminer par : *E dit : « Aujourd'hui, nous allons apprendre à… »*",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -8546,7 +8546,7 @@
           }
         },
         "name": "Je retiens — spécification",
-        "content": "<h3>Je retiens</h3>\n<p>Encadré-résumé de la notion, rédigé à la <strong>première personne</strong> (« Je… »), <strong>3–5 puces</strong>, termes-clés en gras. Il s'appuie sur le même univers d'objets et de personnages que la situation d'amorce.</p>",
+        "content": "### Je retiens\n\nEncadré-résumé de la notion, rédigé à la **première personne** (« Je… »), **3–5 puces**, termes-clés en gras. Il s'appuie sur le même univers d'objets et de personnages que la situation d'amorce.",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -11138,7 +11138,7 @@
           "en": {
             "description": "Lesson sheet — explicit teaching (30 min)"
           },
-          "summary": "<p>Structure fixe d'une fiche de leçon en <strong>enseignement explicite</strong> pour le Guide de l'enseignant·e (CI mathématiques). Chaque leçon dure environ <strong>30 minutes</strong> et enchaîne cinq étapes : modelage → pratique guidée → pratique autonome → objectivation.</p>\n<p>Règles transversales : fiches rédigées en français ; <strong>le maître lit toujours les consignes à voix haute</strong> (les élèves ne lisent pas encore) ; les élèves <strong>n'écrivent pas dans le manuel</strong> (cahier ou ardoise) ; démonstration <strong>d'abord au tableau</strong>, du plus concret au moins concret, avec des supports <strong>gratuits</strong> uniquement (craie, tableau, ardoise, doigts, cailloux, cauris) ; aucun matériel acheté.</p>"
+          "summary": "Structure fixe d'une fiche de leçon en **enseignement explicite** pour le Guide de l'enseignant·e (CI mathématiques). Chaque leçon dure environ **30 minutes** et enchaîne cinq étapes : modelage → pratique guidée → pratique autonome → objectivation.\n\nRègles transversales : fiches rédigées en français ; **le maître lit toujours les consignes à voix haute** (les élèves ne lisent pas encore) ; les élèves **n'écrivent pas dans le manuel** (cahier ou ardoise) ; démonstration **d'abord au tableau**, du plus concret au moins concret, avec des supports **gratuits** uniquement (craie, tableau, ardoise, doigts, cailloux, cauris) ; aucun matériel acheté."
         }
       }
     },
@@ -11195,7 +11195,7 @@
           }
         },
         "name": "NOUS FAISONS — Objectivation — consigne enseignant·e",
-        "content": "<h3>NOUS FAISONS — Objectivation (5 minutes)</h3>\n<p><em>But :</em> consolider les apprentissages.</p>\n<ul>\n  <li>Corriger rapidement.</li>\n  <li>Faire expliquer leurs réponses par un ou deux élèves.</li>\n  <li>Revenir sur la notion clé ; faire <strong>reformuler la règle</strong>.</li>\n</ul>\n<p>Terminer par : <em>E dit : « Aujourd'hui, nous avons appris que… »</em></p>\n<p><strong>Bilan.</strong> Mener une <strong>objectivation globale</strong> du chapitre : ce que les élèves savent désormais faire et pourquoi.</p>",
+        "content": "### NOUS FAISONS — Objectivation (5 minutes)\n\n*But :* consolider les apprentissages.\n\n- Corriger rapidement.\n- Faire expliquer leurs réponses par un ou deux élèves.\n- Revenir sur la notion clé ; faire **reformuler la règle**.\n\nTerminer par : *E dit : « Aujourd'hui, nous avons appris que… »*\n\n**Bilan.** Mener une **objectivation globale** du chapitre : ce que les élèves savent désormais faire et pourquoi.",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -11754,7 +11754,7 @@
           }
         },
         "name": "TU FAIS — consigne enseignant·e",
-        "content": "<h3>TU FAIS (10 minutes)</h3>\n<p><em>But :</em> pratique <strong>autonome</strong>.</p>\n<ul>\n  <li>Faire ouvrir le manuel à l'activité cible en précisant laquelle (par exemple « Activités 2 et 3 » ou « questions 4, 5 et 6 du bilan »).</li>\n  <li>Lire l'instruction à voix haute.</li>\n  <li>Rappeler d'écrire <strong>seulement la lettre</strong> de la bonne réponse (A, B ou C), dans le cahier ou sur l'ardoise — <strong>pas dans le manuel</strong>.</li>\n  <li>Laisser les élèves travailler seuls ; <strong>circuler</strong> pour aider <strong>sans donner la réponse</strong>.</li>\n</ul>\n<p>Terminer par : <em>Réponse attendue : …</em></p>\n<p><strong>Bilan.</strong> Laisser les <strong>questions 4, 5 et 6</strong> en travail autonome ; rappeler la réponse de la <strong>question 1</strong> (modélisée au Rappel / Modelage). Afficher : <em>Réponses attendues : 4 → … ; 5 → … ; 6 → …</em></p>",
+        "content": "### TU FAIS (10 minutes)\n\n*But :* pratique **autonome**.\n\n- Faire ouvrir le manuel à l'activité cible en précisant laquelle (par exemple « Activités 2 et 3 » ou « questions 4, 5 et 6 du bilan »).\n- Lire l'instruction à voix haute.\n- Rappeler d'écrire **seulement la lettre** de la bonne réponse (A, B ou C), dans le cahier ou sur l'ardoise — **pas dans le manuel**.\n- Laisser les élèves travailler seuls ; **circuler** pour aider **sans donner la réponse**.\n\nTerminer par : *Réponse attendue : …*\n\n**Bilan.** Laisser les **questions 4, 5 et 6** en travail autonome ; rappeler la réponse de la **question 1** (modélisée au Rappel / Modelage). Afficher : *Réponses attendues : 4 → … ; 5 → … ; 6 → …*",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -14018,7 +14018,7 @@
           }
         },
         "name": "Activités — spécification",
-        "content": "<h3>Activités</h3>\n<p>Chaque activité cible <strong>une leçon (OS)</strong> du chapitre à travers sa/ses <strong>composante(s) d'apprentissage</strong>.</p>\n<p><strong>Couverture obligatoire :</strong> chaque leçon non-bilan est ciblée par <strong>au moins une activité</strong>. La couverture se juge <strong>par leçon, pas par composante</strong> (plusieurs leçons partagent souvent une même composante ; chacune garde son activité). Là où l'OS le permet, viser <strong>deux activités</strong> par leçon, réellement différentes (jamais des quasi-doublons).</p>\n<p><strong>Structure d'une activité :</strong> Titre (« Activité N — … », peut porter le terme du curriculum) → <strong>Consigne</strong> courte (une phrase concrète, lue à voix haute par le maître, répondable en regardant) → <strong>Image</strong>.</p>\n<ul>\n  <li><strong>QCM A / B / C</strong> uniquement ; les trois choix figurent <strong>uniquement dans l'image</strong> et ne sont jamais recopiés en texte.</li>\n  <li>Le <strong>terme mathématique</strong> paraît dans le titre, le « Je retiens » et les métadonnées enseignant ; la consigne destinée à l'enfant reste concrète.</li>\n  <li>Question <strong>décidable et non auto-répondante</strong>, une seule idée par question ; tout le nécessaire pour répondre est visible dans l'image de l'activité (règle d'or).</li>\n  <li>Non consommable : ni entourage, ni coloriage, ni écriture dans le manuel.</li>\n  <li>Métadonnées enseignant : composante ciblée, leçon, source, lettre de la réponse.</li>\n</ul>",
+        "content": "### Activités\n\nChaque activité cible **une leçon (OS)** du chapitre à travers sa/ses **composante(s) d'apprentissage**.\n\n**Couverture obligatoire :** chaque leçon non-bilan est ciblée par **au moins une activité**. La couverture se juge **par leçon, pas par composante** (plusieurs leçons partagent souvent une même composante ; chacune garde son activité). Là où l'OS le permet, viser **deux activités** par leçon, réellement différentes (jamais des quasi-doublons).\n\n**Structure d'une activité :** Titre (« Activité N — … », peut porter le terme du curriculum) → **Consigne** courte (une phrase concrète, lue à voix haute par le maître, répondable en regardant) → **Image**.\n\n- **QCM A / B / C** uniquement ; les trois choix figurent **uniquement dans l'image** et ne sont jamais recopiés en texte.\n- Le **terme mathématique** paraît dans le titre, le « Je retiens » et les métadonnées enseignant ; la consigne destinée à l'enfant reste concrète.\n- Question **décidable et non auto-répondante**, une seule idée par question ; tout le nécessaire pour répondre est visible dans l'image de l'activité (règle d'or).\n- Non consommable : ni entourage, ni coloriage, ni écriture dans le manuel.\n- Métadonnées enseignant : composante ciblée, leçon, source, lettre de la réponse.",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -15175,7 +15175,7 @@
           }
         },
         "name": "Situation d'amorce — spécification",
-        "content": "<h3>Situation d'amorce</h3>\n<p><em>Rôle :</em> scène <strong>maîtresse</strong> du chapitre. Elle fixe les personnages, le décor et le vocabulaire d'objets réutilisés dans tout le chapitre, et c'est la scène à laquelle le <strong>Bilan</strong> renvoie.</p>\n<ul>\n  <li>Ancrée dans la <strong>vie quotidienne sénégalaise</strong>.</li>\n  <li>Montre clairement les ensembles / quantités de référence, en <strong>petites quantités dénombrables (≤ ~5)</strong>.</li>\n  <li>Narration courte : 2–3 phrases, vocabulaire simple.</li>\n  <li><strong>3–4 questions orales</strong> de mise en train qui, ensemble, couvrent l'éventail des objectifs du chapitre (pas une seule leçon). Chacune doit être décidable à partir de la scène dessinée, porter sur une seule idée, et ne jamais être auto-répondante.</li>\n</ul>",
+        "content": "### Situation d'amorce\n\n*Rôle :* scène **maîtresse** du chapitre. Elle fixe les personnages, le décor et le vocabulaire d'objets réutilisés dans tout le chapitre, et c'est la scène à laquelle le **Bilan** renvoie.\n\n- Ancrée dans la **vie quotidienne sénégalaise**.\n- Montre clairement les ensembles / quantités de référence, en **petites quantités dénombrables (≤ ~5)**.\n- Narration courte : 2–3 phrases, vocabulaire simple.\n- **3–4 questions orales** de mise en train qui, ensemble, couvrent l'éventail des objectifs du chapitre (pas une seule leçon). Chacune doit être décidable à partir de la scène dessinée, porter sur une seule idée, et ne jamais être auto-répondante.",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -15247,7 +15247,7 @@
           }
         },
         "name": "Titre du chapitre — spécification",
-        "content": "<h3>Titre du chapitre</h3>\n<p>Titre en français, adapté aux enfants. Un sous-titre de domaine est possible mais optionnel.</p>",
+        "content": "### Titre du chapitre\n\nTitre en français, adapté aux enfants. Un sous-titre de domaine est possible mais optionnel.",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -15760,7 +15760,7 @@
           }
         },
         "name": "Consigne générale — spécification",
-        "content": "<h3>Consigne générale</h3>\n<p>Phrase fixe, à reprendre <strong>telle quelle</strong> :</p>\n<blockquote>« Observe bien les images. Écris seulement la lettre de la bonne réponse dans ton cahier. »</blockquote>",
+        "content": "### Consigne générale\n\nPhrase fixe, à reprendre **telle quelle** :\n\n> « Observe bien les images. Écris seulement la lettre de la bonne réponse dans ton cahier. »",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -16577,7 +16577,7 @@
           }
         },
         "name": "JE FAIS — Modelage — consigne enseignant·e",
-        "content": "<h3>JE FAIS — Modelage (8 minutes)</h3>\n<p><em>But :</em> le maître montre clairement comment faire <strong>au tableau</strong>. Il dessine la situation à la craie (boucles fermées / « patates » pour les ensembles, points ou marques pour les objets, flèches ou liens un-à-un selon le besoin) ; il <strong>pense à voix haute</strong> ; il montre comment choisir la bonne réponse ; il emploie les mots mathématiques clés ; il donne un exemple <strong>et</strong> un contre-exemple.</p>\n<p>Seuls des supports <strong>gratuits</strong> peuvent compléter le tableau (ardoises, doigts, ou cailloux / cauris que les élèves possèdent déjà). <strong>Aucun matériel acheté</strong> — pas de vrais légumes ni de vrais paniers ; ces objets sont évoqués comme <strong>dessins au tableau</strong>.</p>\n<p>Insérer des prises de parole du type : <em>E dit : « Je dessine d'abord au tableau… »</em> / <em>E dit : « Je choisis cette réponse parce que… »</em> / <em>E dit : « La bonne réponse est… »</em></p>\n<p>Placer ici le repère <span style=\"color:#D4812A\"><strong>Je retiens</strong></span> (étiquette orange en gras, en ligne) : présenter le « Je retiens » de l'outil de l'élève, le lire à voix haute et le faire répéter par les élèves.</p>\n<p><strong>Bilan (Rappel / Modelage).</strong> Modéliser à voix haute la <strong>question 1</strong> : relire les options, écarter les mauvaises en justifiant, puis choisir. Montrer la réponse attendue de la question 1.</p>",
+        "content": "### JE FAIS — Modelage (8 minutes)\n\n*But :* le maître montre clairement comment faire **au tableau**. Il dessine la situation à la craie (boucles fermées / « patates » pour les ensembles, points ou marques pour les objets, flèches ou liens un-à-un selon le besoin) ; il **pense à voix haute** ; il montre comment choisir la bonne réponse ; il emploie les mots mathématiques clés ; il donne un exemple **et** un contre-exemple.\n\nSeuls des supports **gratuits** peuvent compléter le tableau (ardoises, doigts, ou cailloux / cauris que les élèves possèdent déjà). **Aucun matériel acheté** — pas de vrais légumes ni de vrais paniers ; ces objets sont évoqués comme **dessins au tableau**.\n\nInsérer des prises de parole du type : *E dit : « Je dessine d'abord au tableau… »* / *E dit : « Je choisis cette réponse parce que… »* / *E dit : « La bonne réponse est… »*\n\nPlacer ici le repère **Je retiens** (étiquette orange en gras, en ligne) : présenter le « Je retiens » de l'outil de l'élève, le lire à voix haute et le faire répéter par les élèves.\n\n**Bilan (Rappel / Modelage).** Modéliser à voix haute la **question 1** : relire les options, écarter les mauvaises en justifiant, puis choisir. Montrer la réponse attendue de la question 1.",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
@@ -18658,7 +18658,7 @@
           }
         },
         "name": "NOUS FAISONS — consigne enseignant·e",
-        "content": "<h3>NOUS FAISONS (8 minutes)</h3>\n<p><em>But :</em> pratique <strong>guidée et collective</strong>.</p>\n<ul>\n  <li>Nommer <strong>une activité précise du manuel</strong> (par exemple « Activité 1 »).</li>\n  <li>Lire l'instruction à voix haute (les élèves ne savent pas encore lire).</li>\n  <li>Faire réfléchir les élèves <strong>en binômes / sur l'ardoise</strong>.</li>\n  <li>Appeler un élève au tableau ; corriger ensemble ; faire <strong>justifier</strong> la réponse.</li>\n</ul>\n<p>Terminer par : <em>Réponse attendue : …</em></p>\n<p><strong>Bilan.</strong> Traiter ici les <strong>questions 2 et 3</strong>. Afficher les réponses attendues : <em>Réponses attendues : 2 → … ; 3 → …</em></p>",
+        "content": "### NOUS FAISONS (8 minutes)\n\n*But :* pratique **guidée et collective**.\n\n- Nommer **une activité précise du manuel** (par exemple « Activité 1 »).\n- Lire l'instruction à voix haute (les élèves ne savent pas encore lire).\n- Faire réfléchir les élèves **en binômes / sur l'ardoise**.\n- Appeler un élève au tableau ; corriger ensemble ; faire **justifier** la réponse.\n\nTerminer par : *Réponse attendue : …*\n\n**Bilan.** Traiter ici les **questions 2 et 3**. Afficher les réponses attendues : *Réponses attendues : 2 → … ; 3 → …*",
         "materialType": "Reference",
         "educationalUse": "Instruction",
         "audience": [
