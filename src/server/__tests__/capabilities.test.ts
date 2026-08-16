@@ -291,10 +291,11 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.recipes.list.map((r: { name: string }) => r.name)).toEqual(["edit_node"]);
   });
 
-  it("catalog advertises the two tools; canUse mirrors the apply gate", async () => {
+  it("catalog advertises its tools + browse resource; canUse mirrors the apply gate", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     expect(caps.catalog.browse).toBe(true);   // list_catalog is an ungated read
-    expect(caps.catalog.tools).toEqual(["list_catalog", "use_routine", "use_formatter"]);
+    expect(caps.catalog.tools).toEqual(["list_catalog", "get_catalog_entry", "use_routine", "use_formatter"]);
+    expect(caps.catalog.resources).toEqual(["catalog://{scope}/{id}"]);
     expect(caps.catalog.scopes.shared).toBe(SHARED_CATALOG_NAMESPACE);
     // use_routine copies onto the draft — same gate as any edit, no drift.
     expect(caps.catalog.canUse).toBe(caps.actions.canEditDraft);

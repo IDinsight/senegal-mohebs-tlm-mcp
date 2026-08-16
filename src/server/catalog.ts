@@ -100,11 +100,27 @@ const APPLY_INPUT = {
 export function registerCatalogTools(server: McpServer) {
   server.registerTool(
     "list_catalog",
-    { title: "List the catalog", description: "Browse the reusable-spec catalog — the instructional routines and formatters a curator can apply to content. Reads BOTH the shared cross-tenant library and the active workspace's own; each entry carries its `scope` (shared | workspace) and `kind` (routine | formatter), plus id, name, cross-cutting summary, ordered steps (name + timing), and material count. Pass a routine's id to use_routine, or a formatter's to use_formatter, to copy it. [] when nothing is seeded.", inputSchema: {} },
+    { title: "List the catalog", description: "Browse the reusable-spec catalog — the instructional routines and formatters a curator can apply to content. Reads BOTH the shared cross-tenant library and the active workspace's own; each entry carries its `scope` (shared | workspace) and `kind` (routine | formatter), plus id, name, cross-cutting summary, ordered steps (name + timing), and material count. Pass a routine's id to use_routine, or a formatter's to use_formatter, to copy it. For an entry's FULL authored spec, call get_catalog_entry. [] when nothing is seeded.", inputSchema: {} },
     guarded(async () => {
       const scopes = catalogScopes();
       const perScope = await Promise.all(scopes.map(async (s) => listCatalogEntries(await readCatalog(s.namespace), s.scope)));
       return asJson({ scopes: scopes.map((s) => ({ scope: s.scope, namespace: s.namespace })), entries: perScope.flat() });
+    }),
+  );
+
+  server.registerTool(
+    "get_catalog_entry",
+    {
+      title: "Read a catalog entry",
+      description: "Read ONE catalog entry's FULL authored spec, as markdown: a routine's summary + its ordered, timed steps AND each step's Material content; a formatter's spec Material. This is the detail list_catalog only COUNTS (materialCount) — the same content the `catalog://` browse resource serves, exposed as a TOOL so it works in every client (not only those with a resource browser). Pass the entry `id` from list_catalog; both libraries (shared + workspace) are searched. Read-only.",
+      inputSchema: { id: z.string() },
+    },
+    guarded(async (a: { id: string }) => {
+      for (const s of catalogScopes()) {
+        const markdown = renderCatalogEntry(await readCatalog(s.namespace), a.id, s.scope);
+        if (markdown) return asJson({ id: a.id, scope: s.scope, markdown });
+      }
+      return asJson({ error: `Catalog entry '${a.id}' not found in the shared or workspace library. Call list_catalog for entry ids.` });
     }),
   );
 
