@@ -25,7 +25,7 @@ import { registerAuditTools } from "./audit.js";
 import { registerHealthTools } from "./health.js";
 
 export function buildServer(): McpServer {
-  const server = new McpServer({ name: "senegal-mohebs-tlm-server", version: "0.4.0" });
+  const server = new McpServer({ name: "tlm-authoring-server", title: "Teaching & Learning Materials authoring", version: "0.4.0" });
   registerHealthTools(server);       // ping (no datastore — transport liveness probe)
   registerContextTools(server);      // set_context, get_context
   registerWorkspaceTools(server);    // list_workspaces, create_workspace, add/remove/list_member (tenant admin)
