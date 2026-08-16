@@ -51,6 +51,7 @@ supplies credentials.) Never print or commit the key.
 npm run build                                                          # scripts read dist/
 npm run export:kg-store -- <ws> <grade> <subject> [out.json]          # back up first
 npm run import:kg-store -- <ws> <grade> <subject> <graph.json> [--profile p.json] [--dry-run]
+npm run write:profile -- <ws> <grade> <subject> [--profile p.json] [--slot a|b|published] [--dry-run]  # repair a config cell (see Recovery)
 ```
 
 `import-kg` writes the graph **and** the subject-profile config cell — from `--profile
@@ -88,16 +89,27 @@ curl -s https://<service-url>/health     # → ok   (NOT /healthz — Google res
 If `set_context` fails with *"the stored subject profile … is invalid and would
 mis-parse"*, the published config cell is malformed for the running code (e.g. it
 carries a key the current schema retired). This is a **chicken-and-egg**: `edit_profile`
-can't fix it because it needs the context activated, and `import:kg-store` only writes
-slot `a` (so it fixes the published cell only if the published slot *is* `a`). Options,
-in order of preference:
+can't fix it because it needs the context activated. Use **`write:profile`** — it writes
+the `{ core, guide }` config cell **directly** to a slot (default: the currently
+published one), outside the two-phase loop the broken cell blocks, and it refuses to
+write a cell that would not activate (same check the server runs):
 
-1. **If published slot is `a`:** `import:kg-store … --profile <clean.json>` (or the
-   clean in-repo literal) rewrites the published cell.
-2. **If published slot is `b`:** there is no clean CLI for a targeted repair today —
-   this is a known gap. Either add a one-off script that writes the config cell to the
-   published slot, or (destructive, loses history/drafts) `delete-namespace` then
-   re-import.
+```bash
+npm run write:profile -- <ws> <grade> <subject> [--profile clean.json] [--slot a|b|published] [--dry-run]
+```
 
-Determining the published slot needs store access (the pointer doc) — check it before
-choosing.
+Without `--profile` it uses the clean in-repo `{ core, guide }` literal for that
+grade/subject. `--slot` defaults to `published`, so the fix is live immediately with no
+pointer flip; pass `a`/`b` to target a specific slot. Run with `--dry-run` first (it
+reads the real store, reports the target slot + guide length, writes nothing). Env is
+the same as `import-kg` (`SERVICE_ACCOUNT_KEY_PATH` or `SERVICE_ACCOUNT_KEY_JSON`,
+`FIREBASE_STORAGE_BUCKET`, and `TLM_BUCKET_PREFIX` to match the runtime namespace).
+
+`write:profile` is the **repair** path (direct write, no draft, no audit). For an
+ordinary profile/guide change, prefer the curator loop — `edit_profile` then
+`publish_draft` — which is audited and reversible. Note `edit_profile` **replaces the
+whole `{ core, guide }` record** (it does not patch): `get_profile` first, edit, pass it
+all back. A tamper-evident way to confirm a big guide reached the store byte-for-byte:
+the `edit_profile` dry-run's `confirmationToken` is base64url JSON carrying
+`pv = sha256(stableStringify({core, guide}))`; decode it and compare against the same
+hash computed locally before you confirm.
