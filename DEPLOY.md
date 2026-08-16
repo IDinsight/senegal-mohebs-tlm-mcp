@@ -24,9 +24,12 @@ gcloud iam service-accounts add-iam-policy-binding \
 
 ## Deploy (from repo root)
 
+The server package (with its `Dockerfile`) lives under `backend/`, so the build source
+is that directory rather than the repo root.
+
 ```bash
 gcloud run deploy senegal-mohebs-tlm \
-  --source . \
+  --source backend \
   --project senegal-ci-maths \
   --region europe-west1 \
   --service-account tlm-server@senegal-ci-maths.iam.gserviceaccount.com \
@@ -51,7 +54,7 @@ Notes:
 - The KG lives in **Firestore, not the image**, so adding or updating a graph needs **no redeploy** —
   use `import:kg-store` (see [`docs/technical-reference/store.md`](docs/technical-reference/store.md)).
   A *new subject* still needs a redeploy, because its profile is code (registered under
-  `src/adapters/profiles/`). The per-subject `assets/` (terminology, prompt files) ship in the
+  `backend/src/adapters/profiles/`). The per-subject `backend/assets/` (terminology, prompt files) ship in the
   image, so changing those needs a redeploy too.
 
 ## Supabase dashboard configuration

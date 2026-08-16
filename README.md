@@ -30,7 +30,10 @@ The only per-subject files on disk are static assets under `assets/<workspace>/<
 
 ## Quickstart
 
+The server is a self-contained package under **`backend/`** (the `frontend/` explorer UI is its own package). Run these from `backend/`, and read the `assets/…`, `test/…`, `src/…` paths elsewhere in this README as relative to it.
+
 ```bash
+cd backend
 npm install
 npm run build          # check-cycles (layering) + tsc → dist/
 npm test               # vitest
