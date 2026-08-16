@@ -1,6 +1,10 @@
 {
   "hosting": {
-    "public": "hosting/public",
+    "public": "frontend/explorer/dist",
+    "predeploy": [
+      "npm --prefix frontend/explorer ci",
+      "npm --prefix frontend/explorer run build"
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",

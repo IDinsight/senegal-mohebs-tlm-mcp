@@ -12,5 +12,11 @@
 # Committed test fixtures (golden snapshots) live under __fixtures__ dirs.
 !src/adapters/__fixtures__/*.json
 
+# Frontend explorer (Vite/React) — its own package tree. Track its config JSON
+# (rescued from the blanket *.json ignore above), but not its build artefacts.
+!frontend/**/*.json
+frontend/explorer/node_modules
+frontend/explorer/dist
+
 # Firebase CLI deploy cache
 /.firebase
