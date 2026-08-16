@@ -48,7 +48,11 @@ Notes:
 - No `SERVICE_ACCOUNT_KEY_PATH` on Cloud Run — the runtime service account provides
   Application Default Credentials; signed URLs sign via the IAM credentials API
   (hence the TokenCreator role above).
-- `sources/` ships inside the container image, so adding a grade/subject means a redeploy.
+- The KG lives in **Firestore, not the image**, so adding or updating a graph needs **no redeploy** —
+  use `import:kg-store` (see [`docs/technical-reference/store.md`](docs/technical-reference/store.md)).
+  A *new subject* still needs a redeploy, because its profile is code (registered under
+  `src/adapters/profiles/`). The per-subject `assets/` (terminology, prompt files) ship in the
+  image, so changing those needs a redeploy too.
 
 ## Supabase dashboard configuration
 

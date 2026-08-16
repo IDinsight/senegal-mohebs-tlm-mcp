@@ -15,6 +15,7 @@
     "start:http": "node dist/http.js",
     "import:kg-store": "npm run build && node scripts/import-kg.mjs",
     "export:kg-store": "npm run build && node scripts/export-kg.mjs",
+    "write:profile": "npm run build && node scripts/write-profile.mjs",
     "seed:catalog": "npm run build && node scripts/seed-catalog.mjs"
   },
   "dependencies": {
