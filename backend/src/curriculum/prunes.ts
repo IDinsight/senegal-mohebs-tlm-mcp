@@ -25,53 +25,46 @@ type PostParse = (units: CurriculumUnit[], raw: { nodes: RawNode[]; rels: RawRel
 
 export type PruneStrategySpec = { strategy: "content-reachable-from-roots"; rootKinds: string[] };
 
-// Keep only what a document actually needs: the root groupings, their content
-// spine (day groupings → session lessons, or lessons directly under a root), the
-// spine standards those sessions support, their components, and the content
-// layer (Activity/Material) that hangs off any kept node. Everything else
-// (orphans, unrelated spine) is dropped so the store stays lean. Ported verbatim
-// from the CE1 reading adapter; `rootKinds` is the one thing that was hardcoded.
+// Keep only what a document actually needs: everything reachable from a root down
+// the containment tree (to ANY depth — Course → week → day → session →
+// Activity/Material), plus the standards those sessions teach and the standards'
+// components. Everything else (orphans, unrelated spine) is dropped so the store
+// stays lean. `rootKinds` selects the roots — e.g. `["Course"]` scopes a subject
+// from its content root (scope-from-Course), `["Semaine"]` from week roots (the
+// pre-Course reading shape); listing both is a safe transition (either matches).
 function contentReachableFromRoots(rootKinds: Set<string>): PostParse {
   return (units) => {
     const byId = new Map(units.map((u) => [u.id, u]));
+    // A standard's kind is its `statementType` (many values), so it is identified
+    // by its structural class instead: a leaf StandardsFrameworkItem is
+    // normalizedStatementType "Standard".
+    const isLeafStandard = (u: CurriculumUnit | undefined) => u?.properties.normalizedStatementType === "Standard";
     const keep = new Set<string>();
-    for (const g of units) {
-      if (!rootKinds.has(g.kind)) continue;
-      keep.add(g.id);
-      // A root holds day groupings (Jour, each holding session lessons) or, in the
-      // pre-day-layer shape, session lessons directly.
-      for (const cid of g.childIds) {
-        const child = byId.get(cid);
-        if (child?.kind === "Jour") { keep.add(cid); for (const lid of child.childIds) if (byId.get(lid)?.kind === "Lesson") keep.add(lid); }
-        else if (child?.kind === "Lesson") keep.add(cid);
-      }
+
+    // Content closure: walk the containment tree (childIds) from each root to any
+    // depth, keeping every node reached. Do NOT descend INTO a standard — a leaf
+    // standard's childIds are reversed alignment/supports folds (its aligned
+    // sessions + components), not containment, so following them would drag in the
+    // whole spine. This one walk subsumes the old fixed Course-less 2-level descent
+    // and the separate Activity/Material closure.
+    const stack = units.filter((u) => rootKinds.has(u.kind)).map((u) => u.id);
+    while (stack.length) {
+      const id = stack.pop()!;
+      const u = byId.get(id);
+      if (!u || keep.has(id)) continue;
+      keep.add(id);
+      if (isLeafStandard(u)) continue;
+      for (const cid of u.childIds) stack.push(cid);
     }
-    // Standards a kept session supports (session→supports→standard folds so the
-    // standard's childIds ∋ the session). A standard's kind is its `statementType`
-    // (many values), so it is identified by its structural class instead: a leaf
-    // StandardsFrameworkItem is normalizedStatementType "Standard".
-    const isLeafStandard = (u: CurriculumUnit) => u.properties.normalizedStatementType === "Standard";
+
+    // The standards a kept session teaches (session—hasEducationalAlignment→standard
+    // folds so the standard's childIds ∋ the session), then those standards' components.
     for (const ex of units) {
       if (!isLeafStandard(ex)) continue;
-      const supported = ex.childIds.some((cid) => byId.get(cid)?.kind === "Lesson" && keep.has(cid));
-      if (supported) keep.add(ex.id);
+      if (ex.childIds.some((cid) => byId.get(cid)?.kind === "Lesson" && keep.has(cid))) keep.add(ex.id);
     }
     for (const u of units) if (u.kind === "LearningComponent") { const p = byId.get(u.parentId ?? ""); if (p && keep.has(p.id)) keep.add(u.id); }
-    // Content layer: the Activities/Materials the content tree hangs off any kept
-    // node via containment. Closure over childIds restricted to Activity/Material
-    // kinds, so a Material two levels down (under an Activity) is reached once its
-    // Activity is kept, and nothing outside the content layer is pulled in.
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const u of units) {
-        if (!keep.has(u.id)) continue;
-        for (const cid of u.childIds) {
-          const c = byId.get(cid);
-          if (c && (c.kind === "Activity" || c.kind === "Material") && !keep.has(cid)) { keep.add(cid); changed = true; }
-        }
-      }
-    }
+
     return units.filter((u) => keep.has(u.id));
   };
 }

@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import { parseGraph, type GraphParseDescriptor } from "../parse-graph.js";
+import { resolvePrune } from "../prunes.js";
 import type { CurriculumModel, CurriculumUnit } from "../../types.js";
 
 const load = (rel: string) => JSON.parse(readFileSync(resolve(rel), "utf8"));
@@ -149,5 +150,53 @@ describe("generic parseGraph — reading (Scope B — daily sessions)", () => {
 
     const withComponents = aligned.filter((lesson) => model.childrenOf(standardForSession.get(lesson.id)!).some((child) => child.kind === "LearningComponent"));
     expect(withComponents.length).toBeGreaterThan(0);
+  });
+});
+
+describe("content-reachable-from-roots prune (scope-from-Course)", () => {
+  const prune = (rootKinds: string[]): GraphParseDescriptor => ({
+    numberFrom: "position",
+    postParse: resolvePrune({ strategy: "content-reachable-from-roots", rootKinds }),
+  });
+
+  it("generalising the closure keeps the SAME reading set with or without the Course rootKind", () => {
+    // The reading fixture has no Course yet, so ["Course","Semaine"] must prune to
+    // exactly what ["Semaine"] did — the transition adds nothing until a Course exists.
+    const raw = load("test/fixtures/senegal/ce1/reading/knowledge_graph.json");
+    const semaineOnly = parseGraph(raw, prune(["Semaine"]));
+    const withCourse = parseGraph(raw, prune(["Course", "Semaine"]));
+    expect(withCourse.byId.size).toBe(semaineOnly.byId.size);
+    expect(withCourse.byId.size).toBeGreaterThan(0);
+    expect(withCourse.unitsOfKind("Semaine").length).toBe(semaineOnly.unitsOfKind("Semaine").length);
+  });
+
+  it("with rootKinds ['Course'] keeps the Course-rooted tree + aligned standards, drops orphans", () => {
+    // A minimal reading-shaped graph: Course ▸ week ▸ day ▸ session, the session
+    // teaching a standard (which carries a component); plus an orphan week (not under
+    // the Course) and an unrelated standard — both must be pruned.
+    const node = (id: string, labels: string[], properties: Record<string, unknown>) => ({ id, labels, properties });
+    const rel = (start: string, end: string, type: string) => ({ id: `${type}:${start}->${end}`, start, end, type });
+    const raw = {
+      nodes: [
+        node("course", ["Course"], { description: "Guide de l'enseignant" }),
+        node("wk", ["LessonGrouping"], { groupName: "Semaine", position: 1, description: "1" }),
+        node("day", ["LessonGrouping"], { groupName: "Jour", position: 1, description: "Jour 1" }),
+        node("sess", ["Lesson"], { position: 1, description: "Session" }),
+        node("std", ["StandardsFrameworkItem"], { normalizedStatementType: "Standard", statementType: "Lecture", description: "OS" }),
+        node("comp", ["LearningComponent"], { description: "composante" }),
+        node("orphan-wk", ["LessonGrouping"], { groupName: "Semaine", position: 9, description: "9" }),
+        node("unrelated-std", ["StandardsFrameworkItem"], { normalizedStatementType: "Standard", statementType: "Lecture", description: "autre OS" }),
+      ],
+      relationships: [
+        rel("course", "wk", "hasPart"),
+        rel("wk", "day", "hasPart"),
+        rel("day", "sess", "hasPart"),
+        rel("sess", "std", "hasEducationalAlignment"),
+        rel("comp", "std", "supports"),
+      ],
+    };
+    const model = parseGraph(raw, prune(["Course"]));
+    for (const kept of ["course", "wk", "day", "sess", "std", "comp"]) expect(model.byId.has(kept)).toBe(true);
+    for (const dropped of ["orphan-wk", "unrelated-std"]) expect(model.byId.has(dropped)).toBe(false);
   });
 });
