@@ -44,16 +44,17 @@ export function TreeNode(props: Props) {
   const hasKids = kids.length > 0;
   const open = filter ? true : expanded.has(id);
 
-  // Badge the real relation. In the node-type view every link is a relation, so
-  // badge them all; in a containment tree badge only non-obvious folded edges
-  // (leave a genuine hasChild clean).
+  // Always badge the real relation linking this row to its parent — the reader
+  // should never have to guess how a node hangs off its parent. `folded` marks the
+  // semantic hops (a folded edge, or any edge in the by-type view); those keep the
+  // emphasised look, while a plain structural hasChild gets a calmer badge so deep
+  // containment trees stay legible.
   const revView = spec.shape === "label-tree" && !!spec.params.reverse;
-  const rawRel =
+  const linkRel =
     !synthetic && parentId && !isSynth(parentId)
       ? model.relBetween(parentId, id, revView)
       : null;
-  const linkRel =
-    rawRel && (spec.shape === "node-type" || rawRel !== "hasChild") ? rawRel : null;
+  const folded = !!linkRel && (spec.shape === "node-type" || linkRel !== "hasChild");
 
   const node = model.N[id];
   const label = model.nodeLabel(id, lang);
@@ -72,13 +73,13 @@ export function TreeNode(props: Props) {
       <div
         className={`group flex cursor-pointer select-none items-center gap-[7px] rounded-md px-[7px] py-[5px] hover:bg-panel2 ${
           selected === id ? "bg-panel2 outline outline-1 outline-accent" : ""
-        } ${linkRel ? "opacity-95" : ""}`}
+        } ${folded ? "opacity-95" : ""}`}
         onClick={onRowClick}
       >
         <span
           className={`flex w-4 flex-shrink-0 items-center justify-center rounded ${
             hasKids ? "cursor-pointer text-muted hover:bg-line hover:text-txt" : ""
-          } ${linkRel ? "text-task" : ""}`}
+          } ${folded ? "text-task" : ""}`}
           onClick={(e) => {
             if (hasKids && !filter) {
               e.stopPropagation();
@@ -96,7 +97,11 @@ export function TreeNode(props: Props) {
         />
 
         {linkRel && (
-          <span className="flex-shrink-0 rounded border border-line bg-panel2 px-1.5 py-px text-[10px] uppercase tracking-[0.04em] text-task">
+          <span
+            className={`flex-shrink-0 rounded border px-1.5 py-px text-[10px] uppercase tracking-[0.04em] ${
+              folded ? "border-line bg-panel2 text-task" : "border-line text-muted"
+            }`}
+          >
             {linkRel}
           </span>
         )}
@@ -108,7 +113,7 @@ export function TreeNode(props: Props) {
         )}
 
         <span
-          className={`flex-1 truncate ${linkRel ? "italic" : ""} ${
+          className={`flex-1 truncate ${folded ? "italic" : ""} ${
             isHit ? "text-accent" : ""
           }`}
           title={synthetic ? label : model.desc(node, lang) || ""}
