@@ -276,6 +276,14 @@ describe("edit_node (composite field edit — replaced reposition + set_content,
     expect(node.properties.title).toBe("Chapitre renommé");
   });
 
+  it("writes a summary into raw.metadata.summary (a routine/formatter's blurb)", async () => {
+    const { lessonId } = pick(await readPublished());
+    const { confirm } = await runRecipe(editNode, { namespace: ns, nodeId: lessonId, summary: "Résumé transversal en **markdown**." });
+    expect(confirm?.phase).toBe("apply");
+    const node = (await readDraft())!.nodes.find((candidate) => candidate.id === lessonId)!;
+    expect((node.properties.raw as any).metadata.summary).toBe("Résumé transversal en **markdown**.");
+  });
+
   it("blocks when no field is provided", async () => {
     const { lessonId } = pick(await readPublished());
     const { preview } = await runRecipe(editNode, { namespace: ns, nodeId: lessonId });

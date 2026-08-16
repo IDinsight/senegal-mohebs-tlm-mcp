@@ -31,23 +31,24 @@ export function registerRecipeTools(server: McpServer) {
     {
       title: "Edit a node's fields",
       description:
-        "Edit a node IN PLACE in ONE atomic draft edit — the single field-edit verb (it replaced set_content + reposition and added title editing). Pass `nodeId` and AT LEAST ONE of: `content` (load-bearing text, canonical LC Material.content), `position` (ordinal among siblings — membership is the containment edge, so this NEVER cascades; only labels that carry a position in LC — LessonGrouping/Lesson/Activity/routine steps — have one), `title` (display name — normalized to the node's title/text field per its label), `title_en` (English mirror). A nonexistent `nodeId` is BLOCKED; to remove content, delete the node instead. Edit in place — do NOT delete + re-add (that cascades the subtree, drops every incident edge, and mints a new id). REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
+        "Edit a node IN PLACE in ONE atomic draft edit — the single field-edit verb (it replaced set_content + reposition and added title editing). Pass `nodeId` and AT LEAST ONE of: `content` (load-bearing text, canonical LC Material.content), `position` (ordinal among siblings — membership is the containment edge, so this NEVER cascades; only labels that carry a position in LC — LessonGrouping/Lesson/Activity/routine steps — have one), `title` (display name — normalized to the node's title/text field per its label), `title_en` (English mirror), `summary` (a routine/formatter's cross-cutting blurb → raw.metadata.summary, the field list_catalog / get_catalog_entry / walk_graph surface). A nonexistent `nodeId` is BLOCKED; to remove content, delete the node instead. Edit in place — do NOT delete + re-add (that cascades the subtree, drops every incident edge, and mints a new id). REQUIRES CONFIRMATION. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
         nodeId: z.string(),
         content: z.string().optional(),
         position: z.number().optional(),
         title: z.string().optional(),
         title_en: z.string().optional(),
+        summary: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { nodeId: string; content?: string; position?: number; title?: string; title_en?: string; confirm?: boolean; confirmationToken?: string }) => {
+    guarded(async (a: { nodeId: string; content?: string; position?: number; title?: string; title_en?: string; summary?: string; confirm?: boolean; confirmationToken?: string }) => {
       const { namespace } = bind(getActiveAdapter());
       const result = await runGraphMutation({
         namespace,
         mutation: editNode,
-        args: { namespace, nodeId: a.nodeId, content: a.content, position: a.position, title: a.title, title_en: a.title_en },
+        args: { namespace, nodeId: a.nodeId, content: a.content, position: a.position, title: a.title, title_en: a.title_en, summary: a.summary },
         confirm: a.confirm,
         token: a.confirmationToken,
       });
