@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Eye } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Eye } from "lucide-react";
 import { isSynth, type GraphModel } from "../lib/graphModel";
 import { makeT } from "../i18n";
 import type { Lang, ViewSpec } from "../types";
@@ -44,16 +44,16 @@ export function TreeNode(props: Props) {
   const hasKids = kids.length > 0;
   const open = filter ? true : expanded.has(id);
 
-  // Always badge the real relation linking this row to its parent — the reader
-  // should never have to guess how a node hangs off its parent. `folded` marks the
-  // semantic hops (a folded edge, or any edge in the by-type view); those keep the
-  // emphasised look, while a plain structural hasChild gets a calmer badge so deep
-  // containment trees stay legible.
-  const revView = spec.shape === "label-tree" && !!spec.params.reverse;
-  const linkRel =
+  // Always badge the real relation linking this row to its parent — with an arrow
+  // showing which way the edge actually flows (down = parent is the source, up =
+  // this child is). `folded` marks the semantic hops (a folded edge, or any edge in
+  // the by-type view); those keep the emphasised look, while a plain structural
+  // hasChild gets a calmer badge so deep containment trees stay legible.
+  const link =
     !synthetic && parentId && !isSynth(parentId)
-      ? model.relBetween(parentId, id, revView)
+      ? model.relBetween(parentId, id)
       : null;
+  const linkRel = link?.rel ?? null;
   const folded = !!linkRel && (spec.shape === "node-type" || linkRel !== "hasChild");
 
   const node = model.N[id];
@@ -96,13 +96,14 @@ export function TreeNode(props: Props) {
           style={{ background: model.colorFor(id) }}
         />
 
-        {linkRel && (
+        {link && (
           <span
-            className={`flex-shrink-0 rounded border px-1.5 py-px text-[10px] uppercase tracking-[0.04em] ${
+            className={`inline-flex flex-shrink-0 items-center gap-0.5 rounded border px-1.5 py-px text-[10px] uppercase tracking-[0.04em] ${
               folded ? "border-line bg-panel2 text-task" : "border-line text-muted"
             }`}
           >
-            {linkRel}
+            {link.sourceIsParent ? <ArrowDown size={9} /> : <ArrowUp size={9} />}
+            {link.rel}
           </span>
         )}
 

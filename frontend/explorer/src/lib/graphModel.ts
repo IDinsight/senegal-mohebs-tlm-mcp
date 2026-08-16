@@ -324,11 +324,23 @@ export function createGraphModel(data: DisplayGraph) {
   // The REAL relation linking parent→child (for the link badge). `outByRel` is
   // keyed by traversal type (folded to hasChild), so read the true type off the
   // stored adjacency entry. In a reversed tree the display edge runs child→parent.
+  // The real relation between a tree parent and child, plus which way it actually
+  // flows. `sourceIsParent` is true when the parent node is the edge's source (the
+  // arrow points down to the child), false when the child is (the arrow points back
+  // up to the parent). The server folds a few edges REVERSED onto the display
+  // containment axis (a component `supports` its standard, a lesson/activity
+  // `hasEducationalAlignment`s its standard, an activity `illustrates` its
+  // component — see kg-export.ts::toDisplayEdges), so for those the true source is
+  // the display target; everything else flows in its display direction.
+  const REVERSED_DISPLAY_RELS = new Set([
+    "supports",
+    "hasEducationalAlignment",
+    "illustrates",
+  ]);
   function relBetween(
     parentId: string,
     childId: string,
-    reverse: boolean,
-  ): string | null {
+  ): { rel: string; sourceIsParent: boolean } | null {
     const lookup = (from: string, to: string): string | null => {
       for (const r in outByRel) {
         const hit = (outByRel[r][from] || []).find((x) => x.to === to);
@@ -336,11 +348,21 @@ export function createGraphModel(data: DisplayGraph) {
       }
       return null;
     };
-    const [from, to] = reverse ? [childId, parentId] : [parentId, childId];
-    // Fall back to the opposite direction: an alignment-tail edge (e.g. a Lesson
-    // pointing to its standard) is stored reversed relative to how the tree shows
-    // it, but the badge label is the same either way.
-    return lookup(from, to) ?? lookup(to, from);
+    // Find the display edge either way round (a folded edge sits reversed to how
+    // the tree shows it), tracking which endpoint the stored edge points from.
+    let displaySource = parentId;
+    let rel = lookup(parentId, childId);
+    if (!rel) {
+      rel = lookup(childId, parentId);
+      if (rel) displaySource = childId;
+    }
+    if (!rel) return null;
+    const realSource = REVERSED_DISPLAY_RELS.has(rel)
+      ? displaySource === parentId
+        ? childId
+        : parentId
+      : displaySource;
+    return { rel, sourceIsParent: realSource === parentId };
   }
 
   // Colour is driven entirely by the server taxonomy (node.cat); synthetic rows
