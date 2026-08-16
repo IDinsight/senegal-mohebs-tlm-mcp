@@ -7,8 +7,10 @@ stays in the MCP curator tools. See `docs/design-notes/kg-explorer-findings.md` 
 the data-scope finding.
 
 Two pieces: a read-only **export endpoint** (companion routes on the same Cloud Run service,
-`src/kg-export.ts` + routes in `src/http.ts`) and the **hosted explorer** (`hosting/public/index.html`,
-a fork of the original single-file explorer — same look and interactions, live data).
+`src/kg-export.ts` + routes in `src/http.ts`) and the **hosted explorer** (`frontend/explorer/`,
+a React + TypeScript app — Vite, Tailwind CSS, Lucide icons — that builds to
+`frontend/explorer/dist` and is served by Firebase Hosting). It is a component-based port of the
+original single-file page: same look, interactions, and data contract.
 
 ### Endpoint contract
 
@@ -98,7 +100,7 @@ Both subjects declare the same three tabs: **thematic**, **planification**, **ge
 
 `buildViewConfig` picks the thematic anchor by which kinds are present (`domaine` → maths hierarchy;
 else `standard` → reading strand grouping). The backend is covered by `src/__tests__/kg-export.test.ts`; the
-static frontend (`hosting/public/index.html`) is data-driven and adapts — **re-verify in-browser after
+frontend (`frontend/explorer/`) is data-driven and adapts — **re-verify in-browser after
 `gcloud run deploy` (the /kg endpoint) + `firebase deploy --only hosting`.**
 
 **Explorer post-processing** (`exportNamespace`, display-only — never touches the store): (1) domaine
@@ -115,7 +117,8 @@ de-noises the explorer without a re-seed.
 Seed it into Firestore (see [Seed](store.md#seed)). It then appears in the selector automatically. If its
 data has the CI maths-shaped fields it gets the rich views; otherwise it renders via the generic
 `node-type` view — no frontend change. To give a differently-shaped KG its own rich views, extend
-`buildViewConfig` in `src/kg-export.ts` with a new detection + a new view `shape` in the frontend.
+`buildViewConfig` in `src/kg-export.ts` with a new detection + a new view `shape` in the frontend
+(the view-derivation builders live in `frontend/explorer/src/lib/graphModel.ts`).
 
 ### Data-scope finding (what's in the graph)
 
@@ -144,12 +147,20 @@ reproduces the raw `{ nodes, relationships }` envelope — that is what `export-
 neutral `framework` legend bucket for non-spine nodes and the `supports`/`relatesTo` cross-links.
 See `docs/design-notes/kg-explorer-findings.md` §1 for the original spine-only analysis (superseded).
 
-### Deploy the explorer
+### Build & deploy the explorer
+
+The explorer is a Vite/React app under `frontend/explorer/`. `firebase.json`'s `predeploy` hook
+runs the build automatically, so a plain deploy is enough:
 
 ```bash
 firebase deploy --only hosting --project senegal-ci-maths    # → https://senegal-ci-maths.web.app
 ```
 
+That runs `npm --prefix frontend/explorer ci && npm --prefix frontend/explorer run build`
+(output → `frontend/explorer/dist`, the folder Firebase serves) before uploading.
+
 `firebase.json` rewrites `/kg/**` to the `senegal-mohebs-tlm` Cloud Run service (region
-`europe-west1`). Local dev: run the server (`node dist/http.js` with `ALLOW_UNAUTHENTICATED=1`)
-and open the page with `?api=http://localhost:<port>` so it hits the local endpoint directly.
+`europe-west1`). Local dev: `cd frontend/explorer && npm install && npm run dev`, then either run the
+server locally (`node dist/http.js` with `ALLOW_UNAUTHENTICATED=1`) and let the Vite proxy forward
+`/kg` (override the target with `KG_API=http://localhost:<port>`), or point the app straight at the
+deployed endpoint with `?api=https://…run.app`.

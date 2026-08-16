@@ -52,7 +52,7 @@ export type DisplayNode = {
 // bilingual name + colour.
 export type TaxonomyEntry = { key: string; label: { fr: string; en: string }; color: string };
 
-// One colour per LC label (palette kept in sync with hosting/public/index.html).
+// One colour per LC label (palette kept in sync with frontend/explorer's theme).
 // Canonical LC labels, in containment order (Course → grouping → lesson →
 // activity → material), with the standards labels first and LearningComponent last.
 const LABEL_DEFS: TaxonomyEntry[] = [
