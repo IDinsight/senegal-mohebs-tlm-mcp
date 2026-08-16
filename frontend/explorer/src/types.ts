@@ -62,6 +62,12 @@ export type ViewSpec =
         rootKinds?: string[];
         pruneToLabel?: string;
         reverse?: boolean;
+        // Grafts extra branches onto content leaves that the containment walk folds
+        // away — an ordered chain of steps, each expanding a node of LC label `from`
+        // along a real edge `rel` (`dir:"in"` follows it toward the node, `"out"`
+        // away). Curriculum uses it for Lesson → aligned standard → supporting
+        // components. Kept in lock-step with src/kg-export.ts.
+        alignmentTail?: Array<{ from: string; rel: string; dir: "in" | "out" }>;
       };
     }
   | {

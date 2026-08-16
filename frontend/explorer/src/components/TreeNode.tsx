@@ -1,5 +1,6 @@
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Eye } from "lucide-react";
 import { isSynth, type GraphModel } from "../lib/graphModel";
+import { makeT } from "../i18n";
 import type { Lang, ViewSpec } from "../types";
 
 // One node in the tree — real or synthetic — rendered recursively. Two modes:
@@ -36,47 +37,49 @@ export function TreeNode(props: Props) {
     filter,
   } = props;
 
+  const t = makeT(lang);
   const synthetic = isSynth(id);
   let kids = model.viewChildren(spec, id, sourceOn);
   if (filter) kids = kids.filter((k) => filter.keep.has(k));
   const hasKids = kids.length > 0;
   const open = filter ? true : expanded.has(id);
 
-  // Badge the real relation. In the node-type view every link is a relation, so
-  // badge them all; in a containment tree badge only non-obvious folded edges
-  // (leave a genuine hasChild clean).
-  const revView = spec.shape === "label-tree" && !!spec.params.reverse;
-  const rawRel =
+  // Always badge the real relation linking this row to its parent — with an arrow
+  // showing which way the edge actually flows (down = parent is the source, up =
+  // this child is). `folded` marks the semantic hops (a folded edge, or any edge in
+  // the by-type view); those keep the emphasised look, while a plain structural
+  // hasChild gets a calmer badge so deep containment trees stay legible.
+  const link =
     !synthetic && parentId && !isSynth(parentId)
-      ? model.relBetween(parentId, id, revView)
+      ? model.relBetween(parentId, id)
       : null;
-  const linkRel =
-    rawRel && (spec.shape === "node-type" || rawRel !== "hasChild") ? rawRel : null;
+  const linkRel = link?.rel ?? null;
+  const folded = !!linkRel && (spec.shape === "node-type" || linkRel !== "hasChild");
 
   const node = model.N[id];
   const label = model.nodeLabel(id, lang);
   const isHit = !!filter && filter.hits.has(id);
 
+  // Clicking the row expands/collapses when there's something to unfold; a real
+  // leaf (nothing to toggle) opens its detail instead. The dedicated eye button is
+  // the explicit "view details" affordance for any real node.
   const onRowClick = () => {
-    if (synthetic) {
-      if (hasKids) onToggle(id);
-    } else {
-      onOpen(id);
-    }
+    if (hasKids) onToggle(id);
+    else if (!synthetic) onOpen(id);
   };
 
   return (
     <div className="my-px">
       <div
-        className={`flex cursor-pointer select-none items-center gap-[7px] rounded-md px-[7px] py-[5px] hover:bg-panel2 ${
+        className={`group flex cursor-pointer select-none items-center gap-[7px] rounded-md px-[7px] py-[5px] hover:bg-panel2 ${
           selected === id ? "bg-panel2 outline outline-1 outline-accent" : ""
-        } ${linkRel ? "opacity-95" : ""}`}
+        } ${folded ? "opacity-95" : ""}`}
         onClick={onRowClick}
       >
         <span
           className={`flex w-4 flex-shrink-0 items-center justify-center rounded ${
             hasKids ? "cursor-pointer text-muted hover:bg-line hover:text-txt" : ""
-          } ${linkRel ? "text-task" : ""}`}
+          } ${folded ? "text-task" : ""}`}
           onClick={(e) => {
             if (hasKids && !filter) {
               e.stopPropagation();
@@ -93,9 +96,14 @@ export function TreeNode(props: Props) {
           style={{ background: model.colorFor(id) }}
         />
 
-        {linkRel && (
-          <span className="flex-shrink-0 rounded border border-line bg-panel2 px-1.5 py-px text-[10px] uppercase tracking-[0.04em] text-task">
-            {linkRel}
+        {link && (
+          <span
+            className={`inline-flex flex-shrink-0 items-center gap-0.5 rounded border px-1.5 py-px text-[10px] uppercase tracking-[0.04em] ${
+              folded ? "border-line bg-panel2 text-task" : "border-line text-muted"
+            }`}
+          >
+            {link.sourceIsParent ? <ArrowDown size={9} /> : <ArrowUp size={9} />}
+            {link.rel}
           </span>
         )}
 
@@ -106,13 +114,30 @@ export function TreeNode(props: Props) {
         )}
 
         <span
-          className={`flex-1 truncate ${linkRel ? "italic" : ""} ${
+          className={`flex-1 truncate ${folded ? "italic" : ""} ${
             isHit ? "text-accent" : ""
           }`}
           title={synthetic ? label : model.desc(node, lang) || ""}
         >
           {label}
         </span>
+
+        {!synthetic && (
+          <button
+            type="button"
+            className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-muted hover:bg-line hover:text-txt ${
+              selected === id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            }`}
+            title={t("view")}
+            aria-label={t("view")}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(id);
+            }}
+          >
+            <Eye size={13} />
+          </button>
+        )}
 
         {hasKids && (
           <span className="flex-shrink-0 text-[11px] text-muted">{kids.length}</span>

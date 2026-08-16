@@ -39,6 +39,12 @@ export function createGraphModel(data: DisplayGraph) {
   const btOut: Record<string, string[]> = {}; // buildsTowards from → [to]
   const btIn: Record<string, string[]> = {}; // buildsTowards to → [from]
 
+  // Adjacency keyed by the REAL LC edge type, both directions — the alignment tail
+  // walks specific edge types (hasEducationalAlignment / supports) that the folded
+  // `outByRel` traversal collapses onto "hasChild", so it needs the true type.
+  const realOut: Record<string, Record<string, string[]>> = {}; // rel → s → [t]
+  const realIn: Record<string, Record<string, string[]>> = {}; // rel → t → [s]
+
   data.edges.forEach((e) => {
     (outByRel[e.r] ||= {});
     (outByRel[e.r][e.s] ||= []).push({ to: e.t, o: e.o || 0, rel: e.rel || e.r });
@@ -47,6 +53,9 @@ export function createGraphModel(data: DisplayGraph) {
       (btOut[e.s] ||= []).push(e.t);
       (btIn[e.t] ||= []).push(e.s);
     }
+    const rel = e.rel || e.r;
+    ((realOut[rel] ||= {})[e.s] ||= []).push(e.t);
+    ((realIn[rel] ||= {})[e.t] ||= []).push(e.s);
   });
   for (const r in outByRel)
     for (const s in outByRel[r]) outByRel[r][s].sort((a, b) => a.o - b.o);
@@ -149,6 +158,46 @@ export function createGraphModel(data: DisplayGraph) {
     });
   }
 
+  // Graft the spec's `alignmentTail` onto the built content tree. The tail is a set
+  // of rules keyed by LC label: a node of label `from` gains its `rel` targets (in
+  // direction `dir`) as extra children, and the same rules then apply to each
+  // target — so the walk chains onward wherever a target matches another rule.
+  // Curriculum uses it so a Lesson OR an Activity reveals the standard it teaches
+  // (its alignment lives on whichever one the subject authored — teacher-guide
+  // lessons vs. student-book activities), and each standard reveals its supporting
+  // components. Every node is expanded once, so a standard reached from many
+  // lessons/activities doesn't accumulate duplicate component children.
+  function graftAlignmentTail(
+    spec: Extract<ViewSpec, { shape: "label-tree" }>,
+    childrenOf: Record<string, string[]>,
+  ): void {
+    const tail = spec.params.alignmentTail;
+    if (!tail || !tail.length) return;
+    const ruleFor = (id: string) => tail.find((s) => s.from === N[id]?.kind);
+    const done = new Set<string>();
+    const expand = (id: string) => {
+      if (done.has(id)) return;
+      done.add(id);
+      const rule = ruleFor(id);
+      if (!rule) return;
+      const index = rule.dir === "out" ? realOut : realIn;
+      const targets = (index[rule.rel]?.[id] || [])
+        .filter((t) => N[t])
+        .slice()
+        .sort(byNumThenCode);
+      if (!targets.length) return;
+      childrenOf[id] = [...(childrenOf[id] || []), ...targets];
+      targets.forEach(expand);
+    };
+    // Seed from every node a rule can start from. Nodes only reachable this way
+    // (standards, components) never head the content tree, so they surface solely
+    // where a real lesson/activity pulls them in — attaching to an unreferenced one
+    // is harmless (it stays unrendered).
+    data.nodes.forEach((n) => {
+      if (tail.some((s) => s.from === n.kind)) expand(n.id);
+    });
+  }
+
   // Label-tree: containment tree restricted to a set of LC labels. `reverse`
   // walks the edge bottom-up (target parents source); `pruneToLabel` drops any
   // branch that never reaches that label.
@@ -203,6 +252,8 @@ export function createGraphModel(data: DisplayGraph) {
       for (const s in childrenOf)
         childrenOf[s] = childrenOf[s].filter((c) => keep.has(c));
     }
+
+    graftAlignmentTail(spec, childrenOf);
     return (cache[spec.id] = { roots, childrenOf });
   }
 
@@ -273,17 +324,45 @@ export function createGraphModel(data: DisplayGraph) {
   // The REAL relation linking parent→child (for the link badge). `outByRel` is
   // keyed by traversal type (folded to hasChild), so read the true type off the
   // stored adjacency entry. In a reversed tree the display edge runs child→parent.
+  // The real relation between a tree parent and child, plus which way it actually
+  // flows. `sourceIsParent` is true when the parent node is the edge's source (the
+  // arrow points down to the child), false when the child is (the arrow points back
+  // up to the parent). The server folds a few edges REVERSED onto the display
+  // containment axis (a component `supports` its standard, a lesson/activity
+  // `hasEducationalAlignment`s its standard, an activity `illustrates` its
+  // component — see kg-export.ts::toDisplayEdges), so for those the true source is
+  // the display target; everything else flows in its display direction.
+  const REVERSED_DISPLAY_RELS = new Set([
+    "supports",
+    "hasEducationalAlignment",
+    "illustrates",
+  ]);
   function relBetween(
     parentId: string,
     childId: string,
-    reverse: boolean,
-  ): string | null {
-    const [from, to] = reverse ? [childId, parentId] : [parentId, childId];
-    for (const r in outByRel) {
-      const hit = (outByRel[r][from] || []).find((x) => x.to === to);
-      if (hit) return hit.rel || r;
+  ): { rel: string; sourceIsParent: boolean } | null {
+    const lookup = (from: string, to: string): string | null => {
+      for (const r in outByRel) {
+        const hit = (outByRel[r][from] || []).find((x) => x.to === to);
+        if (hit) return hit.rel || r;
+      }
+      return null;
+    };
+    // Find the display edge either way round (a folded edge sits reversed to how
+    // the tree shows it), tracking which endpoint the stored edge points from.
+    let displaySource = parentId;
+    let rel = lookup(parentId, childId);
+    if (!rel) {
+      rel = lookup(childId, parentId);
+      if (rel) displaySource = childId;
     }
-    return null;
+    if (!rel) return null;
+    const realSource = REVERSED_DISPLAY_RELS.has(rel)
+      ? displaySource === parentId
+        ? childId
+        : parentId
+      : displaySource;
+    return { rel, sourceIsParent: realSource === parentId };
   }
 
   // Colour is driven entirely by the server taxonomy (node.cat); synthetic rows
