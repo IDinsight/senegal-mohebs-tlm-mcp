@@ -123,6 +123,22 @@ describe("store config cell rides the pointer", () => {
     expect(await store.readConfig(ns, "a")).toMatchObject({ core: { id: "ci-maths/nodes-relationships-v1" } });
   });
 
+  it("REPLACES the cell — a re-write drops keys the new config omits (no deep-merge)", async () => {
+    // Regression: a profile edit that DROPS a key (e.g. a retired `coverage`)
+    // must leave no trace of it. The Firestore backend must not use
+    // `set(..., { merge: true })`, which deep-merges map fields and so can only
+    // ever ADD keys — leaving a stale key behind produces a hybrid cell that
+    // fails validation. This contract holds across every store implementation.
+    const s = createMemoryKgStore();
+    await s.ensurePointer(ns, "a");
+    await s.writeConfig(ns, "a", { core: { id: "x" }, coverage: [] } as unknown as StoredConfig);
+    expect(await s.readConfig(ns, "a")).toHaveProperty("coverage");
+    await s.writeConfig(ns, "a", { core: { id: "x" }, guide: "g" });
+    const cell = await s.readConfig(ns, "a");
+    expect(cell).not.toHaveProperty("coverage");
+    expect(cell).toMatchObject({ core: { id: "x" }, guide: "g" });
+  });
+
   it("createDraft copies the config into the draft cell; discard clears it", async () => {
     await store.createDraft(ns);
     const pointer = await store.readPointer(ns);

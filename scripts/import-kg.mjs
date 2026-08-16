@@ -41,7 +41,9 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const profileIdx = args.indexOf("--profile");
 const profilePath = profileIdx >= 0 ? args[profileIdx + 1] : null;
-const positional = args.filter((a, i) => !a.startsWith("--") && i !== profileIdx + 1);
+// Drop the value after --profile, but only when the flag is present (indexOf
+// returns -1 when absent, and -1 + 1 = 0 would wrongly drop the first positional).
+const positional = args.filter((a, i) => !a.startsWith("--") && (profileIdx < 0 || i !== profileIdx + 1));
 
 if (positional.length !== 4) {
   console.error("import-kg: expected `<workspace> <grade> <subject> <graph.json>` (plus optional --profile <path> / --dry-run).");

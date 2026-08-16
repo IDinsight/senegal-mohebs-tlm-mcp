@@ -1,76 +1,102 @@
 ---
 name: seed-and-deploy
-description: Safely re-seed the Firestore KG store from sources/ and roll the change out to the deployed server. Use whenever re-seeding Firestore, running `npm run seed:kg-store`, pushing a curriculum / knowledge-graph change into the store, verifying the store after a seed, or coordinating a seed with a Cloud Run deploy.
+description: Roll out a change to the Firestore KG store or the deployed MCP server and verify it — import/export a whole graph, edit a subject profile or guide through the live curator loop, deploy new server code, or repair a namespace. Use whenever importing/exporting a KG, changing a profile/guide, coordinating a data or code change with a Cloud Run deploy, or fixing a store namespace. (There is no `seed:kg-store` / seed-from-`sources/` step any more — Firestore is the only store.)
 ---
 
-# Seed the KG store + deploy safely
+# Roll out a KG-store or server change safely
 
-Re-seeding Firestore and deploying the server are **coupled** — get the order or the pairing wrong and generation silently drops content with no error. Follow this checklist rather than running the seed on its own.
+**Firestore is the only KG store.** There is no `bundle`/`KG_SOURCE` mode, no
+`seed:kg-store`, and no seed-from-`sources/` step — all removed with the
+firestore-only change (see
+[`docs/design-notes/firestore-only-store.md`](../../docs/design-notes/firestore-only-store.md)
+and [`docs/technical-reference/store.md`](../../docs/technical-reference/store.md)).
+The graphs now live under `test/fixtures/` (tests only) and in Firestore (live); the
+per-subject `assets/<ws>/<grade>/<subject>/` (terminology + prompt files) ship in the
+container image.
 
-## The two things that cause silent outages
+## Pick the path by what changed
 
-1. **Store shape ↔ server code must match.** The store holds the *full* Learning-Commons graph — the curriculum spine **plus** framework/derived nodes and the real `supports` / `relatesTo` edges. The server must run code that reads that shape (the `toRawEnvelope` + `adapter.parse` hydration, from PR #22 onward). An **older** server reading a full-graph store follows only `hasChild` edges, so it drops the learning components/tasks it hands the generator — no crash, just missing content in the output. **Rule: deploy the matching server code together with (or before) the store it will read.** Never leave an old server pointed at a freshly full-graph-seeded store.
+| What you're changing | Path | Redeploy? |
+|---|---|---|
+| **Curriculum content, a subject profile, or a graph guide** | The **live curator loop** — edit with the graph tools / `edit_profile`, then `diff_draft` → `publish_draft`. Nothing reaches generation until you publish. | **No** |
+| **A whole graph** (new namespace, restore from backup, clone) | `export:kg-store` (back up first) then `import:kg-store` | No (data only) |
+| **A new subject** | Register its profile under `src/adapters/profiles/` (**code**) → deploy → `import:kg-store` its graph | Yes (the profile is code) |
+| **Server code** (parser, adapter engine, tools) | Cloud Run deploy (see [`DEPLOY.md`](../../DEPLOY.md)) | Yes |
 
-2. **The seed writes slot `a`, which may not be the published slot.** The store is double-buffered (`a` / `b`) behind a pointer `{ publishedSlot, draftSlot }`. `seed:kg-store` **always** writes slot `a` and only stamps the pointer the *first* time. If someone has since published a draft, the pointer points at `b`, so a re-seed writes a **stale side-copy that nothing reads**. The seed script prints a `WARNING` in this case — read its output, don't assume success.
+The common case — tweaking a guide, fixing a lesson, editing a profile — is a **data
+change through the curator loop, live, with no redeploy and no import.** Reach for
+`import:kg-store` only to move a *whole graph*.
 
-## Prerequisites (local run)
+## The one coupling that still bites: code vs. store shape
 
-The seed/parity scripts need these in the shell you run them from:
+The store holds the *full* Learning-Commons graph (spine + framework/derived nodes +
+the real `supports`/`relatesTo` edges). The server must run code that reads that shape
+(`toRawEnvelope` + `adapter.parse` hydration). An **older** server pointed at the store
+silently drops content it can't read — no crash, just missing components/tasks in the
+output. **Rule: when the code that reads the graph changes, deploy it before or with the
+data it will read.** Pure data changes (curator loop, import) don't need a redeploy.
+
+## Import / export (whole-graph moves)
+
+These scripts run from `dist/` and hit real Firestore. Prerequisites in the shell:
 
 - `SERVICE_ACCOUNT_KEY_PATH` — path to the Firebase service-account JSON
 - `FIREBASE_STORAGE_BUCKET`
-- `KG_SOURCE=firestore`
 
-Never print or commit the service-account key. (On Cloud Run there is no key path — the runtime service account supplies credentials.)
+(No `KG_SOURCE`. On Cloud Run there is no key path — the runtime service account
+supplies credentials.) Never print or commit the key.
 
-## Procedure
+```bash
+npm run build                                                          # scripts read dist/
+npm run export:kg-store -- <ws> <grade> <subject> [out.json]          # back up first
+npm run import:kg-store -- <ws> <grade> <subject> <graph.json> [--profile p.json] [--dry-run]
+```
 
-1. **Build first** — the seed and parity scripts run from `dist/`, so stale `dist/` silently seeds stale data:
-   ```bash
-   npm run build
-   ```
+`import-kg` writes the graph **and** the subject-profile config cell — from `--profile
+<path>` (`{ core, guide }` JSON) when given, otherwise the in-repo literal for that
+grade/subject.
 
-2. **Dry-run** (optional; no writes — uses an in-memory store):
-   ```bash
-   node scripts/seed-kg-store.mjs --dry-run
-   ```
+> **⚠️ import writes slot `a` and never repoints an existing namespace.** The store is
+> double-buffered (`a`/`b`) behind a pointer `{ publishedSlot, draftSlot }`. On a
+> **new** namespace, import stamps the pointer to `a`. On an **existing** one it prints
+> `WARNING — namespace already exists … writing slot 'a' and leaving the pointer as-is`
+> and writes `a` regardless. So if the published slot is `b`, a re-import lands in a
+> **side-copy nothing reads.** Read the script's output; if you need the imported data
+> published, publish it through the curator loop (which flips the pointer), not by
+> re-running import.
 
-3. **Seed** — every installed grade/subject, or a single pair:
-   ```bash
-   KG_SOURCE=firestore npm run seed:kg-store                      # all contexts
-   KG_SOURCE=firestore node scripts/seed-kg-store.mjs ci maths    # one pair
-   ```
+## Verify after any store change
 
-4. **Read the seed output** and confirm both:
-   - **No stale-slot `WARNING`** — if present, the published pointer isn't `a`; reconcile deliberately before trusting the seed (see `docs/technical-reference/generation-and-storage.md`).
-   - **Node/edge counts match the source graph.** The counts should equal the raw `sources/<grade>/<subject>/knowledge_graph.json` totals — the *full* graph, not a spine subset. Current values:
+Against the deployed server (via the MCP tools):
 
-     | context | nodes | edges |
-     |---|---|---|
-     | ci/maths | 397 | 773 |
-     | ce1/reading | 1401 | 1362 |
+1. `set_context <ws> <grade> <subject>` **activates** (an invalid stored profile refuses
+   activation — see recovery below).
+2. `namespace_stats` / `walk_graph` return the expected node/edge counts.
+3. `get_graph_guide` returns the intended guide text (for a profile/guide change).
 
-     If you instead see the old spine-only numbers (ci/maths 355/586, ce1/reading 535/513), the build is stale — rebuild (step 1) and re-seed.
+## Deploy the server
 
-5. **Verify reads** match the source bundle (read-only, safe to run against production):
-   ```bash
-   npm run parity:kg-store -- --live
-   ```
-   Healthy output ends with `parity-check: all backends match.` A `DIFF` means live reads diverge from the source — do not roll out; investigate.
+Full command + env live in [`DEPLOY.md`](../../DEPLOY.md). After deploy, smoke-check:
 
-6. **Deploy the matching server** — only when the server code changed too. From repo root (full command + env in `DEPLOY.md`):
-   ```bash
-   gcloud run deploy senegal-mohebs-tlm --source . \
-     --project senegal-ci-maths --region europe-west1 \
-     --service-account tlm-server@senegal-ci-maths.iam.gserviceaccount.com ...
-   ```
-   Then smoke-check:
-   ```bash
-   curl -s https://<service-url>/healthz     # → ok
-   ```
+```bash
+curl -s https://<service-url>/health     # → ok   (NOT /healthz — Google reserves that path)
+```
 
-## Safety notes
+## Recovery: a config cell too invalid to activate
 
-- Seeding **overwrites slot `a`**, so it clobbers a curator's in-flight draft if that draft lives in `a`. Coordinate before re-seeding a live environment.
-- `sources/` ships inside the container image — **adding a grade/subject requires a redeploy**, not just a re-seed.
-- The seed and the live parity check both hit real Firestore; confirm you are pointed at the intended project/bucket before running.
+If `set_context` fails with *"the stored subject profile … is invalid and would
+mis-parse"*, the published config cell is malformed for the running code (e.g. it
+carries a key the current schema retired). This is a **chicken-and-egg**: `edit_profile`
+can't fix it because it needs the context activated, and `import:kg-store` only writes
+slot `a` (so it fixes the published cell only if the published slot *is* `a`). Options,
+in order of preference:
+
+1. **If published slot is `a`:** `import:kg-store … --profile <clean.json>` (or the
+   clean in-repo literal) rewrites the published cell.
+2. **If published slot is `b`:** there is no clean CLI for a targeted repair today —
+   this is a known gap. Either add a one-off script that writes the config cell to the
+   published slot, or (destructive, loses history/drafts) `delete-namespace` then
+   re-import.
+
+Determining the published slot needs store access (the pointer doc) — check it before
+choosing.

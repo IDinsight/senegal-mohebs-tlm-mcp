@@ -214,13 +214,21 @@ export function createFirestoreKgStore(): KgNodeStore {
       // Single-doc transaction on the pointer, mirroring writeSlot's final meta
       // touch: set this slot's config cell and — when the caller passed an audit
       // — the audit doc, together, so a committed profile edit always has its
-      // record. merge:true leaves the other slot's cell and the pointer fields
-      // untouched.
+      // record.
+      //
+      // We REPLACE the config cell rather than merging it. This must NOT use
+      // `merge: true`: Firestore deep-merges nested map fields, so a merged write
+      // could only ever ADD keys to the cell — a profile edit that drops a key
+      // (e.g. a retired `coverage`/`deliverables`) would leave the stale key
+      // behind, producing a hybrid cell that fails validation. Instead we read
+      // the whole pointer in-transaction and write it back with only this slot's
+      // cell swapped, so the other slot's cell and the pointer fields are
+      // preserved while the target cell is fully replaced.
       await db.runTransaction(async (tx) => {
         const pRef = pointerRef(namespace);
         const doc = await tx.get(pRef as unknown as FsDocRef);
         const prev = (doc.data() as PointerDoc | undefined) ?? {};
-        tx.set(pRef as unknown as FsDocRef, { ...prev, [configField(slot)]: { ...config } }, { merge: true });
+        tx.set(pRef as unknown as FsDocRef, { ...prev, [configField(slot)]: { ...config } });
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },

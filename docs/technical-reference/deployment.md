@@ -41,7 +41,7 @@ different grades/subjects without interfering. Stdio mode (`npm start`) is uncha
 With auth on, unauthenticated calls get a 401 pointing at `/.well-known/oauth-protected-resource`,
 which advertises the Supabase authorization server — MCP clients (e.g. Claude connectors)
 discover the login flow from there. Every tool call is logged with the caller's identity.
-`GET /healthz` is unauthenticated.
+`GET /health` is unauthenticated. (Use `/health`, not `/healthz`, for external checks — Google's Front End reserves the literal `/healthz` path and 404s it before the request reaches the container.)
 
 #### Per-request actor identity
 
