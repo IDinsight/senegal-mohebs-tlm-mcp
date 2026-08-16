@@ -20,7 +20,7 @@ export const CE1_READING_PROFILE: SubjectProfile = {
   // Lessons carry only `position`, so the ordinal source is "position".
   parse: {
     numberFrom: "position",
-    prune: { strategy: "content-reachable-from-roots", rootKinds: ["Semaine"] },
+    prune: { strategy: "content-reachable-from-roots", rootKinds: ["Course", "Semaine"] },
   },
 };
 
