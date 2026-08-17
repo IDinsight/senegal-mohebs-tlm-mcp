@@ -9,6 +9,7 @@ import {
   signIn,
 } from "../lib/api";
 import { createGraphModel, type GraphModel } from "../lib/graphModel";
+import { readUrlState } from "../lib/urlState";
 import { makeT } from "../i18n";
 import type { DisplayGraph, KgConfig, Lang, NamespaceEntry } from "../types";
 
@@ -92,7 +93,11 @@ export function useGraphData(lang: Lang): GraphData {
       return;
     }
     setNamespaces(list);
-    await loadGraph(list[0].ns);
+    // A deep link / reload may name the graph to open; fall back to the first
+    // one if that graph isn't in this list (e.g. a stale or cross-tenant link).
+    const wanted = readUrlState().ns;
+    const start = list.find((n) => n.ns === wanted)?.ns ?? list[0].ns;
+    await loadGraph(start);
   }, [fail, loadGraph]);
 
   const boot = useCallback(async () => {

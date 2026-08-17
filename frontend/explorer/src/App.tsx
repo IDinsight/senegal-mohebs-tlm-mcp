@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Header, type StatChip } from "./components/Header";
 import { Banner } from "./components/Banner";
 import { LoginGate } from "./components/LoginGate";
@@ -10,6 +10,7 @@ import { Tree } from "./components/Tree";
 import { DetailModal } from "./components/DetailModal";
 import { useGraphData } from "./hooks/useGraphData";
 import { computeSearch } from "./lib/search";
+import { EMPTY_URL_STATE, readUrlState, writeUrlState } from "./lib/urlState";
 import { makeT, pick } from "./i18n";
 import type { GraphModel } from "./lib/graphModel";
 import type { Lang, ViewSpec } from "./types";
@@ -45,17 +46,54 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
+  // Restore view/node/filters from the URL only on the FIRST graph we load (a
+  // deep link or reload). Later graph switches from the dropdown start fresh at
+  // defaults — the old graph's params don't belong to the new one.
+  const urlRestored = useRef(false);
+
   useEffect(() => {
-    if (!data) return;
+    if (!data || !model) return;
     const views = data.meta.viewConfig.views;
-    setCurrentView(views[0]?.id ?? null);
+    const sources = data.meta.sources || [];
+    const url = urlRestored.current ? EMPTY_URL_STATE : readUrlState();
+    urlRestored.current = true;
+
+    // View: honor the URL's view only if this graph actually defines it.
+    setCurrentView(views.find((v) => v.id === url.view)?.id ?? views[0]?.id ?? null);
+
+    // Sources: start every chip on, then turn off the ones the URL names,
+    // ignoring any key this graph doesn't have (e.g. a stale link).
     const src: Record<string, boolean> = {};
-    (data.meta.sources || []).forEach((k) => (src[k] = true));
+    sources.forEach((k) => (src[k] = true));
+    url.off.forEach((k) => {
+      if (k in src) src[k] = false;
+    });
     setSourceOn(src);
-    setExpanded(new Set());
-    setSelected(null);
+
+    // Selected node: only if it exists here; reveal its hasChild ancestors so
+    // the tree opens straight to it.
+    const hasNode = !!url.node && data.nodes.some((n) => n.id === url.node);
+    setSelected(hasNode ? url.node : null);
+    const reveal = new Set<string>();
+    if (hasNode) {
+      let p = model.inHasChild[url.node!];
+      while (p) {
+        reveal.add(p);
+        p = model.inHasChild[p];
+      }
+    }
+    setExpanded(reveal);
     setQuery("");
-  }, [data]);
+  }, [data, model]);
+
+  // Mirror the current graph/view/node/filters back into the address bar so the
+  // URL stays a shareable pointer to this exact spot (replaceState — no history
+  // spam). Runs once the graph is ready and on every subsequent state change.
+  useEffect(() => {
+    if (g.phase !== "ready" || !g.currentNs) return;
+    const off = Object.keys(sourceOn).filter((k) => !sourceOn[k]);
+    writeUrlState({ ns: g.currentNs, view: currentView, node: selected, off });
+  }, [g.phase, g.currentNs, currentView, selected, sourceOn]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
