@@ -19,9 +19,9 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
-import { activeWorkspace } from "../context/index.js";
+import { activeWorkspace, sessionState } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor, diffGraphs, type GraphDiff } from "../kg-store/index.js";
-import { walkGraph, computeGraphStats, type WalkDirection } from "../curriculum/index.js";
+import { walkGraph, computeGraphStats, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
 import { resolveDraftModel } from "./preview.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
@@ -30,6 +30,15 @@ import type { CurriculumModel } from "../types.js";
 function activeNamespace(): string {
   const adapter = getActiveAdapter();
   return kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
+}
+
+// The physical slot ("a"/"b") the session's published read model was hydrated
+// from — stamped by activate.ts / refreshActiveContext. It is the true origin of
+// a slot:"published" read, so reporting it lets a caller spot a read/write
+// disagreement (e.g. reads still on the old slot after a publish flip). null
+// before any context is activated.
+function preloadedSlot(): string | null {
+  return (sessionState().bag.get(PRELOADED_SLOT_KEY) as string | undefined) ?? null;
 }
 
 type WalkSlot = "published" | "draft";
@@ -61,9 +70,9 @@ async function denyIfNotDraftReader(namespace: string): Promise<Record<string, u
 async function resolveWalkModel(
   namespace: string,
   slot: WalkSlot,
-): Promise<{ model: CurriculumModel } | { notice: Record<string, unknown> }> {
+): Promise<{ model: CurriculumModel; physicalSlot: string | null } | { notice: Record<string, unknown> }> {
   if (slot === "published") {
-    return { model: getActiveAdapter().model() };
+    return { model: getActiveAdapter().model(), physicalSlot: preloadedSlot() };
   }
 
   const denied = await denyIfNotDraftReader(namespace);
@@ -81,7 +90,8 @@ async function resolveWalkModel(
       },
     };
   }
-  return { model: resolved.model };
+  // resolveDraftModel read the pointer fresh, so draftSlot is the real slot.
+  return { model: resolved.model, physicalSlot: resolved.draftSlot };
 }
 
 // The arguments walk_graph accepts, shared by the tool handler and the exported
@@ -120,7 +130,7 @@ export async function walkActiveGraph(args: WalkToolArgs): Promise<Record<string
     limit: args.limit,
     cursor: args.cursor,
   });
-  return { slot, ...result };
+  return { slot, physicalSlot: resolved.physicalSlot, ...result };
 }
 
 // ── Core: namespace_stats ─────────────────────────────────────────────────────
@@ -145,6 +155,7 @@ export async function namespaceStats(): Promise<Record<string, unknown>> {
 
   return {
     namespace,
+    physicalSlot: preloadedSlot(),
     nodeCounts: stats.nodeCounts,
     edgeCounts: stats.edgeCounts,
     roots: stats.roots,
@@ -200,7 +211,8 @@ export function registerGraphTools(server: McpServer) {
         "             includeEdges=true)  →  one page overflows the client\n" +
         "Each response carries `nextCursor` (null on the last page) plus three independent flags: `truncatedByLimit:true` means more matching nodes remain on further pages (call again with `cursor: <nextCursor>`); `truncated:true` means the `maxDepth` cap hid deeper nodes (raise maxDepth to reach them); and `truncatedBySize:true` means the page was trimmed to fit a response BYTE budget, so it holds fewer nodes than `limit` — raising `limit` will NOT help, so instead set includeEdges:false and narrow `nodeTypes`, then page via cursor (the `hint` field spells this out). " +
         "This is the single generic read for every 'list / find / enumerate / traverse' need. `direction`: 'out' follows edges from→to (a Course down to its parts), 'in' follows to→from (a standard up to its framework root), 'both' either. `edgeTypes` filters which edges to follow (empty ⇒ all); `nodeTypes` filters which nodes to RETURN (empty ⇒ all) — non-matching nodes are still traversed THROUGH, so filters compose. `maxDepth` (default 3, max 10) bounds the hops. `includeEdges` (default true) returns the traversed edges so you can rebuild the subgraph. `limit` maxes at 500. `slot`: 'published' (default) reads the live graph; 'draft' reads UNPUBLISHED staged edits (curators/approvers only). Read-only. " +
-        "Examples: framework root → walk(fromId=<any standard>, direction='in', edgeTypes=['hasChild'], nodeTypes=['StandardsFramework']); the whole SFI spine → walk(fromId=<root>, direction='out', edgeTypes=['hasChild'], nodeTypes=['StandardsFrameworkItem']), then keep calling with cursor:<nextCursor> until nextCursor is null; a course subtree → walk(fromId=<courseId>, direction='out', edgeTypes=['hasPart','hasChild']).",
+        "Examples: framework root → walk(fromId=<any standard>, direction='in', edgeTypes=['hasChild'], nodeTypes=['StandardsFramework']); the whole SFI spine → walk(fromId=<root>, direction='out', edgeTypes=['hasChild'], nodeTypes=['StandardsFrameworkItem']), then keep calling with cursor:<nextCursor> until nextCursor is null; a course subtree → walk(fromId=<courseId>, direction='out', edgeTypes=['hasPart','hasChild']). " +
+        "Each response also carries `physicalSlot` — the actual slot ('a'/'b') the returned data came from — so you can confirm reads and writes agree after a publish.",
       inputSchema: {
         fromId: z.string(),
         direction: z.enum(["out", "in", "both"]),
@@ -221,7 +233,7 @@ export function registerGraphTools(server: McpServer) {
     {
       title: "Namespace orientation snapshot",
       description:
-        "A cheap, argument-free snapshot of the active workspace/grade/subject: `nodeCounts` (per LC label), `edgeCounts` (per edge type), `roots` (nodes with no inbound containment edge — Course/StandardsFramework/orphan groupings, each with id + labels + description), `draft` (whether one is open and how many edits it stages), and `coverageFlags` (high-level orientation hints). Run this FIRST, before writing any walk_graph query, to see the shape of the graph — and this is where you find the subject's Course content roots (id + name) to walk from (it replaced list_courses; filter `roots` by labels including 'Course'). Read-only; no audit event.",
+        "A cheap, argument-free snapshot of the active workspace/grade/subject: `nodeCounts` (per LC label), `edgeCounts` (per edge type), `roots` (nodes with no inbound containment edge — Course/StandardsFramework/orphan groupings, each with id + labels + description), `draft` (whether one is open and how many edits it stages), and `coverageFlags` (high-level orientation hints). Run this FIRST, before writing any walk_graph query, to see the shape of the graph — and this is where you find the subject's Course content roots (id + name) to walk from (it replaced list_courses; filter `roots` by labels including 'Course'). Also carries `physicalSlot` — the slot ('a'/'b') these counts were read from. Read-only; no audit event.",
       inputSchema: {},
     },
     guarded(async () => asJson(await namespaceStats())),
