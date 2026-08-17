@@ -1,6 +1,6 @@
 # Getting started
 
-Four steps before you can work: **request your access**, **install the connector** in Claude, **sign in**, then **choose where you work** (the workspace, grade and subject).
+Five steps before you can work: **request your access**, **install the connector** in Claude, **sign in**, learn how to **talk to the tool**, then **choose where you work** (the workspace, grade and subject).
 
 ## 1. Request your access (Supabase account)
 
@@ -25,7 +25,24 @@ The first time, Claude opens a Supabase sign-in page. Enter the **email** and **
 
 <!-- SCREENSHOT: sign-in page -->
 
-## 4. Choose where you work
+## 4. Talk to the tool
+
+Once the connector is installed and you're signed in, you use the tool **by writing to Claude in plain language** — no commands to remember, no special syntax. You describe what you want, and Claude calls the right tools on the connector.
+
+Two things that aren't obvious:
+
+- **The connector must be active in the conversation.** In Claude, connectors are enabled per conversation. If you don't see Claude using the tool, check that **"Teaching & Learning Materials authoring"** is switched on for this chat (in the tools/connectors menu below the message box).
+- **The first use asks for permission.** The very first time Claude calls a tool, it asks your permission to run it. Accept — this is normal, and it's also the safeguard that means nothing runs without your approval.
+
+To check everything is wired up, send a simple message:
+
+> "What can I do?"
+
+If Claude answers using the tool (for example by listing your roles or workspaces), it's working. If it answers "from memory" without using the tool, ask explicitly:
+
+> "Use the Teaching & Learning Materials connector to tell me what I can do."
+
+## 5. Choose where you work
 
 Work is always framed by three things: a **workspace**, a **grade** and a **subject**.
 
