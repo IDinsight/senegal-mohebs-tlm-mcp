@@ -23,6 +23,14 @@ type LogicalEdge = Omit<StoredEdge, "slot">;
 // that clears the bag automatically drops the preloaded model.
 export const PRELOADED_MODEL_KEY = "curriculum.preloadedModel";
 
+// Session-bag key recording WHICH physical slot ("a"/"b") the preloaded model
+// was hydrated from. The graph read tools echo it as `physicalSlot` so a caller
+// can see the real origin of the data they got back — and catch a read/write
+// disagreement (reads still serving an old slot after a publish flip) without
+// decoding the audit trail. Written next to PRELOADED_MODEL_KEY, so a context
+// switch that clears the bag drops both together.
+export const PRELOADED_SLOT_KEY = "curriculum.preloadedSlot";
+
 // Deterministic edge id — defined in the kg-store leaf (kg-store/types.ts) so
 // the store's structural linker and this serializer share ONE definition
 // without cycling. Re-exported here to keep curriculum's public surface stable

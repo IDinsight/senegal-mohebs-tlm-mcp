@@ -14,10 +14,10 @@
  * light leaf).
  */
 import { slug } from "./utils/index.js";
-import { setActiveContext, setAvailableContexts, listAvailableContexts, sessionState, type ActiveContext } from "./context/index.js";
+import { setActiveContext, setAvailableContexts, listAvailableContexts, getActiveContext, sessionState, type ActiveContext } from "./context/index.js";
 import { resolveAdapter, buildAdapterFromStoredProfile, setActiveAdapter } from "./adapters/index.js";
 import { getKgStore, kgNamespace, parseNamespace } from "./kg-store/index.js";
-import { toRawEnvelope, PRELOADED_MODEL_KEY } from "./curriculum/index.js";
+import { toRawEnvelope, PRELOADED_MODEL_KEY, PRELOADED_SLOT_KEY } from "./curriculum/index.js";
 import type { CurriculumModel } from "./types.js";
 
 export type ActivateResult =
@@ -89,8 +89,25 @@ export async function activateContext(workspace: string, grade: string, subject:
   const bound = setActiveContext(match.workspace, match.grade, match.subject); // clears the session bag
   if (!bound.ok) return bound;
   // The bag is now clean — install the preloaded model AFTER binding so the
-  // just-run bag.clear() doesn't wipe it.
+  // just-run bag.clear() doesn't wipe it. Stamp the slot we hydrated from next
+  // to it so the read tools can report the true origin of published reads.
   sessionState().bag.set(PRELOADED_MODEL_KEY, preloadedModel);
+  sessionState().bag.set(PRELOADED_SLOT_KEY, publishedSlot);
   setActiveAdapter(adapter);
   return { ok: true, context: bound.context };
+}
+
+// Re-hydrate the ACTIVE context's published read model from the store, replacing
+// the snapshot pinned at set_context. The published model is a session-scoped
+// snapshot (parsed once, read synchronously); publish_draft flips the published
+// pointer in the store WITHOUT touching that snapshot, so in-session published
+// reads (walk_graph / namespace_stats / generation) would otherwise keep serving
+// the pre-publish slot. Calling this at the end of a successful publish re-reads
+// the now-current published slot (and rebuilds the adapter from the freshly
+// published profile cell, so a published profile edit also lands in-session).
+// A no-op with an ok:false result when there is no active context to refresh.
+export async function refreshActiveContext(): Promise<ActivateResult> {
+  const ctx = getActiveContext();
+  if (!ctx) return { ok: false, error: "No active context to refresh.", available: listAvailableContexts() };
+  return activateContext(ctx.workspace, ctx.grade, ctx.subject);
 }

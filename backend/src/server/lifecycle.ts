@@ -23,6 +23,7 @@ import { asJson, guarded } from "./shared.js";
 import { countsOf, type ReturnMode } from "./batch.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
+import { refreshActiveContext } from "../activate.js";
 import {
   diffDraft,
   publishDraftWithConfirm,
@@ -148,7 +149,27 @@ export async function runPublishDraft(
   // Coverage hook so the dry-run shows completeness warnings and the publish
   // audit records any present at publish time (#13). Warnings never block.
   const result = await publishDraftWithConfirm(ns, { confirm: a.confirm, token: a.confirmationToken });
-  return shapePublishDraft(result, a.returnMode ?? "summary");
+  const shaped = shapePublishDraft(result, a.returnMode ?? "summary");
+
+  // A successful publish flips the published pointer in the store, but this
+  // session's read model was hydrated from the OLD slot at set_context. Re-read
+  // the now-current published slot so subsequent published reads in this session
+  // (walk_graph / namespace_stats / generation) reflect what was just published
+  // instead of the pre-publish snapshot. This is the read-cache invalidation
+  // paired with the pointer flip. It runs only on a committed publish, and never
+  // undoes the publish: if the re-hydrate fails, the publish still stands and we
+  // tell the caller their reads may be stale until they re-run set_context.
+  if (result.phase === "commit" && result.ok) {
+    const refreshed = await refreshActiveContext().catch(
+      (e: unknown): { ok: false } => ({ ok: false }),
+    );
+    shaped.readModelRefreshed = refreshed.ok;
+    if (!refreshed.ok) {
+      shaped.readModelWarning =
+        "Publish succeeded, but re-hydrating this session's read model failed. Reads may show pre-publish data until you re-run set_context.";
+    }
+  }
+  return shaped;
 }
 
 export async function runDiscardDraft(
