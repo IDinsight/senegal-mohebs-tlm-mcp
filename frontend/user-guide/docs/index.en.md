@@ -1,29 +1,43 @@
 # MOHEBS TLM user guide
 
-Welcome. This tool helps you **produce teaching materials** (pupil manuals and lesson sheets) and **maintain the curriculum** (the "knowledge graph") for mathematics and reading, keeping everything consistent from one chapter to the next.
+Welcome. This tool helps you **maintain the curriculum** (the "knowledge graph") and **produce teaching materials** — pupil manuals and lesson sheets — for mathematics and reading, keeping everything consistent from one chapter to the next.
 
-You use the tool **by chatting with Claude**: you ask for what you want in plain language, and Claude handles the details. There are no complicated buttons to learn — this guide shows you what to ask and what to expect.
+## Your two working surfaces
+
+You work with **two surfaces**, and nothing else to install:
+
+- **Chatting with Claude.** This is where everything happens: you ask for what you want in plain language, and Claude handles the details. Creating a lesson, generating a manual, publishing a change — you ask for all of it in writing. There are no complicated buttons to learn; this guide shows you what to ask and what to expect.
+- **The explorer.** A **read-only** web page that displays the published curriculum — the standards, chapters, lessons and how they link together. You use it to *look*, never to edit. See [Explore the graph](explorer.md).
 
 ## Who does what
 
-What you can do depends on your **role**:
+What you can do depends on your **role**. In the system a single word — *curator* — covers several jobs; the table below starts from what you do day to day.
 
-| Role | What you can do |
-|---|---|
-| **Author** | Create teaching materials (manuals, lesson sheets) |
-| **Curator** | Also: edit the curriculum (fix a title, add/move a lesson…) — these changes stay as a **draft** |
-| **Approver** | Also: **review and publish** drafts so they become official |
+| You are… | You want to… | System role |
+|---|---|---|
+| **Author** | Generate manuals and lesson sheets | anyone can generate |
+| **Curriculum expert** | Create and enrich the curriculum: standards, learning components | curator |
+| **Designer (TLM)** | Build the courses, lessons, routines and formatting templates | curator |
+| **Approver** | Review and **publish** drafts to make them official | approver |
+| **Administrator / developer** | Add a workspace, a new subject | admin / super admin |
 
-Anyone can **explore** the knowledge graph (read-only).
+Anyone can **explore** the graph and **generate** materials. Editing the curriculum needs the **curator** role; publishing those edits needs the **approver** role.
+
+Not sure of your role? Just ask Claude: "**What can I do?**"
 
 ## Where to start
 
-1. [**Getting started**](getting-started.md) — connect Claude to the tool, sign in, pick the grade/subject.
-2. [**Create teaching materials**](create-materials.md) — produce a manual or lesson sheets.
-3. [**Edit the knowledge graph**](edit-knowledge-graph.md) — fix a title, restructure chapters (curator).
-4. [**Review & approve**](review-approve.md) — check and publish changes (approver).
-5. [**Explore the graph**](explorer.md) — view the curriculum in the explorer.
-6. [**Reference**](reference.md) — who can do what, plus a short glossary.
+1. [**Getting started**](getting-started.md) — connect Claude to the tool, sign in, pick the workspace, grade and subject.
+2. **Build the curriculum** — [create a knowledge graph](create-graph.md), then [build the standards and components](build-standards.md).
+3. **Design the courses** — [add and edit a course and its lessons](courses-lessons.md), [create instructional routines](routines.md), [create formatters](formatters.md).
+4. [**Generate teaching materials**](create-materials.md) — produce a manual or lesson sheets.
+5. [**Review, publish or discard a draft**](review-approve.md) — check changes and make them official.
+6. [**Explore the graph**](explorer.md) — view the curriculum in the explorer.
+7. [**Administration & development**](admin-developer.md) — add a workspace or a subject.
 
-!!! note "One safety rule to remember"
-    Important actions (saving a document, publishing a change) **always ask for confirmation** before they run. Nothing irreversible happens unless you approve it first.
+Need a vocabulary refresher? The [Reference](reference.md) summarises who can do what and defines each term.
+
+!!! note "Two safety rules to remember"
+    **Nothing important happens without your confirmation.** Saving a document, publishing a change: Claude first shows you what is about to happen, and waits for your approval.
+
+    **Curriculum edits go through a draft.** Your changes pile up separately and only reach document generation once an approver has **published** them. That is your safety net.

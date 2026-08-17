@@ -1,6 +1,6 @@
-# Relire et approuver
+# Relire, publier ou abandonner un brouillon
 
-Quand un curateur a préparé des modifications, elles attendent dans un **brouillon**. Le rôle de l'**approbateur** est de les **relire** puis de les **publier** — c'est la publication qui les rend officielles et visibles par la génération de documents.
+Quand un curateur a préparé des modifications, elles attendent dans un **brouillon**. Le rôle de l'**approbateur** est de les **relire** puis de les **publier** — c'est la publication qui les rend officielles et visibles par la génération de documents. S'il ne faut pas les garder, on **abandonne** le brouillon.
 
 !!! info "Réservé aux approbateurs"
     Seuls les **approbateurs** peuvent publier. Les curateurs préparent ; les approbateurs valident.
