@@ -16,6 +16,12 @@ import type { MutationGraph, MutationNode } from "../kg-store/index.js";
 // ▸ Activity ▸ Material). The standards tree nests by `hasChild`.
 const CONTENT_LABELS = new Set(["Course", "LessonGrouping", "Lesson", "Activity", "Material"]);
 const STANDARDS_LABELS = new Set(["StandardsFramework", "StandardsFrameworkItem"]);
+// Canonical LC labels that sit outside the content and standards trees but are
+// still first-class nodes a curator may author — currently the reusable
+// InstructionalRoutine (a routine / formatter spec, referenced by content via
+// `usesRoutine`). Always creatable, even in a graph that has none to copy yet
+// (e.g. reading before its first routine).
+const CROSS_CUTTING_LABELS = new Set(["InstructionalRoutine"]);
 // Labels whose display name lives in the normalized `title` (a "Standard
 // Grouping"), as opposed to leaves whose text lives in `text`.
 const GROUPING_LABELS = new Set(["Course", "LessonGrouping", "StandardsFramework"]);
@@ -40,12 +46,16 @@ export const POSITION = "order";
 // Fallback internal `kind` for a label when the graph has no example to copy
 // from. Kinds are the graph's own canonical values, and a content leaf's kind is
 // its LC label (Lesson/Activity/Material/Course), so the fallback is the label
-// itself. Only content labels are ever created without an example (reading's first
-// Activity/Material); a grouping's kind is its `groupName`, but groupings always
-// have an example (maths' chapters), so that ambiguity never reaches this map.
+// itself. Content labels (reading's first Activity/Material) and the cross-cutting
+// InstructionalRoutine (reading's first routine) can be created without an
+// example; a grouping's kind is its `groupName`, but groupings always have an
+// example (maths' chapters), so that ambiguity never reaches this map. Listing a
+// label here also stops the `label.toLowerCase()` default from mangling a
+// PascalCase kind (an "instructionalroutine" wouldn't match a seeded routine).
 const FALLBACK_KIND: Record<string, string> = {
   Lesson: "Lesson", Activity: "Activity", Material: "Material",
   LessonGrouping: "LessonGrouping", Course: "Course",
+  InstructionalRoutine: "InstructionalRoutine",
 };
 
 // LC "boilerplate" — the constant provenance/licensing fields every node of a
@@ -127,21 +137,31 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
       boilerplate: boilerplateOf(example),
     };
   }
+  // A cross-cutting routine carries no normalizedType and a fixed role, matching
+  // the routine nodes the catalog seeds (assembleCatalog) — so a first inline
+  // routine looks like a seeded one.
+  const isCrossCutting = CROSS_CUTTING_LABELS.has(label);
   return {
     kind: FALLBACK_KIND[label] ?? label.toLowerCase(),
     labels: [label],
     isGrouping,
     orderPaths: ["raw.position"],
-    normalizedType: label,
+    normalizedType: isCrossCutting ? undefined : label,
     normalizedStatementType: STANDARDS_LABELS.has(label) ? "Standard Grouping" : undefined,
+    role: isCrossCutting ? "instructional-routine" : undefined,
     boilerplate: { ...FALLBACK_BOILERPLATE },
   };
 }
 
 // The set of LC labels a curator may create — a canonical label the ontology
-// defines, OR any label already present in the graph (forward-compatible with
-// labels this build doesn't enumerate). Used by add_node's validation.
+// defines (content, standards, LearningComponent, or a cross-cutting routine),
+// OR any label already present in the graph (forward-compatible with labels this
+// build doesn't enumerate). The cross-cutting check is what lets a routine be
+// authored in a graph that has none yet (e.g. reading), the same way maths — which
+// already holds routines — has always allowed via the graph-presence check below.
+// Used by add_node's validation.
 export function isKnownLabel(graph: MutationGraph, label: string): boolean {
   if (CONTENT_LABELS.has(label) || STANDARDS_LABELS.has(label) || label === "LearningComponent") return true;
+  if (CROSS_CUTTING_LABELS.has(label)) return true;
   return graph.nodes.some((node) => (node.labels ?? []).includes(label));
 }

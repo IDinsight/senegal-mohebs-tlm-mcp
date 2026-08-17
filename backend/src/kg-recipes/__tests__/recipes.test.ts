@@ -198,6 +198,22 @@ describe("typed-add core behaviors (boilerplate, supports direction, root node)"
     expect(draft.edges.some((edge) => edge.id === makeEdgeId("supports", sfi, compId))).toBe(false);
   });
 
+  it("authors an InstructionalRoutine onto a Lesson via `usesRoutine`", async () => {
+    const { lessonId } = pick(await readPublished());
+    const routineId = mintNodeId();
+    // A routine ROOT attaches to its lesson by the reference edge, not hasPart.
+    const { confirm } = await runRecipe(addNode, { namespace: ns, parentId: lessonId, label: "InstructionalRoutine", newNodeId: routineId, title: "Fiche de leçon", via: "usesRoutine" });
+    expect(confirm?.phase).toBe("apply");
+
+    const draft = (await readDraft())!;
+    const node = draft.nodes.find((candidate) => candidate.id === routineId)!;
+    expect(node.type).toBe("InstructionalRoutine");
+    expect(node.labels).toContain("InstructionalRoutine");
+    // Linked by usesRoutine (lesson → routine), and NOT folded into containment.
+    expect(draft.edges.some((edge) => edge.id === makeEdgeId("usesRoutine", lessonId, routineId))).toBe(true);
+    expect(draft.edges.some((edge) => edge.id === makeEdgeId(HAS_PART, lessonId, routineId))).toBe(false);
+  });
+
   it("creates a root Course with NO parentId and NO containment edge", async () => {
     const courseId = mintNodeId();
     const { confirm } = await runRecipe(addNode, { namespace: ns, label: "Course", newNodeId: courseId, title: "Cahier d'activités" });

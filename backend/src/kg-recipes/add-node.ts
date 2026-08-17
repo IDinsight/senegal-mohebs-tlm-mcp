@@ -35,7 +35,7 @@ export const addNode: GraphMutation<AddNodeArgs> = {
   validate: (base, _after, args) => {
     const errors: string[] = [];
     if (typeof args.label !== "string" || args.label.length === 0) errors.push(`add_node: 'label' (the LC node label) is required.`);
-    else if (!isKnownLabel(base, args.label)) errors.push(`add_node: '${args.label}' is not a known LC label on this namespace (and none exists to copy). Known content labels: Course, LessonGrouping, Lesson, Activity, Material.`);
+    else if (!isKnownLabel(base, args.label)) errors.push(`add_node: '${args.label}' is not a known LC label on this namespace (and none exists to copy). Known labels: Course, LessonGrouping, Lesson, Activity, Material, InstructionalRoutine (+ any already in the graph).`);
     if (args.parentId && !nodeById(base, args.parentId)) errors.push(`add_node: parent '${args.parentId}' does not exist in the draft.`);
     if (base.nodes.some((node) => node.id === args.newNodeId)) errors.push(`add_node: minted id '${args.newNodeId}' already exists (retry).`);
     if (args.alignTo) {

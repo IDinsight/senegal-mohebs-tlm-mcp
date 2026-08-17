@@ -307,3 +307,45 @@ export const useRoutine: GraphMutation<UseRoutineArgs> = {
     return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
   },
 };
+
+// ── add_to_catalog: publish an authored entry INTO a catalog ─────────────────
+// The inverse of useRoutine. useRoutine copies a library entry OUT onto a lesson;
+// this copies an entry IN — a routine/formatter subtree authored in a subject
+// graph, cloned (fresh ids, via cloneRoutineSubtree) into a catalog namespace and
+// filed under that library's root container by `hasPart`, so list_catalog/use_*
+// then surface it. The subtree is cloned by the tool (apply() sees only the target
+// catalog's base), exactly as useRoutine takes its clone pre-built.
+
+// The catalog's root container in `graph`: the fixed CATALOG_ROOT_ID when present
+// (how every seeded library is built), else the routine that is nobody's hasPart
+// child. null for a catalog with no container — the caller reports "seed first".
+export function catalogRootId(graph: MutationGraph): string | null {
+  if (graph.nodes.some((n) => n.id === CATALOG_ROOT_ID)) return CATALOG_ROOT_ID;
+  const { hasRoutineParent } = indexContainment(graph);
+  return graph.nodes.find((n) => isRoutine(n) && !hasRoutineParent.has(n.id))?.id ?? null;
+}
+
+export type AddCatalogEntryArgs = {
+  namespace: string;            // the CATALOG namespace being written
+  clonedNodes: MutationNode[];  // the entry subtree, fresh ids, already namespaced to the catalog
+  clonedEdges: MutationEdge[];
+  newEntryId: string;           // the cloned entry's id (filed under the catalog root)
+};
+
+export const addCatalogEntry: GraphMutation<AddCatalogEntryArgs> = {
+  name: "addCatalogEntry",
+  describe: (args) => `add a catalog entry (${args.newEntryId}) to library '${args.namespace}'`,
+  validate: (base, _after, args) => {
+    const errors: string[] = [];
+    if (!catalogRootId(base)) errors.push(`add_to_catalog: '${args.namespace}' has no catalog root container to file under — seed the catalog first.`);
+    if (!args.clonedNodes.some((n) => n.id === args.newEntryId)) errors.push(`add_to_catalog: the cloned entry '${args.newEntryId}' is missing from the copied subtree (retry).`);
+    for (const n of args.clonedNodes) if (nodeById(base, n.id)) errors.push(`add_to_catalog: copied id '${n.id}' already exists in the catalog (retry).`);
+    return { errors, warnings: [] };
+  },
+  apply: (base, args) => {
+    const rootId = catalogRootId(base);
+    if (!rootId) return base; // no container → clean "blocked" from validate
+    const link: MutationEdge = { id: edgeId(CONTAINMENT, rootId, args.newEntryId), type: CONTAINMENT, from: rootId, to: args.newEntryId, namespace: args.namespace, properties: {} };
+    return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
+  },
+};

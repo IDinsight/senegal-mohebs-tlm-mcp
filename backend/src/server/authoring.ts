@@ -83,7 +83,7 @@ const PER_KIND_GUIDE =
   "Material: content (body text/HTML), materialType, audience, educationalUse · " +
   "LearningComponent: examples — attaches to its parent StandardsFrameworkItem via `supports` (no alignTo) · " +
   "StandardsFrameworkItem: normalizedStatementType, statementType, statementCode, gradeLevel · " +
-  "InstructionalRoutine: timeRequired, 'metadata.summary' (cross-cutting rules). " +
+  "InstructionalRoutine: timeRequired, 'metadata.summary' (cross-cutting rules) — attach a routine ROOT onto a Lesson/Course/Activity with `via:\"usesRoutine\"`; nest its steps/step-Materials under it by the default hasPart. " +
   "Common to every item: `description` (display title), `title_en`, `position`; content kinds may `alignTo` an SFI (hasEducationalAlignment).";
 
 // The add_nodes core, exported so tests drive the real logic (like

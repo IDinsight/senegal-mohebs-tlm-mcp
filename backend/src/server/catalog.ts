@@ -26,8 +26,10 @@ import { z } from "zod";
 import { asJson, asMarkdown, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
-import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
-import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, listCatalogEntries, renderCatalogEntry, useRoutine, type CatalogScope } from "../kg-recipes/index.js";
+import { currentActor } from "../actor.js";
+import { getWorkspaceStore } from "../workspaces/index.js";
+import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, publishDraft, discardDraft, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
+import { SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, catalogNamespace, cloneRoutineSubtree, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, type CatalogScope } from "../kg-recipes/index.js";
 
 // Read one catalog namespace's published slot as a plain MutationGraph. Empty when
 // that namespace has never been seeded (no pointer). Exported for tests.
@@ -88,6 +90,135 @@ async function applyCatalogEntry(a: ApplyArgs) {
   return asJson(a.confirm ? result : withMintedMap(result, clone.idMap));
 }
 
+// ── add_to_catalog: file an authored routine/formatter INTO a catalog ─────────
+// The write inverse of use_routine. use_routine copies a library entry OUT onto a
+// lesson; this copies one IN — a routine/formatter subtree authored in the active
+// subject graph, cloned (fresh ids) into a catalog library and PUBLISHED in one
+// gated step (catalogs aren't enterable contexts, so there is no separate
+// publish_draft for them). Destination rights ride the catalog's namespace: the
+// shared library (_shared) needs super_admin; a workspace library that tenant's curators.
+
+// Read a namespace's current graph, preferring its DRAFT slot so a just-authored
+// (still-unpublished) routine is visible — the natural flow is author inline (a
+// draft edit) then add it to the catalog. Falls back to published; empty when unseeded.
+async function readActiveGraph(namespace: string): Promise<MutationGraph> {
+  const store = getKgStore();
+  const pointer = await store.readPointer(namespace);
+  if (!pointer) return { nodes: [], edges: [] };
+  const slot = pointer.draftSlot ?? pointer.publishedSlot;
+  const [nodes, edges] = await Promise.all([store.listNodes(namespace, slot), store.listEdges(namespace, slot)]);
+  const dropSlot = <T extends { slot: unknown }>(x: T): Omit<T, "slot"> => { const { slot: _s, ...rest } = x; return rest; };
+  return { nodes: nodes.map((n: StoredNode) => dropSlot(n) as MutationNode), edges: edges.map((e: StoredEdge) => dropSlot(e) as MutationEdge) };
+}
+
+// Which catalog the caller may write to. A workspace curator is locked to their OWN
+// workspace's library. A super_admin picks — the shared library or any workspace's —
+// and when they name none, we hand back the choices for the caller to ask about.
+type CatalogTarget =
+  | { kind: "namespace"; workspace: string; namespace: string; scope: CatalogScope }
+  | { kind: "choose"; choices: Array<{ target: string; label: string }> }
+  | { kind: "error"; message: string };
+
+async function resolveCatalogTarget(target: string | undefined): Promise<CatalogTarget> {
+  const actor = currentActor();
+  const active = activeWorkspace();
+  const toTarget = (workspace: string): CatalogTarget => ({
+    kind: "namespace", workspace, namespace: catalogNamespace(workspace),
+    scope: workspace === SHARED_CATALOG_WORKSPACE ? "shared" : "workspace",
+  });
+
+  if (!actor.superAdmin) {
+    // Only a super_admin writes across catalogs; everyone else → their own workspace.
+    if (target && target !== active) {
+      return { kind: "error", message: `Only a super admin can add to another workspace's or the shared catalog. As a member of '${active}', you can add to that workspace's library only — omit targetWorkspace (or pass '${active}').` };
+    }
+    return toTarget(active);
+  }
+  if (target) return toTarget(target);
+
+  // super_admin, no choice yet — offer the shared library plus every live workspace.
+  const registry = await getWorkspaceStore().listWorkspaces().catch(() => []);
+  const choices = [
+    { target: SHARED_CATALOG_WORKSPACE, label: "Shared cross-tenant library (every workspace can use it)" },
+    ...registry.filter((w) => !w.archived).map((w) => ({ target: w.id, label: `Workspace library — ${w.displayName} (${w.id})` })),
+  ];
+  return { kind: "choose", choices };
+}
+
+// Tag a dry-run preview so the caller knows confirming PUBLISHES the library live
+// (not merely stages a draft, as the graph tools do) and where it lands.
+function withCatalogPublishNote(result: unknown, target: { scope: CatalogScope; workspace: string; namespace: string }): unknown {
+  const r = result as { phase?: string };
+  if (!r || r.phase !== "preview") return result;
+  return {
+    ...(result as object),
+    publishesOnConfirm: true,
+    destination: { scope: target.scope, workspace: target.workspace, namespace: target.namespace },
+    note: `Confirming does NOT just stage a draft — it PUBLISHES this entry live into the ${target.scope} catalog ('${target.namespace}') in one step. Confirm the destination with the user before proceeding.`,
+  };
+}
+
+type AddToCatalogArgs = {
+  entryId: string;
+  targetWorkspace?: string;
+  mintedIdMap?: Record<string, string>;
+  confirm?: boolean;
+  confirmationToken?: string;
+};
+
+// Exported so tests drive the real logic (like runAddNodes / runPublishDraft).
+// Returns the raw result record; the tool registration wraps it in asJson.
+export async function runAddToCatalog(a: AddToCatalogArgs): Promise<Record<string, unknown>> {
+  const target = await resolveCatalogTarget(a.targetWorkspace);
+  if (target.kind === "error") return { error: target.message };
+  if (target.kind === "choose") {
+    return {
+      needsChoice: true,
+      message: "You are a super admin — choose which catalog to add this entry to, then call add_to_catalog again with `targetWorkspace` set to one of the `target` values below.",
+      choices: target.choices,
+    };
+  }
+
+  const catalogNs = target.namespace;
+  // The catalog must already exist (a root container to file under). Bootstrapping a
+  // brand-new library is a seed-time job (scripts/seed-catalog.mjs), not this tool's.
+  const pointer = await getKgStore().readPointer(catalogNs);
+  if (!pointer) return { error: `The ${target.scope} catalog ('${catalogNs}') has not been seeded yet — seed it before adding entries.` };
+
+  // Source: the entry authored in the ACTIVE subject graph (draft-preferred).
+  const adapter = getActiveAdapter();
+  const activeNs = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
+  const source = await readActiveGraph(activeNs);
+
+  // Clone its subtree into the catalog with fresh ids (stable across dry-run/confirm
+  // via the echoed id-map), exactly like use_routine's copy — but toward the library.
+  const mint = a.confirm ? (oldId: string) => (a.mintedIdMap ?? {})[oldId] : () => mintNodeId();
+  const clone = cloneRoutineSubtree(source, a.entryId, catalogNs, mint);
+  if (!clone) return { error: `Entry '${a.entryId}' was not found in the active graph. Author it first (add_nodes: an InstructionalRoutine + its steps/materials), then add it to the catalog.` };
+
+  const mutationArgs = { namespace: catalogNs, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
+
+  // Dry-run: stage nothing; return the diff + the id-map to echo back + the publish note.
+  if (!a.confirm) {
+    const preview = await runGraphMutation({ namespace: catalogNs, mutation: addCatalogEntry, args: mutationArgs });
+    return withCatalogPublishNote(withMintedMap(preview, clone.idMap), target) as Record<string, unknown>;
+  }
+
+  // Confirm: apply to the catalog's draft…
+  const applied = await runGraphMutation({ namespace: catalogNs, mutation: addCatalogEntry, args: mutationArgs, confirm: true, token: a.confirmationToken });
+  if (applied.phase !== "apply" || !(applied as { ok?: boolean }).ok) return applied as unknown as Record<string, unknown>; // blocked / unauthorized / failed — nothing to publish
+
+  // …then PUBLISH it live, one gated step. If publish is refused (e.g. strict
+  // separation-of-duties), roll the draft back so nothing is stranded in a
+  // namespace the curator can't enter to finish or discard.
+  const published = await publishDraft(catalogNs);
+  if (!published.ok) {
+    await discardDraft(catalogNs).catch(() => undefined);
+    return { error: `Entry staged but publishing the ${target.scope} catalog was refused: ${published.reason}. The catalog draft was rolled back — nothing changed.` };
+  }
+  return { ok: true, published: true, scope: target.scope, workspace: target.workspace, namespace: catalogNs, entryId: clone.newEntryId, auditId: published.auditId };
+}
+
 // Shared confirm-gate + copy input, declared on both apply tools.
 const APPLY_INPUT = {
   entryId: z.string(),
@@ -144,6 +275,22 @@ export function registerCatalogTools(server: McpServer) {
       inputSchema: APPLY_INPUT,
     },
     guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
+  );
+
+  server.registerTool(
+    "add_to_catalog",
+    {
+      title: "Add a routine or formatter to the catalog",
+      description: "Publish a routine or formatter you AUTHORED (an InstructionalRoutine entry + its steps/materials, built in the active subject with add_nodes) INTO a catalog library, so list_catalog / use_routine / use_formatter can then reuse it. It clones the entry's whole subtree with fresh ids into the destination and files it under that library's root — the write inverse of use_routine. DESTINATION: a workspace curator adds to their OWN workspace's library (omit targetWorkspace). A super_admin may target the shared cross-tenant library OR any workspace — pass `targetWorkspace` ('_shared' for the shared library, or a workspace id); call WITHOUT it to get back the list of catalogs to choose from. GATED by the destination — because it PUBLISHES, it needs an APPROVER of that workspace (or super_admin for the shared library). TWO-PHASE, and confirming does BOTH in one step: the dry-run returns the diff + confirmationToken + mintedIdMap; confirm APPLIES AND PUBLISHES the library live (catalogs aren't enterable contexts, so there is no separate publish_draft). Re-send confirm:true + the token + the same mintedIdMap.",
+      inputSchema: {
+        entryId: z.string(),
+        targetWorkspace: z.string().optional(),
+        mintedIdMap: z.record(z.string(), z.string()).optional(),   // required on confirm
+        confirm: z.boolean().optional(),
+        confirmationToken: z.string().optional(),
+      },
+    },
+    guarded(async (a: AddToCatalogArgs) => asJson(await runAddToCatalog(a))),
   );
 }
 
