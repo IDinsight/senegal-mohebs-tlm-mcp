@@ -67,7 +67,7 @@ Applying a routine makes an **independent copy** attached to your lesson: later 
 
 A **formatter** describes the **layout** of the produced document — palette, typography, page setup, illustration style. You **apply it to the course** (the root of the document), and generation follows it:
 
-> "Apply the 'MOHEBS house style' formatter to this course."
+> "Apply the 'House style' formatter to this course."
 
 As with a routine, applying it creates an independent copy attached to the course. To create or edit formatters, see [Create formatters](formatters.md).
 

@@ -9,7 +9,7 @@ A **formatter** describes the **appearance** of a document: its colour palette, 
 
 | Formatter | What it fixes | Reach |
 |---|---|---|
-| **MOHEBS house style (docx)** | Palette, typography (e.g. Calibri, body 11–12 pt), page setup, image compression | Shared — any `.docx` |
+| **House style (docx)** | Palette, typography (e.g. Calibri, body 11–12 pt), page setup, image compression | Shared — any `.docx` |
 | **Art style (images)** | The look of illustrations: flat 2-D vector, Senegalese textbook style, character consistency | Shared — illustrated subjects |
 | **Illustration layout — CI maths** | Image formats, activity-panel layouts, answer-badge colours (A red / B blue / C green), display sizes | Workspace — subject-specific |
 
@@ -27,13 +27,13 @@ To browse and read the catalog:
 
 > "What's in the catalog?"
 >
-> "Show me the detail of the 'MOHEBS house style' formatter."
+> "Show me the detail of the 'House style' formatter."
 
 ## Apply a formatter to a course
 
 Unlike a routine (which applies to a *lesson*), a formatter applies to a **course** — the root of the document to produce:
 
-> "Apply the 'MOHEBS house style' formatter to this course."
+> "Apply the 'House style' formatter to this course."
 
 Generation of that course will then follow the formatting instruction. As with a routine, applying it creates an **independent copy** attached to the course: a later edit to the catalog formatter does not flow back to courses already served.
 
