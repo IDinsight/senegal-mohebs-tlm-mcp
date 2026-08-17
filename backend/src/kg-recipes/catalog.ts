@@ -114,20 +114,27 @@ export function listCatalogEntries(graph: MutationGraph, scope: CatalogScope): C
 function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, children: Map<string, string[]>, scope: CatalogScope): CatalogEntry {
   const steps: CatalogEntry["steps"] = [];
   let materialCount = 0;
+  const kind = kindOf(entry);
+  const asStep = (n: MutationNode) => ({ id: n.id, name: str(rawOf(n).description), order: orderOf(n), timeRequired: str(rawOf(n).timeRequired) || undefined });
   for (const childId of children.get(entry.id) ?? []) {
     const child = byId.get(childId);
     if (!child) continue;
     if (isRoutine(child)) {
-      steps.push({ id: child.id, name: str(rawOf(child).description), order: orderOf(child), timeRequired: str(rawOf(child).timeRequired) || undefined });
+      // Nested step shape: a step is a child routine, its body in a Material grandchild.
+      steps.push(asStep(child));
       materialCount += (children.get(child.id) ?? []).filter((id) => isMaterial(byId.get(id))).length;
     } else if (isMaterial(child)) {
       materialCount += 1;
+      // Flat step shape (add_nodes → add_to_catalog): a ROUTINE's direct Material child
+      // IS a step (name/order/timing on the Material itself). A FORMATTER's direct
+      // Materials are its spec, not steps.
+      if (kind === "routine") steps.push(asStep(child));
     }
   }
   steps.sort((a, b) => a.order - b.order);
   return {
     id: entry.id,
-    kind: kindOf(entry),
+    kind,
     scope,
     name: str(rawOf(entry).description),
     summary: str(metaOf(entry).summary),
@@ -147,24 +154,27 @@ export function renderCatalogEntry(graph: MutationGraph, entryId: string, scope:
   if (!entry || !isRoutine(entry)) return null;
 
   const childrenOf = (id: string) => (children.get(id) ?? []).map((c) => byId.get(c)).filter((n): n is MutationNode => !!n);
-  const lines: string[] = [`# ${str(rawOf(entry).description) || entryId}`, "", `*${kindOf(entry)} · ${scope} catalog*`, ""];
+  const kind = kindOf(entry);
+  const lines: string[] = [`# ${str(rawOf(entry).description) || entryId}`, "", `*${kind} · ${scope} catalog*`, ""];
   const summary = str(metaOf(entry).summary);
   if (summary) lines.push(summary, "");
 
-  // A formatter's spec sits in the entry's direct Material children.
-  for (const m of childrenOf(entry.id).filter(isMaterial)) {
-    const content = str(rawOf(m).content);
-    if (content) lines.push(content, "");
-  }
-
-  // A routine's ordered steps, each with its Material content.
-  const steps = childrenOf(entry.id).filter(isRoutine).sort((a, b) => orderOf(a) - orderOf(b));
-  for (const step of steps) {
-    const timing = str(rawOf(step).timeRequired);
-    lines.push(`## ${str(rawOf(step).description)}${timing ? `  (${timing})` : ""}`, "");
-    for (const m of childrenOf(step.id).filter(isMaterial)) {
+  if (kind === "formatter") {
+    // A formatter's spec sits in its direct Material children — rendered flat, no headings.
+    for (const m of childrenOf(entry.id).filter(isMaterial)) {
       const content = str(rawOf(m).content);
       if (content) lines.push(content, "");
+    }
+  } else {
+    // A routine's ordered steps, each under its own heading. A step is either a child
+    // InstructionalRoutine (body in a Material grandchild) or a direct Material child
+    // (body in its own content) — see describeEntry; both shapes render the same.
+    const steps = childrenOf(entry.id).filter((c) => isRoutine(c) || isMaterial(c)).sort((a, b) => orderOf(a) - orderOf(b));
+    for (const step of steps) {
+      const timing = str(rawOf(step).timeRequired);
+      lines.push(`## ${str(rawOf(step).description)}${timing ? `  (${timing})` : ""}`, "");
+      const bodies = isMaterial(step) ? [str(rawOf(step).content)] : childrenOf(step.id).filter(isMaterial).map((m) => str(rawOf(m).content));
+      for (const body of bodies) if (body) lines.push(body, "");
     }
   }
   return `${lines.join("\n").trimEnd()}\n`;
@@ -304,6 +314,48 @@ export const useRoutine: GraphMutation<UseRoutineArgs> = {
     // base (→ clean "blocked" from validate) rather than produce a dangling edge.
     if (!nodeById(base, args.targetId)) return base;
     const link: MutationEdge = { id: edgeId("usesRoutine", args.targetId, args.newEntryId), type: "usesRoutine", from: args.targetId, to: args.newEntryId, namespace: args.namespace, properties: {} };
+    return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
+  },
+};
+
+// ── add_to_catalog: publish an authored entry INTO a catalog ─────────────────
+// The inverse of useRoutine. useRoutine copies a library entry OUT onto a lesson;
+// this copies an entry IN — a routine/formatter subtree authored in a subject
+// graph, cloned (fresh ids, via cloneRoutineSubtree) into a catalog namespace and
+// filed under that library's root container by `hasPart`, so list_catalog/use_*
+// then surface it. The subtree is cloned by the tool (apply() sees only the target
+// catalog's base), exactly as useRoutine takes its clone pre-built.
+
+// The catalog's root container in `graph`: the fixed CATALOG_ROOT_ID when present
+// (how every seeded library is built), else the routine that is nobody's hasPart
+// child. null for a catalog with no container — the caller reports "seed first".
+export function catalogRootId(graph: MutationGraph): string | null {
+  if (graph.nodes.some((n) => n.id === CATALOG_ROOT_ID)) return CATALOG_ROOT_ID;
+  const { hasRoutineParent } = indexContainment(graph);
+  return graph.nodes.find((n) => isRoutine(n) && !hasRoutineParent.has(n.id))?.id ?? null;
+}
+
+export type AddCatalogEntryArgs = {
+  namespace: string;            // the CATALOG namespace being written
+  clonedNodes: MutationNode[];  // the entry subtree, fresh ids, already namespaced to the catalog
+  clonedEdges: MutationEdge[];
+  newEntryId: string;           // the cloned entry's id (filed under the catalog root)
+};
+
+export const addCatalogEntry: GraphMutation<AddCatalogEntryArgs> = {
+  name: "addCatalogEntry",
+  describe: (args) => `add a catalog entry (${args.newEntryId}) to library '${args.namespace}'`,
+  validate: (base, _after, args) => {
+    const errors: string[] = [];
+    if (!catalogRootId(base)) errors.push(`add_to_catalog: '${args.namespace}' has no catalog root container to file under — seed the catalog first.`);
+    if (!args.clonedNodes.some((n) => n.id === args.newEntryId)) errors.push(`add_to_catalog: the cloned entry '${args.newEntryId}' is missing from the copied subtree (retry).`);
+    for (const n of args.clonedNodes) if (nodeById(base, n.id)) errors.push(`add_to_catalog: copied id '${n.id}' already exists in the catalog (retry).`);
+    return { errors, warnings: [] };
+  },
+  apply: (base, args) => {
+    const rootId = catalogRootId(base);
+    if (!rootId) return base; // no container → clean "blocked" from validate
+    const link: MutationEdge = { id: edgeId(CONTAINMENT, rootId, args.newEntryId), type: CONTAINMENT, from: rootId, to: args.newEntryId, namespace: args.namespace, properties: {} };
     return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
   },
 };
