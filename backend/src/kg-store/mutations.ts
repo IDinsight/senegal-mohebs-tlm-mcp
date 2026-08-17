@@ -412,11 +412,27 @@ export async function runGraphMutation<Args>(
     }
     const draftSlot = pointerAfter.draftSlot;
 
-    // Re-read the draft (it's the exact bytes we hashed on the 'onDraft' path,
-    // and the freshly-copied bytes on the 'onPublished' path). Apply the
-    // mutation to it and writeSlot the new state.
-    const [dn, de] = await timed("confirm.reReadDraft", () => Promise.all([store.listNodes(namespace, draftSlot), store.listEdges(namespace, draftSlot)]));
-    const draftGraph: MutationGraph = { nodes: dn.map(stripSlot), edges: de.map(stripSlot) };
+    // Resolve the draft graph the mutation applies to.
+    //
+    // On the 'onDraft' path, readBase already read THIS draft into snap.graph,
+    // and the base-version CAS above proved it is current (its hash still equals
+    // the token's) — so a second full read of the same slot is pure redundancy.
+    // Reuse snap.graph and skip the re-read; on a ~2,000-node graph that trims a
+    // full-graph fetch (~2–3s co-located) off every follow-up edit. The residual
+    // window (a concurrent confirm landing between readBase and applyDelta) is
+    // the same order the framework already tolerates — serialized confirms are
+    // enforced by the one-time nonce + base-version CAS, not by this re-read.
+    //
+    // On the 'onPublished' path we MUST re-read: createDraft may have accepted a
+    // concurrently-created draft rather than the copy we just staged, so the
+    // draft slot is the only source of truth for what we're about to edit.
+    let draftGraph: MutationGraph;
+    if (snap.kind === "onDraft") {
+      draftGraph = snap.graph;
+    } else {
+      const [dn, de] = await timed("confirm.reReadDraft", () => Promise.all([store.listNodes(namespace, draftSlot), store.listEdges(namespace, draftSlot)]));
+      draftGraph = { nodes: dn.map(stripSlot), edges: de.map(stripSlot) };
+    }
     const applied = timedSync("confirm.applyFold", () => mutation.apply(draftGraph, args));
     const diff = timedSync("confirm.diffGraphs", () => diffGraphs(draftGraph, applied));
 
