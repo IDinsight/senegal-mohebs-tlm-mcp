@@ -157,28 +157,26 @@ export interface KgNodeStore {
   // pointer (or in the same synchronous op for the memory backend), so a
   // committed state change always has its record.
   //
-  // createDraft: if no draft exists, copy the published slot into the free
-  //   slot and set draftSlot in the pointer LAST (so a half-copied draft is
-  //   invisible to readers). The copy includes the profile CONFIG cell, so a
-  //   fresh draft starts from the published profile. If a draft already exists,
-  //   no-op (idempotent). Errors if the namespace has never been seeded (no pointer).
-  //   `sourceGraph`, when passed, is the published graph the CALLER already read
-  //   (runGraphMutation's base snapshot) — createDraft copies from it instead of
-  //   re-reading the published slot. Safe because the published slot is immutable
-  //   while published (edits land on the draft; publish flips the pointer), and
-  //   the final pointer transaction re-verifies the published slot didn't move.
-  createDraft(namespace: string, audit?: AuditRecord, sourceGraph?: MutationGraph): Promise<void>;
+  // createDraft: open a draft as an EMPTY OVERLAY on top of published — O(1), no
+  //   graph copy (canonical + changeset model; see the design note). Sets
+  //   draftSlot in the pointer and carries the published profile CONFIG + meta
+  //   cell so the draft opens from the published profile. A draft read merges
+  //   published + this (empty) overlay, reading identical to published until the
+  //   first edit. If a draft already exists, no-op (idempotent). Errors if the
+  //   namespace has never been seeded (no pointer).
+  createDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
-  // publishDraft: atomic single-doc pointer flip —
-  //   publishedSlot := draftSlot; draftSlot := null.
-  // The old published data is orphaned in place until the next createDraft
-  // overwrites its slot. Errors if no draft exists.
+  // publishDraft: apply the draft's overlay onto the canonical (published) graph,
+  //   then clear the draft. ALWAYS ATOMIC — a small overlay applies in one
+  //   transaction in place (published slot unchanged); an over-cap overlay
+  //   materializes into the draft slot and atomically swaps it in as the new
+  //   published slot. Either way no reader observes a partial published graph.
+  //   Errors if no draft exists.
   publishDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
-  // discardDraft: single-doc pointer write — draftSlot := null, and the draft
-  // slot's meta + config cells are cleared alongside it (so a fresh createDraft
-  // doesn't inherit a stale profile). Orphaned draft node/edge docs remain until
-  // the next createDraft overwrites them. No-op if no draft exists.
+  // discardDraft: delete the draft's overlay docs and clear the pointer's draft
+  //   state + meta/config cells (so a fresh createDraft doesn't inherit a stale
+  //   profile). Published is untouched. No-op if no draft exists.
   discardDraft(namespace: string, audit?: AuditRecord): Promise<void>;
 
   // ── Audit surface (append-only) ────────────────────────────────────────────

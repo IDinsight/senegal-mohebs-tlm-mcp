@@ -204,9 +204,9 @@ describe("approver role", () => {
         expect(publishRecords[0].promotedApplyIds).toHaveLength(1);
       }
     });
-    // Pointer flipped to former draft slot.
+    // A small publish applies the overlay in place — published slot stays "a".
     const pointer = await store.readPointer(ns);
-    expect(pointer?.publishedSlot).toBe("b");
+    expect(pointer?.publishedSlot).toBe("a");
     expect(pointer?.draftSlot).toBe(null);
   });
 

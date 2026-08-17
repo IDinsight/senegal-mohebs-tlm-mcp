@@ -47,6 +47,7 @@ interface FsCollection extends FsQuery {
 interface FsBatch { set(ref: FsDocRef, data: Record<string, unknown>): FsBatch; delete(ref: FsDocRef): FsBatch; commit(): Promise<unknown> }
 interface FsTransaction {
   get(ref: FsDocRef): Promise<FsDoc>;
+  get(query: FsQuery): Promise<FsQuerySnap>;
   set(ref: FsDocRef, data: Record<string, unknown>, opts?: FsSetOpts): FsTransaction;
   update(ref: FsDocRef, data: Record<string, unknown>): FsTransaction;
   delete(ref: FsDocRef): FsTransaction;
@@ -127,6 +128,33 @@ async function commitInChunks<T>(db: Firestore, items: T[], apply: (batch: FsBat
   note(`firestore.${label}`, `${items.length} ops in ${batches.length} concurrent batch(es)`);
 }
 
+// ── Canonical + changeset overlay ────────────────────────────────────────────
+// A DRAFT slot stores only an OVERLAY: the docs an editing session changed, plus
+// tombstone markers for the ids it deleted — NOT a full copy (see
+// docs/design-notes/canonical-changeset-store.md). A tombstone is a doc carrying
+// just {id, namespace, slot, _tombstone:true}; it masks the canonical doc of the
+// same id in a draft read and becomes a canonical delete at publish.
+const TOMBSTONE = "_tombstone";
+
+// Max WRITES a small publish applies in one transaction. Firestore caps a
+// transaction at 500 writes; a publish writes ~2 per overlay doc (apply to
+// canonical + clear the overlay doc) plus the pointer + audit, so we cap the
+// overlay at ~240 and take the scratch-and-swap path above that. Interactive
+// sessions are far smaller; only a bulk pass crosses this.
+const PUBLISH_TXN_MAX = 240;
+
+// Merge a canonical layer with a draft overlay: overlay upserts win by id,
+// tombstones remove. `overlay` is the raw draft-slot docs (some are tombstones).
+function mergeOverlay<T extends { id: string }>(canonical: T[], overlay: Array<Record<string, unknown>>): T[] {
+  const merged = new Map(canonical.map((x) => [x.id, x]));
+  for (const d of overlay) {
+    const id = d.id as string;
+    if (d[TOMBSTONE]) merged.delete(id);
+    else merged.set(id, d as unknown as T);
+  }
+  return [...merged.values()];
+}
+
 // Pointer doc layout. We keep the two per-slot meta stamps AND the two per-slot
 // profile-config cells on the same doc as the pointer, so a publish (which is
 // transactional on the pointer) swaps both the "current" meta and the "current"
@@ -156,20 +184,35 @@ export function createFirestoreKgStore(): KgNodeStore {
   return {
     kind: "firestore",
 
+    // A published/seed slot read returns the slot's docs directly. A DRAFT slot
+    // read merges the canonical (published) graph with the draft's overlay —
+    // callers still see a complete graph (the interface hides the split). The
+    // pointer fetch runs in parallel with the slot query, so a plain published
+    // read is still one round trip.
     async listNodes(namespace, slot) {
-      const snap = await db.collection(NODES)
-        .where("namespace", "==", namespace)
-        .where("slot", "==", slot)
-        .get();
-      return snap.docs.map((d) => d.data() as StoredNode);
+      const [p, direct] = await Promise.all([
+        fetchPointer(namespace),
+        db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", slot).get(),
+      ]);
+      const directData = direct.docs.map((d) => d.data() as StoredNode & Record<string, unknown>);
+      if (p?.draftSlot === slot) {
+        const canon = await db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", p.publishedSlot).get();
+        return mergeOverlay(canon.docs.map((d) => d.data() as StoredNode), directData);
+      }
+      return directData.filter((d) => !d[TOMBSTONE]) as StoredNode[];
     },
 
     async listEdges(namespace, slot) {
-      const snap = await db.collection(EDGES)
-        .where("namespace", "==", namespace)
-        .where("slot", "==", slot)
-        .get();
-      return snap.docs.map((d) => d.data() as StoredEdge);
+      const [p, direct] = await Promise.all([
+        fetchPointer(namespace),
+        db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", slot).get(),
+      ]);
+      const directData = direct.docs.map((d) => d.data() as StoredEdge & Record<string, unknown>);
+      if (p?.draftSlot === slot) {
+        const canon = await db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", p.publishedSlot).get();
+        return mergeOverlay(canon.docs.map((d) => d.data() as StoredEdge), directData);
+      }
+      return directData.filter((d) => !d[TOMBSTONE]) as StoredEdge[];
     },
 
     async readMeta(namespace, slot) {
@@ -244,22 +287,22 @@ export function createFirestoreKgStore(): KgNodeStore {
     },
 
     async applyDelta(namespace, slot, delta, meta, audit) {
-      // The edit hot path: write ONLY what changed. No full-slot read, no
-      // full-slot rewrite — upserts hit the added/changed ids, deletes hit the
-      // removed ids, and the four slices touch disjoint ids so they commit
-      // concurrently. Everything the delta doesn't mention is left as-is, which
-      // is correct precisely because runGraphMutation computed the delta against
-      // this slot's current contents (base-version hash-CAS — see types.ts).
+      // The edit hot path, writing ONLY what changed onto the draft's OVERLAY:
+      // upserts hit the added/changed ids; a removed id is written as a TOMBSTONE
+      // (the canonical doc still exists — the tombstone masks it in the draft
+      // merge and becomes a canonical delete at publish). No full-slot read or
+      // rewrite; correct because runGraphMutation computed the delta against this
+      // draft's current (merged) contents (base-version hash-CAS — see types.ts).
       const nodeUpserts = delta.upsertNodes.map((n) => ({ ref: db.collection(NODES).doc(docId(namespace, slot, n.id)), data: { ...n, namespace, slot } }));
       const edgeUpserts = delta.upsertEdges.map((e) => ({ ref: db.collection(EDGES).doc(docId(namespace, slot, e.id)), data: { ...e, namespace, slot } }));
-      const nodeDeletes = delta.removeNodeIds.map((id) => db.collection(NODES).doc(docId(namespace, slot, id)));
-      const edgeDeletes = delta.removeEdgeIds.map((id) => db.collection(EDGES).doc(docId(namespace, slot, id)));
+      const nodeTombstones = delta.removeNodeIds.map((id) => ({ ref: db.collection(NODES).doc(docId(namespace, slot, id)), data: { id, namespace, slot, [TOMBSTONE]: true } }));
+      const edgeTombstones = delta.removeEdgeIds.map((id) => ({ ref: db.collection(EDGES).doc(docId(namespace, slot, id)), data: { id, namespace, slot, [TOMBSTONE]: true } }));
 
       await Promise.all([
         commitInChunks(db, nodeUpserts, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "applyDelta.nodeUpserts"),
         commitInChunks(db, edgeUpserts, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "applyDelta.edgeUpserts"),
-        commitInChunks(db, nodeDeletes, (b, r) => { b.delete(r as unknown as FsDocRef); }, "applyDelta.nodeDeletes"),
-        commitInChunks(db, edgeDeletes, (b, r) => { b.delete(r as unknown as FsDocRef); }, "applyDelta.edgeDeletes"),
+        commitInChunks(db, nodeTombstones, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "applyDelta.nodeTombstones"),
+        commitInChunks(db, edgeTombstones, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "applyDelta.edgeTombstones"),
       ]);
 
       // Same final meta+audit transaction as writeSlot: the committed edit
@@ -308,12 +351,10 @@ export function createFirestoreKgStore(): KgNodeStore {
       });
     },
 
-    async createDraft(namespace, audit, sourceGraph) {
-      // Read the current pointer OUTSIDE a transaction: the copy step itself
-      // is long-running and cannot be inside a Firestore transaction (which
-      // caps at 500 writes and a few seconds). Race safety is achieved by
-      // setting the pointer's draftSlot LAST, inside a transaction that
-      // re-reads the pointer to make sure nobody else set draftSlot first.
+    async createDraft(namespace, audit) {
+      // O(1): a draft is an EMPTY overlay on top of published — NO graph copy.
+      // A draft read merges published + this (empty) overlay, so it reads
+      // identical to published until the first edit lands via applyDelta.
       const existing = await fetchPointer(namespace);
       if (!existing) throw new Error(`createDraft: namespace '${namespace}' has no pointer — run the seed first.`);
       if (existing.draftSlot) return; // idempotent — a draft already exists
@@ -321,94 +362,152 @@ export function createFirestoreKgStore(): KgNodeStore {
       const from = existing.publishedSlot;
       const to = otherSlot(from);
 
-      // Read the destination (to find orphans) always; read the SOURCE only if
-      // the caller didn't already hand us the published graph. Skipping the
-      // source re-read saves a full-graph fetch on the confirm hot path (the
-      // caller just read it as its base snapshot).
-      const needSourceRead = sourceGraph == null;
-      const [destNodes, destEdges, srcNodes, srcEdges] = await timed("createDraft.reads", () => Promise.all([
+      // Clear any stragglers in the target overlay slot before opening the draft,
+      // so a prior draft's leftover overlay docs can't pollute the merge. Normally
+      // empty (discard/publish clean up) — O(overlay), not O(graph). The rare
+      // exception (a full graph left in `to` by a crashed large publish) is
+      // cleaned here too.
+      const [staleNodes, staleEdges] = await Promise.all([
         db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", to).get(),
         db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", to).get(),
-        needSourceRead ? db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", from).get() : Promise.resolve(null),
-        needSourceRead ? db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", from).get() : Promise.resolve(null),
-      ]));
-      const srcNodeData: Array<Omit<StoredNode, "slot">> = sourceGraph ? sourceGraph.nodes : srcNodes!.docs.map((d) => d.data() as StoredNode);
-      const srcEdgeData: Array<Omit<StoredEdge, "slot">> = sourceGraph ? sourceGraph.edges : srcEdges!.docs.map((d) => d.data() as StoredEdge);
-      const nodeCopies = srcNodeData.map((src) => ({ id: src.id, doc: { ...src, slot: to } }));
-      const edgeCopies = srcEdgeData.map((src) => ({ id: src.id, doc: { ...src, slot: to } }));
-
-      // Only delete destination docs that the copy WON'T overwrite. The copy
-      // `set`s every source id into the destination slot, so a straggler that
-      // shares an id with a copy is replaced anyway — deleting it first would be
-      // a wasted delete-then-recreate. What's left to delete is the true
-      // orphans: destination ids not present in the source. Because deletes and
-      // copies now touch disjoint doc ids, all four slices commit concurrently.
-      const copyNodeDocIds = new Set(nodeCopies.map((c) => docId(namespace, to, c.id)));
-      const copyEdgeDocIds = new Set(edgeCopies.map((c) => docId(namespace, to, c.id)));
-      const orphanNodeRefs = destNodes.docs.filter((d) => !copyNodeDocIds.has(d.id)).map((d) => d.ref);
-      const orphanEdgeRefs = destEdges.docs.filter((d) => !copyEdgeDocIds.has(d.id)).map((d) => d.ref);
-
+      ]);
       await Promise.all([
-        commitInChunks(db, orphanNodeRefs, (b, r) => { b.delete(r); }, "createDraft.orphanNodeDeletes"),
-        commitInChunks(db, orphanEdgeRefs, (b, r) => { b.delete(r); }, "createDraft.orphanEdgeDeletes"),
-        commitInChunks(db, nodeCopies, (b, w) => { b.set(db.collection(NODES).doc(docId(namespace, to, w.id)) as unknown as FsDocRef, w.doc as unknown as Record<string, unknown>); }, "createDraft.nodeCopies"),
-        commitInChunks(db, edgeCopies, (b, w) => { b.set(db.collection(EDGES).doc(docId(namespace, to, w.id)) as unknown as FsDocRef, w.doc as unknown as Record<string, unknown>); }, "createDraft.edgeCopies"),
+        commitInChunks(db, staleNodes.docs.map((d) => d.ref), (b, r) => { b.delete(r); }, "createDraft.clearNodes"),
+        commitInChunks(db, staleEdges.docs.map((d) => d.ref), (b, r) => { b.delete(r); }, "createDraft.clearEdges"),
       ]);
 
-      // Finally, flip draftSlot in a transaction so a racing createDraft that
-      // beat us to the copy phase doesn't silently overwrite each other's
-      // pointer state.
+      // Flip draftSlot in a transaction that re-checks the pointer, so a racing
+      // createDraft or a concurrent publish can't leave inconsistent state.
       await db.runTransaction(async (tx) => {
         const ref = pointerRef(namespace);
         const doc = await tx.get(ref as unknown as FsDocRef);
         const p = (doc.data() as PointerDoc | undefined) ?? null;
         if (!p) throw new Error(`createDraft: pointer for '${namespace}' vanished mid-op.`);
-        if (p.publishedSlot !== from) {
-          // Someone else published between our read and our write — our copy
-          // is now against a stale published version. Bail rather than commit
-          // an inconsistent pointer; a retry will read the new published slot.
-          throw new Error(`createDraft: '${namespace}' was published concurrently; retry.`);
-        }
+        if (p.publishedSlot !== from) throw new Error(`createDraft: '${namespace}' was published concurrently; retry.`);
         if (p.draftSlot) return; // another createDraft finished first — accept it (no audit either)
         // Carry the published slot's meta AND profile config into the new draft
-        // cell, so the draft starts from the published profile (the node/edge
-        // copy above already cloned the graph). Both ride this same pointer tx.
+        // cell, so the draft opens from the published profile.
         tx.update(ref as unknown as FsDocRef, {
           draftSlot: to,
           [metaField(to)]: p[metaField(from)] ?? null,
           [configField(to)]: p[configField(from)] ?? null,
         });
-        // Join the audit doc into this same pointer transaction — the draft
-        // is only observable once THIS commits, so audit and state agree.
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },
 
     async publishDraft(namespace, audit) {
-      // Single-doc transaction: read current pointer, flip published/draft.
-      // Atomic by Firestore's single-doc write guarantee — no reader ever
-      // observes a partial state. The audit doc write is added to the same
-      // tx so a committed publish always has its record.
+      // Publish = apply the draft's overlay onto canonical, then clear the draft.
+      // SIZE-ADAPTIVE (always atomic — see O1 in the design note):
+      //   • small overlay  → one transaction: apply upserts/tombstones onto the
+      //     canonical (published) slot, clear the overlay, promote meta/config,
+      //     null draftSlot. Published slot does NOT move.
+      //   • large overlay  → materialize canonical+overlay into the draft slot as
+      //     a full graph, then an atomic pointer swap makes it the new published
+      //     slot; the old canonical slot is cleaned afterwards.
+      const nodeSlotQuery = (slot: Slot) => db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", slot);
+      const edgeSlotQuery = (slot: Slot) => db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", slot);
+      const stripTomb = (d: Record<string, unknown>) => { const { [TOMBSTONE]: _t, ...rest } = d; return rest; };
+
+      const p0 = await fetchPointer(namespace);
+      if (!p0) throw new Error(`publishDraft: namespace '${namespace}' has no pointer.`);
+      if (!p0.draftSlot) throw new Error(`publishDraft: namespace '${namespace}' has no draft to publish.`);
+      const draftSlot = p0.draftSlot;
+      const pub = p0.publishedSlot;
+
+      const [ovN, ovE] = await Promise.all([nodeSlotQuery(draftSlot).get(), edgeSlotQuery(draftSlot).get()]);
+
+      if (ovN.docs.length + ovE.docs.length <= PUBLISH_TXN_MAX) {
+        // ── Small: one atomic transaction (re-reads the overlay in-tx) ────────
+        await db.runTransaction(async (tx) => {
+          const pRef = pointerRef(namespace);
+          const p = ((await tx.get(pRef as unknown as FsDocRef)).data() as PointerDoc | undefined) ?? null;
+          if (!p || p.draftSlot !== draftSlot) throw new Error(`publishDraft: '${namespace}' draft moved mid-publish; retry.`);
+          const [txN, txE] = await Promise.all([tx.get(nodeSlotQuery(draftSlot)), tx.get(edgeSlotQuery(draftSlot))]);
+          for (const d of txN.docs) {
+            const data = d.data() as Record<string, unknown>;
+            const canonRef = db.collection(NODES).doc(docId(namespace, pub, data.id as string)) as unknown as FsDocRef;
+            if (data[TOMBSTONE]) tx.delete(canonRef); else tx.set(canonRef, { ...stripTomb(data), slot: pub });
+            tx.delete(d.ref);
+          }
+          for (const d of txE.docs) {
+            const data = d.data() as Record<string, unknown>;
+            const canonRef = db.collection(EDGES).doc(docId(namespace, pub, data.id as string)) as unknown as FsDocRef;
+            if (data[TOMBSTONE]) tx.delete(canonRef); else tx.set(canonRef, { ...stripTomb(data), slot: pub });
+            tx.delete(d.ref);
+          }
+          // Promote the draft's meta/config onto the (unchanged) published slot,
+          // and clear the draft cells.
+          tx.update(pRef as unknown as FsDocRef, {
+            draftSlot: null,
+            [metaField(pub)]: p[metaField(draftSlot)] ?? p[metaField(pub)] ?? null,
+            [configField(pub)]: p[configField(draftSlot)] ?? p[configField(pub)] ?? null,
+            [metaField(draftSlot)]: null,
+            [configField(draftSlot)]: null,
+          });
+          if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
+        });
+        return;
+      }
+
+      // ── Large: materialize into the draft slot, then atomic swap ────────────
+      const [canonN, canonE] = await Promise.all([nodeSlotQuery(pub).get(), edgeSlotQuery(pub).get()]);
+      const mergedN = mergeOverlay(canonN.docs.map((d) => d.data() as StoredNode), ovN.docs.map((d) => d.data() as Record<string, unknown>));
+      const mergedE = mergeOverlay(canonE.docs.map((d) => d.data() as StoredEdge), ovE.docs.map((d) => d.data() as Record<string, unknown>));
+      const mergedNodeDocIds = new Set(mergedN.map((n) => docId(namespace, draftSlot, n.id)));
+      const mergedEdgeDocIds = new Set(mergedE.map((e) => docId(namespace, draftSlot, e.id)));
+      // Overlay docs the merge doesn't keep (tombstones) must be deleted from the
+      // draft slot so the materialized graph has no leftover markers.
+      const staleOverlayN = ovN.docs.filter((d) => !mergedNodeDocIds.has(d.id)).map((d) => d.ref);
+      const staleOverlayE = ovE.docs.filter((d) => !mergedEdgeDocIds.has(d.id)).map((d) => d.ref);
+      await Promise.all([
+        commitInChunks(db, mergedN, (b, n) => { b.set(db.collection(NODES).doc(docId(namespace, draftSlot, n.id)) as unknown as FsDocRef, { ...n, slot: draftSlot }); }, "publish.materializeNodes"),
+        commitInChunks(db, mergedE, (b, e) => { b.set(db.collection(EDGES).doc(docId(namespace, draftSlot, e.id)) as unknown as FsDocRef, { ...e, slot: draftSlot }); }, "publish.materializeEdges"),
+        commitInChunks(db, staleOverlayN, (b, r) => { b.delete(r); }, "publish.clearOverlayNodes"),
+        commitInChunks(db, staleOverlayE, (b, r) => { b.delete(r); }, "publish.clearOverlayEdges"),
+      ]);
+      // Atomic swap: the freshly materialized draft slot becomes published. Its
+      // meta/config cell already holds the draft's, so publishing just flips the
+      // pointer. No reader observed a partial graph — the materialize wrote to the
+      // (invisible) draft slot only.
       await db.runTransaction(async (tx) => {
-        const ref = pointerRef(namespace);
-        const doc = await tx.get(ref as unknown as FsDocRef);
-        const p = (doc.data() as PointerDoc | undefined) ?? null;
-        if (!p) throw new Error(`publishDraft: namespace '${namespace}' has no pointer.`);
-        if (!p.draftSlot) throw new Error(`publishDraft: namespace '${namespace}' has no draft to publish.`);
-        tx.update(ref as unknown as FsDocRef, { publishedSlot: p.draftSlot, draftSlot: null });
+        const pRef = pointerRef(namespace);
+        const p = ((await tx.get(pRef as unknown as FsDocRef)).data() as PointerDoc | undefined) ?? null;
+        if (!p || p.draftSlot !== draftSlot) throw new Error(`publishDraft: '${namespace}' draft moved mid-publish; retry.`);
+        tx.update(pRef as unknown as FsDocRef, { publishedSlot: draftSlot, draftSlot: null });
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
+      // Clean the old canonical slot (now scratch) so the next createDraft's
+      // target is empty. Off the critical path — published already flipped.
+      await Promise.all([
+        commitInChunks(db, canonN.docs.map((d) => d.ref), (b, r) => { b.delete(r); }, "publish.cleanOldNodes"),
+        commitInChunks(db, canonE.docs.map((d) => d.ref), (b, r) => { b.delete(r); }, "publish.cleanOldEdges"),
+      ]);
     },
 
     async discardDraft(namespace, audit) {
+      const p0 = await fetchPointer(namespace);
+      if (!p0 || !p0.draftSlot) return; // idempotent no-op — no audit either
+      const draftSlot = p0.draftSlot;
+
+      // Delete the draft's overlay docs (small — only what the session changed),
+      // so the slot is empty for the next createDraft.
+      const [ovN, ovE] = await Promise.all([
+        db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", draftSlot).get(),
+        db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", draftSlot).get(),
+      ]);
+      await Promise.all([
+        commitInChunks(db, ovN.docs.map((d) => d.ref), (b, r) => { b.delete(r); }, "discard.clearNodes"),
+        commitInChunks(db, ovE.docs.map((d) => d.ref), (b, r) => { b.delete(r); }, "discard.clearEdges"),
+      ]);
+
+      // Clear the pointer's draft state + cells (transaction re-checks the draft
+      // is still the one we cleared).
       await db.runTransaction(async (tx) => {
         const ref = pointerRef(namespace);
-        const doc = await tx.get(ref as unknown as FsDocRef);
-        const p = (doc.data() as PointerDoc | undefined) ?? null;
-        if (!p || !p.draftSlot) return; // idempotent no-op — no audit either
-        // Clear the draft slot's meta AND config cells alongside the pointer so
-        // a fresh createDraft doesn't inherit a stale meta or profile.
-        tx.update(ref as unknown as FsDocRef, { draftSlot: null, [metaField(p.draftSlot)]: null, [configField(p.draftSlot)]: null });
+        const p = ((await tx.get(ref as unknown as FsDocRef)).data() as PointerDoc | undefined) ?? null;
+        if (!p || p.draftSlot !== draftSlot) return; // someone else changed it — leave their state
+        tx.update(ref as unknown as FsDocRef, { draftSlot: null, [metaField(draftSlot)]: null, [configField(draftSlot)]: null });
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },

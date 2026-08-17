@@ -198,11 +198,12 @@ describe("end-to-end curator loop: edit → diff → publish", () => {
       return commit.auditId;
     });
 
-    // ── 8: the pointer flipped, and the new ordinals live on published ─────
+    // ── 8: the overlay was applied onto canonical, and the new ordinals live
+    // on published (a small publish applies in place — publishedSlot stays "a").
     const pointerAfter = await store.readPointer(ns);
-    expect(pointerAfter?.publishedSlot).toBe("b");
+    expect(pointerAfter?.publishedSlot).toBe("a");
     expect(pointerAfter?.draftSlot).toBe(null);
-    const publishedNodes = await store.listNodes(ns, "b");
+    const publishedNodes = await store.listNodes(ns, "a");
     const publishedChapter = publishedNodes.find((n) => n.id === chapterId)!;
     const publishedLesson = publishedNodes.find((n) => n.id === lessonId)!;
     // reposition writes the normalized ordinal — what a published read now sees.
