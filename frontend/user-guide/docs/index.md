@@ -1,4 +1,4 @@
-# Guide utilisateur MOHEBS TLM
+# Guide utilisateur TLM
 
 Bienvenue. Cet outil vous aide à **entretenir le curriculum** (le « graphe de connaissances ») et à **produire du matériel pédagogique** — manuels de l'élève et fiches de leçons — pour les mathématiques et la lecture, en gardant tout cohérent d'un chapitre à l'autre.
 

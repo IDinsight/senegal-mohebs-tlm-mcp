@@ -9,7 +9,7 @@ Un **formatter** décrit **l'apparence** d'un document : sa palette de couleurs,
 
 | Formatter | Ce qu'il fixe | Portée |
 |---|---|---|
-| **Style maison MOHEBS (docx)** | Palette, typographie (ex. Calibri, corps 11–12 pt), mise en page, compression des images | Partagé — tout document `.docx` |
+| **Style maison (docx)** | Palette, typographie (ex. Calibri, corps 11–12 pt), mise en page, compression des images | Partagé — tout document `.docx` |
 | **Style graphique (images)** | Le look des illustrations : dessin vectoriel 2-D façon manuel scolaire sénégalais, cohérence des personnages | Partagé — matières illustrées |
 | **Mise en page des illustrations — maths CI** | Formats d'images, disposition des panneaux d'activité, couleurs des pastilles de réponse (A rouge / B bleu / C vert), tailles d'affichage | Espace de travail — spécifique à une matière |
 
@@ -27,13 +27,13 @@ Pour parcourir et lire le catalogue :
 
 > « Qu'y a-t-il dans le catalogue ? »
 >
-> « Montre-moi le détail du formatter “Style maison MOHEBS”. »
+> « Montre-moi le détail du formatter “Style maison”. »
 
 ## Appliquer un formatter à un cours
 
 À la différence d'une routine (qui s'applique à une *leçon*), un formatter s'applique à un **cours** — la racine du document à produire :
 
-> « Applique le formatter “Style maison MOHEBS” à ce cours. »
+> « Applique le formatter “Style maison” à ce cours. »
 
 La génération de ce cours suivra alors la consigne de mise en forme. Comme pour une routine, l'application crée une **copie indépendante** rattachée au cours : une modification ultérieure du formatter du catalogue ne rejaillit pas sur les cours déjà servis.
 

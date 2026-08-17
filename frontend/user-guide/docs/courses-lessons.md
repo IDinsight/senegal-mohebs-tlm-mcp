@@ -67,7 +67,7 @@ Appliquer une routine en fait une **copie indépendante** attachée à votre le�
 
 Un **formatter** décrit la **mise en forme** du document produit — palette, typographie, mise en page, style des illustrations. On l'**applique au cours** (la racine du document), et la génération s'y conforme :
 
-> « Applique le formatter “Style maison MOHEBS” à ce cours. »
+> « Applique le formatter “Style maison” à ce cours. »
 
 Comme pour une routine, l'application crée une copie indépendante attachée au cours. Pour créer ou modifier les formatters, voir [Créer des formatters](formatters.md).
 

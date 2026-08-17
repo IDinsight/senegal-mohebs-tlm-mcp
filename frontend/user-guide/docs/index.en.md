@@ -1,4 +1,4 @@
-# MOHEBS TLM user guide
+# TLM user guide
 
 Welcome. This tool helps you **maintain the curriculum** (the "knowledge graph") and **produce teaching materials** — pupil manuals and lesson sheets — for mathematics and reading, keeping everything consistent from one chapter to the next.
 

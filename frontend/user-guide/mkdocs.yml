@@ -1,5 +1,5 @@
-site_name: Guide utilisateur — MOHEBS TLM
-site_description: Comment utiliser les outils MOHEBS pour créer du matériel pédagogique, modifier le graphe de connaissances, et explorer le curriculum.
+site_name: Guide utilisateur — TLM
+site_description: Comment utiliser les outils TLM pour créer du matériel pédagogique, modifier le graphe de connaissances, et explorer le curriculum.
 docs_dir: docs
 
 theme:
