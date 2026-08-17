@@ -17,11 +17,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { asJson, guarded } from "./shared.js";
+import { asJson, asText, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace, sessionState } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor, diffGraphs, type GraphDiff } from "../kg-store/index.js";
-import { exportSubtree } from "../kg-export.js";
+import { exportSubtree, renderGraphView, type RenderExport } from "../kg-export.js";
 import { walkGraph, computeGraphStats, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
 import { resolveDraftModel } from "./preview.js";
 import { authorize } from "../authz.js";
@@ -182,6 +182,16 @@ export async function exportGraphView(args: { fromId: string; maxDepth?: number;
   return result as unknown as Record<string, unknown>;
 }
 
+// ── Core: render_graph_view ────────────────────────────────────────────────────
+// Like export_graph_view, but returns the FINISHED self-contained HTML page (the
+// scoped slice injected into the pre-built shell) — one call, no local build step.
+// Returns the RenderExport union raw; the tool handler sends the HTML as text and
+// any notice (tooLarge / error) as JSON. Exported so tests drive the real logic.
+export async function renderActiveGraphView(args: { fromId: string; maxDepth?: number; detail?: boolean; title?: string }): Promise<RenderExport | null> {
+  const namespace = activeNamespace();
+  return renderGraphView(namespace, args.fromId, { maxDepth: args.maxDepth, detail: args.detail, title: args.title });
+}
+
 // Live draft state: whether a draft is open and, if so, how many nodes/edges it
 // changes vs published (a cheap diff over two small slots, no traversal).
 async function draftState(namespace: string): Promise<{ open: boolean; editsStaged?: number }> {
@@ -270,5 +280,29 @@ export function registerGraphTools(server: McpServer) {
       },
     },
     guarded(async (a: { fromId: string; maxDepth?: number; detail?: boolean }) => asJson(await exportGraphView(a))),
+  );
+
+  server.registerTool(
+    "render_graph_view",
+    {
+      title: "Render a scoped graph slice to a self-contained HTML page",
+      description:
+        "Like export_graph_view, but returns the FINISHED, self-contained HTML page — one call, no local build step. It injects the scoped slice (the containment subtree of `fromId`, plus each lesson's aligned standard + components) into the pre-built explorer engine, so the page renders the SAME interactive tree the live KG explorer shows (Standards / Curriculum / Progression / By-type tabs, LC-label colours, folded containment, FR/EN, expand/collapse, a per-node detail panel) with no server, network, or auth. " +
+        "On success the response IS the HTML (save it to a .html file and open or publish it as an artifact). Scope it to ONE thing: get a root id from namespace_stats (a Course/chapter) or walk_graph. `maxDepth` (default 4, max 12) bounds depth; `detail` (default false) includes each node's raw LC properties for the detail panel; `title` sets the page title. " +
+        "The whole page must fit the response cap (the engine shell is ~12 KB), so an oversized slice returns `{ tooLarge, counts, message }` telling you to lower maxDepth, set detail:false, or pick a deeper root. Read-only, published slot only.",
+      inputSchema: {
+        fromId: z.string(),
+        maxDepth: z.number().int().optional(),
+        detail: z.boolean().optional(),
+        title: z.string().optional(),
+      },
+    },
+    guarded(async (a: { fromId: string; maxDepth?: number; detail?: boolean; title?: string }) => {
+      const result = await renderActiveGraphView(a);
+      if (result === null) return asJson({ error: `No published graph for '${activeNamespace()}'. The namespace has never been seeded/published.` });
+      // Success is the raw HTML (ready to save/publish) delivered as a text
+      // resource; a notice (tooLarge / error) stays JSON.
+      return "html" in result ? asText("graph-view.html", result.html) : asJson(result);
+    }),
   );
 }

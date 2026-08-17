@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>__TITLE_PLACEHOLDER__</title>
+<style>
+  :root {
+    --color-bg: #ffffff; --color-panel: #f6f7f9; --color-line: #e2e5ea;
+    --color-txt: #1a1d23; --color-muted: #6b7280;
+    --color-framework: #888780; --color-plan: #378add; --color-accent: #1d9e75;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --color-bg: #0f1115; --color-panel: #171a21; --color-line: #2a2f3a;
+      --color-txt: #e6e8ec; --color-muted: #9aa0ab;
+    }
+  }
+  :root[data-theme="dark"] {
+    --color-bg: #0f1115; --color-panel: #171a21; --color-line: #2a2f3a;
+    --color-txt: #e6e8ec; --color-muted: #9aa0ab;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--color-bg); color: var(--color-txt);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #app { max-width: 1000px; margin: 0 auto; padding: 16px; }
+  .hdr-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .hdr-title { font-size: 18px; font-weight: 650; }
+  .hdr-sub { color: var(--color-muted); font-size: 12px; margin-top: 2px; }
+  .lang { border: 1px solid var(--color-line); background: var(--color-panel); color: var(--color-txt);
+    border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 12px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 4px; }
+  .tab { border: 1px solid var(--color-line); background: transparent; color: var(--color-muted);
+    border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 12px; }
+  .tab.on { background: var(--color-panel); color: var(--color-txt); border-color: var(--color-accent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 8px 0 12px; border-bottom: 1px solid var(--color-line); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-muted); }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+  .tree { margin-top: 8px; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 6px; }
+  .row:hover { background: var(--color-panel); }
+  .caret { width: 12px; color: var(--color-muted); flex: none; }
+  .label { flex: 1; min-width: 0; }
+  .badge { font-size: 10px; color: var(--color-muted); border: 1px solid var(--color-line);
+    border-radius: 4px; padding: 0 5px; flex: none; }
+  .info { color: var(--color-muted); cursor: pointer; flex: none; padding: 0 4px; }
+  .detail { margin: 2px 0 6px 28px; padding: 8px 10px; background: var(--color-panel);
+    border: 1px solid var(--color-line); border-radius: 8px; font-size: 12px; }
+  .detail-h { font-weight: 600; margin-bottom: 4px; }
+  .detail-desc { color: var(--color-muted); margin-bottom: 6px; }
+  .detail-empty { color: var(--color-muted); font-style: italic; }
+  .detail-props { display: grid; grid-template-columns: minmax(120px, auto) 1fr; gap: 2px 12px; margin: 0; }
+  .detail-props dt { color: var(--color-muted); }
+  .detail-props dd { margin: 0; word-break: break-word; }
+  .empty { color: var(--color-muted); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>window.__GRAPH__ = "__GRAPH_DATA_PLACEHOLDER__";</script>
+<script>"use strict";(()=>{function V(i,n){return n?i==="en"&&n.en||n.fr:""}var $=i=>i.startsWith("grp:")||i.startsWith("kind:");function q(i){let n={};i.nodes.forEach(e=>n[e.id]=e);let o={},s={},a={},m={},f={},b={};i.edges.forEach(e=>{var l,r,c,h,d,p,E,u,w;o[l=e.r]||(o[l]={}),((r=o[e.r])[c=e.s]||(r[c]=[])).push({to:e.t,o:e.o||0,rel:e.rel||e.r}),e.r==="hasChild"&&(s[e.t]=e.s),e.r==="buildsTowards"&&((a[h=e.s]||(a[h]=[])).push(e.t),(m[d=e.t]||(m[d]=[])).push(e.s));let t=e.rel||e.r;((p=f[t]||(f[t]={}))[E=e.s]||(p[E]=[])).push(e.t),((u=b[t]||(b[t]={}))[w=e.t]||(u[w]=[])).push(e.s)});for(let e in o)for(let t in o[e])o[e][t].sort((l,r)=>l.o-r.o);let v={};(i.meta.taxonomy||[]).forEach(e=>v[e.key]=e);let x=(e,t)=>{var l;return(((l=o[t])==null?void 0:l[e])||[]).map(r=>r.to)},S={},R=e=>S[e]||null,N=(e,t)=>{var l,r;return((l=n[e].ord)!=null?l:0)-((r=n[t].ord)!=null?r:0)||String(n[e].code).localeCompare(String(n[t].code),void 0,{numeric:!0})},L={};function D(e){if(L[e.id])return L[e.id];let t={},l=i.nodes.filter(p=>p.kind===e.params.anchorKind),r=e.params.groupBy,c=e.params.order||null,h=(p,E,u)=>{if(E>=r.length)return p.slice().sort((y,T)=>{var G,F;return((G=y.ord)!=null?G:0)-((F=T.ord)!=null?F:0)||String(y.code).localeCompare(String(T.code),void 0,{numeric:!0})}).map(y=>y.id);let w=r[E],C=new Map;p.forEach(y=>{var G;let T=String((G=y[w.key])!=null?G:"");C.has(T)||C.set(T,[]),C.get(T).push(y)});let _=[...C.keys()];_.sort((y,T)=>{if(c){let H=c.indexOf(y),P=c.indexOf(T);if(H>=0||P>=0)return(H<0?1e9:H)-(P<0?1e9:P)}let G=Number(y),F=Number(T);return!isNaN(G)&&!isNaN(F)?G-F:y.localeCompare(T)});let k=[];return _.forEach(y=>{let T=`grp:${e.id}:${u}${y}`,G=w.labelFr?{fr:`${w.labelFr} ${y}`,en:`${w.labelEn||w.labelFr} ${y}`}:{fr:y||"\u2014",en:y||"\u2014"};S[T]={label:G,level:w.key,value:y},t[T]=h(C.get(y),E+1,`${u}${y}/`),k.push(T)}),k},d=h(l,0,"");return L[e.id]={roots:d,childrenOf:t}}function M(){if(L.__nodetype)return L.__nodetype;let e={};i.nodes.forEach(r=>{var c;return(e[c=r.kind]||(e[c]=[])).push(r.id)});let t=Object.keys(e).sort(),l={};return t.forEach(r=>{let c=`kind:${r}`;S[c]={label:{fr:r,en:r},kindRoot:!0},l[c]=e[r].slice().sort(N)}),L.__nodetype={roots:t.map(r=>`kind:${r}`),childrenOf:l}}function A(e,t){let l=e.params.alignmentTail;if(!l||!l.length)return;let r=d=>l.find(p=>{var E;return p.from===((E=n[d])==null?void 0:E.kind)}),c=new Set,h=d=>{var w;if(c.has(d))return;c.add(d);let p=r(d);if(!p)return;let u=(((w=(p.dir==="out"?f:b)[p.rel])==null?void 0:w[d])||[]).filter(C=>n[C]).slice().sort(N);u.length&&(t[d]=[...t[d]||[],...u],u.forEach(h))};i.nodes.forEach(d=>{l.some(p=>p.from===d.kind)&&h(d.id)})}function U(e){if(L[e.id])return L[e.id];let t=new Set(e.params.includeLabels),l=e.params.expandEdge||"hasChild",r=!!e.params.reverse,c=u=>n[u]&&t.has(n[u].kind),h={},d=new Set;for(let u in o[l]||{})if(c(u)){for(let w of o[l][u])if(c(w.to)){let C=r?w.to:u,_=r?u:w.to;(h[C]||(h[C]=[])).push(_),d.add(_)}}for(let u in h)h[u].sort(N);let p=e.params.rootKinds?new Set(e.params.rootKinds):null,E=i.nodes.filter(u=>t.has(u.kind)&&!d.has(u.id)&&(!p||p.has(u.kind))).map(u=>u.id).sort(N);if(e.params.pruneToLabel){let u=e.params.pruneToLabel,w=new Set,C=new Set,_=k=>{if(C.has(k))return w.has(k);C.add(k);let y=n[k]&&n[k].kind===u;for(let T of h[k]||[])_(T)&&(y=!0);return y&&w.add(k),y};E.forEach(_),E=E.filter(k=>w.has(k));for(let k in h)h[k]=h[k].filter(y=>w.has(y))}return A(e,h),L[e.id]={roots:E,childrenOf:h}}function K(e){if(L[e.id])return L[e.id];let t=o[e.params.edge]||{},l=new Set,r=new Set;for(let d in t){r.add(d);for(let p of t[d])l.add(p.to),r.add(p.to)}let c={};for(let d in t)c[d]=t[d].map(p=>p.to);let h=[...r].filter(d=>!l.has(d)).sort(N);return L[e.id]={roots:h,childrenOf:c}}let I=(e,t)=>{if($(e))return!0;let l=n[e];return!l||!l.srcKey?!0:t[l.srcKey]!==!1};function Q(e){return e.shape==="label-tree"?U(e).roots:e.shape==="progression"?K(e).roots:e.shape==="grouped-spine"?D(e).roots:M().roots}function Z(e,t,l){let r=d=>I(d,l);if(e.shape==="label-tree")return(U(e).childrenOf[t]||[]).filter(r);if(e.shape==="progression")return(K(e).childrenOf[t]||[]).filter(r);if(e.shape==="grouped-spine"){let d=D(e);if($(t))return(d.childrenOf[t]||[]).filter(r);let p=n[t];return p?e.params.stopKind&&p.kind===e.params.stopKind?[]:x(t,e.params.expandEdge).filter(r):[]}let c=M();if($(t))return(c.childrenOf[t]||[]).filter(r);let h=[];for(let d in o)for(let p of o[d][t]||[])r(p.to)&&h.push(p.to);return h}let ee=new Set(["supports","hasEducationalAlignment","illustrates"]);function ne(e,t){let l=(d,p)=>{for(let E in o){let u=(o[E][d]||[]).find(w=>w.to===p);if(u)return u.rel||E}return null},r=e,c=l(e,t);if(c||(c=l(t,e),c&&(r=t)),!c)return null;let h=ee.has(c)?r===e?t:e:r;return{rel:c,sourceIsParent:h===e}}function te(e){if($(e)){let r=R(e);if(r!=null&&r.kindRoot)return"var(--color-framework)";let c=(r==null?void 0:r.level)&&v[r.level];return c?c.color:"var(--color-plan)"}let t=n[e];if(!t)return"var(--color-muted)";let l=t.cat&&v[t.cat];return l?l.color:"var(--color-muted)"}let j=(e,t)=>t==="en"&&e.desc_en||e.desc;function re(e,t){var c;if($(e))return V(t,(c=R(e))==null?void 0:c.label);let l=n[e],r=j(l,t)||l.code||"";return r.length>84?`${r.slice(0,82)}\u2026`:r}return{data:i,N:n,outByRel:o,inHasChild:s,btOut:a,btIn:m,TAXO:v,outTargets:x,synthMeta:R,srcAllowed:I,viewRoots:Q,viewChildren:Z,relBetween:ne,colorFor:te,nodeLabel:re,desc:j}}var g=(i,n,o)=>{let s=document.createElement(i);return n&&(s.className=n),o!=null&&(s.textContent=o),s},X=i=>i.join(" / ");function oe(i,n){var b,v;let o=q(n),s=n.meta.viewConfig.views,a={viewId:(v=(b=s[0])==null?void 0:b.id)!=null?v:"generic",lang:"fr",expanded:new Set,opened:new Set};i.innerHTML="",i.append(W(n,a,()=>f()),z(n,a));let m=g("div","tree");i.append(m);let f=()=>{var S;i.replaceChildren(W(n,a,f),z(n,a),m);let x=(S=s.find(R=>R.id===a.viewId))!=null?S:s[0];m.replaceChildren(x?ie(o,x,a,f):g("p","empty","No view."))};f()}function W(i,n,o){let s=g("header","hdr"),a=g("div","hdr-title",V(n.lang,i.meta.label)),m=i.meta.counts,f=g("div","hdr-sub",m?`${m.nodes} ${n.lang==="fr"?"n\u0153uds":"nodes"} \xB7 ${m.edges} ${n.lang==="fr"?"relations":"edges"}`:""),b=g("div");b.append(a,f);let v=g("button","lang",n.lang==="fr"?"EN":"FR");v.onclick=()=>{n.lang=n.lang==="fr"?"en":"fr",o()};let x=g("div","hdr-top");x.append(b,v),s.append(x);let S=g("nav","tabs");for(let R of i.meta.viewConfig.views){let N=g("button","tab"+(R.id===n.viewId?" on":""),V(n.lang,R.label));N.onclick=()=>{n.viewId=R.id,o()},S.append(N)}return s.append(S),s}function z(i,n){let o=g("div","legend");for(let s of i.meta.taxonomy){let a=g("span","chip"),m=g("span","dot");m.style.background=s.color,a.append(m,document.createTextNode(V(n.lang,s.label))),o.append(a)}return o}function ie(i,n,o,s){let a=g("div","rows"),m=i.viewRoots(n);o.opened.has(n.id)||(m.forEach(f=>o.expanded.add(X([f]))),o.opened.add(n.id));for(let f of m)a.append(Y(i,n,f,[f],o,s));return a}function Y(i,n,o,s,a,m){let f=g("div","row-wrap"),b=g("div","row");b.style.paddingLeft=`${(s.length-1)*18+8}px`;let v=i.viewChildren(n,o,{}),x=X(s),S=a.expanded.has(x),R=g("span","caret",v.length?S?"\u25BE":"\u25B8":""),N=g("span","dot");N.style.background=i.colorFor(o);let L=g("span","label",i.nodeLabel(o,a.lang));b.append(R,N,L);let D=s[s.length-2];if(D&&!$(D)&&!$(o)){let M=i.relBetween(D,o);M&&M.rel!=="hasChild"&&b.append(g("span","badge",M.rel))}if(v.length&&(b.style.cursor="pointer",b.onclick=()=>{S?a.expanded.delete(x):a.expanded.add(x),m()}),$(o)||b.append(se(i,o,a)),f.append(b),S&&v.length){let M=g("div","kids");for(let A of v)M.append(Y(i,n,A,[...s,A],a,m));f.append(M)}return f}function se(i,n,o){let s=i.N[n],a=g("span","info","\u24D8");return a.title=(s==null?void 0:s.code)||(s==null?void 0:s.label)||n,a.onclick=m=>{var b,v,x,S;m.stopPropagation();let f=(v=(b=a.parentElement)==null?void 0:b.parentElement)==null?void 0:v.querySelector(".detail");if(f){f.remove();return}(S=(x=a.parentElement)==null?void 0:x.parentElement)==null||S.append(le(i,n,o))},a}function le(i,n,o){var v,x;let s=i.N[n],a=g("div","detail");a.append(g("div","detail-h",`${(v=s==null?void 0:s.label)!=null?v:"?"} \u2014 ${(s==null?void 0:s.code)||n}`));let m=i.desc(s,o.lang);m&&a.append(g("div","detail-desc",m));let f=(x=s==null?void 0:s.props)!=null?x:{},b=Object.keys(f);if(!b.length)a.append(g("div","detail-empty",o.lang==="fr"?"D\xE9tails non inclus (exportez avec detail:true).":"Details not included (export with detail:true)."));else{let S=g("dl","detail-props");for(let R of b)S.append(g("dt",void 0,R)),S.append(g("dd",void 0,typeof f[R]=="object"?JSON.stringify(f[R]):String(f[R])));a.append(S)}return a}var B=window.__GRAPH__,O=document.getElementById("app"),J;O&&(B&&((J=B.nodes)!=null&&J.length)?oe(O,B):O.append(g("p","empty","No graph data was inlined into this page.")));})();
+</script>
+</body>
+</html>
