@@ -312,20 +312,20 @@ describe("actor fidelity", () => {
 // In the memory backend the state write and the audit push happen in one
 // synchronous block, so there's no interleaving to test. What we CAN test is
 // the inverse: if the store's writeSlot throws, no audit is recorded — the
-// framework never emits an audit-without-state. We inject a failing writeSlot
+// framework never emits an audit-without-state. We inject a failing applyDelta
 // and check that the failed apply left no committed audit behind.
 
 describe("atomicity — a failing state write leaves no audit record", () => {
-  it("if writeSlot rejects, no apply audit is committed", async () => {
+  it("if applyDelta rejects, no apply audit is committed", async () => {
     const before = await readPublishedGraph(ns);
     const target = before.nodes[0];
-    // Wrap the store so the next writeSlot throws. All other methods pass
-    // through unchanged.
+    // Wrap the store so the next applyDelta (the edit hot path's state write)
+    // throws. All other methods pass through unchanged.
     const original = store;
     const failing: KgNodeStore = {
       ...original,
       kind: "memory",
-      writeSlot: async () => { throw new Error("simulated commit failure"); },
+      applyDelta: async () => { throw new Error("simulated commit failure"); },
     };
     __setKgStoreForTest(failing);
 
@@ -338,7 +338,7 @@ describe("atomicity — a failing state write leaves no audit record", () => {
     ).rejects.toThrow(/simulated commit failure/);
 
     // Put the good store back and verify no apply record exists — only the
-    // createDraft that ran BEFORE the failing writeSlot, which is expected:
+    // createDraft that ran BEFORE the failing applyDelta, which is expected:
     // createDraft is its own committed event (with its own audit), and
     // succeeded atomically. The apply itself never committed → no apply audit.
     __setKgStoreForTest(original);

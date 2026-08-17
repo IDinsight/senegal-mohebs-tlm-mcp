@@ -55,6 +55,19 @@ export function createMemoryKgStore(): KgNodeStore {
       if (audit) auditLog.push({ ...audit });
     },
 
+    async applyDelta(namespace, slot, delta, meta, audit) {
+      // Mirror the firestore backend: mutate only the delta's ids in place,
+      // leaving everything else in the slot untouched. Same convergent result as
+      // a full writeSlot when the delta was computed against this slot's state.
+      const bucket = ensureNs(namespace).slots[slot];
+      for (const v of delta.upsertNodes) bucket.nodes.set(v.id, { ...v, namespace, slot });
+      for (const v of delta.upsertEdges) bucket.edges.set(v.id, { ...v, namespace, slot });
+      for (const id of delta.removeNodeIds) bucket.nodes.delete(id);
+      for (const id of delta.removeEdgeIds) bucket.edges.delete(id);
+      bucket.meta = { ...meta };
+      if (audit) auditLog.push({ ...audit });
+    },
+
     async writeConfig(namespace, slot, config, audit) {
       const n = ensureNs(namespace);
       n.slots[slot] = { ...n.slots[slot], config: { ...config } };
@@ -66,7 +79,10 @@ export function createMemoryKgStore(): KgNodeStore {
       if (!n.pointer) n.pointer = { publishedSlot, draftSlot: null };
     },
 
-    async createDraft(namespace, audit) {
+    // `sourceGraph` is accepted for interface parity with the firestore backend
+    // (where it skips a re-read); in-memory reads are free, so we always copy
+    // from the published slot — the two are identical by construction.
+    async createDraft(namespace, audit, _sourceGraph) {
       const n = ensureNs(namespace);
       if (!n.pointer) throw new Error(`createDraft: namespace '${namespace}' has no pointer — it was never seeded.`);
       // Idempotent: a draft already exists, so nothing to do (and no audit).

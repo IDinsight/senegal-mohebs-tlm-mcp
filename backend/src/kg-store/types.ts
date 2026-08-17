@@ -82,6 +82,16 @@ export type SlotWriteBatch = {
   meta: StoredMeta;
 };
 
+// Input shape for applyDelta — the EDIT hot path's write. Carries only what
+// changed: docs to upsert (added + changed) and ids to remove. This is what
+// lets an N-node edit cost O(N) writes instead of rewriting the whole slot.
+export type SlotDelta = {
+  upsertNodes: Array<Omit<StoredNode, "slot">>;
+  upsertEdges: Array<Omit<StoredEdge, "slot">>;
+  removeNodeIds: string[];
+  removeEdgeIds: string[];
+};
+
 export interface KgNodeStore {
   readonly kind: "firestore" | "memory";
 
@@ -114,6 +124,21 @@ export interface KgNodeStore {
   // optional here only to keep the seed path untouched.
   writeSlot(namespace: string, slot: Slot, batch: SlotWriteBatch, audit?: AuditRecord): Promise<void>;
 
+  // ── Delta slot write (the EDIT hot path) ──────────────────────────────────
+  // Apply a precomputed delta to a slot: upsert the added/changed docs, delete
+  // the removed ids, stamp `meta`. Unlike writeSlot it does NOT read or rewrite
+  // the whole slot, so an N-node edit costs O(N) writes rather than O(graph) —
+  // this is the fix for the full-graph rewrite on every mutation.
+  //
+  // CORRECTNESS: the caller must have computed `delta` against exactly the
+  // slot's current contents. runGraphMutation guarantees this via its
+  // base-version hash-CAS (the token's `v` must still match the slot before a
+  // confirm applies). Idempotent for a fixed delta — upserts are `set`, removes
+  // are `delete`, both replayable. Commits `meta` + optional `audit` in the
+  // same final transaction as writeSlot does, so a committed edit always has
+  // its record.
+  applyDelta(namespace: string, slot: Slot, delta: SlotDelta, meta: StoredMeta, audit?: AuditRecord): Promise<void>;
+
   // Write the subject-profile config cell for one (namespace, slot). Independent
   // of writeSlot — the profile is edited on its own cadence (edit_profile), not
   // on every graph write. Like writeSlot's final meta touch, `audit` (when
@@ -137,7 +162,12 @@ export interface KgNodeStore {
   //   invisible to readers). The copy includes the profile CONFIG cell, so a
   //   fresh draft starts from the published profile. If a draft already exists,
   //   no-op (idempotent). Errors if the namespace has never been seeded (no pointer).
-  createDraft(namespace: string, audit?: AuditRecord): Promise<void>;
+  //   `sourceGraph`, when passed, is the published graph the CALLER already read
+  //   (runGraphMutation's base snapshot) — createDraft copies from it instead of
+  //   re-reading the published slot. Safe because the published slot is immutable
+  //   while published (edits land on the draft; publish flips the pointer), and
+  //   the final pointer transaction re-verifies the published slot didn't move.
+  createDraft(namespace: string, audit?: AuditRecord, sourceGraph?: MutationGraph): Promise<void>;
 
   // publishDraft: atomic single-doc pointer flip —
   //   publishedSlot := draftSlot; draftSlot := null.
