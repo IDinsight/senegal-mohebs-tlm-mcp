@@ -346,35 +346,36 @@ function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig
   return { views };
 }
 
-// ── Export one namespace (published slot only) ───────────────────────────────
-export async function exportNamespace(ns: string): Promise<DisplayGraph | null> {
-  const store = getKgStore();
-  const pointer = await store.readPointer(ns);
-  if (!pointer) return null; // never seeded
+// ── Shared projection: stored graph → display nodes/edges/meta ────────────────
+// Extracted so the full-namespace export and the scoped-subtree export project
+// the graph through the SAME transforms — the folding, taxonomy, and viewConfig
+// stay identical whichever slice a caller asks for.
 
-  const slot = pointer.publishedSlot;
-  const [storedNodes, storedEdges] = await Promise.all([
-    store.listNodes(ns, slot),
-    store.listEdges(ns, slot),
-  ]);
-
-  let nodes = storedNodes.map(toDisplayNode);
-  // Map each illustrative Activity → the LearningComponent it exemplifies (from
-  // metadata.illustratesComponent, lifted to `props` by flattenProps), so the fold
-  // can nest it under that component instead of listing it beside its siblings.
+// Fold every stored edge to its display edge(s), threading the illustrates map
+// (activity → component it exemplifies) the fold needs to nest illustrative
+// activities under their component instead of beside their siblings.
+function projectDisplayEdges(nodes: DisplayNode[], storedEdges: StoredEdge[]): DisplayEdge[] {
   const illustrates = new Map<string, { comp: string; order: number }>();
   for (const n of nodes) {
     const ic = n.props?.illustratesComponent as { id?: string; order?: number } | undefined;
     if (ic?.id) illustrates.set(n.id, { comp: ic.id, order: typeof ic.order === "number" ? ic.order : 0 });
   }
   const nodeIds = new Set(nodes.map((n) => n.id));
-  let edges = storedEdges.flatMap((e) => toDisplayEdges(e, { illustrates, has: (id) => nodeIds.has(id) }));
+  return storedEdges.flatMap((e) => toDisplayEdges(e, { illustrates, has: (id) => nodeIds.has(id) }));
+}
 
-  // The store holds the FULL Learning-Commons graph (spine + framework/derived
-  // nodes + supports/relatesTo cross-links); the explorer renders all of it as-is.
-  // No subject-specific post-processing — nodes are coloured by LC label, the
-  // hierarchy walks hasChild, and the generic view exposes every node + edge.
-
+// Wrap a set of already-projected display nodes/edges in the meta envelope the
+// explorer consumes: per-label counts, source chips, the present-labels legend
+// taxonomy, and the derived viewConfig. `note` describes the slice (full graph
+// vs. scoped subtree). Colouring/legend/views all reflect ONLY what is present,
+// so a subtree's legend lists only its own labels.
+function assembleDisplayGraph(
+  nodes: DisplayNode[],
+  edges: DisplayEdge[],
+  ns: string,
+  slot: string,
+  note: string,
+): DisplayGraph {
   const byLabel: Record<string, number> = {};
   for (const n of nodes) byLabel[n.label] = (byLabel[n.label] ?? 0) + 1;
   const sources = [...new Set(nodes.map((n) => n.srcKey).filter(Boolean))].sort();
@@ -403,7 +404,186 @@ export async function exportNamespace(ns: string): Promise<DisplayGraph | null> 
       taxonomy,
       viewConfig: buildViewConfig(nodes, edges),
       generatedAt: new Date().toISOString(),
-      note: "Read-only, published slot only (no draft). Full Learning-Commons graph — the curriculum spine plus framework/derived nodes and supports/relatesTo cross-links.",
+      note,
     },
   };
+}
+
+// ── Export one namespace (published slot only) ───────────────────────────────
+export async function exportNamespace(ns: string): Promise<DisplayGraph | null> {
+  const store = getKgStore();
+  const pointer = await store.readPointer(ns);
+  if (!pointer) return null; // never seeded
+
+  const slot = pointer.publishedSlot;
+  const [storedNodes, storedEdges] = await Promise.all([
+    store.listNodes(ns, slot),
+    store.listEdges(ns, slot),
+  ]);
+
+  // The store holds the FULL Learning-Commons graph (spine + framework/derived
+  // nodes + supports/relatesTo cross-links); the explorer renders all of it as-is.
+  // No subject-specific post-processing — nodes are coloured by LC label, the
+  // hierarchy walks hasChild, and the generic view exposes every node + edge.
+  const nodes = storedNodes.map(toDisplayNode);
+  const edges = projectDisplayEdges(nodes, storedEdges);
+  return assembleDisplayGraph(
+    nodes,
+    edges,
+    ns,
+    slot,
+    "Read-only, published slot only (no draft). Full Learning-Commons graph — the curriculum spine plus framework/derived nodes and supports/relatesTo cross-links.",
+  );
+}
+
+// ── Export a scoped subtree (for an in-chat visualization artifact) ───────────
+// Returns the containment descendants of `fromId` as a self-contained DisplayGraph
+// — the SAME shape exportNamespace returns, so the explorer's view engine renders
+// it unchanged, just over a smaller slice. "Containment" is the folded hasChild
+// display axis (hasPart + reversed supports/alignment + illustrates + usesRoutine
+// all collapse onto it in toDisplayEdges), i.e. exactly the tree the explorer
+// walks — so this is one Course / chapter / week and everything nested beneath it.
+
+const SUBTREE_DEFAULT_DEPTH = 4;
+const SUBTREE_MAX_DEPTH = 12;
+// Keep the scoped payload under the 100 KB global asJson cap, so the artifact
+// data comes back as a normal response rather than being withheld. Measured the
+// way asJson serializes it (pretty-printed). Leaves headroom for the wrapper.
+// Tunable for ops (and tests) via TLM_SUBTREE_MAX_BYTES, mirroring walk_graph's
+// TLM_WALK_MAX_PAGE_BYTES.
+const DEFAULT_SUBTREE_MAX_BYTES = 80 * 1024;
+const subtreeMaxBytes = (): number => {
+  const override = Number(process.env.TLM_SUBTREE_MAX_BYTES);
+  return Number.isFinite(override) && override > 0 ? override : DEFAULT_SUBTREE_MAX_BYTES;
+};
+
+const clampDepth = (depth: number): number =>
+  Math.min(SUBTREE_MAX_DEPTH, Math.max(1, Math.floor(depth)));
+
+const displayGraphBytes = (graph: DisplayGraph): number =>
+  Buffer.byteLength(JSON.stringify(graph, null, 2), "utf8");
+
+// The scoped node set for a subtree: the containment descendants of `fromId`,
+// PLUS the alignment tail the Curriculum view grafts onto content leaves (a
+// lesson/activity's aligned standard, and that standard's supporting components)
+// so the "lesson → standard → components" branch renders instead of folding away.
+//
+// Both are computed over the display edges, which fold every containment/alignment
+// edge onto r === "hasChild" while keeping the REAL type in `rel`:
+//   • hasPart / usesRoutine / supports fold as parent(s) → child(t)  — walked outward.
+//   • hasEducationalAlignment / illustrates fold as standard/component(s) → content(t).
+// The tail closure is DIRECTIONAL, matching the view engine's alignmentTail: an
+// in-scope content node pulls IN its standard (not the standard's other lessons),
+// and an in-scope standard pulls in its components — so the scope stays a bounded
+// lesson↔standard↔components star, never the whole spine.
+const ALIGN_TO_PARENT_RELS = new Set(["hasEducationalAlignment", "illustrates"]); // content(t) → add its parent(s)
+const SUPPORT_REL = "supports"; // standard(s) → add its component(t)
+
+function scopedSubtreeIds(edges: DisplayEdge[], fromId: string, maxDepth: number): Set<string> {
+  // 1. Containment descendants — BFS outward over folded hasChild, bounded to
+  //    `maxDepth` hops, shortest-hop visitation like walk_graph.
+  const childrenOf = new Map<string, string[]>();
+  for (const e of edges) {
+    if (e.r !== "hasChild") continue;
+    const list = childrenOf.get(e.s) ?? [];
+    list.push(e.t);
+    childrenOf.set(e.s, list);
+  }
+  const reached = new Set<string>([fromId]);
+  let frontier = [fromId];
+  for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+    const next: string[] = [];
+    for (const id of frontier) {
+      for (const child of childrenOf.get(id) ?? []) {
+        if (!reached.has(child)) {
+          reached.add(child);
+          next.push(child);
+        }
+      }
+    }
+    frontier = next;
+  }
+
+  // 2. Alignment-tail closure to a fixpoint (bounded: content → standard →
+  //    components is only two levels, so this settles in a couple of passes).
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const e of edges) {
+      if (e.r !== "hasChild") continue;
+      if (ALIGN_TO_PARENT_RELS.has(e.rel) && reached.has(e.t) && !reached.has(e.s)) {
+        reached.add(e.s); // content in scope → add the standard/component it aligns to
+        changed = true;
+      } else if (e.rel === SUPPORT_REL && reached.has(e.s) && !reached.has(e.t)) {
+        reached.add(e.t); // standard in scope → add its supporting component
+        changed = true;
+      }
+    }
+  }
+  return reached;
+}
+
+// Drop the per-node raw LC `props` bag — the detail-panel data — to shrink the
+// payload when the caller doesn't need it (the default) or when the full-detail
+// slice would overflow the budget.
+const stripProps = (nodes: DisplayNode[]): DisplayNode[] =>
+  nodes.map((n) => ({ ...n, props: {} }));
+
+export type SubtreeExport =
+  | DisplayGraph
+  | { error: string }
+  | { tooLarge: true; counts: { nodes: number; edges: number }; approxBytes: number; softCapBytes: number; message: string };
+
+export async function exportSubtree(
+  ns: string,
+  fromId: string,
+  opts: { maxDepth?: number; detail?: boolean } = {},
+): Promise<SubtreeExport | null> {
+  const store = getKgStore();
+  const pointer = await store.readPointer(ns);
+  if (!pointer) return null; // never seeded
+
+  const slot = pointer.publishedSlot;
+  const [storedNodes, storedEdges] = await Promise.all([
+    store.listNodes(ns, slot),
+    store.listEdges(ns, slot),
+  ]);
+
+  const allNodes = storedNodes.map(toDisplayNode);
+  if (!allNodes.some((n) => n.id === fromId)) {
+    return { error: `Start node '${fromId}' not found in the published graph for '${ns}'. Use namespace_stats to find a root (a Course/chapter), or walk_graph to find a node id.` };
+  }
+  const allEdges = projectDisplayEdges(allNodes, storedEdges);
+
+  const maxDepth = clampDepth(opts.maxDepth ?? SUBTREE_DEFAULT_DEPTH);
+  const scopedIds = scopedSubtreeIds(allEdges, fromId, maxDepth);
+  const scopedNodes = allNodes.filter((n) => scopedIds.has(n.id));
+  // Keep every display edge whose BOTH endpoints are in scope — so cross-links
+  // among in-scope nodes (buildsTowards, relatesTo) render too, not just the
+  // containment tree we walked.
+  const scopedEdges = allEdges.filter((e) => scopedIds.has(e.s) && scopedIds.has(e.t));
+
+  const note = `Read-only, published slot only (no draft). Scoped subtree from '${fromId}' (containment descendants to depth ${maxDepth}) — a self-contained slice for a single visualization.`;
+  const build = (detail: boolean): DisplayGraph =>
+    assembleDisplayGraph(detail ? scopedNodes : stripProps(scopedNodes), scopedEdges, ns, slot, note);
+
+  // Honour the requested detail, but fall back to props-stripped if the detailed
+  // slice would overflow the budget; if even the lean slice overflows, refuse
+  // with a sized, actionable message rather than tripping the generic cap.
+  const budget = subtreeMaxBytes();
+  let graph = build(opts.detail ?? false);
+  if (displayGraphBytes(graph) > budget && (opts.detail ?? false)) {
+    graph = build(false);
+  }
+  const bytes = displayGraphBytes(graph);
+  if (bytes > budget) {
+    return {
+      tooLarge: true,
+      counts: { nodes: scopedNodes.length, edges: scopedEdges.length },
+      approxBytes: bytes,
+      softCapBytes: budget,
+      message: `The subtree from '${fromId}' (${scopedNodes.length} nodes, ${scopedEdges.length} edges at depth ${maxDepth}) is ~${Math.round(bytes / 1024)} KB, over the ~${Math.round(budget / 1024)} KB budget for one visualization payload. Lower maxDepth, pick a deeper root (a chapter/week rather than the whole Course), or view the full graph in the live explorer instead.`,
+    };
+  }
+  return graph;
 }

@@ -25,7 +25,7 @@ import { addNode } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import { activateContext } from "../../activate.js";
-import { walkActiveGraph, namespaceStats } from "../graph.js";
+import { walkActiveGraph, namespaceStats, exportGraphView } from "../graph.js";
 import type { KgNodeStore, StoredMeta, MutationGraph } from "../../kg-store/index.js";
 import type { StorageAdapter, HistoryFile, CurriculumModel, RawGraphSnapshot } from "../../types.js";
 
@@ -361,5 +361,74 @@ describe("walk_graph (tool core)", () => {
       return walkActiveGraph({ fromId: courseId, direction: "out", slot: "draft" });
     });
     expect(result.phase).toBe("unauthorized");
+  });
+});
+
+describe("export_graph_view (tool core)", () => {
+  const courseId = async (): Promise<string> => {
+    const nodes = await store.listNodes(ns, "a");
+    return nodes.find((node) => (node.labels ?? []).includes("Course"))!.id;
+  };
+
+  // The fixture Course subtree is large, so the happy-path assertions run under a
+  // generous byte budget; the size-guard behaviour is asserted separately below
+  // with a deliberately tiny budget.
+  beforeEach(() => { process.env.TLM_SUBTREE_MAX_BYTES = String(5 * 1024 * 1024); });
+  afterAll(() => { delete process.env.TLM_SUBTREE_MAX_BYTES; });
+
+  it("returns a scoped DisplayGraph rooted at fromId", async () => {
+    const { result, rootId } = await withActiveContext(CURATOR, async () => {
+      const rootId = await courseId();
+      return { result: await exportGraphView({ fromId: rootId, maxDepth: 3 }), rootId };
+    });
+    // The explorer's DisplayGraph shape: nodes/edges plus a meta envelope with a
+    // legend taxonomy and the derived view tabs — the same read the /kg route serves.
+    const nodes = result.nodes as Array<{ id: string; cat: string }>;
+    const meta = result.meta as { taxonomy: unknown[]; viewConfig: { views: unknown[] }; counts: { nodes: number } };
+    expect(nodes.length).toBeGreaterThan(1);
+    expect(nodes.some((node) => node.id === rootId)).toBe(true);
+    expect(meta.taxonomy.length).toBeGreaterThan(0);
+    expect(meta.viewConfig.views.length).toBeGreaterThan(0);
+    expect(meta.counts.nodes).toBe(nodes.length);
+  });
+
+  it("bounds the scope: a shallow depth returns fewer nodes than a deep one", async () => {
+    const { shallow, deep } = await withActiveContext(CURATOR, async () => {
+      const id = await courseId();
+      return {
+        shallow: await exportGraphView({ fromId: id, maxDepth: 1 }),
+        deep: await exportGraphView({ fromId: id, maxDepth: 6 }),
+      };
+    });
+    expect((shallow.nodes as unknown[]).length).toBeLessThan((deep.nodes as unknown[]).length);
+  });
+
+  it("drops the raw props bag by default and includes it when detail:true", async () => {
+    const { lean, full } = await withActiveContext(CURATOR, async () => {
+      const id = await courseId();
+      return {
+        lean: await exportGraphView({ fromId: id, maxDepth: 2 }),
+        full: await exportGraphView({ fromId: id, maxDepth: 2, detail: true }),
+      };
+    });
+    const propsKeys = (r: Record<string, unknown>) =>
+      (r.nodes as Array<{ props: Record<string, unknown> }>).reduce((sum, node) => sum + Object.keys(node.props).length, 0);
+    expect(propsKeys(lean)).toBe(0);
+    expect(propsKeys(full)).toBeGreaterThan(0);
+  });
+
+  it("refuses an oversized slice with a sized, actionable message", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      process.env.TLM_SUBTREE_MAX_BYTES = "2048"; // ~2 KB: a whole-Course subtree cannot fit
+      return exportGraphView({ fromId: await courseId(), maxDepth: 8 });
+    });
+    expect(result.tooLarge).toBe(true);
+    expect(result.message as string).toMatch(/budget/i);
+    expect((result.counts as { nodes: number }).nodes).toBeGreaterThan(0);
+  });
+
+  it("errors clearly for an unknown fromId", async () => {
+    const result = await withActiveContext(CURATOR, async () => exportGraphView({ fromId: "does-not-exist" }));
+    expect(result.error as string).toMatch(/not found/);
   });
 });
