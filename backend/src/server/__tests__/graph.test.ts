@@ -289,6 +289,8 @@ describe("namespace_stats", () => {
   it("reports counts, roots, and a closed draft on a fresh seed", async () => {
     const stats = await withActiveContext(CURATOR, namespaceStats);
     expect(stats.namespace).toBe(ns);
+    // Reads come from the seed's published slot "a".
+    expect(stats.physicalSlot).toBe("a");
 
     const nodeCounts = stats.nodeCounts as Record<string, number>;
     expect(nodeCounts.Lesson).toBeGreaterThan(0);
@@ -325,6 +327,7 @@ describe("walk_graph (tool core)", () => {
       return walkActiveGraph({ fromId: courseId, direction: "out", edgeTypes: ["hasPart", "hasChild"], maxDepth: 10 });
     });
     expect(result.slot).toBe("published");
+    expect(result.physicalSlot).toBe("a"); // published resolves to the seed slot "a"
     expect((result.nodes as unknown[]).length).toBeGreaterThan(0);
   });
 
@@ -347,6 +350,8 @@ describe("walk_graph (tool core)", () => {
     });
     const walkedNodeIds = (result.walked.nodes as Array<{ id: string }>).map((node) => node.id);
     expect(walkedNodeIds).toContain(result.stagedId);
+    // The draft lives on slot "b" (published is still "a"), so the walk reports it.
+    expect(result.walked.physicalSlot).toBe("b");
   });
 
   it("denies slot:draft to an actor without the draft-read role", async () => {

@@ -21,13 +21,14 @@ import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel } from "../../curriculum/index.js";
 import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace,
-  runGraphMutation, __resetMutationsForTest, __resetDraftTokensForTest,
+  runGraphMutation, __resetMutationsForTest, __resetDraftTokensForTest, deleteNodes,
 } from "../../kg-store/index.js";
 import { reposition } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import { activateContext } from "../../activate.js";
 import { runPublishDraft, runDiscardDraft } from "../lifecycle.js";
+import { walkActiveGraph, namespaceStats } from "../graph.js";
 import type { KgNodeStore, StoredMeta } from "../../kg-store/index.js";
 import type { StorageAdapter, HistoryFile } from "../../types.js";
 
@@ -165,6 +166,53 @@ describe("discard_draft returnMode", () => {
     const dryRun = await withActiveContextAs(CURATOR, () => runDiscardDraft({ returnMode: "full" }));
     expect(dryRun.diff).toBeDefined();
     expect(dryRun.counts).toBeDefined();
+  });
+});
+
+// Regression for the stale-read bug: after publish_draft flips the pointer, the
+// SAME session's published reads (walk_graph / namespace_stats) must reflect the
+// promoted draft — not the snapshot pinned at set_context. Before the fix the
+// read model was hydrated once at activate and never refreshed, so a delete could
+// be `applied` + `published` in the audit while reads still returned the node.
+describe("publish refreshes this session's published reads (no stale snapshot)", () => {
+  const totalNodes = (stats: Record<string, unknown>): number =>
+    Object.values(stats.nodeCounts as Record<string, number>).reduce((sum, n) => sum + n, 0);
+
+  it("a delete published in-session is reflected by namespace_stats and walk_graph", async () => {
+    // A curator stages a delete of one content leaf (a Material — no dependents,
+    // so exactly one node vanishes) onto the draft.
+    const deletedId = await withActiveContextAs(CURATOR, async () => {
+      const nodes = await store.listNodes(ns, "a");
+      const leaf = nodes.find((n) => (n.labels ?? []).includes("Material"))
+        ?? nodes.find((n) => (n.labels ?? []).includes("Lesson"))!;
+      const args = { namespace: ns, nodeIds: [leaf.id] };
+      const preview = await runGraphMutation({ namespace: ns, mutation: deleteNodes, args });
+      if (preview.phase !== "preview") throw new Error("expected a preview");
+      await runGraphMutation({ namespace: ns, mutation: deleteNodes, args, confirm: true, token: preview.confirmationToken });
+      return leaf.id;
+    });
+
+    // The approver reads, publishes, and re-reads — all in ONE session, the loop
+    // the bug broke.
+    await withActiveContextAs(APPROVER, async () => {
+      const before = await namespaceStats();
+      expect(before.physicalSlot).toBe("a");             // reads on the seed slot
+      const totalBefore = totalNodes(before);
+      const walkBefore = await walkActiveGraph({ fromId: deletedId, direction: "out" });
+      expect("error" in walkBefore).toBe(false);          // node still on published
+
+      const dryRun = await runPublishDraft({});
+      const commit = await runPublishDraft({ confirm: true, confirmationToken: dryRun.confirmationToken as string });
+      expect(commit.ok).toBe(true);
+      expect(commit.publishedSlot).toBe("b");             // draft slot promoted
+      expect(commit.readModelRefreshed).toBe(true);       // read cache re-hydrated
+
+      const after = await namespaceStats();
+      expect(after.physicalSlot).toBe("b");               // reads now resolve to the new slot
+      expect(totalNodes(after)).toBe(totalBefore - 1);    // the delete is visible
+      const walkAfter = await walkActiveGraph({ fromId: deletedId, direction: "out" });
+      expect("error" in walkAfter).toBe(true);            // the node is gone
+    });
   });
 });
 
