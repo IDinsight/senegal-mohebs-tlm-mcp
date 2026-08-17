@@ -156,9 +156,10 @@ describe("draft/published lifecycle (memory backend)", () => {
       const before = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
       await store.createDraft(ns);
       await store.publishDraft(ns);
-      // Pointer flipped, but with an unedited draft, generation must see the
-      // same graph — this is the acceptance criterion for the whole step.
-      expect(await store.readPointer(ns)).toEqual({ publishedSlot: "b", draftSlot: null });
+      // Publishing an empty overlay is a no-op on canonical: the published slot
+      // stays put (a small publish applies in place, no flip) and, with an
+      // unedited draft, generation sees the same graph — the acceptance criterion.
+      expect(await store.readPointer(ns)).toEqual({ publishedSlot: "a", draftSlot: null });
       const after = await readPublished(ctx.workspace, ctx.grade, ctx.subject);
       expect(after).toEqual(before);
     });

@@ -133,7 +133,7 @@ describe("publish_draft returnMode", () => {
     expect(commit.phase).toBe("commit");
     expect(commit.ok).toBe(true);
     expect(typeof commit.auditId).toBe("string");
-    expect(commit.publishedSlot).toBe("b");           // draft slot promoted
+    expect(commit.publishedSlot).toBe("a");           // small publish applies in place
     expect(commit.diff).toBeUndefined();
   });
 });
@@ -204,11 +204,11 @@ describe("publish refreshes this session's published reads (no stale snapshot)",
       const dryRun = await runPublishDraft({});
       const commit = await runPublishDraft({ confirm: true, confirmationToken: dryRun.confirmationToken as string });
       expect(commit.ok).toBe(true);
-      expect(commit.publishedSlot).toBe("b");             // draft slot promoted
+      expect(commit.publishedSlot).toBe("a");             // small publish applies in place
       expect(commit.readModelRefreshed).toBe(true);       // read cache re-hydrated
 
       const after = await namespaceStats();
-      expect(after.physicalSlot).toBe("b");               // reads now resolve to the new slot
+      expect(after.physicalSlot).toBe("a");               // published stayed on slot a
       expect(totalNodes(after)).toBe(totalBefore - 1);    // the delete is visible
       const walkAfter = await walkActiveGraph({ fromId: deletedId, direction: "out" });
       expect("error" in walkAfter).toBe(true);            // the node is gone

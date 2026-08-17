@@ -387,10 +387,10 @@ export async function runGraphMutation<Args>(
     }
 
     // Lazy draft creation. When the preview was against 'published' the draft
-    // does not exist yet — createDraft is a byte-for-byte copy of published,
-    // so the just-created draft equals what the preview mutated in memory
-    // (already verified via the hash check above). The `createDraft` audit
-    // rides its own transaction and is a distinct committed event.
+    // does not exist yet — createDraft opens an empty overlay on published
+    // (O(1), no copy), so the just-created draft reads identical to published,
+    // which is what the preview mutated in memory (verified via the hash check
+    // above). The `createDraft` audit rides its own transaction, a distinct event.
     if (snap.kind === "onPublished") {
       const createRec: AuditRecord = {
         id: randomUUID(),
@@ -400,10 +400,7 @@ export async function runGraphMutation<Args>(
         eventType: "createDraft",
         baseVersion: hashGraph(snap.graph),
       };
-      // Hand createDraft the published graph we already read (snap.graph, which
-      // on this path IS published) so it copies from memory instead of re-reading
-      // the published slot.
-      await timed("confirm.createDraft", () => store.createDraft(namespace, createRec, snap.graph));
+      await timed("confirm.createDraft", () => store.createDraft(namespace, createRec));
     }
     const pointerAfter = await store.readPointer(namespace);
     if (!pointerAfter || !pointerAfter.draftSlot) {
