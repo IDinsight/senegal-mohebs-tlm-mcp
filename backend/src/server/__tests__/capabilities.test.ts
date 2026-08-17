@@ -252,17 +252,19 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.batch.tools).toContain("add_nodes");
   });
 
-  it("discovery advertises walk_graph + namespace_stats + export_graph_view, with canWalkDraft mirroring the draft-read gate", async () => {
+  it("discovery advertises walk_graph + namespace_stats + export_graph_view + render_graph_view, with canWalkDraft mirroring the draft-read gate", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.discovery.tools).toEqual(["walk_graph", "namespace_stats", "export_graph_view"]);
+    expect(caps.discovery.tools).toEqual(["walk_graph", "namespace_stats", "export_graph_view", "render_graph_view"]);
     // canWalkDraft is the SAME gate diff_draft enforces — it cannot drift.
     expect(caps.discovery.canWalkDraft).toBe(caps.actions.canReadDraft);
     // Feature-detection for the paginated walk.
     expect(caps.discovery.walkGraph.defaults.limit).toBe(50);
     expect(caps.discovery.walkGraph.maxLimit).toBe(500);
-    // Feature-detection for the scoped visualization export.
+    // Feature-detection for the scoped visualization export + render.
     expect(caps.discovery.exportGraphView.defaults.maxDepth).toBe(4);
     expect(caps.discovery.exportGraphView.maxDepth).toBe(12);
+    expect(caps.discovery.renderGraphView.params).toContain("title");
+    expect(caps.discovery.renderGraphView.returns).toMatch(/html/);
   });
 
   it("editable.batch advertises the batched writes' returnMode + idempotency controls", async () => {
