@@ -21,6 +21,7 @@ import { asJson, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor, diffGraphs, type GraphDiff } from "../kg-store/index.js";
+import { exportSubtree } from "../kg-export.js";
 import { walkGraph, computeGraphStats, type WalkDirection } from "../curriculum/index.js";
 import { resolveDraftModel } from "./preview.js";
 import { authorize } from "../authz.js";
@@ -155,6 +156,21 @@ export async function namespaceStats(): Promise<Record<string, unknown>> {
   };
 }
 
+// ── Core: export_graph_view ────────────────────────────────────────────────────
+// Export a scoped, self-contained slice of the published graph (the containment
+// subtree of `fromId`) in the explorer's DisplayGraph shape, so a caller can
+// render it as an interactive visualization artifact. Read-only, published slot
+// only; exportSubtree self-bounds the payload to stay under the response cap.
+// Exported so tests drive the real logic directly (like walkActiveGraph).
+export async function exportGraphView(args: { fromId: string; maxDepth?: number; detail?: boolean }): Promise<Record<string, unknown>> {
+  const namespace = activeNamespace();
+  const result = await exportSubtree(namespace, args.fromId, { maxDepth: args.maxDepth, detail: args.detail });
+  if (result === null) {
+    return { error: `No published graph for '${namespace}'. The namespace has never been seeded/published.` };
+  }
+  return result as unknown as Record<string, unknown>;
+}
+
 // Live draft state: whether a draft is open and, if so, how many nodes/edges it
 // changes vs published (a cheap diff over two small slots, no traversal).
 async function draftState(namespace: string): Promise<{ open: boolean; editsStaged?: number }> {
@@ -225,5 +241,22 @@ export function registerGraphTools(server: McpServer) {
       inputSchema: {},
     },
     guarded(async () => asJson(await namespaceStats())),
+  );
+
+  server.registerTool(
+    "export_graph_view",
+    {
+      title: "Export a scoped graph slice for a visualization artifact",
+      description:
+        "Returns a SELF-CONTAINED slice of the active subject's published graph — the containment subtree rooted at `fromId` — in the explorer's DisplayGraph shape (`nodes`, `edges`, `meta.taxonomy` legend, `meta.viewConfig`, `meta.counts`). Feed this JSON into a self-contained HTML artifact to render the same interactive tree the live KG explorer shows (nodes coloured by LC label; folded hasChild containment with Standards / Curriculum / Progression / By-type views). " +
+        "Scope it to ONE thing: get a root id from namespace_stats (a Course/chapter) or walk_graph, then export its subtree. `maxDepth` (default 4, max 12) bounds how deep the subtree goes. `detail` (default false) includes each node's full raw LC property bag (the detail-panel data); leave it off for a compact payload and turn it on only for a small subtree. " +
+        "The payload is self-bounded to fit the response cap: an oversized detailed slice auto-drops `detail`, and a slice that is still too big returns `{ tooLarge, counts, message }` telling you to lower maxDepth, pick a deeper root, or use the live explorer for the whole graph. Read-only, published slot only (no draft). This returns DATA; render the visual from it.",
+      inputSchema: {
+        fromId: z.string(),
+        maxDepth: z.number().int().optional(),
+        detail: z.boolean().optional(),
+      },
+    },
+    guarded(async (a: { fromId: string; maxDepth?: number; detail?: boolean }) => asJson(await exportGraphView(a))),
   );
 }
