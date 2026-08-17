@@ -114,20 +114,27 @@ export function listCatalogEntries(graph: MutationGraph, scope: CatalogScope): C
 function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, children: Map<string, string[]>, scope: CatalogScope): CatalogEntry {
   const steps: CatalogEntry["steps"] = [];
   let materialCount = 0;
+  const kind = kindOf(entry);
+  const asStep = (n: MutationNode) => ({ id: n.id, name: str(rawOf(n).description), order: orderOf(n), timeRequired: str(rawOf(n).timeRequired) || undefined });
   for (const childId of children.get(entry.id) ?? []) {
     const child = byId.get(childId);
     if (!child) continue;
     if (isRoutine(child)) {
-      steps.push({ id: child.id, name: str(rawOf(child).description), order: orderOf(child), timeRequired: str(rawOf(child).timeRequired) || undefined });
+      // Nested step shape: a step is a child routine, its body in a Material grandchild.
+      steps.push(asStep(child));
       materialCount += (children.get(child.id) ?? []).filter((id) => isMaterial(byId.get(id))).length;
     } else if (isMaterial(child)) {
       materialCount += 1;
+      // Flat step shape (add_nodes → add_to_catalog): a ROUTINE's direct Material child
+      // IS a step (name/order/timing on the Material itself). A FORMATTER's direct
+      // Materials are its spec, not steps.
+      if (kind === "routine") steps.push(asStep(child));
     }
   }
   steps.sort((a, b) => a.order - b.order);
   return {
     id: entry.id,
-    kind: kindOf(entry),
+    kind,
     scope,
     name: str(rawOf(entry).description),
     summary: str(metaOf(entry).summary),
@@ -147,24 +154,27 @@ export function renderCatalogEntry(graph: MutationGraph, entryId: string, scope:
   if (!entry || !isRoutine(entry)) return null;
 
   const childrenOf = (id: string) => (children.get(id) ?? []).map((c) => byId.get(c)).filter((n): n is MutationNode => !!n);
-  const lines: string[] = [`# ${str(rawOf(entry).description) || entryId}`, "", `*${kindOf(entry)} · ${scope} catalog*`, ""];
+  const kind = kindOf(entry);
+  const lines: string[] = [`# ${str(rawOf(entry).description) || entryId}`, "", `*${kind} · ${scope} catalog*`, ""];
   const summary = str(metaOf(entry).summary);
   if (summary) lines.push(summary, "");
 
-  // A formatter's spec sits in the entry's direct Material children.
-  for (const m of childrenOf(entry.id).filter(isMaterial)) {
-    const content = str(rawOf(m).content);
-    if (content) lines.push(content, "");
-  }
-
-  // A routine's ordered steps, each with its Material content.
-  const steps = childrenOf(entry.id).filter(isRoutine).sort((a, b) => orderOf(a) - orderOf(b));
-  for (const step of steps) {
-    const timing = str(rawOf(step).timeRequired);
-    lines.push(`## ${str(rawOf(step).description)}${timing ? `  (${timing})` : ""}`, "");
-    for (const m of childrenOf(step.id).filter(isMaterial)) {
+  if (kind === "formatter") {
+    // A formatter's spec sits in its direct Material children — rendered flat, no headings.
+    for (const m of childrenOf(entry.id).filter(isMaterial)) {
       const content = str(rawOf(m).content);
       if (content) lines.push(content, "");
+    }
+  } else {
+    // A routine's ordered steps, each under its own heading. A step is either a child
+    // InstructionalRoutine (body in a Material grandchild) or a direct Material child
+    // (body in its own content) — see describeEntry; both shapes render the same.
+    const steps = childrenOf(entry.id).filter((c) => isRoutine(c) || isMaterial(c)).sort((a, b) => orderOf(a) - orderOf(b));
+    for (const step of steps) {
+      const timing = str(rawOf(step).timeRequired);
+      lines.push(`## ${str(rawOf(step).description)}${timing ? `  (${timing})` : ""}`, "");
+      const bodies = isMaterial(step) ? [str(rawOf(step).content)] : childrenOf(step.id).filter(isMaterial).map((m) => str(rawOf(m).content));
+      for (const body of bodies) if (body) lines.push(body, "");
     }
   }
   return `${lines.join("\n").trimEnd()}\n`;

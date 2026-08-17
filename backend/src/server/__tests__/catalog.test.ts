@@ -51,13 +51,19 @@ async function seedCatalog(s: KgNodeStore) {
     rNode("cat-s2", "InstructionalRoutine", { description: "Modelage", position: 2, timeRequired: "PT8M" }),
     rNode("cat-m1", "Material", { content: "..." }),
     rNode("cat-m2", "Material", { content: "..." }),
-    // …and a formatter entry (a spec Material, no steps).
+    // …a formatter entry (a spec Material, no steps)…
     rNode("cat-fmt", "InstructionalRoutine", { description: "House style", metadata: { catalogKind: "formatter" } }),
     rNode("cat-fmt-spec", "Material", { content: "palette + fonts + page setup" }),
+    // …and a routine whose steps are DIRECT Material children — the shape produced by
+    // authoring with add_nodes then promoting with add_to_catalog (no nested step-routines).
+    rNode("cat-flat", "InstructionalRoutine", { description: "Séance d'intégration" }),
+    rNode("cat-flat-1", "Material", { description: "Révision", position: 1, timeRequired: "PT5M", content: "corps révision" }),
+    rNode("cat-flat-2", "Material", { description: "Intégration", position: 2, content: "corps intégration" }),
   ];
   const edges = [
     rEdge("cat-root", "cat-entry"), rEdge("cat-entry", "cat-s1"), rEdge("cat-entry", "cat-s2"), rEdge("cat-s1", "cat-m1"), rEdge("cat-s2", "cat-m2"),
     rEdge("cat-root", "cat-fmt"), rEdge("cat-fmt", "cat-fmt-spec"),
+    rEdge("cat-root", "cat-flat"), rEdge("cat-flat", "cat-flat-1"), rEdge("cat-flat", "cat-flat-2"),
   ];
   const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: "catalog", nodeCount: nodes.length, edgeCount: edges.length };
   await s.writeSlot(SHARED_CATALOG_NAMESPACE, "a", { nodes, edges, meta });
@@ -118,6 +124,19 @@ describe("list_catalog", () => {
     expect(byId["cat-fmt"].steps).toEqual([]);   // a formatter has no ordered steps
   });
 
+  it("derives steps from a routine's DIRECT Material children (the add_to_catalog shape)", async () => {
+    const byId = Object.fromEntries(listCatalogEntries(await readCatalog(SHARED_CATALOG_NAMESPACE), "shared").map((e) => [e.id, e]));
+    // The flat routine's step summary is populated from its Material children (name +
+    // order + timing), matching what nested step-routines yield — not left empty.
+    expect(byId["cat-flat"]).toMatchObject({ kind: "routine", materialCount: 2 });
+    expect(byId["cat-flat"].steps).toEqual([
+      { id: "cat-flat-1", name: "Révision", order: 1, timeRequired: "PT5M" },
+      { id: "cat-flat-2", name: "Intégration", order: 2, timeRequired: undefined },
+    ]);
+    // A formatter's direct Materials stay spec, NOT steps (no regression).
+    expect(byId["cat-fmt"].steps).toEqual([]);
+  });
+
   it("reads a WORKSPACE-scoped catalog namespace independently, tagged workspace", async () => {
     // A second library living under a real workspace, separate from the shared one.
     const wsNs = catalogNamespace("senegal");
@@ -150,6 +169,13 @@ describe("catalog browse resources", () => {
     const fmtMd = renderCatalogEntry(catalog, "cat-fmt", "shared")!;
     expect(fmtMd).toContain("# House style");
     expect(fmtMd).toContain("palette + fonts + page setup");
+    // A routine with DIRECT Material steps renders each body UNDER its step heading
+    // (with timing when present), in order — not as headingless spec text.
+    const flatMd = renderCatalogEntry(catalog, "cat-flat", "shared")!;
+    expect(flatMd).toContain("## Révision  (PT5M)");
+    expect(flatMd).toContain("corps révision");
+    expect(flatMd).toContain("## Intégration");
+    expect(flatMd.indexOf("## Révision")).toBeLessThan(flatMd.indexOf("## Intégration")); // ordered
   });
 });
 
