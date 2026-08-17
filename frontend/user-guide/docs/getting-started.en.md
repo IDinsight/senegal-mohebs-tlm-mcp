@@ -1,27 +1,31 @@
 # Getting started
 
-Three steps before you can work: **connect** the tool to Claude, **sign in**, then **choose where you work** (the workspace, grade and subject).
+Four steps before you can work: **request your access**, **install the connector** in Claude, **sign in**, then **choose where you work** (the workspace, grade and subject).
 
-## 1. Connect the tool to Claude
+## 1. Request your access (Supabase account)
 
-The tool plugs into Claude as a "connector". Your administrator gives you **an address** (a URL ending in `/mcp`).
+Authentication goes through **Supabase**. There is no self-registration yet: the project administrator **creates your account**. Ask them for your access; you receive a sign-in **email** and **password**.
+
+!!! info "No account yet?"
+    Email the project administrator to have your Supabase access created. They will also pass you the connector address (step 2) if it isn't already listed in Claude.
+
+## 2. Install the connector in Claude
+
+The tool plugs into Claude as a **connector** named **"Teaching & Learning Materials authoring"**.
 
 1. In Claude, open the connector settings.
-2. Add a connector and paste the address you were given.
-3. Confirm.
-
-!!! info "No address or account yet?"
-    Accounts are created by the project administrator (there is no self-registration yet). Ask them for your access and the connector address.
+2. If the **"Teaching & Learning Materials authoring"** connector is already offered by your organisation, enable it.
+3. Otherwise, add a **custom connector** and paste the **address your administrator gives you** (a URL ending in `/mcp`), then confirm.
 
 <!-- SCREENSHOT: adding the connector in Claude -->
 
-## 2. Sign in
+## 3. Sign in
 
-The first time, Claude opens a sign-in page. Enter the **email** and **password** your administrator gave you. You won't have to do this every time.
+The first time, Claude opens a Supabase sign-in page. Enter the **email** and **password** from step 1. You won't have to do this every time.
 
 <!-- SCREENSHOT: sign-in page -->
 
-## 3. Choose where you work
+## 4. Choose where you work
 
 Work is always framed by three things: a **workspace**, a **grade** and a **subject**.
 
