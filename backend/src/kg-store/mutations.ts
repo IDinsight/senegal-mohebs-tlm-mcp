@@ -28,11 +28,12 @@ import { createHash, randomBytes } from "node:crypto";
 import { getKgStore } from "./adapter.js";
 import { toAuditActor } from "./audit.js";
 import { validateStructural } from "./validate.js";
-import type { AuditRecord, DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, Slot, StoredMeta, ValidationResult } from "./types.js";
+import type { AuditRecord, DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, Slot, SlotDelta, StoredMeta, ValidationResult } from "./types.js";
 export type { DiffEntry, GraphDiff, MutationEdge, MutationGraph, MutationNode, ValidationResult } from "./types.js";
 import { currentActor } from "../actor.js";
 import { authorize, type AuthAction } from "../authz.js";
 import { randomUUID } from "node:crypto";
+import { timed, timedSync } from "../utils/index.js";
 
 // A graph mutation is a pure function over {nodes, edges}. `describe(args)` is
 // used in the envelope's `action` string, so it must state the stakes: what
@@ -256,26 +257,28 @@ async function readBase(namespace: string): Promise<BaseSnapshot | { unseeded: t
   if (!pointer) return { unseeded: true };
   const targetSlot = pointer.draftSlot ?? pointer.publishedSlot;
   const publishedSlot = pointer.publishedSlot;
-  // Always read the published slot separately so Rule 1's rename-detection has
-  // a stable identity reference — the published snapshot is the source of
-  // truth for "what ids belong to which content." If no draft exists,
-  // targetSlot === publishedSlot and the two reads return identical graphs;
-  // in that case the extra listNodes/listEdges pair is a modest re-read cost
-  // (Firestore's small graph today) that keeps this branch dead-simple —
-  // preferable to a "same slot? skip" special case that would drift.
+  // Rule 1's rename-detection needs the published snapshot as the identity
+  // reference. When a draft exists, target and published are different slots, so
+  // read both. When there's NO draft, target === published: reading it twice
+  // would fetch the exact same docs, so we read once and share the result for
+  // both `graph` and `publishedGraph`. (On a ~2,000-node graph that redundant
+  // pair was a full extra fetch per preview/confirm — see the timing findings.)
+  const onDraft = pointer.draftSlot != null;
   const [nodes, edges, meta, pubNodes, pubEdges] = await Promise.all([
     store.listNodes(namespace, targetSlot),
     store.listEdges(namespace, targetSlot),
     store.readMeta(namespace, targetSlot),
-    store.listNodes(namespace, publishedSlot),
-    store.listEdges(namespace, publishedSlot),
+    onDraft ? store.listNodes(namespace, publishedSlot) : Promise.resolve(null),
+    onDraft ? store.listEdges(namespace, publishedSlot) : Promise.resolve(null),
   ]);
+  const graph = { nodes: nodes.map(stripSlot), edges: edges.map(stripSlot) };
   return {
-    graph: { nodes: nodes.map(stripSlot), edges: edges.map(stripSlot) },
-    kind: pointer.draftSlot ? "onDraft" : "onPublished",
+    graph,
+    kind: onDraft ? "onDraft" : "onPublished",
     publishedSlot,
     meta,
-    publishedGraph: { nodes: pubNodes.map(stripSlot), edges: pubEdges.map(stripSlot) },
+    // No draft → published IS target; reuse the graph we already read.
+    publishedGraph: onDraft ? { nodes: pubNodes!.map(stripSlot), edges: pubEdges!.map(stripSlot) } : graph,
   };
 }
 
@@ -359,7 +362,7 @@ export async function runGraphMutation<Args>(
 
     if (consumedNonces.has(payload.n)) { await auditBlocked("replay"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "replay", code: "REPLAY", message: "This confirmation token has already been used; a mutation cannot be applied twice from one preview. (Pass an idempotencyKey on confirm to make a retried confirm a safe no-op instead.)" }; }
 
-    const snap = await readBase(namespace);
+    const snap = await timed("confirm.readBase", () => readBase(namespace));
     if ("unseeded" in snap) { await auditBlocked("unseeded"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "unseeded", code: "UNSEEDED", message: `Namespace '${namespace}' has no seed; run the seed before mutating.` }; }
 
     // STALE takes priority over EXPIRED: a moved base means the approved diff no
@@ -397,7 +400,10 @@ export async function runGraphMutation<Args>(
         eventType: "createDraft",
         baseVersion: hashGraph(snap.graph),
       };
-      await store.createDraft(namespace, createRec);
+      // Hand createDraft the published graph we already read (snap.graph, which
+      // on this path IS published) so it copies from memory instead of re-reading
+      // the published slot.
+      await timed("confirm.createDraft", () => store.createDraft(namespace, createRec, snap.graph));
     }
     const pointerAfter = await store.readPointer(namespace);
     if (!pointerAfter || !pointerAfter.draftSlot) {
@@ -409,12 +415,12 @@ export async function runGraphMutation<Args>(
     // Re-read the draft (it's the exact bytes we hashed on the 'onDraft' path,
     // and the freshly-copied bytes on the 'onPublished' path). Apply the
     // mutation to it and writeSlot the new state.
-    const [dn, de] = await Promise.all([store.listNodes(namespace, draftSlot), store.listEdges(namespace, draftSlot)]);
+    const [dn, de] = await timed("confirm.reReadDraft", () => Promise.all([store.listNodes(namespace, draftSlot), store.listEdges(namespace, draftSlot)]));
     const draftGraph: MutationGraph = { nodes: dn.map(stripSlot), edges: de.map(stripSlot) };
-    const applied = mutation.apply(draftGraph, args);
-    const diff = diffGraphs(draftGraph, applied);
+    const applied = timedSync("confirm.applyFold", () => mutation.apply(draftGraph, args));
+    const diff = timedSync("confirm.diffGraphs", () => diffGraphs(draftGraph, applied));
 
-    const resultingVersion = hashGraph(applied);
+    const resultingVersion = timedSync("confirm.hashApplied", () => hashGraph(applied));
     const meta: StoredMeta = {
       // adapterId survives from the previous meta so re-seed detection stays
       // meaningful; contentHash + counts reflect the new draft state.
@@ -435,11 +441,25 @@ export async function runGraphMutation<Args>(
       resultingVersion,
       diff,
     };
-    // writeSlot commits the audit doc in the SAME final pointer transaction
+    // Turn the diff into a write delta: upsert the added + changed docs, delete
+    // the removed ids. We pull the upsert payloads from `applied` (the diff
+    // entries carry `after` as `unknown`, but `applied` is the typed post-state)
+    // so the write stays O(edit size), not O(graph).
+    const appliedNodeById = byId(applied.nodes);
+    const appliedEdgeById = byId(applied.edges);
+    const pick = <T,>(entries: DiffEntry[], from: Map<string, T>): T[] =>
+      entries.map((e) => from.get(e.id)).filter((v): v is T => v !== undefined);
+    const delta: SlotDelta = {
+      upsertNodes: pick([...diff.nodes.added, ...diff.nodes.changed], appliedNodeById),
+      upsertEdges: pick([...diff.edges.added, ...diff.edges.changed], appliedEdgeById),
+      removeNodeIds: diff.nodes.removed.map((e) => e.id),
+      removeEdgeIds: diff.edges.removed.map((e) => e.id),
+    };
+    // applyDelta commits the audit doc in the SAME final pointer transaction
     // (see firestore.ts) — a committed change always has its record.
-    await store.writeSlot(namespace, draftSlot, { nodes: applied.nodes, edges: applied.edges, meta }, applyRec);
+    await timed("confirm.applyDelta", () => store.applyDelta(namespace, draftSlot, delta, meta, applyRec));
 
-    // Consume the nonce LAST — if writeSlot throws, the token remains usable
+    // Consume the nonce LAST — if applyDelta throws, the token remains usable
     // for a legitimate retry after the operator fixes the underlying issue.
     consumedNonces.add(payload.n);
     const result: GraphApplyResult = { phase: "apply", ok: true, kind: "graphMutation", applied: mutation.describe(args), draftSlot, diff, auditId: applyRec.id };

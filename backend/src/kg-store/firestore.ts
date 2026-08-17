@@ -18,9 +18,10 @@
  */
 import { createRequire } from "node:module";
 import { CONFIG } from "../config.js";
-import type { AuditQuery, AuditRecord, KgNodeStore, Slot, StoredConfig, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
+import type { AuditQuery, AuditRecord, KgNodeStore, Slot, SlotDelta, StoredConfig, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
 import { otherSlot } from "./types.js";
 import { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";
+import { timed, note } from "../utils/index.js";
 
 const require = createRequire(import.meta.url);
 
@@ -91,13 +92,39 @@ const AUDIT = "kg_audit";
 // Firestore caps a WriteBatch at 500 operations. We stay a bit under to leave
 // headroom.
 const BATCH_MAX = 450;
+// Cap on batch commits in flight at once. The batches within one commitInChunks
+// call target disjoint doc ids, so they're safe to commit concurrently; the cap
+// just keeps us from opening an unbounded number of gRPC streams on a very large
+// graph. High enough that a ~2,300-edge graph's ~6 batches all run in parallel.
+const MAX_CONCURRENT_COMMITS = 12;
 
-async function commitInChunks<T>(db: Firestore, items: T[], apply: (batch: FsBatch, item: T) => void): Promise<void> {
+// Run `task` over each item with at most `limit` in flight — a small bounded
+// worker pool. Rejects on the first failure (Promise.all semantics per wave).
+async function runPooled<T>(items: T[], limit: number, task: (item: T) => Promise<unknown>): Promise<void> {
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const mine = items[next++];
+      await task(mine);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+// `label` names which slice of writes this call carried (node-upserts,
+// edge-copies, …) so a TLM_TIMING trace shows where the write time goes. The
+// per-call chunk commits run CONCURRENTLY (bounded by MAX_CONCURRENT_COMMITS) —
+// they touch disjoint doc ids, so there's no ordering constraint between them.
+async function commitInChunks<T>(db: Firestore, items: T[], apply: (batch: FsBatch, item: T) => void, label = "commit"): Promise<void> {
+  if (items.length === 0) return;
+  const batches: FsBatch[] = [];
   for (let i = 0; i < items.length; i += BATCH_MAX) {
     const b = db.batch();
     for (const item of items.slice(i, i + BATCH_MAX)) apply(b, item);
-    await b.commit();
+    batches.push(b);
   }
+  await timed(`firestore.${label}`, () => runPooled(batches, MAX_CONCURRENT_COMMITS, (b) => b.commit()));
+  note(`firestore.${label}`, `${items.length} ops in ${batches.length} concurrent batch(es)`);
 }
 
 // Pointer doc layout. We keep the two per-slot meta stamps AND the two per-slot
@@ -175,10 +202,10 @@ export function createFirestoreKgStore(): KgNodeStore {
       // Idempotency (per slot): upsert target ids, delete stragglers in this
       // slot only. The other slot is untouched — critical for createDraft's
       // copy phase not to disturb the published data.
-      const [existingNodes, existingEdges] = await Promise.all([
+      const [existingNodes, existingEdges] = await timed("writeSlot.readExisting", () => Promise.all([
         db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", slot).get(),
         db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", slot).get(),
-      ]);
+      ]));
       const targetNodeIds = new Set(batch.nodes.map((n) => docId(namespace, slot, n.id)));
       const targetEdgeIds = new Set(batch.edges.map((e) => docId(namespace, slot, e.id)));
 
@@ -187,10 +214,16 @@ export function createFirestoreKgStore(): KgNodeStore {
       const nodeDeletes = existingNodes.docs.filter((d) => !targetNodeIds.has(d.id)).map((d) => d.ref);
       const edgeDeletes = existingEdges.docs.filter((d) => !targetEdgeIds.has(d.id)).map((d) => d.ref);
 
-      await commitInChunks(db, nodeWrites, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); });
-      await commitInChunks(db, edgeWrites, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); });
-      await commitInChunks(db, nodeDeletes, (b, r) => { b.delete(r); });
-      await commitInChunks(db, edgeDeletes, (b, r) => { b.delete(r); });
+      // writeSlot rewrites the WHOLE slot (seed + createDraft's copy path use
+      // it); the edit hot path uses applyDelta instead. The four slices touch
+      // disjoint doc ids (upsert targets vs delete-only stragglers), so they run
+      // concurrently rather than one-after-another.
+      await Promise.all([
+        commitInChunks(db, nodeWrites, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "writeSlot.nodeUpserts"),
+        commitInChunks(db, edgeWrites, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "writeSlot.edgeUpserts"),
+        commitInChunks(db, nodeDeletes, (b, r) => { b.delete(r); }, "writeSlot.nodeDeletes"),
+        commitInChunks(db, edgeDeletes, (b, r) => { b.delete(r); }, "writeSlot.edgeDeletes"),
+      ]);
 
       // Final step: stash the slot's meta on the pointer doc AND — when the
       // caller passed an audit — write the audit doc, in the SAME
@@ -206,6 +239,36 @@ export function createFirestoreKgStore(): KgNodeStore {
         const doc = await tx.get(pRef as unknown as FsDocRef);
         const prev = (doc.data() as PointerDoc | undefined) ?? {};
         tx.set(pRef as unknown as FsDocRef, { ...prev, [metaField(slot)]: { ...batch.meta } }, { merge: true });
+        if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
+      });
+    },
+
+    async applyDelta(namespace, slot, delta, meta, audit) {
+      // The edit hot path: write ONLY what changed. No full-slot read, no
+      // full-slot rewrite — upserts hit the added/changed ids, deletes hit the
+      // removed ids, and the four slices touch disjoint ids so they commit
+      // concurrently. Everything the delta doesn't mention is left as-is, which
+      // is correct precisely because runGraphMutation computed the delta against
+      // this slot's current contents (base-version hash-CAS — see types.ts).
+      const nodeUpserts = delta.upsertNodes.map((n) => ({ ref: db.collection(NODES).doc(docId(namespace, slot, n.id)), data: { ...n, namespace, slot } }));
+      const edgeUpserts = delta.upsertEdges.map((e) => ({ ref: db.collection(EDGES).doc(docId(namespace, slot, e.id)), data: { ...e, namespace, slot } }));
+      const nodeDeletes = delta.removeNodeIds.map((id) => db.collection(NODES).doc(docId(namespace, slot, id)));
+      const edgeDeletes = delta.removeEdgeIds.map((id) => db.collection(EDGES).doc(docId(namespace, slot, id)));
+
+      await Promise.all([
+        commitInChunks(db, nodeUpserts, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "applyDelta.nodeUpserts"),
+        commitInChunks(db, edgeUpserts, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "applyDelta.edgeUpserts"),
+        commitInChunks(db, nodeDeletes, (b, r) => { b.delete(r as unknown as FsDocRef); }, "applyDelta.nodeDeletes"),
+        commitInChunks(db, edgeDeletes, (b, r) => { b.delete(r as unknown as FsDocRef); }, "applyDelta.edgeDeletes"),
+      ]);
+
+      // Same final meta+audit transaction as writeSlot: the committed edit
+      // always carries its record, atomically with the slot's meta stamp.
+      await db.runTransaction(async (tx) => {
+        const pRef = pointerRef(namespace);
+        const doc = await tx.get(pRef as unknown as FsDocRef);
+        const prev = (doc.data() as PointerDoc | undefined) ?? {};
+        tx.set(pRef as unknown as FsDocRef, { ...prev, [metaField(slot)]: { ...meta } }, { merge: true });
         if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
       });
     },
@@ -245,7 +308,7 @@ export function createFirestoreKgStore(): KgNodeStore {
       });
     },
 
-    async createDraft(namespace, audit) {
+    async createDraft(namespace, audit, sourceGraph) {
       // Read the current pointer OUTSIDE a transaction: the copy step itself
       // is long-running and cannot be inside a Firestore transaction (which
       // caps at 500 writes and a few seconds). Race safety is achieved by
@@ -258,29 +321,39 @@ export function createFirestoreKgStore(): KgNodeStore {
       const from = existing.publishedSlot;
       const to = otherSlot(from);
 
-      const [nodes, edges] = await Promise.all([
-        db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", from).get(),
-        db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", from).get(),
-      ]);
-      const nodeCopies = nodes.docs.map((d) => {
-        const src = d.data() as StoredNode;
-        return { id: src.id, doc: { ...src, slot: to } };
-      });
-      const edgeCopies = edges.docs.map((d) => {
-        const src = d.data() as StoredEdge;
-        return { id: src.id, doc: { ...src, slot: to } };
-      });
-
-      // First, wipe any stragglers in the destination slot (from a prior
-      // discarded draft that left orphans). Then upsert copies.
-      const [staleNodes, staleEdges] = await Promise.all([
+      // Read the destination (to find orphans) always; read the SOURCE only if
+      // the caller didn't already hand us the published graph. Skipping the
+      // source re-read saves a full-graph fetch on the confirm hot path (the
+      // caller just read it as its base snapshot).
+      const needSourceRead = sourceGraph == null;
+      const [destNodes, destEdges, srcNodes, srcEdges] = await timed("createDraft.reads", () => Promise.all([
         db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", to).get(),
         db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", to).get(),
+        needSourceRead ? db.collection(NODES).where("namespace", "==", namespace).where("slot", "==", from).get() : Promise.resolve(null),
+        needSourceRead ? db.collection(EDGES).where("namespace", "==", namespace).where("slot", "==", from).get() : Promise.resolve(null),
+      ]));
+      const srcNodeData: Array<Omit<StoredNode, "slot">> = sourceGraph ? sourceGraph.nodes : srcNodes!.docs.map((d) => d.data() as StoredNode);
+      const srcEdgeData: Array<Omit<StoredEdge, "slot">> = sourceGraph ? sourceGraph.edges : srcEdges!.docs.map((d) => d.data() as StoredEdge);
+      const nodeCopies = srcNodeData.map((src) => ({ id: src.id, doc: { ...src, slot: to } }));
+      const edgeCopies = srcEdgeData.map((src) => ({ id: src.id, doc: { ...src, slot: to } }));
+
+      // Only delete destination docs that the copy WON'T overwrite. The copy
+      // `set`s every source id into the destination slot, so a straggler that
+      // shares an id with a copy is replaced anyway — deleting it first would be
+      // a wasted delete-then-recreate. What's left to delete is the true
+      // orphans: destination ids not present in the source. Because deletes and
+      // copies now touch disjoint doc ids, all four slices commit concurrently.
+      const copyNodeDocIds = new Set(nodeCopies.map((c) => docId(namespace, to, c.id)));
+      const copyEdgeDocIds = new Set(edgeCopies.map((c) => docId(namespace, to, c.id)));
+      const orphanNodeRefs = destNodes.docs.filter((d) => !copyNodeDocIds.has(d.id)).map((d) => d.ref);
+      const orphanEdgeRefs = destEdges.docs.filter((d) => !copyEdgeDocIds.has(d.id)).map((d) => d.ref);
+
+      await Promise.all([
+        commitInChunks(db, orphanNodeRefs, (b, r) => { b.delete(r); }, "createDraft.orphanNodeDeletes"),
+        commitInChunks(db, orphanEdgeRefs, (b, r) => { b.delete(r); }, "createDraft.orphanEdgeDeletes"),
+        commitInChunks(db, nodeCopies, (b, w) => { b.set(db.collection(NODES).doc(docId(namespace, to, w.id)) as unknown as FsDocRef, w.doc as unknown as Record<string, unknown>); }, "createDraft.nodeCopies"),
+        commitInChunks(db, edgeCopies, (b, w) => { b.set(db.collection(EDGES).doc(docId(namespace, to, w.id)) as unknown as FsDocRef, w.doc as unknown as Record<string, unknown>); }, "createDraft.edgeCopies"),
       ]);
-      await commitInChunks(db, staleNodes.docs.map((d) => d.ref), (b, r) => { b.delete(r); });
-      await commitInChunks(db, staleEdges.docs.map((d) => d.ref), (b, r) => { b.delete(r); });
-      await commitInChunks(db, nodeCopies, (b, w) => { b.set(db.collection(NODES).doc(docId(namespace, to, w.id)) as unknown as FsDocRef, w.doc as unknown as Record<string, unknown>); });
-      await commitInChunks(db, edgeCopies, (b, w) => { b.set(db.collection(EDGES).doc(docId(namespace, to, w.id)) as unknown as FsDocRef, w.doc as unknown as Record<string, unknown>); });
 
       // Finally, flip draftSlot in a transaction so a racing createDraft that
       // beat us to the copy phase doesn't silently overwrite each other's
