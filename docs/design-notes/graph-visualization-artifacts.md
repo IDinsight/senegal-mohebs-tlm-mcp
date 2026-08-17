@@ -17,46 +17,28 @@ and the 100 KB `asJson` cap).
 
 ## The shape
 
-Everything hangs off the explorer's existing `DisplayGraph` contract. There are
-**two MCP tools** and one shared engine:
+Two halves, joined by the explorer's existing `DisplayGraph` contract:
 
-- **`export_graph_view` → DATA.** (`src/server/graph.ts` → `src/kg-export.ts::
-  exportSubtree`) returns a *self-contained slice* of the published graph — the
-  containment subtree of one node — in the **exact `DisplayGraph` shape** the
-  explorer already consumes (`nodes`, `edges`, `meta.taxonomy`, `meta.viewConfig`,
-  `meta.counts`). Reuses the projection verbatim (`toDisplayNode` /
-  `toDisplayEdges` / the legend taxonomy / `buildViewConfig`, extracted into a
-  shared `assembleDisplayGraph`), so a slice folds and colours identically to the
-  whole graph. Use it when you have the repo (feed it to the local build step) or
-  want the raw data.
+1. **Server returns *data*, scoped.** The `export_graph_view` MCP tool
+   (`src/server/graph.ts` → `src/kg-export.ts::exportSubtree`) returns a
+   *self-contained slice* of the published graph — the containment subtree of one
+   node — in the **exact `DisplayGraph` shape** the explorer already consumes
+   (`nodes`, `edges`, `meta.taxonomy`, `meta.viewConfig`, `meta.counts`). It
+   reuses the explorer's projection verbatim (`toDisplayNode` / `toDisplayEdges` /
+   the legend taxonomy / `buildViewConfig`, extracted into a shared
+   `assembleDisplayGraph`), so a slice folds and colours identically to the whole.
 
-- **`render_graph_view` → finished HTML.** (`src/kg-export.ts::renderGraphView`)
-  the **one-call path**: it takes the same scoped slice and returns the *finished
-  self-contained HTML page* — no local build step, no checkout needed. Success is
-  the raw HTML (delivered as a text resource); save it to a `.html` and open or
-  publish it.
+2. **Claude renders the *visual*.** A build step
+   (`frontend/explorer/scripts/build-graph-artifact.mjs`) esbuild-bundles the
+   explorer's **real view engine** (`src/lib/graphModel.ts`) plus a small vanilla
+   DOM shell (`src/standalone/render.ts`) and inlines it, with the data as
+   `window.__GRAPH__`, into one self-contained HTML file — no server, no auth, no
+   network — publishable as a Claude artifact.
 
-### The engine, and why the server can't bundle it
-
-The page is the explorer's **real view engine** — `src/lib/graphModel.ts` plus a
-small vanilla DOM shell (`frontend/explorer/src/standalone/render.ts`) — esbuild-
-bundled **from source**, so the Standards / Curriculum / Progression / By-type
-views, the folded-`hasChild` walk, the honest `rel` badges, and the colouring are
-exactly the explorer's, with no hand-ported copy to drift.
-
-But the backend is a **separate, self-contained package** and can't run esbuild at
-request time. So the bundle ships as a committed **shell**: a data-less HTML page
-(engine + CSS inlined) with two placeholders — `"__GRAPH_DATA_PLACEHOLDER__"` for
-the `DisplayGraph` JSON and `__TITLE_PLACEHOLDER__` for the page title.
-
-- `frontend/explorer/scripts/build-graph-shell.mjs` esbuilds the engine and writes
-  the shell to `backend/assets/graph-view/shell.html` — a **committed build
-  output** (like `frontend/explorer/dist/`). Re-run it and commit when
-  `graphModel.ts` / `render.ts` / the CSS change.
-- Two consumers fill the placeholders **identically** (escape `<`, swap the quoted
-  data token for the raw JSON object): the backend at request time
-  (`renderGraphView`) and the local `build-graph-artifact.mjs` (the data-file
-  path). The template + engine therefore live in exactly one place.
+Because `graphModel.ts` is bundled **from source**, the artifact's Standards /
+Curriculum / Progression / By-type views, the folded-`hasChild` containment walk,
+the honest `rel` badges, and the colouring are exactly the explorer's — there is
+no hand-ported copy to drift.
 
 ## Scoping: containment + alignment tail
 
@@ -78,43 +60,27 @@ The payload is self-bounded to the response cap:
 - An oversized detailed slice auto-drops `detail`; a slice still too big returns
   `{ tooLarge, counts, message }` telling the caller to lower `maxDepth`, pick a
   deeper root (a chapter/week, not the whole Course), or use the live explorer for
-  the whole graph. `export_graph_view`'s data budget is tunable via
-  `TLM_SUBTREE_MAX_BYTES` (mirrors `walk_graph`'s `TLM_WALK_MAX_PAGE_BYTES`).
-- `render_graph_view` adds the ~12 KB shell on top of the compact data, so it
-  applies a second page-size guard (`TLM_RENDER_MAX_BYTES`, default 96 KB, under
-  the 100 KB cap) and returns the same `{ tooLarge, message }` when the whole page
-  won't fit.
+  the whole graph. The budget is tunable via `TLM_SUBTREE_MAX_BYTES` (mirrors
+  `walk_graph`'s `TLM_WALK_MAX_PAGE_BYTES`).
 
 Whole-graph visualization is deliberately **out of scope** for the artifact — that
 is what the hosted explorer is for.
 
 ## Producing an artifact (workflow)
 
-Both paths start the same way — `namespace_stats` (or `walk_graph`) → a root id (a
-Course/chapter/week).
-
-**One call (no repo needed):**
-- `render_graph_view(fromId=<id>, maxDepth=4, detail=true, title="…")` → save the
-  returned HTML to a `.html` and open/publish it.
-
-**Data + local build (when working in the repo):**
-1. `export_graph_view(fromId=<id>, maxDepth=4, detail=true)` → the scoped
-   `DisplayGraph`; save the JSON.
-2. From `frontend/explorer/`:
+1. `namespace_stats` → pick a root id (a Course/chapter/week), or `walk_graph` to
+   find a deeper node.
+2. `export_graph_view(fromId=<id>, maxDepth=4, detail=true)` → the scoped
+   `DisplayGraph`.
+3. Save that JSON, then from `frontend/explorer/`:
    `node scripts/build-graph-artifact.mjs <graph.json> <out.html> "Title"`.
-3. Publish `<out.html>`.
+4. Publish `<out.html>` as an artifact.
 
 ## Files
 
-- `src/kg-export.ts` — `exportSubtree` (data) + `renderGraphView` (HTML) + the
-  shared `assembleDisplayGraph` projection (also used by the full-graph `/kg`
-  route).
-- `src/server/graph.ts` — the `export_graph_view` + `render_graph_view` tools
-  (read-only, published slot).
-- `backend/assets/graph-view/shell.html` — the committed, data-less engine shell.
+- `src/kg-export.ts` — `exportSubtree` + the shared `assembleDisplayGraph`
+  projection (also used by the full-graph `/kg` route).
+- `src/server/graph.ts` — the `export_graph_view` tool (read-only, published slot).
 - `frontend/explorer/src/standalone/render.ts` — the vanilla DOM shell over
   `graphModel.ts`.
-- `frontend/explorer/scripts/build-graph-shell.mjs` — esbuilds the engine → the
-  committed shell (re-run + commit when the engine changes).
-- `frontend/explorer/scripts/build-graph-artifact.mjs` — injects a data file into
-  the shell (the local mirror of `renderGraphView`).
+- `frontend/explorer/scripts/build-graph-artifact.mjs` — the esbuild + inline step.

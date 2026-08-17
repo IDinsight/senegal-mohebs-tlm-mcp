@@ -25,7 +25,7 @@ import { addNode } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import { activateContext } from "../../activate.js";
-import { walkActiveGraph, namespaceStats, exportGraphView, renderActiveGraphView } from "../graph.js";
+import { walkActiveGraph, namespaceStats, exportGraphView } from "../graph.js";
 import type { KgNodeStore, StoredMeta, MutationGraph } from "../../kg-store/index.js";
 import type { StorageAdapter, HistoryFile, CurriculumModel, RawGraphSnapshot } from "../../types.js";
 
@@ -430,49 +430,5 @@ describe("export_graph_view (tool core)", () => {
   it("errors clearly for an unknown fromId", async () => {
     const result = await withActiveContext(CURATOR, async () => exportGraphView({ fromId: "does-not-exist" }));
     expect(result.error as string).toMatch(/not found/);
-  });
-});
-
-describe("render_graph_view (tool core)", () => {
-  const courseId = async (): Promise<string> => {
-    const nodes = await store.listNodes(ns, "a");
-    return nodes.find((node) => (node.labels ?? []).includes("Course"))!.id;
-  };
-
-  // Generous data budget so a whole-Course happy path renders; the page-size guard
-  // is asserted separately with a tiny render budget.
-  beforeEach(() => {
-    process.env.TLM_SUBTREE_MAX_BYTES = String(5 * 1024 * 1024);
-    process.env.TLM_RENDER_MAX_BYTES = String(5 * 1024 * 1024);
-  });
-  afterAll(() => { delete process.env.TLM_SUBTREE_MAX_BYTES; delete process.env.TLM_RENDER_MAX_BYTES; });
-
-  it("returns a self-contained HTML page with the data injected into the shell", async () => {
-    const result = await withActiveContext(CURATOR, async () => renderActiveGraphView({ fromId: await courseId(), maxDepth: 3, title: "Test viz" }));
-    if (!result || !("html" in result)) throw new Error("expected an html result");
-    const html = result.html;
-    // Self-contained page: the shell's app mount + engine, with the data injected
-    // in place of the placeholder (not the raw placeholder token).
-    expect(html).toContain('<div id="app">');
-    expect(html).toContain("window.__GRAPH__ =");
-    expect(html).not.toContain("__GRAPH_DATA_PLACEHOLDER__");
-    expect(html).toContain("__GRAPH__ = {"); // a real JSON object, not the quoted placeholder
-    expect(html).toContain("<title>Test viz</title>");
-    expect(result.counts.nodes).toBeGreaterThan(1);
-  });
-
-  it("refuses an oversized page with a sized message", async () => {
-    const result = await withActiveContext(CURATOR, async () => {
-      process.env.TLM_RENDER_MAX_BYTES = "4096"; // the shell alone exceeds this
-      return renderActiveGraphView({ fromId: await courseId(), maxDepth: 3 });
-    });
-    if (!result || !("tooLarge" in result)) throw new Error("expected tooLarge");
-    expect(result.message).toMatch(/budget/i);
-  });
-
-  it("passes an unknown-fromId error straight through", async () => {
-    const result = await withActiveContext(CURATOR, async () => renderActiveGraphView({ fromId: "nope" }));
-    if (!result || !("error" in result)) throw new Error("expected error");
-    expect(result.error).toMatch(/not found/);
   });
 });

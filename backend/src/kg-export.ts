@@ -24,12 +24,9 @@
  * nodes keep their category, non-spine nodes fall into the neutral `framework`
  * legend bucket, and every edge type renders.
  */
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { getKgStore, kgNamespace } from "./kg-store/index.js";
 import type { StoredNode, StoredEdge } from "./kg-store/index.js";
 import { listAvailableContexts } from "./context/index.js";
-import { CONFIG } from "./config.js";
 
 // ── Display schema (what the explorer consumes) ──────────────────────────────
 // The React explorer (frontend/explorer/, schema mirrored in
@@ -590,76 +587,3 @@ export async function exportSubtree(
   }
   return graph;
 }
-
-// ── Render a scoped subtree straight to a self-contained HTML page ─────────────
-// export_graph_view returns DATA; render_graph_view returns the finished HTML —
-// one call, no local build step — by injecting the scoped DisplayGraph into the
-// pre-built shell asset (assets/graph-view/shell.html, produced from source by
-// frontend/explorer/scripts/build-graph-shell.mjs). The server can't esbuild the
-// frontend engine at request time, so the shell is a committed build output it
-// just fills in. See docs/design-notes/graph-visualization-artifacts.md.
-
-// The whole page must fit the tool response cap. The shell is ~12 KB, so the HTML
-// is shell + compact data; keep it under the 100 KB asJson cap with headroom.
-// Tunable via TLM_RENDER_MAX_BYTES.
-const DEFAULT_RENDER_MAX_BYTES = 96 * 1024;
-const renderMaxBytes = (): number => {
-  const override = Number(process.env.TLM_RENDER_MAX_BYTES);
-  return Number.isFinite(override) && override > 0 ? override : DEFAULT_RENDER_MAX_BYTES;
-};
-
-// The shell is small and immutable at runtime, so read it once and cache it.
-let shellCache: string | null = null;
-const shellPath = (): string => resolve(CONFIG.assetsDir, "graph-view", "shell.html");
-function loadShell(): string {
-  if (shellCache === null) shellCache = readFileSync(shellPath(), "utf8");
-  return shellCache;
-}
-
-const escapeHtml = (s: string): string =>
-  s.replace(/[&<>"]/g, (c) => (({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }) as Record<string, string>)[c]);
-
-// Fill the shell's two placeholders. MUST match the local injector
-// (frontend/explorer/scripts/build-graph-artifact.mjs::injectShell): escape `<`
-// in the JSON so a `</script>` inside a value can't end the tag, and replace the
-// QUOTED data token with the raw JSON object.
-function injectShell(shell: string, graph: DisplayGraph, title: string): string {
-  const dataJson = JSON.stringify(graph).replace(/</g, "\\u003c");
-  return shell
-    .replace('"__GRAPH_DATA_PLACEHOLDER__"', dataJson)
-    .replace("__TITLE_PLACEHOLDER__", escapeHtml(title));
-}
-
-export type RenderExport =
-  | { format: "html"; html: string; bytes: number; counts: { nodes: number; edges: number } }
-  | { error: string }
-  | { tooLarge: true; counts: { nodes: number; edges: number }; approxBytes: number; softCapBytes: number; message: string };
-
-export async function renderGraphView(
-  ns: string,
-  fromId: string,
-  opts: { maxDepth?: number; detail?: boolean; title?: string } = {},
-): Promise<RenderExport | null> {
-  const sub = await exportSubtree(ns, fromId, { maxDepth: opts.maxDepth, detail: opts.detail });
-  if (sub === null) return null;
-  if ("error" in sub || "tooLarge" in sub) return sub; // pass the notice straight through
-
-  const graph = sub; // a DisplayGraph
-  const title = opts.title || graph.meta.label.fr || ns;
-  const html = injectShell(loadShell(), graph, title);
-  const bytes = Buffer.byteLength(html, "utf8");
-  const cap = renderMaxBytes();
-  if (bytes > cap) {
-    return {
-      tooLarge: true,
-      counts: { nodes: graph.nodes.length, edges: graph.edges.length },
-      approxBytes: bytes,
-      softCapBytes: cap,
-      message: `The rendered page for '${fromId}' is ~${Math.round(bytes / 1024)} KB, over the ~${Math.round(cap / 1024)} KB response budget. Lower maxDepth, set detail:false, or pick a deeper root (a chapter/week rather than the whole Course).`,
-    };
-  }
-  return { format: "html", html, bytes, counts: { nodes: graph.nodes.length, edges: graph.edges.length } };
-}
-
-// For tests: drop the cached shell so a test can point CONFIG.assetsDir elsewhere.
-export const __resetShellCacheForTest = (): void => { shellCache = null; };
