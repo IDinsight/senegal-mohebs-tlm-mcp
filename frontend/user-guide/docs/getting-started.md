@@ -1,6 +1,6 @@
 # Prise en main
 
-Quatre étapes avant de travailler : **demander votre accès**, **installer le connecteur** dans Claude, **vous connecter**, puis **choisir où vous travaillez** (l'espace de travail, la classe et la matière).
+Cinq étapes avant de travailler : **demander votre accès**, **installer le connecteur** dans Claude, **vous connecter**, comprendre comment **parler à l'outil**, puis **choisir où vous travaillez** (l'espace de travail, la classe et la matière).
 
 ## 1. Demander votre accès (compte Supabase)
 
@@ -25,7 +25,24 @@ L'outil se branche à Claude comme un **connecteur** nommé **« Teaching & Lear
 
 <!-- SCREENSHOT : page de connexion -->
 
-## 4. Choisir où vous travaillez
+## 4. Parler à l'outil
+
+Une fois le connecteur installé et la connexion faite, vous utilisez l'outil **en écrivant à Claude en langage courant** — pas de commande à retenir, pas de syntaxe particulière. Vous décrivez ce que vous voulez, Claude appelle les bons outils du connecteur.
+
+Deux points qui ne sautent pas aux yeux :
+
+- **Le connecteur doit être actif dans la conversation.** Dans Claude, les connecteurs s'activent par conversation. Si vous ne voyez pas Claude utiliser l'outil, vérifiez que **« Teaching & Learning Materials authoring »** est bien activé pour ce fil de discussion (dans le menu des outils/connecteurs, sous la zone de saisie).
+- **La première utilisation demande une autorisation.** La toute première fois que Claude appelle un outil, il vous demande la permission de l'exécuter. Acceptez — c'est normal, et c'est aussi le garde-fou qui fait que rien ne s'exécute sans votre accord.
+
+Pour vérifier que tout est branché, envoyez un message simple :
+
+> « Que puis-je faire ? »
+
+Si Claude répond en s'appuyant sur l'outil (par exemple en listant vos rôles ou vos espaces de travail), tout fonctionne. S'il répond « de tête », sans utiliser l'outil, demandez-le explicitement :
+
+> « Utilise le connecteur Teaching & Learning Materials pour me dire ce que je peux faire. »
+
+## 5. Choisir où vous travaillez
 
 Le travail est toujours cadré par trois choses : un **espace de travail**, une **classe** et une **matière**.
 
