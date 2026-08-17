@@ -38,10 +38,19 @@ plugins:
           nav_translations:
             Accueil: Home
             Prise en main: Getting started
-            Créer du matériel pédagogique: Create teaching materials
-            Modifier le graphe de connaissances: Edit the knowledge graph
-            Relire et approuver: Review & approve
+            Construire le curriculum: Build the curriculum
+            Créer un graphe de connaissances: Create a knowledge graph
+            Construire les standards et les composants: Build standards & components
+            Concevoir les cours et les gabarits: Design courses & templates
+            Ajouter et modifier un cours et ses leçons: Add & edit a course and its lessons
+            Créer des routines pédagogiques: Create instructional routines
+            Créer des formatters: Create formatters
+            Produire et publier: Produce & publish
+            Générer du matériel pédagogique: Generate teaching materials
+            Relire, publier ou abandonner un brouillon: Review, publish or discard a draft
             Explorer le graphe: Explore the graph
+            Administration et développement: Administration & development
+            Ajouter un espace de travail ou une matière: Add a workspace or a subject
             Référence: Reference
 
 markdown_extensions:
@@ -56,8 +65,17 @@ markdown_extensions:
 nav:
   - Accueil: index.md
   - Prise en main: getting-started.md
-  - Créer du matériel pédagogique: create-materials.md
-  - Modifier le graphe de connaissances: edit-knowledge-graph.md
-  - Relire et approuver: review-approve.md
+  - Construire le curriculum:
+      - Créer un graphe de connaissances: create-graph.md
+      - Construire les standards et les composants: build-standards.md
+  - Concevoir les cours et les gabarits:
+      - Ajouter et modifier un cours et ses leçons: courses-lessons.md
+      - Créer des routines pédagogiques: routines.md
+      - Créer des formatters: formatters.md
+  - Produire et publier:
+      - Générer du matériel pédagogique: create-materials.md
+      - Relire, publier ou abandonner un brouillon: review-approve.md
   - Explorer le graphe: explorer.md
+  - Administration et développement:
+      - Ajouter un espace de travail ou une matière: admin-developer.md
   - Référence: reference.md

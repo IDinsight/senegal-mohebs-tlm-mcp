@@ -1,6 +1,6 @@
-# Review & approve
+# Review, publish or discard a draft
 
-Once a curator has prepared changes, they wait in a **draft**. The **approver's** job is to **review** them and then **publish** them — publishing is what makes them official and visible to document generation.
+Once a curator has prepared changes, they wait in a **draft**. The **approver's** job is to **review** them and then **publish** them — publishing is what makes them official and visible to document generation. If they should not be kept, you **discard** the draft.
 
 !!! info "Approvers only"
     Only **approvers** can publish. Curators prepare; approvers approve.
