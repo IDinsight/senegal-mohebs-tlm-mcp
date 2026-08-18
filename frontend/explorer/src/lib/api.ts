@@ -2,7 +2,7 @@ import {
   createClient,
   type SupabaseClient,
 } from "@supabase/supabase-js";
-import type { DisplayGraph, KgConfig, NamespaceEntry } from "../types";
+import type { CatalogExport, DisplayGraph, KgConfig, NamespaceEntry } from "../types";
 
 // API base. Empty = same-origin (Firebase Hosting rewrites /kg → Cloud Run).
 // Override with ?api=http://localhost:8791 for local/direct testing (CORS).
@@ -74,6 +74,19 @@ export function fetchNamespaces(): Promise<{ namespaces: NamespaceEntry[] }> {
 
 export function fetchGraph(ns: string): Promise<DisplayGraph> {
   return apiGet(`/kg?ns=${encodeURIComponent(ns)}`);
+}
+
+// The catalog libraries (shared + this namespace's workspace) for the Catalog tab.
+export function fetchCatalog(ns: string): Promise<CatalogExport> {
+  return apiGet(`/kg/catalog?ns=${encodeURIComponent(ns)}`);
+}
+
+// One catalog entry's full authored spec, as markdown (the tab's click-through).
+export function fetchCatalogEntry(
+  ns: string,
+  id: string,
+): Promise<{ id: string; markdown: string }> {
+  return apiGet(`/kg/catalog/entry?ns=${encodeURIComponent(ns)}&id=${encodeURIComponent(id)}`);
 }
 
 // The origin we tried to reach, for error messages.

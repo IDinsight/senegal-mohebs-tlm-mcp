@@ -1,15 +1,19 @@
 import { pick } from "../i18n";
-import type { Lang, ViewSpec } from "../types";
+import type { Bilingual, Lang } from "../types";
+
+// A tab is just an id + a bilingual label — the graph's viewConfig views satisfy
+// this, and so does the synthetic Catalog tab App injects alongside them.
+export type TabSpec = { id: string; label: Bilingual };
 
 type Props = {
   lang: Lang;
-  views: ViewSpec[];
+  views: TabSpec[];
   currentView: string | null;
   onSelect: (id: string) => void;
 };
 
-// The view-shape tabs (Standards, Curriculum, By type, …), driven by the graph's
-// meta.viewConfig — the set differs per graph.
+// The view-shape tabs (Standards, Curriculum, Catalogue, By type, …), driven by the
+// graph's meta.viewConfig plus the injected Catalog tab — the set differs per graph.
 export function ViewTabs({ lang, views, currentView, onSelect }: Props) {
   return (
     <div className="flex flex-wrap gap-1.5 px-3.5 pt-3">

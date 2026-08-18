@@ -28,7 +28,7 @@ import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.
 import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
-import { listExportNamespaces, exportNamespace } from "./kg-export.js";
+import { listExportNamespaces, exportNamespace, exportCatalog, exportCatalogEntry } from "./kg-export.js";
 import { CONFIG, basePrefix, DEFAULT_WORKSPACE } from "./config.js";
 import { newSessionState, runInSession, listAvailableContexts, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
@@ -80,6 +80,9 @@ function supabaseVerifier(): OAuthTokenVerifier {
 //                         without baking deployment config into the HTML.
 //   GET /kg/namespaces  — auth-gated. The selector list.
 //   GET /kg?ns=<ns>     — auth-gated. Published display-JSON for one namespace.
+//   GET /kg/catalog?ns=<ns>            — auth-gated. The catalog libraries (shared +
+//                                        that workspace's) for the Catalog tab.
+//   GET /kg/catalog/entry?ns=&id=      — auth-gated. One entry's full spec (markdown).
 // CORS is allow-listed to the hosting origin(s); auth requires a valid Supabase
 // Bearer JWT whenever auth is enabled (mirrors /mcp). All read-only, published-only.
 //
@@ -150,6 +153,36 @@ function registerKgRoutes(app: express.Express, authEnabled: boolean, verifier: 
       res.json(graph);
     } catch (e) {
       console.error(`${LOG} /kg?ns=${ns} failed:`, (e as Error).message);
+      res.status(500).json({ error: "export_failed", message: (e as Error).message });
+    }
+  });
+
+  // The Catalog tab: the reusable-spec libraries (routines + formatters) a curator of
+  // this namespace's workspace can browse — the shared library plus the workspace's own.
+  app.get("/kg/catalog", cors, requireJwt, async (req, res) => {
+    const ns = String(req.query.ns ?? "").trim();
+    if (!ns) { res.status(400).json({ error: "missing_ns" }); return; }
+    try {
+      const catalog = await exportCatalog(ns);
+      if (!catalog) { res.status(404).json({ error: "not_a_curriculum_namespace", ns }); return; }
+      res.json(catalog);
+    } catch (e) {
+      console.error(`${LOG} /kg/catalog?ns=${ns} failed:`, (e as Error).message);
+      res.status(500).json({ error: "export_failed", message: (e as Error).message });
+    }
+  });
+
+  // One catalog entry's full authored spec as markdown — the Catalog tab's click-through.
+  app.get("/kg/catalog/entry", cors, requireJwt, async (req, res) => {
+    const ns = String(req.query.ns ?? "").trim();
+    const id = String(req.query.id ?? "").trim();
+    if (!ns || !id) { res.status(400).json({ error: "missing_ns_or_id" }); return; }
+    try {
+      const markdown = await exportCatalogEntry(ns, id);
+      if (markdown == null) { res.status(404).json({ error: "unknown_catalog_entry", ns, id }); return; }
+      res.json({ id, markdown });
+    } catch (e) {
+      console.error(`${LOG} /kg/catalog/entry?ns=${ns}&id=${id} failed:`, (e as Error).message);
       res.status(500).json({ error: "export_failed", message: (e as Error).message });
     }
   });
