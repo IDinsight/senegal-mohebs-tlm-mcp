@@ -13,7 +13,7 @@
  * alongside index.ts rather than inside context/ (which stays a dependency-
  * light leaf).
  */
-import { slug } from "./utils/index.js";
+import { slug, timed, timedSync } from "./utils/index.js";
 import { setActiveContext, setAvailableContexts, listAvailableContexts, getActiveContext, sessionState, type ActiveContext } from "./context/index.js";
 import { resolveAdapter, buildAdapterFromStoredProfile, setActiveAdapter } from "./adapters/index.js";
 import { getKgStore, kgNamespace, parseNamespace } from "./kg-store/index.js";
@@ -65,12 +65,12 @@ export async function activateContext(workspace: string, grade: string, subject:
   }
   if (!pointer) return { ok: false, error: `No graph in the store for namespace '${ns}'. Import it first.`, available };
   const publishedSlot = pointer.publishedSlot;
-  const [meta, nodes, edges, storedConfig] = await Promise.all([
+  const [meta, nodes, edges, storedConfig] = await timed("activate.readGraph", () => Promise.all([
     getKgStore().readMeta(ns, publishedSlot),
     getKgStore().listNodes(ns, publishedSlot),
     getKgStore().listEdges(ns, publishedSlot),
     getKgStore().readConfig(ns, publishedSlot),
-  ]);
+  ]));
   if (!meta) return { ok: false, error: `The pointer for '${ns}' says slot '${publishedSlot}' is published, but that slot has no meta — the graph is corrupt. Re-import it.`, available };
   // The SUBJECT PROFILE is authored data on the published slot. Build the adapter
   // from that stored profile so a published profile edit takes effect with no
@@ -84,7 +84,7 @@ export async function activateContext(workspace: string, grade: string, subject:
   }
   // The store holds the full raw graph; reconstruct the LC envelope and parse it
   // into the spine model (non-spine nodes are dropped by parse).
-  const preloadedModel: CurriculumModel = adapter.parse(toRawEnvelope({ nodes, edges }));
+  const preloadedModel: CurriculumModel = timedSync("activate.parse", () => adapter.parse(toRawEnvelope({ nodes, edges })));
 
   const bound = setActiveContext(match.workspace, match.grade, match.subject); // clears the session bag
   if (!bound.ok) return bound;
