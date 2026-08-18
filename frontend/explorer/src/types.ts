@@ -118,3 +118,31 @@ export type KgConfig = {
   supabaseUrl?: string;
   supabaseAnonKey?: string;
 };
+
+// ── Catalog (GET /kg/catalog?ns=) ────────────────────────────────────────────
+// Kept in lock-step with the server's CatalogEntry / CatalogExport (kg-recipes,
+// re-exported by kg-export.ts). The reusable-spec libraries a curator browses.
+export type CatalogKind = "routine" | "formatter";
+export type CatalogScope = "shared" | "workspace";
+
+export type CatalogStep = {
+  id: string;
+  name: string;
+  order: number;
+  timeRequired?: string;
+};
+
+export type CatalogEntry = {
+  id: string;
+  kind: CatalogKind;
+  scope: CatalogScope;
+  name: string;
+  summary: string;
+  steps: CatalogStep[];
+  materialCount: number;
+};
+
+export type CatalogExport = {
+  scopes: Array<{ scope: CatalogScope; namespace: string }>;
+  entries: CatalogEntry[];
+};

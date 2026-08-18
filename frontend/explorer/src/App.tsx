@@ -3,10 +3,11 @@ import { Header, type StatChip } from "./components/Header";
 import { Banner } from "./components/Banner";
 import { LoginGate } from "./components/LoginGate";
 import { Legend } from "./components/Legend";
-import { ViewTabs } from "./components/ViewTabs";
+import { ViewTabs, type TabSpec } from "./components/ViewTabs";
 import { SourceFilters } from "./components/SourceFilters";
 import { Toolbar } from "./components/Toolbar";
 import { Tree } from "./components/Tree";
+import { CatalogPanel } from "./components/CatalogPanel";
 import { DetailModal } from "./components/DetailModal";
 import { useGraphData } from "./hooks/useGraphData";
 import { computeSearch } from "./lib/search";
@@ -14,6 +15,11 @@ import { EMPTY_URL_STATE, readUrlState, writeUrlState } from "./lib/urlState";
 import { makeT, pick } from "./i18n";
 import type { GraphModel } from "./lib/graphModel";
 import type { Lang, ViewSpec } from "./types";
+
+// The Catalog tab isn't a graph view (its data lives in separate _catalog
+// namespaces, fetched on demand), so it rides alongside the viewConfig views as a
+// synthetic tab with a reserved id and renders its own panel instead of the tree.
+const CATALOG_TAB = "__catalog";
 
 // Every node reachable in the current view (used by "expand all").
 function allViewNodes(
@@ -58,8 +64,11 @@ export default function App() {
     const url = urlRestored.current ? EMPTY_URL_STATE : readUrlState();
     urlRestored.current = true;
 
-    // View: honor the URL's view only if this graph actually defines it.
-    setCurrentView(views.find((v) => v.id === url.view)?.id ?? views[0]?.id ?? null);
+    // View: honor the URL's view only if this graph actually defines it (or it's
+    // the synthetic Catalog tab, which every graph has).
+    const restoredView =
+      url.view === CATALOG_TAB ? CATALOG_TAB : views.find((v) => v.id === url.view)?.id;
+    setCurrentView(restoredView ?? views[0]?.id ?? null);
 
     // Sources: start every chip on, then turn off the ones the URL names,
     // ignoring any key this graph doesn't have (e.g. a stale link).
@@ -103,6 +112,19 @@ export default function App() {
     if (!data || !currentView) return null;
     return data.meta.viewConfig.views.find((v) => v.id === currentView) ?? null;
   }, [data, currentView]);
+
+  const catalogActive = currentView === CATALOG_TAB;
+
+  // The tab strip: the graph's views, with the synthetic Catalog tab slotted in
+  // just before the generic "Par type (LC)" floor (or appended if there is none).
+  const tabs = useMemo<TabSpec[]>(() => {
+    if (!data) return [];
+    const catalogTab: TabSpec = { id: CATALOG_TAB, label: { fr: t("catalog"), en: t("catalog") } };
+    const views: TabSpec[] = data.meta.viewConfig.views;
+    const genericAt = views.findIndex((v) => v.id === "generic");
+    const at = genericAt === -1 ? views.length : genericAt;
+    return [...views.slice(0, at), catalogTab, ...views.slice(at)];
+  }, [data, t]);
 
   // Stats chips: visible node count, per-taxonomy counts, and edges among visibles.
   const stats = useMemo<StatChip[]>(() => {
@@ -183,7 +205,9 @@ export default function App() {
     setQuery("");
   }, []);
 
-  const ready = g.phase === "ready" && data && model && spec;
+  // The graph is ready once loaded; a graph view additionally needs its spec, but
+  // the Catalog tab renders without one (it fetches its own data).
+  const ready = g.phase === "ready" && data && model && (catalogActive || spec);
   const refreshing = g.phase === "loading" && g.namespaces.length > 0;
 
   return (
@@ -217,35 +241,43 @@ export default function App() {
           <Legend lang={lang} taxonomy={data.meta.taxonomy || []} />
           <ViewTabs
             lang={lang}
-            views={data.meta.viewConfig.views}
+            views={tabs}
             currentView={currentView}
             onSelect={selectView}
           />
-          <SourceFilters
-            lang={lang}
-            sources={data.meta.sources || []}
-            sourceOn={sourceOn}
-            onToggle={toggleSource}
-            onSetAll={setAllSources}
-          />
-          <Toolbar
-            lang={lang}
-            query={query}
-            onQuery={setQuery}
-            onExpandAll={expandAll}
-            onCollapseAll={() => setExpanded(new Set())}
-          />
-          <Tree
-            lang={lang}
-            model={model}
-            spec={spec}
-            sourceOn={sourceOn}
-            expanded={expanded}
-            onToggle={toggleNode}
-            selected={selected}
-            onOpen={openNode}
-            filter={search}
-          />
+          {catalogActive ? (
+            g.currentNs && <CatalogPanel lang={lang} ns={g.currentNs} />
+          ) : (
+            spec && (
+              <>
+                <SourceFilters
+                  lang={lang}
+                  sources={data.meta.sources || []}
+                  sourceOn={sourceOn}
+                  onToggle={toggleSource}
+                  onSetAll={setAllSources}
+                />
+                <Toolbar
+                  lang={lang}
+                  query={query}
+                  onQuery={setQuery}
+                  onExpandAll={expandAll}
+                  onCollapseAll={() => setExpanded(new Set())}
+                />
+                <Tree
+                  lang={lang}
+                  model={model}
+                  spec={spec}
+                  sourceOn={sourceOn}
+                  expanded={expanded}
+                  onToggle={toggleNode}
+                  selected={selected}
+                  onOpen={openNode}
+                  filter={search}
+                />
+              </>
+            )
+          )}
         </div>
       )}
 

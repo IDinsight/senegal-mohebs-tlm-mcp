@@ -38,6 +38,20 @@ All routes are additive; the MCP `/mcp` surface is unchanged. Reads resolve to t
   }
   ```
 
+- `GET /kg/catalog?ns=<namespace>` — **auth-gated**. The reusable-spec libraries visible from that
+  namespace's workspace (the shared cross-tenant library + the workspace's own), for the explorer's
+  **Catalog** tab: `{ scopes: [{ scope, namespace }], entries: [ CatalogEntry ] }`, each entry
+  carrying its `scope` (shared | workspace), `kind` (routine | formatter), name, summary, ordered
+  steps, and material count. Mirrors the MCP `list_catalog` tool, but keyed by namespace (stateless —
+  no `set_context`). `404` for a non-curriculum namespace. The catalog is separate data (the reserved
+  `_catalog` partitions), not part of a graph's nodes/edges — so the Catalog tab is a synthetic tab
+  (client id `__catalog`, slotted before the generic *By type* tab) that renders its own panel, not a
+  `meta.viewConfig` view; it appears only in the live explorer, not the self-contained standalone
+  artifact.
+- `GET /kg/catalog/entry?ns=<namespace>&id=<entryId>` — **auth-gated**. One catalog entry's full
+  authored spec as markdown (`{ id, markdown }`) — the Catalog tab's click-through detail. Mirrors
+  `get_catalog_entry`. `404` when the id isn't an entry in either library.
+
 **Auth** (decision: Supabase login). When `SUPABASE_URL` is set, `/kg/namespaces` and `/kg`
 require a valid Supabase Bearer JWT — the same trust channel as `/mcp`. The static page runs a
 small `supabase-js` email/password login (mirroring `/oauth/consent`) and sends the token. In

@@ -11,12 +11,40 @@ import { listAvailableContexts } from "../context/index.js";
 import { subjectDir, KG_FIXTURE } from "./index.js";
 import { resolveAdapter } from "../adapters/index.js";
 import { serializeModel } from "../curriculum/index.js";
-import { __setKgStoreForTest, createMemoryKgStore, kgNamespace } from "../kg-store/index.js";
-import { exportNamespace } from "../kg-export.js";
-import type { KgNodeStore, StoredMeta } from "../kg-store/index.js";
+import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, edgeId as makeEdgeId } from "../kg-store/index.js";
+import { exportNamespace, exportCatalog, exportCatalogEntry } from "../kg-export.js";
+import { SHARED_CATALOG_NAMESPACE, catalogNamespace } from "../kg-recipes/index.js";
+import { DEFAULT_WORKSPACE } from "../config.js";
+import type { KgNodeStore, StoredMeta, StoredNode, StoredEdge } from "../kg-store/index.js";
 
 const priorEnv = process.env.KG_SOURCE;
 const contexts = listAvailableContexts();
+
+// A small catalog fixture in store shape (non-spine; LC props under properties.raw)
+// for one catalog namespace: root ─hasPart→ {a routine entry with 2 steps, a formatter}.
+async function seedCatalog(store: KgNodeStore, namespace: string): Promise<void> {
+  const node = (id: string, label: string, raw: Record<string, unknown>): Omit<StoredNode, "slot"> =>
+    ({ id, type: label, namespace, labels: [label], spine: false, properties: { raw } });
+  const edge = (from: string, to: string): Omit<StoredEdge, "slot"> =>
+    ({ id: makeEdgeId("hasPart", from, to), type: "hasPart", from, to, namespace, properties: {} });
+  const p = namespace.replace(/[^a-z]/gi, "").slice(-6); // per-namespace id prefix so shared/workspace ids don't collide
+  const nodes = [
+    node(`${p}-root`, "InstructionalRoutine", { description: "Library" }),
+    node(`${p}-entry`, "InstructionalRoutine", { description: "Fiche de leçon", metadata: { summary: "French only" } }),
+    node(`${p}-s1`, "InstructionalRoutine", { description: "Déclencheur", position: 1, timeRequired: "PT4M" }),
+    node(`${p}-s2`, "InstructionalRoutine", { description: "Modelage", position: 2 }),
+    node(`${p}-m1`, "Material", { content: "corps déclencheur" }),
+    node(`${p}-fmt`, "InstructionalRoutine", { description: "House style", metadata: { catalogKind: "formatter" } }),
+    node(`${p}-fmt-spec`, "Material", { content: "palette + fonts" }),
+  ];
+  const edges = [
+    edge(`${p}-root`, `${p}-entry`), edge(`${p}-entry`, `${p}-s1`), edge(`${p}-entry`, `${p}-s2`), edge(`${p}-s1`, `${p}-m1`),
+    edge(`${p}-root`, `${p}-fmt`), edge(`${p}-fmt`, `${p}-fmt-spec`),
+  ];
+  const meta: StoredMeta = { contentHash: "t", seededAt: "1970-01-01T00:00:00Z", adapterId: "catalog", nodeCount: nodes.length, edgeCount: edges.length };
+  await store.writeSlot(namespace, "a", { nodes, edges, meta });
+  await store.ensurePointer(namespace, "a");
+}
 
 async function seed(): Promise<KgNodeStore> {
   const store = createMemoryKgStore();
@@ -30,6 +58,9 @@ async function seed(): Promise<KgNodeStore> {
     await store.writeSlot(ns, "a", { nodes, edges, meta });
     await store.ensurePointer(ns, "a");
   }
+  // Both libraries the Catalog tab reads: the shared one and the default workspace's.
+  await seedCatalog(store, SHARED_CATALOG_NAMESPACE);
+  await seedCatalog(store, catalogNamespace(DEFAULT_WORKSPACE));
   return store;
 }
 
@@ -194,6 +225,48 @@ describe("kg-export — LC ontology (maths)", () => {
     expect((lesson as Record<string, unknown>).dom).toBeUndefined();
     expect((lesson as Record<string, unknown>).pal).toBeUndefined();
     expect((lesson as Record<string, unknown>).strand).toBeUndefined();
+  });
+});
+
+// The Catalog tab's backend: exportCatalog reads BOTH libraries visible from a
+// curriculum namespace (shared + that workspace's own), and exportCatalogEntry
+// renders one entry's full spec as markdown.
+describe("kg-export — catalog", () => {
+  it("returns both scopes' entries, each tagged with scope + kind + outline", async () => {
+    const catalog = (await exportCatalog(mathsNs))!;
+    expect(catalog).toBeTruthy();
+    // Two libraries: shared + the maths namespace's workspace.
+    expect(catalog.scopes.map((s) => s.scope).sort()).toEqual(["shared", "workspace"]);
+    expect(catalog.scopes.some((s) => s.namespace === SHARED_CATALOG_NAMESPACE)).toBe(true);
+
+    const shared = catalog.entries.filter((e) => e.scope === "shared");
+    const workspace = catalog.entries.filter((e) => e.scope === "workspace");
+    expect(shared.length).toBe(2);    // a routine + a formatter
+    expect(workspace.length).toBe(2);
+
+    const routine = shared.find((e) => e.kind === "routine")!;
+    expect(routine.name).toBe("Fiche de leçon");
+    expect(routine.summary).toBe("French only");
+    expect(routine.steps.map((s) => s.name)).toEqual(["Déclencheur", "Modelage"]); // ordered by position
+    expect(routine.materialCount).toBe(1);
+
+    const formatter = shared.find((e) => e.kind === "formatter")!;
+    expect(formatter.name).toBe("House style");
+    expect(formatter.steps).toEqual([]);  // a formatter's Materials are spec, not steps
+  });
+
+  it("renders one entry's full authored spec as markdown; unknown id → null", async () => {
+    const catalog = (await exportCatalog(mathsNs))!;
+    const routine = catalog.entries.find((e) => e.scope === "shared" && e.kind === "routine")!;
+    const md = await exportCatalogEntry(mathsNs, routine.id);
+    expect(md).toContain("# Fiche de leçon");
+    expect(md).toContain("## Déclencheur");
+    expect(md).toContain("corps déclencheur");
+    expect(await exportCatalogEntry(mathsNs, "no-such-entry")).toBeNull();
+  });
+
+  it("returns null for a namespace that isn't a curriculum context", async () => {
+    expect(await exportCatalog(SHARED_CATALOG_NAMESPACE)).toBeNull();
   });
 });
 
