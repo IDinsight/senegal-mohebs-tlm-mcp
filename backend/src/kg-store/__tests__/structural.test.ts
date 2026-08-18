@@ -219,6 +219,25 @@ describe("link_nodes", () => {
     expect(blocked.errors.some((e) => e.includes("not a known edge type"))).toBe(true);
   });
 
+  it("accepts a canonical edge type the namespace has none of yet (bootstrap)", async () => {
+    // ce1/reading carries zero `usesRoutine` edges, so the old observed-only
+    // gate rejected the FIRST one. `usesRoutine` is canonical LC, so the gate's
+    // canonical floor now lets it through even with no example to observe.
+    const readingNs = kgNamespace("ce1", "reading");
+    const graph = await readSlotGraph(readingNs, (await store.readPointer(readingNs))!.publishedSlot);
+    expect(graph.edges.some((e) => e.type === "usesRoutine")).toBe(false); // precondition: none present
+    const [from, to] = [graph.nodes[0], graph.nodes[1]];
+
+    const preview = await runGraphMutation({
+      namespace: readingNs, mutation: linkNodes,
+      args: { edgeType: "usesRoutine", fromId: from.id, toId: to.id, properties: {}, namespace: readingNs },
+    });
+    // The point of the test: not blocked on the known-edge-type check.
+    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
+    const newId = makeEdgeId("usesRoutine", from.id, to.id);
+    expect(preview.diff.edges.added.map((e) => e.id)).toContain(newId);
+  });
+
   it("rejects a duplicate edge (same type, from, to already exists)", async () => {
     const graph = await readPublishedGraph(ns);
     // Any existing hasChild edge is a valid duplicate target.

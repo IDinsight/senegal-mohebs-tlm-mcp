@@ -30,8 +30,10 @@
  *     that Rule 2 wouldn't catch on its own, so we block early. To
  *     genuinely introduce a new kind, a future step would add a schema
  *     hook to the adapter.
- *   • link_nodes's `edgeType` must be an edge type already present.
- *     Rejects "hasLesson" / "supports" / other invented type strings.
+ *   • link_nodes's `edgeType` must be either a canonical LC edge type
+ *     (CANONICAL_EDGE_TYPES) or one already present in the namespace — so
+ *     the first edge of a canonical type is creatable in a namespace that
+ *     has none yet, while invented strings like "hasLesson" are rejected.
  *     Does NOT enforce domain/range (e.g. hasChild(task→chapter) passes
  *     these checks even though it's semantically nonsense) — that judgment
  *     is deferred to human review at publish, as the task specifies.
@@ -43,7 +45,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { edgeId } from "./types.js";
+import { CANONICAL_EDGE_TYPES, edgeId } from "./types.js";
 import type { MutationEdge, MutationGraph, MutationNode } from "./types.js";
 import type { GraphMutation } from "./mutations.js";
 
@@ -53,9 +55,13 @@ import type { GraphMutation } from "./mutations.js";
 const observedKinds = (base: MutationGraph): Set<string> =>
   new Set(base.nodes.map((n) => n.type));
 
-// The set of edge types currently observed in `base`. Used by link_nodes.
-const observedEdgeTypes = (base: MutationGraph): Set<string> =>
-  new Set(base.edges.map((e) => e.type));
+// The edge types link_nodes will accept: every canonical LC type (so the FIRST
+// edge of a canonical type is creatable in a namespace that has none yet) plus
+// any non-canonical type already observed in `base` (a namespace may carry
+// pre-existing off-canon edges we still let a curator extend). Invented typos
+// like "hasLesson" are in neither set, so they're still rejected.
+const allowedEdgeTypes = (base: MutationGraph): Set<string> =>
+  new Set([...CANONICAL_EDGE_TYPES, ...base.edges.map((e) => e.type)]);
 
 // ── create_node ──────────────────────────────────────────────────────────────
 // Mints a fresh randomUUID for the new node's id and adds one node to the
@@ -168,9 +174,10 @@ export const linkNodes: GraphMutation<LinkNodesArgs> = {
     if (!nodeIds.has(args.toId))
       errors.push(`link_nodes: 'to' node '${args.toId}' does not exist in the draft.`);
 
-    // Known-edge-type check (F3 decision). Rejects "hasLesson" / "supports" /
-    // other invented type strings. Does NOT enforce domain/range.
-    const knownTypes = observedEdgeTypes(base);
+    // Known-edge-type check (F3 decision). Rejects invented type strings like
+    // "hasLesson". Accepts any canonical LC type plus any type already observed
+    // here. Does NOT enforce domain/range.
+    const knownTypes = allowedEdgeTypes(base);
     if (!knownTypes.has(args.edgeType)) {
       errors.push(
         `link_nodes: edge type '${args.edgeType}' is not a known edge type on this namespace. ` +
