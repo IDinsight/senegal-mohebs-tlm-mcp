@@ -74,6 +74,24 @@ export const otherSlot = (s: Slot): Slot => (s === "a" ? "b" : "a");
 // mutual import previously formed a cycle through the kg-store barrel.
 export const edgeId = (type: string, from: string, to: string) => `${type}:${from}->${to}`;
 
+// The canonical Learning-Commons relationship vocabulary — every edge type the
+// ontology defines (see docs/reference/learning-commons/relationships.md). It is
+// the FLOOR for link_nodes' known-edge-type gate: an edge type is creatable when
+// it is canonical OR already present in the namespace. Without this, a namespace
+// could never create the FIRST edge of a type it doesn't yet have (e.g. reading
+// had zero `usesRoutine` edges, so `usesRoutine` was rejected there while
+// ci/maths accepted it). The gate still rejects invented types like "hasLesson".
+export const CANONICAL_EDGE_TYPES: ReadonlySet<string> = new Set([
+  "hasChild",                 // standards tree: SFI parent → child
+  "hasPart",                  // content tree: compositional nesting
+  "supports",                 // LearningComponent → SFI
+  "hasEducationalAlignment",  // content → SFI (the only content→standards bridge)
+  "relatesTo",                // SFI ↔ SFI, non-directional
+  "buildsTowards",            // SFI → SFI, directional progression
+  "hasDependency",            // content → content prerequisite
+  "usesRoutine",              // Course/Lesson/Activity → InstructionalRoutine
+]);
+
 // Input shape for writeSlot. `slot` is added by the store at write time — the
 // caller passes the logical graph, not the wire representation.
 export type SlotWriteBatch = {
