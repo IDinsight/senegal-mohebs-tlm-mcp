@@ -76,6 +76,23 @@ describe("listCatalogEntries", () => {
     const loose: MutationGraph = { nodes: [routine("a", { description: "A" }), routine("b", { description: "B" })], edges: [] };
     expect(listCatalogEntries(loose, "shared")).toEqual([]);
   });
+
+  it("classifies a formatter by metadata — catalogKind OR role:formatter, else routine", () => {
+    // Three sibling entries under one root: a seeded-style formatter (catalogKind), an
+    // author-built formatter that overloads role:"formatter" (no catalogKind — the bug
+    // these lists mis-read as routines), and a plain routine (role:instructional-routine).
+    const g: MutationGraph = {
+      nodes: [
+        routine("root", { description: "Routine library" }),
+        routine("fmt-kind", { description: "Seeded formatter", metadata: { role: "instructional-routine", catalogKind: "formatter" } }),
+        routine("fmt-role", { description: "Authored formatter", metadata: { role: "formatter" } }),
+        routine("plain", { description: "A routine", metadata: { role: "instructional-routine" } }),
+      ],
+      edges: [hasPart("root", "fmt-kind"), hasPart("root", "fmt-role"), hasPart("root", "plain")],
+    };
+    const kindById = Object.fromEntries(listCatalogEntries(g, "workspace").map((e) => [e.id, e.kind]));
+    expect(kindById).toEqual({ "fmt-kind": "formatter", "fmt-role": "formatter", plain: "routine" });
+  });
 });
 
 describe("renderCatalogEntry", () => {
@@ -115,6 +132,22 @@ describe("renderCatalogEntry", () => {
     expect(md).toContain("formatter · workspace catalog");
     expect(md).toContain("Apply everywhere.");
     expect(md).toContain("Palette: green.");
+  });
+
+  it("labels a role:formatter entry as a formatter in the header (get_catalog_entry path)", () => {
+    // Same fix as listCatalogEntries: an author-built formatter tags role:"formatter"
+    // (no catalogKind), so its detail header must read "formatter", not "routine".
+    const g: MutationGraph = {
+      nodes: [
+        routine("root", { description: "Routine library" }),
+        routine("fmt", { description: "House style", metadata: { role: "formatter", summary: "Apply everywhere." } }),
+        material("spec", { content: "Palette: green." }),
+      ],
+      edges: [hasPart("root", "fmt"), hasPart("fmt", "spec")],
+    };
+    const md = renderCatalogEntry(g, "fmt", "workspace")!;
+    expect(md).toContain("formatter · workspace catalog");
+    expect(md).toContain("Palette: green.");   // its spec Material renders (not treated as a step)
   });
 
   it("returns null for an unknown id or a non-routine node", () => {

@@ -71,8 +71,14 @@ const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const num = (v: unknown): number | undefined => (typeof v === "number" ? v : undefined);
 
 // An entry's kind is tagged in metadata; entries with no tag are routines (the
-// original kind, and how the already-seeded shared library reads).
-const kindOf = (n: MutationNode): CatalogKind => (metaOf(n).catalogKind === "formatter" ? "formatter" : "routine");
+// original kind, and how the already-seeded shared library reads). Two tags mean
+// formatter: `catalogKind:"formatter"` (how the seeded shared formatters are stamped)
+// and `role:"formatter"` (how an author who built one via add_nodes tags it — there is
+// no "Formatter" LC label to reach for, so the author overloads role). Either counts.
+const kindOf = (n: MutationNode): CatalogKind => {
+  const meta = metaOf(n);
+  return meta.catalogKind === "formatter" || meta.role === "formatter" ? "formatter" : "routine";
+};
 
 // A step's ordinal comes from raw.position or raw.metadata.order (CI maths writes
 // both); fall back to 0 so a malformed step still lists in a stable place.
