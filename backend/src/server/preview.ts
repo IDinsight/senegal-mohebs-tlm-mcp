@@ -28,6 +28,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { asJson, guarded } from "./shared.js";
+import { timed, timedSync } from "../utils/index.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor } from "../kg-store/index.js";
@@ -51,15 +52,15 @@ export async function resolveDraftModel(
   const store = getKgStore();
   const pointer = await store.readPointer(ns);
   if (!pointer || !pointer.draftSlot) return null;
-  const [nodes, edges, meta] = await Promise.all([
-    store.listNodes(ns, pointer.draftSlot),
-    store.listEdges(ns, pointer.draftSlot),
-    store.readMeta(ns, pointer.draftSlot),
-  ]);
+  const [nodes, edges, meta] = await timed("draftRead.readGraph", () => Promise.all([
+    store.listNodes(ns, pointer.draftSlot!),
+    store.listEdges(ns, pointer.draftSlot!),
+    store.readMeta(ns, pointer.draftSlot!),
+  ]));
   return {
     // Same full-graph hydration as activate.ts: rebuild the LC envelope from the
     // draft slot and run the active adapter's parser to derive the spine model.
-    model: getActiveAdapter().parse(toRawEnvelope({ nodes, edges })),
+    model: timedSync("draftRead.parse", () => getActiveAdapter().parse(toRawEnvelope({ nodes, edges }))),
     draftSlot: pointer.draftSlot,
     draftVersion: meta?.contentHash ?? null,
   };
