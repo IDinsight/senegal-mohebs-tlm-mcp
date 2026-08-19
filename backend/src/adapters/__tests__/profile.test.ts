@@ -11,9 +11,9 @@
 import { describe, it, expect } from "vitest";
 import { validateProfile, type SubjectProfile } from "../profile.js";
 import { buildAdapterFromProfile } from "../build.js";
-import { CI_MATHS_PROFILE } from "../profiles/ci-maths.js";
-import { CE1_READING_PROFILE } from "../profiles/ce1-reading.js";
-import { NIGERIA_MATHS_PROFILE } from "../profiles/nigeria-maths.js";
+import { CI_MATHS_PROFILE } from "../profiles/senegal/ci-maths.js";
+import { CE1_READING_PROFILE } from "../profiles/senegal/ce1-reading.js";
+import { NIGERIA_MATHS_PROFILE } from "../profiles/nigeria/primary-1-3-maths.js";
 
 describe("SubjectProfile validation", () => {
   it("accepts every shipped profile", () => {

@@ -70,19 +70,19 @@ let config;
 if (profilePath) {
   config = JSON.parse(readFileSync(resolve(profilePath), "utf8"));
 } else {
-  const core = getRegisteredProfile(grade, subject);
+  const core = getRegisteredProfile(workspace, grade, subject);
   if (!core) {
-    console.error(`write-profile: no in-repo profile for '${grade}/${subject}'. Pass --profile <path>.`);
+    console.error(`write-profile: no in-repo profile for '${workspace}/${grade}/${subject}'. Pass --profile <path>.`);
     process.exit(1);
   }
-  const guide = getRegisteredGuide(grade, subject);
+  const guide = getRegisteredGuide(workspace, grade, subject);
   config = guide !== undefined ? { core, guide } : { core };
 }
 
 // Validate exactly as the server does on activation, so we never write a cell
 // that would refuse to activate.
 try {
-  buildAdapterFromStoredProfile(grade, subject, config);
+  buildAdapterFromStoredProfile(workspace, grade, subject, config);
 } catch (e) {
   console.error(`write-profile: REFUSED — config would not activate: ${(e && e.message) || e}`);
   process.exit(2);

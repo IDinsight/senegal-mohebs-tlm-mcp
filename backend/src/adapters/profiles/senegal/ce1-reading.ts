@@ -8,7 +8,7 @@
  * prune); everything else is dropped to keep the store lean. See
  * docs/design-notes/graph-native-authoring.md (Scope B/C).
  */
-import type { SubjectProfile } from "../profile.js";
+import type { SubjectProfile } from "../../profile.js";
 
 export const CE1_READING_PROFILE: SubjectProfile = {
   id: "ce1-reading/nodes-relationships-v1",

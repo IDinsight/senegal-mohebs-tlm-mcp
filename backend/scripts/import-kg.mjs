@@ -51,9 +51,9 @@ if (positional.length !== 4) {
 }
 const [workspace, grade, subject, graphPath] = positional;
 
-const adapter = resolveAdapter(grade, subject);
+const adapter = resolveAdapter(workspace, grade, subject);
 if (!adapter) {
-  console.error(`import-kg: no subject adapter registered for '${grade}/${subject}'. Add its profile under src/adapters/profiles/ first.`);
+  console.error(`import-kg: no subject adapter registered for '${workspace}/${grade}/${subject}'. Add its profile under src/adapters/profiles/ first.`);
   process.exit(1);
 }
 
@@ -70,8 +70,8 @@ let config;
 if (profilePath) {
   config = JSON.parse(readFileSync(resolve(profilePath), "utf8"));
 } else {
-  const core = getRegisteredProfile(grade, subject);
-  const guide = getRegisteredGuide(grade, subject);
+  const core = getRegisteredProfile(workspace, grade, subject);
+  const guide = getRegisteredGuide(workspace, grade, subject);
   config = guide !== undefined ? { core, guide } : { core };
 }
 

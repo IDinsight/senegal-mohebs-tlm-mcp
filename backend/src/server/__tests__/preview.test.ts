@@ -69,7 +69,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(grade, subject);
+    const adapter = resolveAdapter(workspace, grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
     const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length };
@@ -156,7 +156,7 @@ describe("draft-resolved preview reflects a staged edit; published generation do
 
     // The chapter's published ordinal, straight from the published subtree.
     const publishedBefore = await withCtx(CURATOR, async () => {
-      const adapter = resolveAdapter(ctx.grade, ctx.subject)!;
+      const adapter = resolveAdapter(ctx.workspace, ctx.grade, ctx.subject)!;
       return courseSubgraph(adapter.model(), course.id)!;
     }) as { nodes: Array<{ id: string; properties: any }> };
     const originalPosition = publishedBefore.nodes.find((n) => n.id === chapter.id)!.properties.position as number;
@@ -172,7 +172,7 @@ describe("draft-resolved preview reflects a staged edit; published generation do
     // Published read (courseSubgraph on the published model) still shows the old
     // ordinal — the staged reposition never reached published.
     const published = await withCtx(CURATOR, async () => {
-      const adapter = resolveAdapter(ctx.grade, ctx.subject)!;
+      const adapter = resolveAdapter(ctx.workspace, ctx.grade, ctx.subject)!;
       return courseSubgraph(adapter.model(), course.id)!;
     }) as { nodes: Array<{ id: string; properties: any }> };
     const pubNode = published.nodes.find((n) => n.id === chapter.id)!;

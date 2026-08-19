@@ -7,8 +7,9 @@
  * module (this directory) exposing behavior for the whole read path.
  *
  * Resolution is many-to-one capable by construction: the registry is keyed on
- * `${grade}/${subject}` (grade × subject, not just subject — different grades
- * of the "same" subject may need different adapters when their graphs differ),
+ * `${workspace}/${grade}/${subject}` (workspace × grade × subject — the workspace
+ * is part of the key because two tenants can own the "same" grade/subject with
+ * genuinely different graphs, e.g. Nigeria and Rwanda both at `primary-1-3/maths`),
  * and multiple keys may point at the same builder when their graphs happen to
  * share a shape.
  *
@@ -25,9 +26,14 @@ import { validateProfile, validateProfileRecord, type SubjectProfile } from "./p
 // edit_profile server tool) reach it through this barrel, per the layering rule.
 export { validateProfile, validateProfileRecord, MAX_GUIDE_CHARS } from "./profile.js";
 export type { SubjectProfile, ProfileRecord } from "./profile.js";
-import { CI_MATHS_PROFILE, CI_MATHS_GUIDE } from "./profiles/ci-maths.js";
-import { CE1_READING_PROFILE, CE1_READING_GUIDE } from "./profiles/ce1-reading.js";
-import { NIGERIA_MATHS_PROFILE, NIGERIA_MATHS_GUIDE } from "./profiles/nigeria-maths.js";
+import { CI_MATHS_PROFILE, CI_MATHS_GUIDE } from "./profiles/senegal/ci-maths.js";
+import { CE1_READING_PROFILE, CE1_READING_GUIDE } from "./profiles/senegal/ce1-reading.js";
+import { NIGERIA_MATHS_PROFILE, NIGERIA_MATHS_GUIDE } from "./profiles/nigeria/primary-1-3-maths.js";
+import { CBSE_SCIENCE_PROFILE, CBSE_SCIENCE_GUIDE } from "./profiles/cbse/class-9-10-science.js";
+import { GHANA_ENGLISH_PROFILE, GHANA_ENGLISH_GUIDE } from "./profiles/ghana/basic-1-3-english.js";
+import { GHANA_MATHS_PROFILE, GHANA_MATHS_GUIDE } from "./profiles/ghana/basic-4-6-maths.js";
+import { MADHI_MATHS_PROFILE, MADHI_MATHS_GUIDE } from "./profiles/madhi/class-1-5-maths.js";
+import { RWANDA_MATHS_PROFILE, RWANDA_MATHS_GUIDE } from "./profiles/rwanda/primary-1-3-maths.js";
 
 // Registry: (grade/subject) → subject PROFILE (data). A subject is added by
 // authoring a profile literal and registering it here — no per-subject behavior
@@ -40,39 +46,49 @@ import { NIGERIA_MATHS_PROFILE, NIGERIA_MATHS_GUIDE } from "./profiles/nigeria-m
 // (unsupported), rather than silently mis-handled.
 const PROFILES: Record<string, SubjectProfile> = Object.fromEntries(
   Object.entries({
-    "ci/maths": CI_MATHS_PROFILE,
-    "ce1/reading": CE1_READING_PROFILE,
-    // Nigeria NERDC maths spans Primary 1–3 in one framework, so its grade
-    // segment is the combined "primary-1-3" (see sources/nigeria/).
-    "primary-1-3/maths": NIGERIA_MATHS_PROFILE,
+    "senegal/ci/maths": CI_MATHS_PROFILE,
+    "senegal/ce1/reading": CE1_READING_PROFILE,
+    "nigeria/primary-1-3/maths": NIGERIA_MATHS_PROFILE,
+    "cbse/class-9-10/science": CBSE_SCIENCE_PROFILE,
+    "ghana/basic-1-3/english": GHANA_ENGLISH_PROFILE,
+    "ghana/basic-4-6/maths": GHANA_MATHS_PROFILE,
+    "madhi/class-1-5/maths": MADHI_MATHS_PROFILE,
+    // Rwanda shares primary-1-3/maths with Nigeria — distinguished only by the
+    // workspace segment of the key (the reason the registry is workspace-keyed).
+    "rwanda/primary-1-3/maths": RWANDA_MATHS_PROFILE,
   }).map(([key, profile]) => [key, validateProfile(profile, `profile for ${key}`)]),
 );
 
 // Many-to-one is supported by construction: two keys may share one profile when
 // their graphs have the same shape, and the builder still stamps each with its
 // own (grade, subject) identity.
-export function resolveAdapter(grade: string, subject: string): SubjectAdapter | null {
-  const profile = PROFILES[`${grade}/${subject}`];
+export function resolveAdapter(workspace: string, grade: string, subject: string): SubjectAdapter | null {
+  const profile = PROFILES[`${workspace}/${grade}/${subject}`];
   return profile ? buildAdapterFromProfile(profile, grade, subject) : null;
 }
 
-// The in-repo profile CORE for a (grade, subject), already validated at load.
-// This is the seed's SOURCE for the machine core and the fallback the firestore
-// path uses for a namespace seeded before the config layer existed (no cell yet).
-export function getRegisteredProfile(grade: string, subject: string): SubjectProfile | null {
-  return PROFILES[`${grade}/${subject}`] ?? null;
+// The in-repo profile CORE for a (workspace, grade, subject), already validated at
+// load. This is the seed's SOURCE for the machine core and the fallback the
+// firestore path uses for a namespace seeded before the config layer existed.
+export function getRegisteredProfile(workspace: string, grade: string, subject: string): SubjectProfile | null {
+  return PROFILES[`${workspace}/${grade}/${subject}`] ?? null;
 }
 
 // The in-repo GRAPH GUIDE (authored markdown, phase 2c) for a (grade, subject),
 // or undefined when the subject ships without one yet. The seed writes it into
 // the config cell alongside the core; the guide is for the LLM, never for reads.
 const GUIDES: Record<string, string> = {
-  "ci/maths": CI_MATHS_GUIDE,
-  "ce1/reading": CE1_READING_GUIDE,
-  "primary-1-3/maths": NIGERIA_MATHS_GUIDE,
+  "senegal/ci/maths": CI_MATHS_GUIDE,
+  "senegal/ce1/reading": CE1_READING_GUIDE,
+  "nigeria/primary-1-3/maths": NIGERIA_MATHS_GUIDE,
+  "cbse/class-9-10/science": CBSE_SCIENCE_GUIDE,
+  "ghana/basic-1-3/english": GHANA_ENGLISH_GUIDE,
+  "ghana/basic-4-6/maths": GHANA_MATHS_GUIDE,
+  "madhi/class-1-5/maths": MADHI_MATHS_GUIDE,
+  "rwanda/primary-1-3/maths": RWANDA_MATHS_GUIDE,
 };
-export function getRegisteredGuide(grade: string, subject: string): string | undefined {
-  return GUIDES[`${grade}/${subject}`];
+export function getRegisteredGuide(workspace: string, grade: string, subject: string): string | undefined {
+  return GUIDES[`${workspace}/${grade}/${subject}`];
 }
 
 // Build an adapter from a profile record READ FROM THE STORE (phase 2b/2c)
@@ -82,16 +98,16 @@ export function getRegisteredGuide(grade: string, subject: string): string | und
 // load-time registry uses to the CORE. The adapter is built from the core only —
 // the guide never touches the read path. A malformed core throws a readable
 // error here (surfaced by activate.ts as a refuse-to-load).
-export function buildAdapterFromStoredProfile(grade: string, subject: string, raw: unknown): SubjectAdapter {
-  const { core } = validateProfileRecord(raw, `stored profile for ${grade}/${subject}`);
+export function buildAdapterFromStoredProfile(workspace: string, grade: string, subject: string, raw: unknown): SubjectAdapter {
+  const { core } = validateProfileRecord(raw, `stored profile for ${workspace}/${grade}/${subject}`);
   return buildAdapterFromProfile(core, grade, subject);
 }
 
-// Test-only surface: register a profile against an arbitrary (grade, subject)
-// key. Used by the many-to-one resolution test to prove two keys can share one
-// profile without shipping a synthetic subject in production.
-export function __registerProfileForTest(grade: string, subject: string, profile: SubjectProfile | null) {
-  const key = `${grade}/${subject}`;
+// Test-only surface: register a profile against an arbitrary (workspace, grade,
+// subject) key. Used by the many-to-one resolution test to prove two keys can
+// share one profile without shipping a synthetic subject in production.
+export function __registerProfileForTest(workspace: string, grade: string, subject: string, profile: SubjectProfile | null) {
+  const key = `${workspace}/${grade}/${subject}`;
   if (profile === null) delete PROFILES[key];
   else PROFILES[key] = profile;
 }

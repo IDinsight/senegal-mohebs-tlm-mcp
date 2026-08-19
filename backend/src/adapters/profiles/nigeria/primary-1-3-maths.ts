@@ -10,7 +10,7 @@
  * traversal order. No deliverables or coverage — a reference framework has
  * nothing to complete.
  */
-import type { SubjectProfile } from "../profile.js";
+import type { SubjectProfile } from "../../profile.js";
 
 export const NIGERIA_MATHS_PROFILE: SubjectProfile = {
   id: "nigeria-maths/lc-graph-v2",

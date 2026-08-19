@@ -58,7 +58,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(grade, subject);
+    const adapter = resolveAdapter(workspace, grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
     const meta: StoredMeta = {
@@ -269,7 +269,7 @@ describe("parity — force work does not leak into published reads", () => {
         if (!activation.ok) {
           throw new Error(activation.error);
         }
-        const adapter = resolveAdapter(targetCtx.grade, targetCtx.subject)!;
+        const adapter = resolveAdapter(targetCtx.workspace, targetCtx.grade, targetCtx.subject)!;
         return { nodes: [...adapter.model().byId.keys()].sort() };
       });
     }

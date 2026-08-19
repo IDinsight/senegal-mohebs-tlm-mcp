@@ -33,7 +33,7 @@ const CURATOR: Actor = { id: "curator-uid", email: "curator@test", role: "curato
 const priorEnv = process.env.KG_SOURCE;
 let store: KgNodeStore;
 const ns = kgNamespace("ci", "maths");
-const adapter = () => resolveAdapter("ci", "maths")!;
+const adapter = () => resolveAdapter("senegal", "ci", "maths")!;
 
 // A catalog fixture in store shape (non-spine: LC props under properties.raw):
 // root ─hasPart→ entry ─hasPart→ {s1 ─hasPart→ m1, s2 ─hasPart→ m2}.
@@ -74,7 +74,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
   for (const { workspace, grade, subject } of listAvailableContexts()) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const a = resolveAdapter(grade, subject);
+    const a = resolveAdapter(workspace, grade, subject);
     if (!a) continue;
     const { nodes, edges } = serializeModel(a.parse(raw), kgNamespace(grade, subject));
     const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: a.id, nodeCount: nodes.length, edgeCount: edges.length };

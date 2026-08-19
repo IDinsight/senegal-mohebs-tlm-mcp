@@ -43,13 +43,13 @@ const priorEnv = process.env.KG_SOURCE;
 let store: KgNodeStore;
 const contexts = listAvailableContexts();
 const ns = kgNamespace("ci", "maths");
-const adapter = () => resolveAdapter("ci", "maths")!;
+const adapter = () => resolveAdapter("senegal", "ci", "maths")!;
 
 async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const subjectAdapter = resolveAdapter(grade, subject);
+    const subjectAdapter = resolveAdapter(workspace, grade, subject);
     if (!subjectAdapter) continue;
     const { nodes, edges } = serializeModel(subjectAdapter.parse(raw), kgNamespace(grade, subject));
     const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: subjectAdapter.id, nodeCount: nodes.length, edgeCount: edges.length };
