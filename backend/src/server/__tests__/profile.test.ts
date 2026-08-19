@@ -41,9 +41,9 @@ const contexts = listAvailableContexts();
 const maths = contexts.find((c) => c.grade === "ci" && c.subject === "maths")!;
 const reading = contexts.find((c) => c.grade === "ce1" && c.subject === "reading")!;
 
-const recordOf = (grade: string, subject: string): StoredConfig => {
-  const core = getRegisteredProfile(grade, subject);
-  const guide = getRegisteredGuide(grade, subject);
+const recordOf = (workspace: string, grade: string, subject: string): StoredConfig => {
+  const core = getRegisteredProfile(workspace, grade, subject);
+  const guide = getRegisteredGuide(workspace, grade, subject);
   return guide !== undefined ? { core, guide } : { core };
 };
 
@@ -51,13 +51,13 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const c of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(c.workspace, c.grade, c.subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(c.grade, c.subject);
+    const adapter = resolveAdapter(c.workspace, c.grade, c.subject);
     if (!adapter) continue;
     const nsC = kgNamespace(c.workspace, c.grade, c.subject);
     const { nodes, edges } = serializeModel(adapter.parse(raw), nsC);
     const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length };
     await freshStore.writeSlot(nsC, "a", { nodes, edges, meta });
-    if (getRegisteredProfile(c.grade, c.subject)) await freshStore.writeConfig(nsC, "a", recordOf(c.grade, c.subject));
+    if (getRegisteredProfile(c.workspace, c.grade, c.subject)) await freshStore.writeConfig(nsC, "a", recordOf(c.workspace, c.grade, c.subject));
     await freshStore.ensurePointer(nsC, "a");
   }
   return freshStore;
@@ -120,7 +120,7 @@ describe("firestore mode", () => {
 
   it("edit_profile dry-run previews a change (curator)", async () => {
     await inContext(maths, CURATOR, async () => {
-      const rec = { core: getRegisteredProfile("ci", "maths"), guide: "# edited" };
+      const rec = { core: getRegisteredProfile("senegal", "ci", "maths"), guide: "# edited" };
       const res = await runEditProfile(rec as Record<string, unknown>) as { phase: string };
       expect(res.phase).toBe("preview");
     });

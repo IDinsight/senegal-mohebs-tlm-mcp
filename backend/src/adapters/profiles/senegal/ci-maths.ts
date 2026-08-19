@@ -9,7 +9,7 @@
  * rules were retired in phase 2c, so expectations live in the guide's prose. See
  * docs/design-notes/graph-native-authoring.md.
  */
-import type { SubjectProfile } from "../profile.js";
+import type { SubjectProfile } from "../../profile.js";
 
 export const CI_MATHS_PROFILE: SubjectProfile = {
   id: "ci-maths/nodes-relationships-v1",

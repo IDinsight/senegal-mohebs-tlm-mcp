@@ -237,7 +237,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(grade, subject);
+    const adapter = resolveAdapter(workspace, grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
     const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length };

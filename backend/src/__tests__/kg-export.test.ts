@@ -50,7 +50,7 @@ async function seed(): Promise<KgNodeStore> {
   const store = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(grade, subject);
+    const adapter = resolveAdapter(workspace, grade, subject);
     if (!adapter) continue;
     const ns = kgNamespace(grade, subject);
     const { nodes, edges } = serializeModel(adapter.parse(raw), ns);

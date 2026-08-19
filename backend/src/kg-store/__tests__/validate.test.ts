@@ -182,7 +182,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(grade, subject);
+    const adapter = resolveAdapter(workspace, grade, subject);
     if (!adapter) continue;
 
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(workspace, grade, subject));
@@ -334,7 +334,7 @@ describe("write-safety rules through the mutation framework", () => {
         const { activateContext } = await import("../../activate.js");
         const activation = await activateContext(firstCtx.workspace, firstCtx.grade, firstCtx.subject);
         if (!activation.ok) throw new Error(activation.error);
-        const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
+        const adapter = resolveAdapter(firstCtx.workspace, firstCtx.grade, firstCtx.subject)!;
         return { nodes: [...adapter.model().byId.keys()].sort() };
       });
     }

@@ -46,7 +46,7 @@ const contexts = listAvailableContexts();
 const targetCtx = contexts.find((c) => c.grade === "ci" && c.subject === "maths")!;
 const ns = kgNamespace(targetCtx.grade, targetCtx.subject);        // senegal/ci/maths (2-arg → DEFAULT_WORKSPACE)
 const wsCatalogNs = catalogNamespace("senegal");                   // the senegal workspace library
-const adapter = () => resolveAdapter("ci", "maths")!;
+const adapter = () => resolveAdapter("senegal", "ci", "maths")!;
 
 // Seed a minimal catalog (a root container + optionally one entry) into `namespace`.
 async function seedCatalog(s: KgNodeStore, namespace: string, rootId: string, withEntry: boolean) {
@@ -66,7 +66,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const s = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const a = resolveAdapter(grade, subject);
+    const a = resolveAdapter(workspace, grade, subject);
     if (!a) continue;
     const { nodes, edges } = serializeModel(a.parse(raw), kgNamespace(grade, subject));
     const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: a.id, nodeCount: nodes.length, edgeCount: edges.length };

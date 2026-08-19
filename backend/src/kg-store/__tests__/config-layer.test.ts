@@ -58,13 +58,13 @@ const ns = kgNamespace(ctx.workspace, ctx.grade, ctx.subject);
 
 // The baseline machine core, the { core, guide } record a real seed writes, and
 // an injected validator mirroring the server tool's guard.
-const baseCore = (): Record<string, unknown> => getRegisteredProfile(ctx.grade, ctx.subject) as unknown as Record<string, unknown>;
-const recordOf = (grade: string, subject: string): StoredConfig => {
-  const core = getRegisteredProfile(grade, subject);
-  const guide = getRegisteredGuide(grade, subject);
+const baseCore = (): Record<string, unknown> => getRegisteredProfile(ctx.workspace, ctx.grade, ctx.subject) as unknown as Record<string, unknown>;
+const recordOf = (workspace: string, grade: string, subject: string): StoredConfig => {
+  const core = getRegisteredProfile(workspace, grade, subject);
+  const guide = getRegisteredGuide(workspace, grade, subject);
   return guide !== undefined ? { core, guide } : { core };
 };
-const baseRecord = (): StoredConfig => recordOf(ctx.grade, ctx.subject);
+const baseRecord = (): StoredConfig => recordOf(ctx.workspace, ctx.grade, ctx.subject);
 const validate = (proposed: StoredConfig) => {
   try { validateProfileRecord(proposed, "test"); return { errors: [], warnings: [] }; }
   catch (e) { return { errors: [(e as Error).message], warnings: [] }; }
@@ -76,13 +76,13 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const c of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(c.workspace, c.grade, c.subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(c.grade, c.subject);
+    const adapter = resolveAdapter(c.workspace, c.grade, c.subject);
     if (!adapter) continue;
     const nsC = kgNamespace(c.workspace, c.grade, c.subject);
     const { nodes, edges } = serializeModel(adapter.parse(raw), nsC);
     const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: adapter.id, nodeCount: nodes.length, edgeCount: edges.length };
     await freshStore.writeSlot(nsC, "a", { nodes, edges, meta });
-    if (getRegisteredProfile(c.grade, c.subject)) await freshStore.writeConfig(nsC, "a", recordOf(c.grade, c.subject));
+    if (getRegisteredProfile(c.workspace, c.grade, c.subject)) await freshStore.writeConfig(nsC, "a", recordOf(c.workspace, c.grade, c.subject));
     await freshStore.ensurePointer(nsC, "a");
   }
   return freshStore;

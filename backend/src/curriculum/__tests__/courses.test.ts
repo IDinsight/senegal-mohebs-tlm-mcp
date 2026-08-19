@@ -12,7 +12,7 @@ import { coursesOf, courseSubgraph, standardsFor } from "../courses.js";
 
 const modelFor = (grade: string, subject: string) => {
   const raw = JSON.parse(readFileSync(resolve(subjectDir("senegal", grade, subject), KG_FIXTURE), "utf8"));
-  return resolveAdapter(grade, subject)!.parse(raw);
+  return resolveAdapter("senegal", grade, subject)!.parse(raw);
 };
 
 describe("coursesOf / courseSubgraph — generic Course readers", () => {

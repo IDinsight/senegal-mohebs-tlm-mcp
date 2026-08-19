@@ -48,7 +48,7 @@ export async function activateContext(workspace: string, grade: string, subject:
   // The in-repo adapter is the registration check (a subject with no profile is
   // unsupported); below it is REPLACED by an adapter built from the namespace's
   // stored profile cell (the store is the source of truth for a live server).
-  let adapter = resolveAdapter(match.grade, match.subject);
+  let adapter = resolveAdapter(match.workspace, match.grade, match.subject);
   if (!adapter) return { ok: false, error: `A graph exists for '${match.grade}/${match.subject}', but no subject adapter is registered for it. This grade/subject is not supported yet.`, available };
 
   // ── Hydrate from the store ──────────────────────────────────────────────────
@@ -77,7 +77,7 @@ export async function activateContext(workspace: string, grade: string, subject:
   // redeploy; a namespace with no cell falls back to the in-repo literal.
   if (storedConfig) {
     try {
-      adapter = buildAdapterFromStoredProfile(match.grade, match.subject, storedConfig);
+      adapter = buildAdapterFromStoredProfile(match.workspace, match.grade, match.subject, storedConfig);
     } catch (e) {
       return { ok: false, error: `The stored subject profile for '${ns}' is invalid and would mis-parse: ${(e as Error).message}. Fix it via edit_profile or re-import.`, available };
     }

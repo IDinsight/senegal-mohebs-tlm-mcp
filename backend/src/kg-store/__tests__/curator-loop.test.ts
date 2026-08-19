@@ -64,7 +64,7 @@ async function seedFreshStore(): Promise<KgNodeStore> {
   const freshStore = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
     const raw = JSON.parse(readFileSync(resolve(subjectDir(workspace, grade, subject), KG_FIXTURE), "utf8"));
-    const adapter = resolveAdapter(grade, subject);
+    const adapter = resolveAdapter(workspace, grade, subject);
     if (!adapter) continue;
     const { nodes, edges } = serializeModel(adapter.parse(raw), kgNamespace(grade, subject));
     const meta: StoredMeta = {
@@ -401,7 +401,7 @@ describe("parity: published reads unaffected until publish, then reflect the cha
         if (!activation.ok) {
           throw new Error(activation.error);
         }
-        const adapter = resolveAdapter(firstCtx.grade, firstCtx.subject)!;
+        const adapter = resolveAdapter(firstCtx.workspace, firstCtx.grade, firstCtx.subject)!;
         const model = adapter.model();
         // node ids + the ordinal of each chapter — a reposition doesn't change ids
         // but does change the published chapter's order, which is what we assert.
