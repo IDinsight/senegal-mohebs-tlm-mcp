@@ -190,3 +190,4 @@ The "Step 0 findings" below were the per-issue design notes; each is now its own
 - [`structural-primitives.md`](structural-primitives.md) — #12 structural primitives.
 - [`integrity.md`](integrity.md) — #13 referential integrity (cascade + coverage).
 - [`recipes.md`](recipes.md) — #14 curriculum recipes (composite mutations).
+- [`token-only-confirm.md`](token-only-confirm.md) — parking large payloads server-side so a confirm need not re-send them (`edit_profile`, `edit_node`).

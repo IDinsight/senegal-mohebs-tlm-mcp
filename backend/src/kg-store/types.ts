@@ -55,6 +55,28 @@ export type StoredMeta = {
 // phase 2b.
 export type StoredConfig = Record<string, unknown>;
 
+// A staged confirm payload, parked between a two-phase op's dry-run and its
+// confirm and keyed by the token's one-time nonce. This exists so a LARGE
+// payload (a whole profile record, a content-heavy authoring batch) does not
+// have to be RE-SENT verbatim on confirm — the model would pay to regenerate it
+// and could reproduce it imperfectly (→ args-hash mismatch). Instead the dry-run
+// parks it here and the confirm reads it back by nonce. Small payloads skip this
+// entirely and keep the re-send path (see the size trigger in mutations.ts).
+//
+// Integrity is still pinned: `proposedHash` (sha256 of the payload) lets confirm
+// prove the parked bytes are the ones the token was issued for. `expiresAt` is a
+// timing bound — a confirm that arrives after it treats the entry as absent, the
+// same as if it had never been parked. NOT a correctness guard: exactly-once and
+// "nothing moved since dry-run" are still enforced by the nonce ledger + the base
+// hash-CAS, so a lost/expired entry can only ever force a fresh dry-run, never a
+// double-apply. The entry is deleted best-effort after a successful apply.
+export type PendingEntry = {
+  op: string;              // mutation name / "editProfile" — cross-checked against the token
+  proposedHash: string;    // sha256 of `payload` — the integrity pin
+  payload: unknown;        // the staged args the confirm would otherwise re-send
+  expiresAt: number;       // epoch ms; a read past this treats the entry as absent
+};
+
 // Draft/published pointer for one namespace. `publishedSlot` is always set once
 // the namespace has been seeded. `draftSlot`, when set, MUST differ from
 // `publishedSlot` (two slots total). The pointer doc is the atomic swap point:
@@ -204,6 +226,17 @@ export interface KgNodeStore {
   // that call's `audit` parameter so both are committed together.
   appendAudit(record: AuditRecord): Promise<void>;
   listAudit(query: AuditQuery): Promise<AuditRecord[]>;
+
+  // ── Pending confirm payloads (token-only confirm for large payloads) ───────
+  // Park a payload at dry-run so the confirm need not re-send it; read it back
+  // by the token's nonce at confirm; delete it after a successful apply. These
+  // are pure payload storage — NOT a lock and NOT the source of exactly-once
+  // (that stays the nonce ledger + base hash-CAS). readPending returns null for
+  // an absent OR expired entry; the caller treats null as "re-preview". Keyed by
+  // (namespace, nonce). See PendingEntry.
+  putPending(namespace: string, nonce: string, entry: PendingEntry): Promise<void>;
+  readPending(namespace: string, nonce: string): Promise<PendingEntry | null>;
+  deletePending(namespace: string, nonce: string): Promise<void>;
 }
 
 // ─── Audit types ─────────────────────────────────────────────────────────────

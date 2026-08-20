@@ -28,7 +28,7 @@ import {
   editProfileWithConfirm, diffProfile, diffDraft, publishDraftWithConfirm,
   runGraphMutation, __resetConfigTokensForTest, __resetDraftTokensForTest, __resetMutationsForTest,
 } from "../index.js";
-import { reposition } from "../../kg-recipes/index.js";
+import { reposition, editNode } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { activateContext } from "../../activate.js";
 import { runAsActor, __setActorForTest, type Actor } from "../../actor.js";
@@ -249,6 +249,111 @@ describe("editProfileWithConfirm — two-phase", () => {
       const draft = await store.readConfig(ns, "b") as { guide?: string };
       expect(draft.guide).toBe("# New guide\n\nAuthored prose for the LLM.");
       expect((await diffProfile(ns)).changed).toBe(true);
+    });
+  });
+});
+
+// The token-only confirm mechanism: a LARGE payload is parked server-side at
+// dry-run and read back at confirm, so the caller need not re-send it. Small
+// payloads keep the re-send path. See PendingEntry + runGraphMutation.storePayload.
+describe("token-only confirm — large payloads are parked, not re-sent", () => {
+  // White-box: decode an opaque config token to reach its nonce, so a test can
+  // simulate the parked entry vanishing (TTL sweep / instance restart).
+  const nonceOf = (token: string): string =>
+    (JSON.parse(Buffer.from(token, "base64url").toString("utf8")) as { n: string }).n;
+
+  it("edit_profile: a large record is parked; confirm needs ONLY the token (no re-send)", async () => {
+    await runAsActor(CURATOR, async () => {
+      const proposed = editedRecord();  // carries the big guide → over the store threshold
+      const flag = (r: StoredConfig) => ((r.core as Record<string, unknown>).capabilities as Record<string, unknown>).exampleDomainRotation;
+      const preview = await editProfileWithConfirm(ns, proposed, { validate });
+      if (preview.phase !== "preview") throw new Error("expected preview");
+      expect(preview.payloadStored).toBe(true);
+      // Confirm with NO profile at all — the parked record is authoritative.
+      const res = await editProfileWithConfirm(ns, undefined, { confirm: true, token: preview.confirmationToken, validate });
+      expect(res.phase === "apply" && res.ok === true).toBe(true);
+      // The edited record (not the seeded one) reached the draft cell.
+      const pointer = await store.readPointer(ns);
+      const draftCfg = await store.readConfig(ns, pointer!.draftSlot!) as StoredConfig;
+      expect(flag(draftCfg)).toBe(flag(proposed));
+    });
+  });
+
+  it("edit_profile: a token-only confirm whose parked record vanished is STALE", async () => {
+    await runAsActor(CURATOR, async () => {
+      const preview = await editProfileWithConfirm(ns, editedRecord(), { validate });
+      if (preview.phase !== "preview") throw new Error("expected preview");
+      expect(preview.payloadStored).toBe(true);
+      // Simulate the parked entry being swept / lost before confirm.
+      await store.deletePending(ns, nonceOf(preview.confirmationToken));
+      const res = await editProfileWithConfirm(ns, undefined, { confirm: true, token: preview.confirmationToken, validate });
+      expect(res.phase === "apply" && res.ok === false && res.reason === "stale").toBe(true);
+    });
+  });
+
+  it("edit_profile: a differing re-send in stored mode is still rejected (argsMismatch)", async () => {
+    await runAsActor(CURATOR, async () => {
+      const preview = await editProfileWithConfirm(ns, editedRecord(), { validate });
+      if (preview.phase !== "preview") throw new Error("expected preview");
+      const different = structuredClone(baseRecord()) as Record<string, unknown>;
+      (different.core as Record<string, unknown>).id = "ci-maths/some-other-profile";
+      const res = await editProfileWithConfirm(ns, different as StoredConfig, { confirm: true, token: preview.confirmationToken, validate });
+      expect(res.phase === "apply" && res.ok === false && res.reason === "argsMismatch").toBe(true);
+    });
+  });
+
+  it("edit_profile: below the size threshold the payload stays on the re-send path", async () => {
+    const prior = process.env.TLM_CONFIRM_STORE_BYTES;
+    process.env.TLM_CONFIRM_STORE_BYTES = "10000000";  // above any record → never park
+    try {
+      await runAsActor(CURATOR, async () => {
+        const proposed = editedRecord();
+        const preview = await editProfileWithConfirm(ns, proposed, { validate });
+        if (preview.phase !== "preview") throw new Error("expected preview");
+        expect(preview.payloadStored).toBe(false);
+        // Re-send path: omitting the record on confirm is an argsMismatch…
+        const omitted = await editProfileWithConfirm(ns, undefined, { confirm: true, token: preview.confirmationToken, validate });
+        expect(omitted.phase === "apply" && omitted.ok === false && omitted.reason === "argsMismatch").toBe(true);
+        // …re-sending the same record applies.
+        const res = await editProfileWithConfirm(ns, proposed, { confirm: true, token: preview.confirmationToken, validate });
+        expect(res.phase === "apply" && res.ok === true).toBe(true);
+      });
+    } finally {
+      if (prior === undefined) delete process.env.TLM_CONFIRM_STORE_BYTES; else process.env.TLM_CONFIRM_STORE_BYTES = prior;
+    }
+  });
+
+  it("edit_node (graph path): a large content edit is parked; confirm applies token-only", async () => {
+    await runAsActor(CURATOR, async () => {
+      const target = (await store.listNodes(ns, "a"))[0];
+      const bigContent = "x".repeat(6000);  // over the 4 KB store threshold
+      const preview = await runGraphMutation({
+        namespace: ns, mutation: editNode,
+        args: { namespace: ns, nodeId: target.id, content: bigContent },
+        storePayload: true,
+      });
+      if (preview.phase !== "preview") throw new Error("expected preview");
+      expect(preview.payloadStored).toBe(true);
+      // Confirm carrying only the id (content omitted) — the parked args win.
+      const res = await runGraphMutation({
+        namespace: ns, mutation: editNode,
+        args: { namespace: ns, nodeId: target.id },
+        confirm: true, token: preview.confirmationToken,
+      });
+      expect(res.phase === "apply" && res.ok === true).toBe(true);
+    });
+  });
+
+  it("edit_node (graph path): storePayload off keeps the re-send path even for a big edit", async () => {
+    await runAsActor(CURATOR, async () => {
+      const target = (await store.listNodes(ns, "a"))[0];
+      const preview = await runGraphMutation({
+        namespace: ns, mutation: editNode,
+        args: { namespace: ns, nodeId: target.id, content: "x".repeat(6000) },
+        // storePayload omitted → never park, regardless of size
+      });
+      if (preview.phase !== "preview") throw new Error("expected preview");
+      expect(preview.payloadStored).toBe(false);
     });
   });
 });

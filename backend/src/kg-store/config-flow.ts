@@ -18,7 +18,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { getKgStore } from "./adapter.js";
 import { toAuditActor } from "./audit.js";
-import { stableStringify } from "./mutations.js";
+import { stableStringify, shouldStorePayload, pendingTtlMs } from "./mutations.js";
 import type { AuditRecord, Slot, StoredConfig, ValidationResult } from "./types.js";
 import { currentActor, type Actor } from "../actor.js";
 import { authorize } from "../authz.js";
@@ -71,6 +71,11 @@ type ConfigTokenPayload = {
   cv: string;                    // hashConfig(base) at dry-run time
   pv: string;                    // hashConfig(proposed) — pins the exact profile to write
   n: string;                     // one-time nonce
+  // How the confirm gets the proposed profile. "resend" (default; also the shape
+  // of older tokens) → the caller re-sends the whole record and it must hash to
+  // `pv`. "stored" → the record was PARKED at dry-run under `n`; the confirm reads
+  // it back, so the caller need not re-send the (often large) profile.
+  mode?: "resend" | "stored";
 };
 
 const encodeToken = (p: ConfigTokenPayload): string =>
@@ -84,7 +89,8 @@ const decodeToken = (token: string): ConfigTokenPayload | null => {
     if (c.op !== "editProfile") return null;
     if (c.k !== "onDraft" && c.k !== "onPublished") return null;
     if (typeof c.ns !== "string" || typeof c.cv !== "string" || typeof c.pv !== "string" || typeof c.n !== "string") return null;
-    return { op: "editProfile", ns: c.ns, k: c.k, cv: c.cv, pv: c.pv, n: c.n };
+    const mode = c.mode === "stored" ? "stored" : "resend";
+    return { op: "editProfile", ns: c.ns, k: c.k, cv: c.cv, pv: c.pv, n: c.n, mode };
   } catch { return null; }
 };
 
@@ -105,6 +111,9 @@ export type EditProfilePreview = {
   diff: ConfigDiff;
   warnings: string[];
   confirmationToken: string;
+  // True when the profile record was parked server-side (large payload) — confirm
+  // needs ONLY confirm:true + the token, no re-send. False on the re-send path.
+  payloadStored: boolean;
 };
 export type EditProfileResult =
   | EditProfilePreview
@@ -126,7 +135,7 @@ export type EditProfileOpts = {
 // ── The two-phase entry point ────────────────────────────────────────────────
 export async function editProfileWithConfirm(
   namespace: string,
-  proposed: StoredConfig,
+  proposed: StoredConfig | undefined,
   opts: EditProfileOpts = {},
 ): Promise<EditProfileResult> {
   const store = getKgStore();
@@ -150,19 +159,47 @@ export async function editProfileWithConfirm(
     return { phase: "unauthorized", kind: "editProfile", action: "apply", reason: authz.reason };
   }
 
-  const validated = opts.validate ? opts.validate(proposed) : { errors: [], warnings: [] };
-
   // ── Confirm phase ──────────────────────────────────────────────────────────
   if (opts.confirm) {
     if (!opts.token) return { phase: "apply", kind: "editProfile", ok: false, reason: "invalidToken", message: "confirm=true was passed without a confirmationToken; re-run without confirm to get a fresh preview." };
     const payload = decodeToken(opts.token);
     if (!payload) return { phase: "apply", kind: "editProfile", ok: false, reason: "invalidToken", message: "confirmationToken is not valid for edit_profile; re-run without confirm to get a fresh one." };
     if (payload.ns !== namespace) return { phase: "apply", kind: "editProfile", ok: false, reason: "invalidToken", message: `confirmationToken was issued for namespace '${payload.ns}', not '${namespace}'.` };
-    if (payload.pv !== hashConfig(proposed)) { await auditBlocked("argsMismatch"); return { phase: "apply", kind: "editProfile", ok: false, reason: "argsMismatch", message: "the profile differs from the previewed one; re-run without confirm to preview the new profile." }; }
+
+    // In "resend" mode the caller's record must still hash to the previewed `pv`.
+    // (Checked before the replay guard, matching the original order, so a
+    // differing re-send reports argsMismatch rather than a replay.)
+    if (payload.mode !== "stored" && payload.pv !== hashConfig(proposed ?? null)) {
+      await auditBlocked("argsMismatch");
+      return { phase: "apply", kind: "editProfile", ok: false, reason: "argsMismatch", message: "the profile differs from the previewed one; re-run without confirm to preview the new profile." };
+    }
+
+    // Replay guard runs BEFORE reading any parked payload — a replayed "stored"
+    // token whose parked record was already deleted must report the replay, not a
+    // misleading "payload missing" stale.
     if (consumedConfigNonces.has(payload.n)) { await auditBlocked("replay"); return { phase: "apply", kind: "editProfile", ok: false, reason: "invalidToken", message: "This confirmationToken has already been used; a profile edit cannot be applied twice from one preview." }; }
 
-    // Re-validate at confirm — defence in depth against a caller that skipped
-    // the dry-run's block. A malformed profile must never reach a slot.
+    // Resolve the profile this confirm writes. "stored" → the dry-run parked the
+    // record under the nonce; read it back (the caller need not re-send it). A
+    // missing parked entry is STALE (re-preview). If the caller DID re-send a
+    // record in stored mode, it must still match the parked one — a differing
+    // re-send is an argsMismatch, never a silent apply of the previewed record.
+    let effective: StoredConfig;
+    if (payload.mode === "stored") {
+      const parked = await store.readPending(namespace, payload.n);
+      if (!parked) { await auditBlocked("stale: parked profile missing"); return { phase: "apply", kind: "editProfile", ok: false, reason: "stale", message: "The previewed profile has expired or was already used; re-run without confirm to preview again." }; }
+      if (parked.proposedHash !== payload.pv) { await auditBlocked("argsMismatch: parked profile"); return { phase: "apply", kind: "editProfile", ok: false, reason: "argsMismatch", message: "the parked profile does not match the token; re-run without confirm to preview again." }; }
+      if (proposed !== undefined && hashConfig(proposed) !== payload.pv) { await auditBlocked("argsMismatch"); return { phase: "apply", kind: "editProfile", ok: false, reason: "argsMismatch", message: "the profile differs from the previewed one; re-run without confirm to preview the new profile." }; }
+      effective = parked.payload as StoredConfig;
+    } else {
+      effective = proposed as StoredConfig;
+    }
+
+    // Re-validate the RESOLVED profile at confirm — defence in depth against a
+    // caller that skipped the dry-run's block. A malformed profile must never
+    // reach a slot. (In "stored" mode this is the first validation of the exact
+    // bytes we're about to write, since the caller re-sent nothing.)
+    const validated = opts.validate ? opts.validate(effective) : { errors: [], warnings: [] };
     if (validated.errors.length > 0) { await auditBlocked(`validation: ${validated.errors[0]}`); return { phase: "apply", kind: "editProfile", ok: false, reason: "invalid", message: validated.errors.join("; ") }; }
 
     const base = await readConfigBase(namespace);
@@ -188,18 +225,29 @@ export async function editProfileWithConfirm(
     }
     const draftSlot = pointerAfter.draftSlot;
 
-    const diff: ConfigDiff = { before: base.config, after: proposed };
+    const diff: ConfigDiff = { before: base.config, after: effective };
     const applyRec: AuditRecord = {
       id: randomUUID(), ts: new Date().toISOString(), actor: auditActor,
       namespace, eventType: "apply", mutation: "edit_profile",
-      baseVersion: hashConfig(base.config), resultingVersion: hashConfig(proposed),
+      baseVersion: hashConfig(base.config), resultingVersion: hashConfig(effective),
     };
-    await store.writeConfig(namespace, draftSlot, proposed, applyRec);
+    await store.writeConfig(namespace, draftSlot, effective, applyRec);
     consumedConfigNonces.add(payload.n);
+    // Best-effort cleanup of the parked record — nonce ledger already blocks a
+    // replay, so a failed delete only leaves a TTL-swept orphan.
+    if (payload.mode === "stored") { try { await store.deletePending(namespace, payload.n); } catch { /* swept by TTL */ } }
     return { phase: "apply", kind: "editProfile", ok: true, draftSlot, diff, auditId: applyRec.id };
   }
 
   // ── Dry-run phase ────────────────────────────────────────────────────────
+  // A dry-run must carry the profile to preview. (Only a "stored"-mode CONFIRM
+  // may omit it — the record was parked on the preceding dry-run.)
+  if (proposed === undefined) {
+    await auditBlocked("missing profile (preview)");
+    return { phase: "blocked", kind: "editProfile", needsConfirmation: false, errors: ["edit_profile dry-run requires the `profile` record."], warnings: [] };
+  }
+  const validated = opts.validate ? opts.validate(proposed) : { errors: [], warnings: [] };
+
   const base = await readConfigBase(namespace);
   if ("unseeded" in base) {
     await auditBlocked("unseeded (preview)");
@@ -211,18 +259,35 @@ export async function editProfileWithConfirm(
     return { phase: "blocked", kind: "editProfile", needsConfirmation: false, errors: validated.errors, warnings: validated.warnings };
   }
 
+  // Park the record when it's large enough to be worth not re-sending; small
+  // profiles keep the re-send path (the token's `pv` hash).
+  const nonce = randomBytes(16).toString("base64url");
+  const stored = shouldStorePayload(proposed);
+  if (stored) {
+    await store.putPending(namespace, nonce, {
+      op: "editProfile",
+      proposedHash: hashConfig(proposed),
+      payload: proposed,
+      expiresAt: Date.now() + pendingTtlMs(),
+    });
+  }
+
   const token = encodeToken({
     op: "editProfile", ns: namespace, k: base.kind,
     cv: hashConfig(base.config), pv: hashConfig(proposed),
-    n: randomBytes(16).toString("base64url"),
+    n: nonce, mode: stored ? "stored" : "resend",
   });
+  const confirmHint = stored
+    ? "call this tool again with ONLY confirm: true AND the confirmationToken — the profile is held server-side, do NOT re-send it."
+    : "call this tool again with confirm: true AND the confirmationToken from this response.";
   return {
     phase: "preview", kind: "editProfile", needsConfirmation: true,
     action,
-    message: `Do NOT proceed yet. Ask the user to confirm — about to ${action}. Once they explicitly agree, call this tool again with confirm: true AND the confirmationToken from this response.`,
+    message: `Do NOT proceed yet. Ask the user to confirm — about to ${action}. Once they explicitly agree, ${confirmHint}`,
     diff: { before: base.config, after: proposed },
     warnings: validated.warnings,
     confirmationToken: token,
+    payloadStored: stored,
   };
 }
 
