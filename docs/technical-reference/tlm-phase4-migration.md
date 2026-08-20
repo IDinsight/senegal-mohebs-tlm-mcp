@@ -1,10 +1,28 @@
 # Phase 4 runbook — TLM document-model migration + cutover
 
-**Status:** Planned (not yet executed). Phases 1–3 have landed on `feat/tlm-model-foundation`
-(the labels, explorer view, and the `walk_document` reader). Phase 4 is the **live data
-migration + the final code step + deploy** that flips real documents onto the new model.
-It needs Firestore credentials and a Cloud Run redeploy, so it **cannot be run from the dev
-box** — this file is the runbook for whoever runs it with creds.
+**Status:** Code + migration script landed on `feat/tlm-model-foundation`; **live data
+migration + deploy not yet executed** (needs creds). Phases 1–3 gave us the labels,
+explorer view, and `walk_document` reader. Phase 4's dev-box pieces are now done:
+- **Migration script** `backend/scripts/migrate-tlm-documents.mjs` (Steps A/B/D below),
+  verified with `--dry` against the ci/maths fixture and read back through
+  `documentSubgraph` (no formatter/routine leakage into the curriculum walk). It does
+  **not** build the DocumentSection spine (Step C) — the coarse `TLM→covers→Course` is
+  what `walk_document` reads until sections are authored.
+- **Step E code** (the Course walk stops following `usesRoutine`) is landed on the branch.
+  It **must deploy WITH the migrated data**, never before — see Step E / Step G.
+- **Deferred as an explicit follow-up:** repointing the *write* path (`use_formatter`) to
+  create `Formatter`-under-TLM instead of `usesRoutine`-under-Course (Step E point 3).
+
+What remains needs Firestore credentials and a Cloud Run redeploy, so it **cannot be run
+from the dev box** — the rest of this file is the runbook for whoever runs it with creds.
+
+> **Reality note (from the live-shaped fixture).** The "BEFORE" picture below shows
+> `Lesson ─usesRoutine→ formatter`, but in the live ci/maths graph all three formatters
+> hang off **one Course** (the Student's Book, `Outil de l'élève`) via `usesRoutine`, not
+> off Lessons. The other ~137 `usesRoutine` edges are real pedagogy routines on Lessons and
+> are left untouched. The migration script handles both (a Course source directly; a Lesson
+> source by resolving its owning Course), so Step D re-homes 3 doc-wide formatters under the
+> Student's Book TLM.
 
 Design rationale: [`../design-notes/teaching-learning-materials.md`](../design-notes/teaching-learning-materials.md).
 Deploy fundamentals this leans on: [`deployment.md`](deployment.md) and
@@ -143,11 +161,17 @@ cd backend && npm run build
 # 1. Snapshot the live published graph (this is also your backup).
 node scripts/export-kg.mjs senegal ci maths /tmp/ci-maths.before.json
 
-# 2. Transform it with a new, deterministic, re-runnable script (Steps A–D above),
-#    written against the raw { nodes, relationships } envelope like the other
-#    scripts/migrate-*.mjs. Verify with --dry first.
-node scripts/migrate-tlm-documents.mjs --dry     # prints the node/edge delta, writes nothing
-node scripts/migrate-tlm-documents.mjs           # writes /tmp/ci-maths.after.json
+# 2. Transform it with the deterministic, re-runnable migration script (Steps A/B/D;
+#    Step C section spine is NOT built). It reads/writes the raw { nodes,
+#    relationships } envelope. Verify with --dry first, and paste each document's
+#    authored assemblyGuide via --guide "<course description>=<file>" (a Course with
+#    no --guide gets a TLM with no assemblyGuide + a printed reminder).
+node scripts/migrate-tlm-documents.mjs --in /tmp/ci-maths.before.json --dry   # prints the delta, writes nothing
+node scripts/migrate-tlm-documents.mjs \
+  --in /tmp/ci-maths.before.json --out /tmp/ci-maths.after.json \
+  --namespace senegal:ci:maths \
+  --guide "Guide de l'enseignant=/tmp/teacher-guide.md" \
+  --guide "Outil de l'élève=/tmp/student-guide.md"
 
 # 3. Re-import the transformed graph.
 node scripts/import-kg.mjs senegal ci maths /tmp/ci-maths.after.json --dry-run   # in-memory, writes nothing
