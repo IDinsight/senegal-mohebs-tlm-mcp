@@ -1,0 +1,50 @@
+name: Deploy to Cloud Run
+
+# Deploys the MCP server (backend/) to Cloud Run, building from the checked-out
+# repo server-side — no source upload from a laptop — and authenticating via
+# Workload Identity Federation (no JSON key). See DEPLOY.md → "CD".
+#
+# NOT triggered on every push: a deploy rolls the single Cloud Run instance and
+# drops in-memory MCP sessions, so YOU choose when. Two ways to fire it:
+#   - the "Run workflow" button (workflow_dispatch), from any branch;
+#   - pushing a version tag, e.g.  git tag v1.4.0 && git push origin v1.4.0.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+# One deploy at a time — never let two runs race the single instance.
+concurrency:
+  group: cloud-run-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # required to mint the GitHub OIDC token WIF exchanges
+    steps:
+      - uses: actions/checkout@v4
+
+      # Exchange the GitHub OIDC token for short-lived GCP creds by impersonating
+      # the deployer SA. Values are the non-secret resource names setup-wif.sh printed.
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/148764688487/locations/global/workloadIdentityPools/github/providers/github-tlm
+          service_account: github-deployer@senegal-ci-maths.iam.gserviceaccount.com
+
+      # Builds from backend/ (its Dockerfile) and deploys. Env vars already on the
+      # service are preserved (no --set-env-vars here). The service RUNS AS the
+      # runtime SA; the deployer is allowed to act as it (see setup-wif.sh).
+      - uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: senegal-mohebs-tlm
+          project_id: senegal-ci-maths
+          region: europe-west1
+          source: backend
+          flags: >-
+            --service-account=tlm-server@senegal-ci-maths.iam.gserviceaccount.com
+            --max-instances=1
+            --allow-unauthenticated

@@ -88,3 +88,43 @@ curl -si -X POST https://<service-url>/mcp -H 'content-type: application/json' -
 > reserves the literal path `/healthz` and returns its own 404 before the request
 > reaches the container, so `/healthz` is only reachable by a container-internal
 > probe. `/health` is the same handler on a non-reserved path.
+
+## CD: deploy from GitHub Actions (Workload Identity Federation)
+
+The manual `gcloud run deploy --source backend` above uploads your working tree
+from your laptop every time. A GitHub Actions deploy job builds from the checked-out
+repo instead — **no source upload from your machine** — and authenticates to GCP
+with **no JSON key**, via Workload Identity Federation (WIF): Actions presents a
+short-lived GitHub OIDC token, GCP trusts it (scoped to this repo only), and the
+workflow impersonates a dedicated `github-deployer@` service account.
+
+Because a deploy rolls the single Cloud Run instance and drops in-memory MCP
+sessions, the workflow is **not** triggered on every push — it runs on manual
+dispatch (a button) or a `v*` git tag, so *you* choose when to roll the instance.
+
+### One-time WIF setup
+
+Run once, under your own gcloud user creds (needs project IAM-admin rights):
+
+```bash
+./scripts/setup-wif.sh
+```
+
+It is idempotent (create-if-absent), scopes trust to `IDinsight/tlm-authoring-mcp`
+only, and prints the two values the workflow needs:
+
+- `workload_identity_provider` — `projects/<number>/locations/global/workloadIdentityPools/github/providers/github-tlm`
+- `service_account` — `github-deployer@senegal-ci-maths.iam.gserviceaccount.com`
+
+The deployer SA is deliberately separate from the runtime `tlm-server@` SA: it
+holds deploy-time roles (`run.admin`, `cloudbuild.builds.editor`,
+`artifactregistry.writer`, `storage.admin`) plus `iam.serviceAccountUser` on the
+runtime SA (so it can deploy a service that *runs as* `tlm-server@`), while the
+runtime SA stays minimal.
+
+### GitHub environment
+
+WIF is keyless, so there is **no secret to store**. The workflow references the two
+values above directly (non-secret resource names). Env vars for the service
+(`PUBLIC_URL`, `SUPABASE_*`, …) are already set on the Cloud Run service — a source
+deploy preserves them unless `--set-env-vars` overrides, so the workflow omits them.
