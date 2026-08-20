@@ -304,6 +304,11 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.catalog.scopes.shared).toBe(SHARED_CATALOG_NAMESPACE);
     // use_routine copies onto the draft — same gate as any edit, no drift.
     expect(caps.catalog.canUse).toBe(caps.actions.canEditDraft);
+    // The two kinds attach differently: a routine to a Lesson (usesRoutine), a
+    // formatter under the document's TLM (hasPart) — mirrors useRoutine/useFormatter.
+    expect(caps.catalog.applies.routine).toMatch(/usesRoutine/);
+    expect(caps.catalog.applies.formatter).toMatch(/TeachingLearningMaterial/);
+    expect(caps.catalog.applies.formatter).toMatch(/hasPart/);
   });
 });
 

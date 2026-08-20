@@ -5,11 +5,14 @@
  * here: the cross-tenant SHARED library and the active workspace's own library.
  *   - list_catalog  — browse the entries a curator can pick, from BOTH scopes,
  *                     each tagged with its scope + kind (read-only, ungated).
- *   - use_routine   — COPY a routine entry onto a lesson.
- *   - use_formatter — COPY a formatter entry (a house-style spec) onto a Course.
+ *   - use_routine   — COPY a routine entry onto a lesson (linked via `usesRoutine`).
+ *   - use_formatter — COPY a formatter entry (a house-style spec) under a document.
  *                     Both share one path: the entry's subtree is cloned with fresh
- *                     ids into the ACTIVE subject's draft and linked via `usesRoutine`;
- *                     the copy is independent of the library.
+ *                     ids into the ACTIVE subject's draft; the copy is independent of
+ *                     the library. They diverge in the ATTACHMENT — a routine links to
+ *                     a Lesson via `usesRoutine`; a formatter is relabelled to the
+ *                     document layer (Formatter/FormatterSpec) and hung under the
+ *                     Course's TeachingLearningMaterial via `hasPart`.
  *
  * use_routine shares the graph-mutation envelope: a dry-run returns a diff +
  * confirmationToken + the minted id-map (no state change); the confirm re-checks the
@@ -29,7 +32,7 @@ import { activeWorkspace } from "../context/index.js";
 import { currentActor } from "../actor.js";
 import { getWorkspaceStore } from "../workspaces/index.js";
 import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, publishDraft, discardDraft, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
-import { SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, catalogNamespace, cloneRoutineSubtree, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, type CatalogScope } from "../kg-recipes/index.js";
+import { SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, catalogNamespace, cloneRoutineSubtree, relabelClonedFormatter, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, useFormatter, type CatalogScope, type UseRoutineArgs, type UseFormatterArgs } from "../kg-recipes/index.js";
 import { parkWrapperContext, readWrapperContext, deleteWrapperContext } from "./wrapper-park.js";
 
 // Read one catalog namespace's published slot as a plain MutationGraph. Empty when
@@ -65,33 +68,72 @@ function withMintedMap(result: unknown, mintedIdMap: Record<string, string>): un
 }
 
 // The shared copy-onto-target path behind use_routine and use_formatter: locate the
-// entry across both scopes, clone its subtree into the active subject, and link the
-// clone to `targetId` via `usesRoutine`. Two-phase (mints an id-map on dry-run, reuses
-// it on confirm). The two tools differ only in intent/wording — a routine attaches to
-// a Lesson, a formatter to the Course/deliverable — but the mechanism is identical.
+// entry across both scopes, clone its subtree into the active subject, and attach the
+// clone. Two-phase (mints an id-map on dry-run, reuses it on confirm). The two tools
+// diverge in the ATTACHMENT, keyed by `mode`:
+//   - "routine"   — the clone is copied verbatim and linked to a Lesson via `usesRoutine`;
+//   - "formatter" — the clone is relabelled to the document layer (Formatter/
+//     FormatterSpec) and hung under the Course's TeachingLearningMaterial via `hasPart`.
+// The token-only confirm path reads the mode back from the parked context, so a
+// confirm dispatches to the right mutation without the caller re-stating it.
+type CatalogApplyMode = "routine" | "formatter";
 type ApplyArgs = { entryId?: string; targetId?: string; mintedIdMap?: Record<string, string>; confirm?: boolean; confirmationToken?: string };
-// The wrapper's parked context for a use_routine / use_formatter confirm: the
-// cloned subtree the dry-run built plus the id-map to surface in the response.
-type ParkedApplyContext = {
-  mutationArgs: { namespace: string; targetId: string; clonedNodes: MutationNode[]; clonedEdges: MutationEdge[]; newEntryId: string };
-  idMap: Record<string, string>;
-};
+// The wrapper's parked context for a use_routine / use_formatter confirm: the mode,
+// the cloned subtree's mutation args the dry-run built, plus the id-map to surface in
+// the response. Discriminated by `mode` so the confirm runs the matching mutation.
+type ParkedApplyContext =
+  | { mode: "routine"; mutationArgs: UseRoutineArgs; idMap: Record<string, string> }
+  | { mode: "formatter"; mutationArgs: UseFormatterArgs; idMap: Record<string, string> };
 
-export async function applyCatalogEntry(a: ApplyArgs) {
+// Resolve the TeachingLearningMaterial a formatter attaches under, from the id the
+// caller gave use_formatter. A TLM id is used directly; a Course id resolves to the
+// TLM that `covers` it (the document produced from that Course). Reads the active
+// graph DRAFT-first so a just-authored TLM resolves. Any other node — or a Course
+// with no TLM yet — is an actionable error: a formatter is a property of the
+// DOCUMENT (TLM ─hasPart→ Formatter), never the curriculum.
+async function resolveFormatterTarget(namespace: string, targetId: string): Promise<{ tlmId: string } | { error: string }> {
+  const graph = await readActiveGraph(namespace);
+  const target = graph.nodes.find((n) => n.id === targetId);
+  if (!target) return { error: `Target '${targetId}' does not exist in the active graph.` };
+  const labels = target.labels ?? [];
+  if (labels.includes("TeachingLearningMaterial")) return { tlmId: targetId };
+  if (labels.includes("Course")) {
+    const tlmId = graph.nodes.find(
+      (n) => (n.labels ?? []).includes("TeachingLearningMaterial") && graph.edges.some((e) => e.type === "covers" && e.from === n.id && e.to === targetId),
+    )?.id;
+    if (tlmId) return { tlmId };
+    return { error: `Course '${targetId}' has no TeachingLearningMaterial covering it yet. A formatter attaches under the DOCUMENT, not the Course — mint a TeachingLearningMaterial that \`covers\` this Course (add_nodes + create_edges), then use_formatter against the Course or the TLM directly.` };
+  }
+  return { error: `'${targetId}' is a ${labels.join("/") || "node"} — use_formatter targets a TeachingLearningMaterial (the document), or a Course to resolve its TLM.` };
+}
+
+// Shared tail for a dry-run / confirm: on a dry-run park the built context (so a large
+// clone can be confirmed token-only) and surface the id-map; on a confirm return the
+// mutation result verbatim. `idMap` and the parked context differ per mode.
+async function finishApply(namespace: string, result: Awaited<ReturnType<typeof runGraphMutation>>, idMap: Record<string, string>, confirm: boolean | undefined, parked: ParkedApplyContext) {
+  let payloadStored = false;
+  if (!confirm && result.phase === "preview") {
+    payloadStored = await parkWrapperContext<ParkedApplyContext>(namespace, result.confirmationToken, parked);
+  }
+  if (confirm) return asJson(result);
+  const preview = withMintedMap(result, idMap) as Record<string, unknown>;
+  return asJson({ ...preview, payloadStored });
+}
+
+export async function applyCatalogEntry(a: ApplyArgs, mode: CatalogApplyMode = "routine") {
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
   // Token-only confirm shortcut: caller sends confirm+token with no entryId /
   // targetId / mintedIdMap. Read back the cloned subtree the dry-run parked and
   // apply that verbatim — the args-hash still matches because they are the exact
-  // args the token was minted from.
+  // args the token was minted from. The parked mode picks the mutation.
   if (a.confirm && !a.entryId) {
     const parked = a.confirmationToken ? await readWrapperContext<ParkedApplyContext>(namespace, a.confirmationToken) : null;
     if (!parked) return asJson({ phase: "apply", ok: false, reason: "stale", message: "The previewed catalog application has expired or was already used; re-run without confirm to preview again." });
-    const result = await runGraphMutation({
-      namespace, mutation: useRoutine, args: parked.mutationArgs,
-      confirm: true, token: a.confirmationToken,
-    });
+    const result = parked.mode === "formatter"
+      ? await runGraphMutation({ namespace, mutation: useFormatter, args: parked.mutationArgs, confirm: true, token: a.confirmationToken })
+      : await runGraphMutation({ namespace, mutation: useRoutine, args: parked.mutationArgs, confirm: true, token: a.confirmationToken });
     if (result.phase === "apply" && result.ok && a.confirmationToken) await deleteWrapperContext(namespace, a.confirmationToken);
     return asJson(result);
   }
@@ -103,26 +145,22 @@ export async function applyCatalogEntry(a: ApplyArgs) {
   if (!source) return asJson({ error: `Catalog entry '${a.entryId}' not found in the shared or workspace library. Call list_catalog for entry ids.` });
 
   const mint = a.confirm ? (oldId: string) => (a.mintedIdMap ?? {})[oldId] : () => mintNodeId();
-  const clone = cloneRoutineSubtree(source, a.entryId, namespace, mint)!;
-  const mutationArgs = { namespace, targetId: a.targetId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
 
-  const result = await runGraphMutation({
-    namespace,
-    mutation: useRoutine,
-    args: mutationArgs,
-    confirm: a.confirm,
-    token: a.confirmationToken,
-  });
-
-  // Dry-run: park the built context so a large clone can be confirmed token-only.
-  let payloadStored = false;
-  if (!a.confirm && result.phase === "preview") {
-    payloadStored = await parkWrapperContext<ParkedApplyContext>(namespace, result.confirmationToken, { mutationArgs, idMap: clone.idMap });
+  if (mode === "formatter") {
+    // A formatter hangs under the document (TLM), not the Course — resolve the TLM
+    // first, then relabel the clone to the Formatter/FormatterSpec document shape.
+    const resolved = await resolveFormatterTarget(namespace, a.targetId);
+    if ("error" in resolved) return asJson({ error: resolved.error });
+    const clone = relabelClonedFormatter(cloneRoutineSubtree(source, a.entryId, namespace, mint)!);
+    const mutationArgs: UseFormatterArgs = { namespace, tlmId: resolved.tlmId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newFormatterId: clone.newEntryId };
+    const result = await runGraphMutation({ namespace, mutation: useFormatter, args: mutationArgs, confirm: a.confirm, token: a.confirmationToken });
+    return finishApply(namespace, result, clone.idMap, a.confirm, { mode: "formatter", mutationArgs, idMap: clone.idMap });
   }
 
-  if (a.confirm) return asJson(result);
-  const preview = withMintedMap(result, clone.idMap) as Record<string, unknown>;
-  return asJson({ ...preview, payloadStored });
+  const clone = cloneRoutineSubtree(source, a.entryId, namespace, mint)!;
+  const mutationArgs: UseRoutineArgs = { namespace, targetId: a.targetId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
+  const result = await runGraphMutation({ namespace, mutation: useRoutine, args: mutationArgs, confirm: a.confirm, token: a.confirmationToken });
+  return finishApply(namespace, result, clone.idMap, a.confirm, { mode: "routine", mutationArgs, idMap: clone.idMap });
 }
 
 // ── add_to_catalog: file an authored routine/formatter INTO a catalog ─────────
@@ -351,17 +389,17 @@ export function registerCatalogTools(server: McpServer) {
       description: "Apply a catalog ROUTINE to a lesson by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (a Lesson) via `usesRoutine`. The copy is independent — later edits to the library entry do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetId/mintedIdMap; otherwise re-send confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
       inputSchema: APPLY_INPUT,
     },
-    guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
+    guarded(async (a: ApplyArgs) => applyCatalogEntry(a, "routine")),
   );
 
   server.registerTool(
     "use_formatter",
     {
       title: "Use a catalog formatter",
-      description: "Apply a catalog FORMATTER (a house-style spec) to a Course by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (the Course — the root of the document it produces) via `usesRoutine`, so generation for that Course applies the style. The copy is independent — later edits to the library formatter do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetId/mintedIdMap; otherwise re-send confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
+      description: "Apply a catalog FORMATTER (a house-style spec) to a DOCUMENT by COPYING it. `targetId` is a TeachingLearningMaterial (the document node), OR a Course — in which case the TLM that `covers` that Course is resolved for you. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject, RELABELLED to the document layer (Formatter + FormatterSpec), and hung under the TLM via `hasPart`, so generating that document applies the style. Formatting is a property of the document, not the curriculum — it never rides a Course's usesRoutine edge. (If a Course has no TLM yet, mint one first: add_nodes a TeachingLearningMaterial + create_edges a `covers` edge to the Course.) The copy is independent — later edits to the library formatter do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetId/mintedIdMap; otherwise re-send confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
       inputSchema: APPLY_INPUT,
     },
-    guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
+    guarded(async (a: ApplyArgs) => applyCatalogEntry(a, "formatter")),
   );
 
   server.registerTool(
@@ -420,7 +458,7 @@ export function registerCatalogResources(server: McpServer) {
     }),
     {
       title: "Catalog entries",
-      description: "Reusable instructional routines and formatters (shared + workspace libraries), each rendered with its full authored spec. Browse-only; apply one to content with use_routine (→ a Lesson) or use_formatter (→ a Course).",
+      description: "Reusable instructional routines and formatters (shared + workspace libraries), each rendered with its full authored spec. Browse-only; apply one to content with use_routine (→ a Lesson, via usesRoutine) or use_formatter (→ a document / TeachingLearningMaterial, via hasPart).",
       mimeType: "text/markdown",
     },
     async (uri, variables) => {

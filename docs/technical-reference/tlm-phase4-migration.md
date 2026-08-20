@@ -10,8 +10,14 @@ explorer view, and `walk_document` reader. Phase 4's dev-box pieces are now done
   what `walk_document` reads until sections are authored.
 - **Step E code** (the Course walk stops following `usesRoutine`) is landed on the branch.
   It **must deploy WITH the migrated data**, never before — see Step E / Step G.
-- **Deferred as an explicit follow-up:** repointing the *write* path (`use_formatter`) to
-  create `Formatter`-under-TLM instead of `usesRoutine`-under-Course (Step E point 3).
+- **Write-path repoint done (Step E point 3):** `use_formatter` now creates a
+  `Formatter`-under-TLM (`hasPart`) instead of a `usesRoutine`-under-Course routine. It
+  targets a TLM id (or a Course, resolving the TLM that `covers` it), clones + relabels the
+  catalog entry to `Formatter`/`FormatterSpec`, and hangs it under the document — the write
+  mirror of Steps A + D. `use_routine` (real pedagogy → Lessons) is unchanged. So an applied
+  formatter and a migrated one now share one shape; a curator can no longer mint the old
+  overloaded edge. Like Step E, it **must deploy with the migrated data** (a live formatter
+  applied before the migration would still sit on the Course).
 
 What remains needs Firestore credentials and a Cloud Run redeploy, so it **cannot be run
 from the dev box** — the rest of this file is the runbook for whoever runs it with creds.
@@ -203,13 +209,15 @@ walk from following `usesRoutine`:
   (line ~26) and update the surrounding comment (lines ~22–26, ~41).
 - `backend/src/curriculum/__tests__/courses.test.ts` — drop the assertions that expect a
   routine in the Course subtree.
-- Re-check the catalog tools (`use_formatter`/`use_routine`/`add_to_catalog`) and
-  `src/kg-recipes/catalog.ts`: authoring **new** formatters should now create `Formatter`
-  nodes under a TLM, not `usesRoutine` routines under a Lesson. If those tools still attach via
-  `usesRoutine`, either repoint them at the TLM in this same change or file the follow-up
-  explicitly — do not leave the write path minting the very shape we just migrated away from.
-- `get_capabilities` must stay an accurate mirror — update it and `capabilities.test.ts` for
-  any tool-surface change.
+- **Done:** the catalog write path is repointed. `use_formatter`
+  (`src/server/catalog.ts` → `useFormatter` + `relabelClonedFormatter` in
+  `src/kg-recipes/catalog.ts`) now clones the entry, relabels it to `Formatter`/`FormatterSpec`,
+  and hangs it under the Course's TLM via `hasPart` (targeting a TLM id, or a Course to resolve
+  its TLM) — no more `usesRoutine`-under-Course. `use_routine` (real pedagogy → Lessons) is
+  untouched. So the write path no longer mints the shape we migrated away from.
+- `get_capabilities` mirrors it: the `catalog.applies` field + note now describe the
+  formatter→TLM (`hasPart`) vs routine→Lesson (`usesRoutine`) split (`capabilities.test.ts`
+  asserts it).
 
 Run the gates: `npm run typecheck && npm run check:cycles && npx vitest run` (all green).
 
