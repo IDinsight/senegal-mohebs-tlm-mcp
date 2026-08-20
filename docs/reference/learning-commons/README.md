@@ -65,6 +65,7 @@ Enforced in code — keep these in sync with canon:
 | Parser folds containment + alignment | [`src/curriculum/parse-graph.ts`](../../../src/curriculum/parse-graph.ts) | `hasChild`+`hasPart` are containment; `supports`+`hasEducationalAlignment` are attachment |
 | Explorer categories/colours by LC label | [`src/kg-export.ts`](../../../src/kg-export.ts) (`LABEL_DEFS`) | one colour per LC label |
 | Non-canonical extras live in a sidecar | `metadata.*` on every node | see below |
+| Document / rendering layer (non-canonical labels + `covers` edge) | [`docs/design-notes/teaching-learning-materials.md`](../../design-notes/teaching-learning-materials.md) | LC defines no document/formatter node — intentional extension (deviation 7) |
 
 **Our `metadata` sidecar is an extension, not canonical LC.** LC defines no
 `metadata` property. We carry our non-canonical extras there verbatim (extraction
@@ -104,3 +105,22 @@ Documented so they don't get mistaken for canon:
 6. **`metadata.illustratesComponent`** encodes an Activity→LearningComponent link
    that **has no canonical edge** (LC defines none). This is an intentional sidecar
    extension, surfaced display-only by the explorer.
+7. **The document / rendering layer — non-canonical labels + edge.** Documents and
+   their formatting are modelled with **labels LC does not define**:
+   `TeachingLearningMaterial` (the deliverable — a new graph root), `DocumentSection`
+   (the document's own optional spine — a page/section), `Formatter` (a rendering
+   concern), and `FormatterSpec` (one rule within it), nested
+   `TLM ─hasPart→ DocumentSection` and `─hasPart→ Formatter ─hasPart→ FormatterSpec`;
+   plus a **non-canonical edge** `covers` binding a document-thing to the curriculum it
+   renders, at two granularities: `TeachingLearningMaterial ─covers→ Course` (coarse
+   scope) and `DocumentSection ─covers→ Lesson`/`LessonGrouping`/`Activity` (the
+   authoritative per-section mapping; a section with no `covers` target is
+   document-native front-matter). Intentional extensions — a document is a *sibling
+   artifact* of the curriculum, so it can be neither a canonical `Material` (which may
+   only sit *inside* the content tree via `hasPart`) nor a `Course` (a unit of study,
+   not an artifact). The document's own generation logic rides the sidecar as
+   **`metadata.assemblyGuide`** (authored markdown). Design:
+   [`docs/design-notes/teaching-learning-materials.md`](../../design-notes/teaching-learning-materials.md).
+   *(This replaces the earlier stopgap of modelling a formatter as an
+   `InstructionalRoutine` attached to a `Lesson` — which was off-canon on both the
+   label semantics and the `usesRoutine`-is-Activity-only edge rule.)*

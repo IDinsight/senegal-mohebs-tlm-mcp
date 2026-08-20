@@ -13,10 +13,15 @@
  *
  * Each entry carries a `kind` (routine | formatter). Using an entry COPIES it:
  * cloneRoutineSubtree mints fresh ids for the entry and its whole subtree into the
- * active subject's namespace, and `useRoutine` attaches the clone via `usesRoutine`.
- * The copy is independent — later edits to the library entry do NOT reach copies
- * already made (that independence is the point). Edit rights follow the entry's
- * namespace: `_shared` writes need super_admin, `<workspace>` writes its curators.
+ * active subject's namespace. A ROUTINE attaches to a Lesson via `usesRoutine`
+ * (`useRoutine`); a FORMATTER is relabelled to the document-layer Formatter/
+ * FormatterSpec shape (`relabelClonedFormatter`) and hung under the document's
+ * TeachingLearningMaterial via `hasPart` (`useFormatter`) — formatting is a property
+ * of the DOCUMENT, not the curriculum, so it never rides a Course's `usesRoutine`
+ * edge (the pre-Phase-4 stopgap the TLM migration moved away from). The copy is
+ * independent — later edits to the library entry do NOT reach copies already made
+ * (that independence is the point). Edit rights follow the entry's namespace:
+ * `_shared` writes need super_admin, `<workspace>` writes its curators.
  *
  * See docs/design-notes/authorable-catalog.md.
  */
@@ -41,8 +46,16 @@ const ROUTINE_LABEL = "InstructionalRoutine";
 const MATERIAL_LABEL = "Material";
 const CONTAINMENT = "hasPart";
 
-// The labels a `usesRoutine` edge may originate from (canonical LC). A routine
-// attaches to a Lesson; a formatter to the Course/deliverable — both are here.
+// The document-layer labels a formatter takes on when applied (Phase 4): the entry
+// becomes a `Formatter`, its rule-bearing Material children `FormatterSpec`, and it
+// hangs under a `TeachingLearningMaterial`. See docs/design-notes/teaching-learning-materials.md.
+const FORMATTER_LABEL = "Formatter";
+const FORMATTER_SPEC_LABEL = "FormatterSpec";
+const TLM_LABEL = "TeachingLearningMaterial";
+
+// The labels a `usesRoutine` edge may originate from (canonical LC) — the valid
+// targets of use_routine. A formatter no longer rides usesRoutine (it hangs under a
+// TeachingLearningMaterial via hasPart — see useFormatter), so this is routines only.
 const ROUTINE_USERS = new Set(["Lesson", "Course", "Activity"]);
 
 export type CatalogScope = "shared" | "workspace";
@@ -271,8 +284,8 @@ function rehomeEntries(source: RawGraphSnapshot, namespace: string, rootId: stri
 
 // Build a catalog's stored graph: a single root container plus re-homed entries.
 // `sources` are subject graphs (a subject's knowledge_graph.json) — scraped for their
-// ROUTINE subtrees only; any formatter a subject graph carries (a copy attached to its
-// Course via use_formatter) is deliberately NOT re-scraped, since the catalog's
+// ROUTINE subtrees only; any formatter a subject graph carries (a copy attached under
+// its document via use_formatter) is deliberately NOT re-scraped, since the catalog's
 // formatters come solely from the authored literals in `authored`. `authored` are those
 // formatter/routine literals, taken whole (formatters kept). Everything else in a source
 // (chapters, lessons, the spine) is dropped. `namespace` is the target catalog.
@@ -320,6 +333,93 @@ export const useRoutine: GraphMutation<UseRoutineArgs> = {
     // base (→ clean "blocked" from validate) rather than produce a dangling edge.
     if (!nodeById(base, args.targetId)) return base;
     const link: MutationEdge = { id: edgeId("usesRoutine", args.targetId, args.newEntryId), type: "usesRoutine", from: args.targetId, to: args.newEntryId, namespace: args.namespace, properties: {} };
+    return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
+  },
+};
+
+// ── use_formatter: copy a formatter under a document (TLM) ────────────────────
+// The formatter counterpart to useRoutine. Where a routine is copied verbatim and
+// linked to a Lesson via `usesRoutine`, a formatter is RELABELLED to the document
+// layer and hung under a TeachingLearningMaterial via `hasPart` — the shape the
+// Phase-4 migration produces (scripts/migrate-tlm-documents.mjs, Steps A + D), so a
+// formatter applied today matches one migrated from the old usesRoutine stopgap.
+
+// Drop the kind-signalling metadata tags a catalog formatter carried
+// (`catalogKind` / `role:"formatter"`) — the LC label now carries the kind. Returns
+// a fresh raw bag (metadata copied, not mutated) so the source catalog node is never
+// touched; an emptied metadata bag is dropped so the relabelled node stays
+// canonical-clean. Mirrors migrate-tlm-documents.mjs::dropKindTags.
+function withoutFormatterKindTags(raw: Record<string, unknown>): Record<string, unknown> {
+  const next = { ...raw };
+  const metadata = next.metadata as Record<string, unknown> | undefined;
+  if (metadata) {
+    const trimmed = { ...metadata };
+    delete trimmed.catalogKind;
+    delete trimmed.role;
+    if (Object.keys(trimmed).length === 0) delete next.metadata;
+    else next.metadata = trimmed;
+  }
+  return next;
+}
+
+// Turn a freshly-cloned formatter subtree into the document-layer shape a TLM holds:
+// relabel the cloned entry → `Formatter` and its direct hasPart Material children →
+// `FormatterSpec`, dropping each one's kind tags. Content is untouched. The clone's
+// nodes are replaced with relabelled copies (properties copied, so the catalog source
+// is never mutated); edges / idMap / newEntryId pass through unchanged. This mirrors
+// the live-data migration's Step A relabel.
+export function relabelClonedFormatter(clone: ClonedSubtree): ClonedSubtree {
+  const specIds = new Set(
+    clone.edges
+      .filter((e) => e.type === CONTAINMENT && e.from === clone.newEntryId)
+      .map((e) => e.to),
+  );
+  const nodes = clone.nodes.map((node) => {
+    const isEntry = node.id === clone.newEntryId;
+    const isSpec = specIds.has(node.id) && isMaterial(node);
+    if (!isEntry && !isSpec) return node;
+    const label = isEntry ? FORMATTER_LABEL : FORMATTER_SPEC_LABEL;
+    return {
+      ...node,
+      type: label,
+      labels: [label],
+      properties: { ...(node.properties ?? {}), raw: withoutFormatterKindTags(rawOf(node)) },
+    };
+  });
+  return { ...clone, nodes };
+}
+
+// The mutation that lands a copied FORMATTER under a document: it appends the
+// pre-cloned + relabelled Formatter/FormatterSpec subtree (built by cloneRoutineSubtree
+// then relabelClonedFormatter against the catalog, passed in because apply() sees only
+// the active base graph) and links the target TeachingLearningMaterial to the clone's
+// Formatter via `hasPart` — the document's rendering-stack axis. The write mirror of
+// the migration's Step D (TLM ─hasPart→ Formatter, never Course ─usesRoutine→).
+export type UseFormatterArgs = {
+  namespace: string;
+  tlmId: string;                // the TeachingLearningMaterial the formatter attaches under
+  clonedNodes: MutationNode[];
+  clonedEdges: MutationEdge[];
+  newFormatterId: string;       // the cloned entry, relabelled to Formatter (the hasPart target)
+};
+
+export const useFormatter: GraphMutation<UseFormatterArgs> = {
+  name: "useFormatter",
+  describe: (args) => `copy a catalog formatter under document '${args.tlmId}'`,
+  validate: (base, _after, args) => {
+    const errors: string[] = [];
+    const target = nodeById(base, args.tlmId);
+    if (!target) errors.push(`use_formatter: document '${args.tlmId}' does not exist in the draft.`);
+    else if (!(target.labels ?? []).includes(TLM_LABEL)) errors.push(`use_formatter: '${args.tlmId}' is a ${(target.labels ?? []).join("/") || "node"} — a formatter attaches under a ${TLM_LABEL} (the document). Pass a TLM id, or a Course to resolve its TLM.`);
+    if (!args.clonedNodes.some((n) => n.id === args.newFormatterId)) errors.push(`use_formatter: the cloned formatter '${args.newFormatterId}' is missing from the copied subtree (retry).`);
+    for (const n of args.clonedNodes) if (nodeById(base, n.id)) errors.push(`use_formatter: copied id '${n.id}' already exists in the draft (retry).`);
+    return { errors, warnings: [] };
+  },
+  apply: (base, args) => {
+    // apply() runs before validate() on the dry-run, so a bad target must return
+    // base (→ clean "blocked" from validate) rather than produce a dangling edge.
+    if (!nodeById(base, args.tlmId)) return base;
+    const link: MutationEdge = { id: edgeId(CONTAINMENT, args.tlmId, args.newFormatterId), type: CONTAINMENT, from: args.tlmId, to: args.newFormatterId, namespace: args.namespace, properties: {} };
     return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
   },
 };

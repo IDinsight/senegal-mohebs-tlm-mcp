@@ -15,13 +15,33 @@ const routineless: MutationGraph = {
   edges: [],
 };
 
+const DOCUMENT_LABELS = ["TeachingLearningMaterial", "DocumentSection", "Formatter", "FormatterSpec"];
+
 describe("isKnownLabel", () => {
   it("accepts InstructionalRoutine even when the graph has none to copy", () => {
     expect(isKnownLabel(routineless, "InstructionalRoutine")).toBe(true);
   });
 
+  it("accepts every document-layer label even when the graph has none to copy", () => {
+    for (const label of DOCUMENT_LABELS) expect(isKnownLabel(routineless, label)).toBe(true);
+  });
+
   it("still rejects a label that is neither canonical nor present", () => {
     expect(isKnownLabel(routineless, "Widget")).toBe(false);
+  });
+});
+
+describe("deriveTemplate — first-of-kind document-layer node", () => {
+  it("yields a faithful skeleton: label as kind, no normalizedType, no role, not a grouping", () => {
+    for (const label of DOCUMENT_LABELS) {
+      const template = deriveTemplate(routineless, label);
+      expect(template.kind).toBe(label);            // PascalCase kept, not lowercased
+      expect(template.labels).toEqual([label]);
+      expect(template.isGrouping).toBe(false);
+      expect(template.normalizedType).toBeUndefined();
+      expect(template.normalizedStatementType).toBeUndefined();
+      expect(template.role).toBeUndefined();        // not a routine
+    }
   });
 });
 

@@ -42,15 +42,23 @@ describe("coursesOf / courseSubgraph — generic Course readers", () => {
     expect(subgraph.edges.every((edge) => ids.has(edge.start) && ids.has(edge.end))).toBe(true);
   });
 
-  it("pulls in the InstructionalRoutine a lesson applies (usesRoutine) and its step Materials", () => {
+  it("does NOT follow usesRoutine — formatters/routines reach generation via the TLM, not the Course", () => {
     const model = modelFor("ci", "maths");
     const student = coursesOf(model).find((course) => course.properties.description === "Outil de l'élève")!;
+
+    // Sanity: the fixture still has usesRoutine edges pointing OUT of this Course,
+    // so "the walk doesn't follow them" is a real assertion, not a vacuous one.
+    const usesRoutineOutOfCourse = model.rawGraph!.relationships.filter(
+      (edge) => edge.type === "usesRoutine" && edge.start === student.id,
+    );
+    expect(usesRoutineOutOfCourse.length).toBeGreaterThan(0);
+
     const subgraph = courseSubgraph(model, student.id)!;
-    // The student book's container lessons usesRoutine the pupil-manual routine,
-    // so its InstructionalRoutine tree + the step Materials come along.
-    expect(subgraph.nodes.some((node) => node.labels.includes("InstructionalRoutine"))).toBe(true);
-    expect(subgraph.nodes.some((node) => node.labels.includes("Material"))).toBe(true);
-    expect(subgraph.edges.some((edge) => edge.type === "usesRoutine")).toBe(true);
+    // The Course subtree is pure containment: no formatter/routine node comes in,
+    // and no usesRoutine edge survives inside it (Phase 4 — those hang off the TLM).
+    expect(subgraph.nodes.some((node) => node.labels.includes("InstructionalRoutine"))).toBe(false);
+    expect(subgraph.nodes.some((node) => node.labels.includes("Formatter"))).toBe(false);
+    expect(subgraph.edges.some((edge) => edge.type === "usesRoutine")).toBe(false);
   });
 
   it("returns null for a non-Course id and an unknown id", () => {

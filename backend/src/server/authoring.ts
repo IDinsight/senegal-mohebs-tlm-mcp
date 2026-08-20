@@ -47,10 +47,13 @@ type AddNodesItemInput = {
   mintedNodeId?: string;  // caller's own alias, echoed back in the id map for correlation
 };
 
-// The LC labels add_nodes accepts (the discriminator's enum).
+// The LC labels add_nodes accepts (the discriminator's enum). The last four are
+// the non-canonical document / rendering layer (a TLM and its formatting), which
+// LC does not define — see docs/design-notes/teaching-learning-materials.md.
 const ADD_NODE_KINDS = [
   "Course", "LessonGrouping", "Lesson", "Activity", "Assessment",
   "Material", "LearningComponent", "InstructionalRoutine", "StandardsFrameworkItem",
+  "TeachingLearningMaterial", "DocumentSection", "Formatter", "FormatterSpec",
 ] as const;
 
 // The kind-specific canonical LC props each label accepts in its `properties`
@@ -68,6 +71,13 @@ export const KIND_PROPERTIES: Record<string, string[]> = {
   LearningComponent: ["examples"],
   StandardsFrameworkItem: ["normalizedStatementType", "statementType", "statementCode", "gradeLevel"],
   InstructionalRoutine: ["timeRequired", "metadata.summary"],
+  // The document / rendering layer (non-canonical). A TLM is a ROOT that `covers`
+  // a Course (wire the covers edge with create_edges); its own build logic rides
+  // "metadata.assemblyGuide". A FormatterSpec carries the actual rule in `content`.
+  TeachingLearningMaterial: ["audience", "mediumType", "metadata.assemblyGuide"],
+  DocumentSection: ["metadata.assemblyGuide"],
+  Formatter: ["metadata.summary"],
+  FormatterSpec: ["content"],
 };
 
 // The same catalog as prose, with the notes the typed tools carried (required
@@ -84,6 +94,10 @@ const PER_KIND_GUIDE =
   "LearningComponent: examples — attaches to its parent StandardsFrameworkItem via `supports` (no alignTo) · " +
   "StandardsFrameworkItem: normalizedStatementType, statementType, statementCode, gradeLevel · " +
   "InstructionalRoutine: timeRequired, 'metadata.summary' (cross-cutting rules) — attach a routine ROOT onto a Lesson/Course/Activity with `via:\"usesRoutine\"`; nest its steps/step-Materials under it by the default hasPart. " +
+  "TeachingLearningMaterial (the document — a ROOT, omit parentId): audience, mediumType, 'metadata.assemblyGuide' (its own build logic) — point it at the curriculum it renders with a `covers` edge (create_edges): TLM→Course (coarse) and DocumentSection→Lesson (per section). " +
+  "DocumentSection (the document's own spine — nest under the TLM by hasPart): 'metadata.assemblyGuide'; a section with no `covers` target is front-matter. " +
+  "Formatter (a rendering concern — under the TLM or a DocumentSection): 'metadata.summary'; composed of FormatterSpec children by hasPart. " +
+  "FormatterSpec (one rule — under a Formatter): content (the rule text). " +
   "Common to every item: `description` (display title), `title_en`, `position`; content kinds may `alignTo` an SFI (hasEducationalAlignment).";
 
 // The add_nodes core, exported so tests drive the real logic (like
@@ -162,7 +176,7 @@ export function registerAuthoringTools(server: McpServer) {
     {
       title: "Add nodes (one or many) in one batch",
       description:
-        "The single node-creation tool — create ONE node or MANY in one atomic draft edit (it replaced the per-label add_lesson/add_material/… tools). Each `items[i]` has `kind` (the LC label — Course/LessonGrouping/Lesson/Activity/Assessment/Material/LearningComponent/InstructionalRoutine/StandardsFrameworkItem), an EXISTING `parentId` (omit for a root Course/StandardsFramework), `description` (display title), optional `position`/`alignTo`/`via`, and `properties` (the kind-specific canonical LC bag). " +
+        "The single node-creation tool — create ONE node or MANY in one atomic draft edit (it replaced the per-label add_lesson/add_material/… tools). Each `items[i]` has `kind` (the LC label — Course/LessonGrouping/Lesson/Activity/Assessment/Material/LearningComponent/InstructionalRoutine/StandardsFrameworkItem, or a document-layer label TeachingLearningMaterial/DocumentSection/Formatter/FormatterSpec), an EXISTING `parentId` (omit for a root Course/StandardsFramework), `description` (display title), optional `position`/`alignTo`/`via`, and `properties` (the kind-specific canonical LC bag). " +
         PER_KIND_GUIDE + " " +
         "Each item attaches under an already-existing parent — a node minted in the SAME batch cannot be a parent (stage nodes here, then wire cross-references with create_edges). Optional per-item `mintedNodeId` is your own alias, returned in an id map so you can correlate items to their real ids. ALL-OR-NOTHING: the dry-run validates every item and returns ONE confirmationToken + `mintedNodeIds` (real ids, in item order); any item error blocks the whole batch (no partial apply). When the dry-run reports `payloadStored:true` (a large batch held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `items` or `mintedNodeIds`; otherwise re-send `items` verbatim with confirm:true, the token, and `mintedNodeIds` in the same order. " +
         "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff (~1 KB — enough to progress to confirm and wire ids); 'full' also attaches the whole `diff`. " +

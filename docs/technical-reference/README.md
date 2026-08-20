@@ -25,3 +25,7 @@ current architecture summary; [DEPLOY.md](../../DEPLOY.md) is the production run
   per-request actor identity, wiring into a host.
 - [`architecture-and-extending.md`](architecture-and-extending.md) — architecture,
   adding a new grade/subject, testing, baked-in assumptions.
+- [`tlm-phase4-migration.md`](tlm-phase4-migration.md) — the TLM document-model
+  Phase 4 runbook: relabel formatter routines → `Formatter`, mint one
+  `TeachingLearningMaterial` per document, drop `usesRoutine` from the Course walk,
+  re-point generation/history, deploy + verify (needs Firestore creds).

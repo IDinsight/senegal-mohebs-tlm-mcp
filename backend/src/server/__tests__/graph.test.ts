@@ -21,11 +21,11 @@ import {
   __setKgStoreForTest, createMemoryKgStore, kgNamespace, mintNodeId,
   runGraphMutation, __resetMutationsForTest, __resetDraftTokensForTest,
 } from "../../kg-store/index.js";
-import { addNode } from "../../kg-recipes/index.js";
+import { addNode, addNodes, createEdges } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import { activateContext } from "../../activate.js";
-import { walkActiveGraph, namespaceStats, exportGraphView } from "../graph.js";
+import { walkActiveGraph, walkDocument, namespaceStats, exportGraphView } from "../graph.js";
 import type { KgNodeStore, StoredMeta, MutationGraph } from "../../kg-store/index.js";
 import type { StorageAdapter, HistoryFile, CurriculumModel, RawGraphSnapshot } from "../../types.js";
 
@@ -360,6 +360,62 @@ describe("walk_graph (tool core)", () => {
       const courseId = nodes.find((node) => (node.labels ?? []).includes("Course"))!.id;
       return walkActiveGraph({ fromId: courseId, direction: "out", slot: "draft" });
     });
+    expect(result.phase).toBe("unauthorized");
+  });
+});
+
+// Stage a minimal document in the draft: a root TeachingLearningMaterial (with an
+// assembly guide) that `covers` an existing seeded Course — the simple no-section
+// case. Returns the TLM + Course ids. Proves the whole chain the reader depends on
+// (add_nodes doc layer → store raw.* → toRawEnvelope → documentSubgraph).
+async function stageADocument(): Promise<{ tlmId: string; courseId: string }> {
+  const nodes = await store.listNodes(ns, "a");
+  const courseId = nodes.find((node) => (node.labels ?? []).includes("Course"))!.id;
+  const tlmId = mintNodeId();
+
+  const addArgs = {
+    namespace: ns,
+    items: [{
+      label: "TeachingLearningMaterial", newNodeId: tlmId, title: "Guide de l'enseignant",
+      properties: { metadata: { assemblyGuide: "Une leçon par page." } },
+    }],
+  };
+  const addPreview = await runGraphMutation({ namespace: ns, mutation: addNodes, args: addArgs });
+  if (addPreview.phase !== "preview") throw new Error("expected add preview");
+  await runGraphMutation({ namespace: ns, mutation: addNodes, args: addArgs, confirm: true, token: addPreview.confirmationToken });
+
+  const edgeArgs = { namespace: ns, edges: [{ edgeType: "covers", fromId: tlmId, toId: courseId }] };
+  const edgePreview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: edgeArgs });
+  if (edgePreview.phase !== "preview") throw new Error("expected edge preview");
+  await runGraphMutation({ namespace: ns, mutation: createEdges, args: edgeArgs, confirm: true, token: edgePreview.confirmationToken });
+
+  return { tlmId, courseId };
+}
+
+describe("walk_document (tool core)", () => {
+  it("resolves a staged TLM: its assembly guide + the Course it covers (fallback scope)", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      const { tlmId, courseId } = await stageADocument();
+      return { doc: await walkDocument({ tlmId, slot: "draft" }), courseId };
+    });
+    expect(result.doc.scope).toBe("course");                 // no section spine → Course fallback
+    expect(result.doc.assemblyGuide).toBe("Une leçon par page.");
+    expect(result.doc.physicalSlot).toBe("b");               // the draft lives on slot "b"
+    const curriculumIds = (result.doc.curriculum as { nodes: Array<{ id: string }> }).nodes.map((node) => node.id);
+    expect(curriculumIds).toContain(result.courseId);        // the covered Course subtree is resolved
+  });
+
+  it("errors clearly for an id that is not a TeachingLearningMaterial", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      const nodes = await store.listNodes(ns, "a");
+      const lessonId = nodes.find((node) => (node.labels ?? []).includes("Lesson"))!.id;
+      return walkDocument({ tlmId: lessonId });
+    });
+    expect(result.error as string).toMatch(/not found/);
+  });
+
+  it("denies slot:draft to an actor without the draft-read role", async () => {
+    const result = await withActiveContext(SIGNED_IN_NO_ROLE, async () => walkDocument({ tlmId: "anything", slot: "draft" }));
     expect(result.phase).toBe("unauthorized");
   });
 });

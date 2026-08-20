@@ -46,6 +46,34 @@ async function seedCatalog(store: KgNodeStore, namespace: string): Promise<void>
   await store.ensurePointer(namespace, "a");
 }
 
+// A tiny curriculum (Course ▸ Lesson) with a document / rendering layer beside it:
+// a TLM that `covers` the Course, a doc-wide Formatter ▸ FormatterSpec, and a
+// DocumentSection (hasPart under the TLM) that `covers` the Lesson. Exercises the
+// Documents view + the four non-canonical labels + the `covers` link-out.
+async function seedDocumentLayer(store: KgNodeStore, namespace: string): Promise<void> {
+  const node = (id: string, label: string, raw: Record<string, unknown>): Omit<StoredNode, "slot"> =>
+    ({ id, type: label, namespace, labels: [label], spine: label === "Course" || label === "Lesson", properties: { raw } });
+  const link = (type: string, from: string, to: string): Omit<StoredEdge, "slot"> =>
+    ({ id: makeEdgeId(type, from, to), type, from, to, namespace, properties: {} });
+  const nodes = [
+    node("course", "Course", { description: "Cours" }),
+    node("les", "Lesson", { description: "Leçon 1", position: 1 }),
+    node("tlm", "TeachingLearningMaterial", { description: "Manuel de l'élève", metadata: { assemblyGuide: "one page per lesson" } }),
+    node("sec", "DocumentSection", { description: "Page 1", position: 1 }),
+    node("fmt", "Formatter", { description: "Style" }),
+    node("spec", "FormatterSpec", { description: "Palette", content: "warm palette", position: 1 }),
+  ];
+  const edges = [
+    link("hasPart", "course", "les"),
+    link("covers", "tlm", "course"),
+    link("hasPart", "tlm", "sec"), link("covers", "sec", "les"),
+    link("hasPart", "tlm", "fmt"), link("hasPart", "fmt", "spec"),
+  ];
+  const meta: StoredMeta = { contentHash: "t", seededAt: "1970-01-01T00:00:00Z", adapterId: "doc", nodeCount: nodes.length, edgeCount: edges.length };
+  await store.writeSlot(namespace, "a", { nodes, edges, meta });
+  await store.ensurePointer(namespace, "a");
+}
+
 async function seed(): Promise<KgNodeStore> {
   const store = createMemoryKgStore();
   for (const { workspace, grade, subject } of contexts) {
@@ -61,6 +89,7 @@ async function seed(): Promise<KgNodeStore> {
   // Both libraries the Catalog tab reads: the shared one and the default workspace's.
   await seedCatalog(store, SHARED_CATALOG_NAMESPACE);
   await seedCatalog(store, catalogNamespace(DEFAULT_WORKSPACE));
+  await seedDocumentLayer(store, docNs);
   return store;
 }
 
@@ -69,6 +98,7 @@ afterAll(() => { if (priorEnv === undefined) delete process.env.KG_SOURCE; else 
 
 const mathsNs = kgNamespace("ci", "maths");
 const readingNs = kgNamespace("ce1", "reading");
+const docNs = kgNamespace("doc", "test");
 const childrenOf = (graph: NonNullable<Awaited<ReturnType<typeof exportNamespace>>>, id: string) =>
   graph.edges.filter((e) => e.r === "hasChild" && e.s === id).map((e) => graph.nodes.find((n) => n.id === e.t)!);
 
@@ -267,6 +297,75 @@ describe("kg-export — catalog", () => {
 
   it("returns null for a namespace that isn't a curriculum context", async () => {
     expect(await exportCatalog(SHARED_CATALOG_NAMESPACE)).toBeNull();
+  });
+});
+
+// The Documents view: rooted at the TLM, nesting its DocumentSection / Formatter /
+// FormatterSpec via hasPart (folded onto hasChild), with `covers` grafted as a
+// display-only link out to the curriculum. Emitted ONLY when a TLM is present.
+describe("kg-export — document / rendering layer", () => {
+  const DOC_LABELS = ["TeachingLearningMaterial", "DocumentSection", "Formatter", "FormatterSpec"];
+
+  it("colours the four document labels and appends them to the taxonomy", async () => {
+    const graph = (await exportNamespace(docNs))!;
+    const keys = graph.meta.taxonomy.map((x) => x.key);
+    for (const label of DOC_LABELS) {
+      const entry = graph.meta.taxonomy.find((x) => x.key === label)!;
+      expect(entry).toBeTruthy();
+      expect(/^#[0-9a-f]{6}$/i.test(entry.color)).toBe(true);
+    }
+    // Document labels follow the curriculum labels in canonical order.
+    expect(keys.indexOf("TeachingLearningMaterial")).toBeGreaterThan(keys.indexOf("Course"));
+  });
+
+  it("emits a `documents` label-tree rooted on the TLM with the covers alignment tail", async () => {
+    const graph = (await exportNamespace(docNs))!;
+    expect(graph.meta.viewConfig.views.map((v) => v.id)).toContain("documents");
+    const view = graph.meta.viewConfig.views.find((v) => v.id === "documents") as any;
+    expect(view.shape).toBe("label-tree");
+    expect(view.params).toMatchObject({ includeLabels: DOC_LABELS, expandEdge: "hasChild", rootKinds: ["TeachingLearningMaterial"] });
+    expect(view.params.alignmentTail).toEqual([
+      { from: "TeachingLearningMaterial", rel: "covers", dir: "out" },
+      { from: "DocumentSection", rel: "covers", dir: "out" },
+    ]);
+  });
+
+  it("keeps `covers` on its own traversal axis (not folded into the hasChild tree)", async () => {
+    const graph = (await exportNamespace(docNs))!;
+    const covers = graph.edges.filter((e) => e.rel === "covers");
+    expect(covers.map((e) => `${e.s}->${e.t}`).sort()).toEqual(["sec->les", "tlm->course"]);
+    // r === rel === "covers": it must NOT masquerade as a hasChild containment edge.
+    expect(covers.every((e) => e.r === "covers")).toBe(true);
+    // hasPart nesting still folds to the hasChild display axis (so the tree walks it).
+    const hasPart = graph.edges.filter((e) => e.rel === "hasPart" && e.s === "tlm");
+    expect(hasPart.every((e) => e.r === "hasChild")).toBe(true);
+  });
+
+  it("reproduces the client walk: TLM ▸ section/formatter ▸ spec, with covers grafting the curriculum", async () => {
+    const graph = (await exportNamespace(docNs))!;
+    const view = graph.meta.viewConfig.views.find((v) => v.id === "documents") as any;
+    const inc = new Set(view.params.includeLabels as string[]);
+    const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+    const isInc = (id: string) => inc.has(byId.get(id)?.label ?? "");
+
+    // Folded containment (hasChild display axis) restricted to the document labels.
+    const childrenOf = new Map<string, string[]>();
+    const hasIncParent = new Set<string>();
+    for (const e of graph.edges) {
+      if (e.r !== "hasChild" || !isInc(e.s) || !isInc(e.t)) continue;
+      (childrenOf.get(e.s) ?? childrenOf.set(e.s, []).get(e.s)!).push(e.t);
+      hasIncParent.add(e.t);
+    }
+    const roots = graph.nodes.filter((n) => inc.has(n.label) && !hasIncParent.has(n.id)).map((n) => n.id);
+    expect(roots).toEqual(["tlm"]);
+    expect((childrenOf.get("tlm") ?? []).sort()).toEqual(["fmt", "sec"]);
+    expect(childrenOf.get("fmt")).toEqual(["spec"]);
+
+    // The covers alignment tail grafts each covered curriculum node as a leaf.
+    const realOut = new Map<string, string[]>(); // `${rel}|${from}` → [to]
+    for (const e of graph.edges) (realOut.get(`${e.rel}|${e.s}`) ?? realOut.set(`${e.rel}|${e.s}`, []).get(`${e.rel}|${e.s}`)!).push(e.t);
+    expect(realOut.get("covers|tlm")).toEqual(["course"]);
+    expect(realOut.get("covers|sec")).toEqual(["les"]);
   });
 });
 

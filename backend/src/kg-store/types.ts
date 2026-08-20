@@ -114,6 +114,16 @@ export const CANONICAL_EDGE_TYPES: ReadonlySet<string> = new Set([
   "usesRoutine",              // Course/Lesson/Activity → InstructionalRoutine
 ]);
 
+// Non-canonical edge types we intentionally support alongside canon — the
+// document/rendering layer's `covers` (a TLM/DocumentSection → the curriculum it
+// renders; see docs/design-notes/teaching-learning-materials.md). Registered here,
+// not in CANONICAL_EDGE_TYPES, so that set stays honest about what LC defines while
+// link_nodes' gate still lets a curator create the FIRST `covers` edge in a
+// namespace that has none yet.
+export const EXTENSION_EDGE_TYPES: ReadonlySet<string> = new Set([
+  "covers",                   // TeachingLearningMaterial → Course · DocumentSection → Lesson/LessonGrouping/Activity
+]);
+
 // Input shape for writeSlot. `slot` is added by the store at write time — the
 // caller passes the logical graph, not the wire representation.
 export type SlotWriteBatch = {

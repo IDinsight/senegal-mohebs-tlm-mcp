@@ -153,6 +153,49 @@ describe("generic parseGraph — reading (Scope B — daily sessions)", () => {
   });
 });
 
+describe("document / rendering layer — kept out of the spine, round-trips in rawGraph", () => {
+  const node = (id: string, labels: string[], properties: Record<string, unknown>) => ({ id, labels, properties });
+  const rel = (start: string, end: string, type: string) => ({ id: `${type}:${start}->${end}`, start, end, type });
+  // A curriculum Course plus a document layer beside it: a TLM that `covers` the
+  // Course, a doc-wide Formatter with one FormatterSpec, and a DocumentSection that
+  // `covers` the lone Lesson. None of the document labels are curriculum.
+  const raw = {
+    nodes: [
+      node("course", ["Course"], { description: "Guide" }),
+      node("les", ["Lesson"], { position: 1, description: "Leçon 1" }),
+      node("tlm", ["TeachingLearningMaterial"], { description: "Manuel de l'élève", metadata: { assemblyGuide: "one page per lesson" } }),
+      node("sec", ["DocumentSection"], { position: 1, description: "Page 1" }),
+      node("fmt", ["Formatter"], { description: "Art style" }),
+      node("spec", ["FormatterSpec"], { position: 1, content: "warm palette" }),
+    ],
+    relationships: [
+      rel("course", "les", "hasPart"),
+      rel("tlm", "course", "covers"),
+      rel("tlm", "sec", "hasPart"),
+      rel("sec", "les", "covers"),
+      rel("tlm", "fmt", "hasPart"),
+      rel("fmt", "spec", "hasPart"),
+    ],
+  };
+  const model = parseGraph(raw, { numberFrom: "position" });
+
+  it("excludes every document-layer node from the CurriculumModel", () => {
+    expect(model.byId.has("course")).toBe(true);
+    expect(model.byId.has("les")).toBe(true);
+    for (const docId of ["tlm", "sec", "fmt", "spec"]) expect(model.byId.has(docId)).toBe(false);
+    // The Course keeps its real content children; the `covers`-linked section never
+    // folds in as one (covers is not a containment edge).
+    expect(model.childrenOf("course").map((u) => u.id)).toEqual(["les"]);
+  });
+
+  it("preserves the document nodes + covers edges verbatim in rawGraph for re-export", () => {
+    const rawIds = new Set(model.rawGraph!.nodes.map((n) => n.id));
+    for (const id of ["tlm", "sec", "fmt", "spec"]) expect(rawIds.has(id)).toBe(true);
+    const covers = model.rawGraph!.relationships.filter((e) => e.type === "covers");
+    expect(covers.map((e) => `${e.start}->${e.end}`).sort()).toEqual(["sec->les", "tlm->course"]);
+  });
+});
+
 describe("content-reachable-from-roots prune (scope-from-Course)", () => {
   const prune = (rootKinds: string[]): GraphParseDescriptor => ({
     numberFrom: "position",

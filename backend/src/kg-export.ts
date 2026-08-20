@@ -69,6 +69,14 @@ const LABEL_DEFS: TaxonomyEntry[] = [
   { key: "Activity",               label: { fr: "Activité",           en: "Activity" },             color: "#c98a1a" },
   { key: "Material",               label: { fr: "Matériel",           en: "Material" },             color: "#888780" },
   { key: "LearningComponent",      label: { fr: "Composant",          en: "Learning component" },   color: "#d4537e" },
+  // The non-canonical document / rendering layer (teaching-learning-materials.md):
+  // a teal family for the document nodes (TLM ▸ DocumentSection), a plum family for
+  // the rendering nodes (Formatter ▸ FormatterSpec) — kept clearly apart from the
+  // curriculum hues above so a Documents view reads as its own layer.
+  { key: "TeachingLearningMaterial", label: { fr: "Document",         en: "Document (TLM)" },        color: "#0e7c86" },
+  { key: "DocumentSection",          label: { fr: "Section",          en: "Document section" },      color: "#3ba7a0" },
+  { key: "Formatter",                label: { fr: "Formateur",        en: "Formatter" },             color: "#6d597a" },
+  { key: "FormatterSpec",            label: { fr: "Règle de format",  en: "Formatter spec" },        color: "#9b8aa8" },
 ];
 
 // `r` is the TRAVERSAL type (what the containment tree walks — always "hasChild"
@@ -259,6 +267,13 @@ function toDisplayEdges(e: StoredEdge, ctx: FoldContext): DisplayEdge[] {
   if (e.type === "usesRoutine") {
     return [{ s: e.from, t: e.to, r: "hasChild", rel: "usesRoutine", o: edgeOrder(e) }];
   }
+  // `covers` (document → curriculum, teaching-learning-materials.md) is NOT
+  // containment — keep it on its OWN traversal axis (r "covers") so it never folds
+  // into the hasChild tree the curriculum views walk. The Documents view reaches
+  // the covered Course/Lesson through this edge as a display-only link out.
+  if (e.type === "covers") {
+    return [{ s: e.from, t: e.to, r: "covers", rel: "covers", o: edgeOrder(e) }];
+  }
   if (e.type === "supports" || e.type === "hasEducationalAlignment") {
     if (e.type === "hasEducationalAlignment") {
       const ill = ctx.illustrates.get(e.from);
@@ -302,6 +317,9 @@ const STANDARDS_LABELS = ["StandardsFramework", "StandardsFrameworkItem"];
 // InstructionalRoutine + Material carry the shared "fiche de leçon" routine; it folds
 // into the content tree under the Course only (see toDisplayEdges' usesRoutine case).
 const CONTENT_LABELS = ["Course", "LessonGrouping", "Lesson", "Activity", "Material", "InstructionalRoutine"];
+// The document / rendering layer, nested by hasPart (folded onto the hasChild
+// display axis): TLM ▸ DocumentSection · TLM ▸ Formatter ▸ FormatterSpec.
+const DOCUMENT_LABELS = ["TeachingLearningMaterial", "DocumentSection", "Formatter", "FormatterSpec"];
 
 function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig {
   const present = new Set(nodes.map((n) => n.label));
@@ -345,6 +363,23 @@ function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig
   }
   if (edges.some((e) => e.rel === "buildsTowards")) {
     views.push({ id: "progression", label: { fr: "Progression", en: "Learning progression" }, shape: "progression", params: { edge: "buildsTowards" } });
+  }
+  if (has("TeachingLearningMaterial")) {
+    views.push({
+      id: "documents", label: { fr: "Documents", en: "Documents" }, shape: "label-tree",
+      // Rooted on the TLM (rootKinds), walking its hasPart nesting (folded onto
+      // hasChild) down through DocumentSection / Formatter / FormatterSpec. The tail
+      // grafts each covered curriculum node — a TLM's Course, a section's Lesson —
+      // as a display-only leaf out to the curriculum (dir "out" over the real
+      // `covers` edge), the same way the Curriculum view reveals a lesson's standard.
+      params: {
+        includeLabels: DOCUMENT_LABELS, expandEdge: "hasChild", rootKinds: ["TeachingLearningMaterial"],
+        alignmentTail: [
+          { from: "TeachingLearningMaterial", rel: "covers", dir: "out" },
+          { from: "DocumentSection", rel: "covers", dir: "out" },
+        ],
+      },
+    });
   }
   views.push({ id: "generic", label: { fr: "Par type (LC)", en: "By type (LC)" }, shape: "node-type" });
   return { views };

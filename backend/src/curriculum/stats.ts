@@ -39,7 +39,10 @@ const CONTAINMENT_EDGES = new Set(["hasPart", "hasChild"]);
 // Course, the framework root, then groupings) and cap the list, reporting the true
 // total separately. The dropped tail is uninteresting leaves, never a Course.
 const MAX_ROOTS = 50;
-const ROOT_LABEL_RANK: Record<string, number> = { Course: 0, StandardsFramework: 1, LessonGrouping: 2 };
+// A TeachingLearningMaterial is a document root (it points AT a Course via
+// `covers`, so nothing contains it) — rank it up with the other content roots so
+// documents surface in the capped orientation list, not buried among leaf tails.
+const ROOT_LABEL_RANK: Record<string, number> = { Course: 0, TeachingLearningMaterial: 1, StandardsFramework: 2, LessonGrouping: 3 };
 const rootRank = (root: StatsRoot): number => {
   const best = Math.min(...root.labels.map((label) => ROOT_LABEL_RANK[label] ?? 99), 99);
   return best;

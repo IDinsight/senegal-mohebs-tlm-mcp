@@ -62,6 +62,12 @@ const GROUPING = "Standard Grouping";
 const GROUPING_LABELS = new Set(["Course", "LessonGrouping", "StandardsFramework"]);
 
 const SFI = "StandardsFrameworkItem";
+// The non-canonical document / rendering layer sits BESIDE the curriculum (a
+// TeachingLearningMaterial `covers` a Course — it is not part of the spine), so
+// these labels are not curriculum units and never enter the CurriculumModel. They
+// still round-trip: the rawGraph echo below re-emits every node/edge regardless of
+// what became a unit. See docs/design-notes/teaching-learning-materials.md.
+const DOCUMENT_LABELS = new Set(["TeachingLearningMaterial", "DocumentSection", "Formatter", "FormatterSpec"]);
 const str = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
 
 export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumModel {
@@ -109,6 +115,9 @@ export function parseGraph(raw: unknown, d: GraphParseDescriptor): CurriculumMod
   for (const n of nodes) {
     const kind = kindOf(n);
     if (!kind) continue;
+    // Skip the document/rendering layer — it is not curriculum (it round-trips via
+    // the rawGraph echo, just never as a spine unit).
+    if (n.labels?.some((l) => DOCUMENT_LABELS.has(l))) continue;
     const p = n.properties ?? {};
     const label = n.labels?.[0];
     const grouping = (label != null && GROUPING_LABELS.has(label)) || p.normalizedStatementType === GROUPING;

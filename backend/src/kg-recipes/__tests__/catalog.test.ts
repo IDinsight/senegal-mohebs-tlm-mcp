@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import { listCatalogEntries, renderCatalogEntry, cloneRoutineSubtree, assembleCatalog, useRoutine, catalogNamespace, SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID } from "../catalog.js";
+import { listCatalogEntries, renderCatalogEntry, cloneRoutineSubtree, relabelClonedFormatter, assembleCatalog, useRoutine, useFormatter, catalogNamespace, SHARED_CATALOG_NAMESPACE, CATALOG_ROOT_ID } from "../catalog.js";
 import { edgeId, type MutationEdge, type MutationGraph, type MutationNode } from "../../kg-store/index.js";
 import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import type { RawGraphSnapshot } from "../../types.js";
@@ -291,6 +291,76 @@ describe("useRoutine mutation", () => {
   it("validate rejects id collisions with the draft", () => {
     const collide: MutationGraph = { nodes: [lesson("L1"), { ...clone.nodes[0] }], edges: [] };
     const res = useRoutine.validate!(collide, collide, args);
+    expect(res.errors.join(" ")).toMatch(/already exists/);
+  });
+});
+
+// The formatter write path (Phase 4): a copied formatter is relabelled to the
+// document layer and hung under a TeachingLearningMaterial via hasPart — NOT linked
+// to a Course via usesRoutine. Mirrors scripts/migrate-tlm-documents.mjs Steps A + D.
+describe("relabelClonedFormatter + useFormatter mutation", () => {
+  // A formatter entry: root ─hasPart→ fmt (catalogKind:formatter) ─hasPart→ spec (Material).
+  function formatterCatalog(): MutationGraph {
+    return {
+      nodes: [
+        routine("root", { description: "Library" }),
+        routine("fmt", { description: "House style", metadata: { role: "instructional-routine", catalogKind: "formatter", summary: "Apply everywhere." } }),
+        material("spec", { content: "palette + fonts" }),
+      ],
+      edges: [hasPart("root", "fmt"), hasPart("fmt", "spec")],
+    };
+  }
+  const tlm = (id: string): MutationNode =>
+    ({ id, type: "TeachingLearningMaterial", namespace: NS, labels: ["TeachingLearningMaterial"], spine: false, properties: { raw: { description: "Manuel" } } });
+  const cloneFmt = () => relabelClonedFormatter(cloneRoutineSubtree(formatterCatalog(), "fmt", "ci/maths", (id) => `copy-${id}`)!);
+
+  it("relabels the clone to Formatter/FormatterSpec and drops the kind tags (content kept)", () => {
+    const clone = cloneFmt();
+    const entry = clone.nodes.find((n) => n.id === "copy-fmt")!;
+    const spec = clone.nodes.find((n) => n.id === "copy-spec")!;
+    expect(entry.labels).toEqual(["Formatter"]);
+    expect(entry.type).toBe("Formatter");
+    expect(spec.labels).toEqual(["FormatterSpec"]);
+    // Kind tags gone; the other sidecar key (summary) + the content survive verbatim.
+    const entryMeta = (entry.properties!.raw as Record<string, any>).metadata;
+    expect(entryMeta.catalogKind).toBeUndefined();
+    expect(entryMeta.role).toBeUndefined();
+    expect(entryMeta.summary).toBe("Apply everywhere.");
+    expect((spec.properties!.raw as Record<string, any>).content).toBe("palette + fonts");
+  });
+
+  it("does not mutate the source catalog node (relabel copies, never touches the library)", () => {
+    const src = formatterCatalog();
+    relabelClonedFormatter(cloneRoutineSubtree(src, "fmt", "ci/maths", (id) => `copy-${id}`)!);
+    const srcFmt = src.nodes.find((n) => n.id === "fmt")!;
+    expect(srcFmt.labels).toEqual(["InstructionalRoutine"]);
+    expect((srcFmt.properties!.raw as Record<string, any>).metadata.catalogKind).toBe("formatter");
+  });
+
+  it("apply hangs the Formatter under the TLM via hasPart", () => {
+    const clone = cloneFmt();
+    const base: MutationGraph = { nodes: [tlm("T1")], edges: [] };
+    const args = { namespace: "ci/maths", tlmId: "T1", clonedNodes: clone.nodes, clonedEdges: clone.edges, newFormatterId: clone.newEntryId };
+    const after = useFormatter.apply(base, args);
+    expect(after.nodes.map((n) => n.id)).toContain("copy-fmt");
+    expect(after.edges.some((e) => e.id === edgeId("hasPart", "T1", "copy-fmt"))).toBe(true);
+    // No usesRoutine edge is created — formatting lives on the document axis.
+    expect(after.edges.some((e) => e.type === "usesRoutine")).toBe(false);
+  });
+
+  it("validate rejects a target that is not a TeachingLearningMaterial", () => {
+    const clone = cloneFmt();
+    const base: MutationGraph = { nodes: [lesson("L1")], edges: [] };
+    const args = { namespace: "ci/maths", tlmId: "L1", clonedNodes: clone.nodes, clonedEdges: clone.edges, newFormatterId: clone.newEntryId };
+    const res = useFormatter.validate!(base, base, args);
+    expect(res.errors.join(" ")).toMatch(/attaches under a TeachingLearningMaterial/);
+  });
+
+  it("validate rejects id collisions with the draft", () => {
+    const clone = cloneFmt();
+    const base: MutationGraph = { nodes: [tlm("T1"), { ...clone.nodes[0] }], edges: [] };
+    const args = { namespace: "ci/maths", tlmId: "T1", clonedNodes: clone.nodes, clonedEdges: clone.edges, newFormatterId: clone.newEntryId };
+    const res = useFormatter.validate!(base, base, args);
     expect(res.errors.join(" ")).toMatch(/already exists/);
   });
 });

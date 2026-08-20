@@ -45,7 +45,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { CANONICAL_EDGE_TYPES, edgeId } from "./types.js";
+import { CANONICAL_EDGE_TYPES, EXTENSION_EDGE_TYPES, edgeId } from "./types.js";
 import type { MutationEdge, MutationGraph, MutationNode } from "./types.js";
 import type { GraphMutation } from "./mutations.js";
 
@@ -55,13 +55,14 @@ import type { GraphMutation } from "./mutations.js";
 const observedKinds = (base: MutationGraph): Set<string> =>
   new Set(base.nodes.map((n) => n.type));
 
-// The edge types link_nodes will accept: every canonical LC type (so the FIRST
-// edge of a canonical type is creatable in a namespace that has none yet) plus
-// any non-canonical type already observed in `base` (a namespace may carry
-// pre-existing off-canon edges we still let a curator extend). Invented typos
-// like "hasLesson" are in neither set, so they're still rejected.
+// The edge types link_nodes will accept: every canonical LC type plus our
+// registered extension types (`covers`) — so the FIRST edge of either is creatable
+// in a namespace that has none yet — plus any non-canonical type already observed
+// in `base` (a namespace may carry pre-existing off-canon edges we still let a
+// curator extend). Invented typos like "hasLesson" are in none of these, so they're
+// still rejected.
 const allowedEdgeTypes = (base: MutationGraph): Set<string> =>
-  new Set([...CANONICAL_EDGE_TYPES, ...base.edges.map((e) => e.type)]);
+  new Set([...CANONICAL_EDGE_TYPES, ...EXTENSION_EDGE_TYPES, ...base.edges.map((e) => e.type)]);
 
 // ── create_node ──────────────────────────────────────────────────────────────
 // Mints a fresh randomUUID for the new node's id and adds one node to the

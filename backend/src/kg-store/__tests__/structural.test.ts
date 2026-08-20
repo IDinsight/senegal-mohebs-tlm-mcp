@@ -238,6 +238,22 @@ describe("link_nodes", () => {
     expect(preview.diff.edges.added.map((e) => e.id)).toContain(newId);
   });
 
+  it("accepts the extension edge `covers` in a namespace that has none yet (bootstrap)", async () => {
+    // `covers` is our non-canonical document→curriculum edge — registered in
+    // EXTENSION_EDGE_TYPES, so the gate lets a curator create the FIRST one even
+    // though no namespace ships with it. See teaching-learning-materials.md.
+    const graph = await readPublishedGraph(ns);
+    expect(graph.edges.some((e) => e.type === "covers")).toBe(false); // precondition: none present
+    const [from, to] = [graph.nodes[0], graph.nodes[1]];
+
+    const preview = await runGraphMutation({
+      namespace: ns, mutation: linkNodes,
+      args: { edgeType: "covers", fromId: from.id, toId: to.id, properties: {}, namespace: ns },
+    });
+    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
+    expect(preview.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId("covers", from.id, to.id));
+  });
+
   it("rejects a duplicate edge (same type, from, to already exists)", async () => {
     const graph = await readPublishedGraph(ns);
     // Any existing hasChild edge is a valid duplicate target.

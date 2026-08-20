@@ -96,6 +96,30 @@ async function readPublished(): Promise<MutationGraph> { const p = await store.r
 async function readDraft(): Promise<MutationGraph | null> { const p = await store.readPointer(ns); return p?.draftSlot ? readSlot(p.draftSlot) : null; }
 const modelOf = (g: MutationGraph): CurriculumModel => adapter().parse(toRawEnvelope({ nodes: g.nodes, edges: g.edges }));
 
+// Seed a TeachingLearningMaterial (+ covers→course) into the published slot so
+// use_formatter has a document to resolve/attach under — the CI-maths fixture has
+// none (the Phase 4 TLM migration hasn't run on it).
+async function addTlmToPublished(courseId: string, tlmId = "tlm-fixture"): Promise<string> {
+  const slot = (await store.readPointer(ns))!.publishedSlot;
+  const [nodes, edges] = await Promise.all([store.listNodes(ns, slot), store.listEdges(ns, slot)]);
+  const tlm: Omit<StoredNode, "slot"> = { id: tlmId, type: "TeachingLearningMaterial", namespace: ns, labels: ["TeachingLearningMaterial"], spine: false, properties: { raw: { description: "Manuel de l'élève", metadata: { role: "teaching-learning-material", assemblyGuide: "how to build me" } } } };
+  const covers: Omit<StoredEdge, "slot"> = { id: makeEdgeId("covers", tlmId, courseId), type: "covers", from: tlmId, to: courseId, namespace: ns, properties: {} };
+  const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: "test", nodeCount: nodes.length + 1, edgeCount: edges.length + 1 };
+  await store.writeSlot(ns, slot, { nodes: [...nodes.map(strip), tlm], edges: [...edges.map(strip), covers], meta });
+  return tlmId;
+}
+
+// Activate the ci/maths context inside a fresh session as the curator — the setup
+// use_formatter's tool-layer resolution (getActiveAdapter / readActiveGraph) needs.
+async function inCtx(fn: () => Promise<void>): Promise<void> {
+  await runInSession(newSessionState(), async () => {
+    __setActorForTest(CURATOR);
+    const act = await activateContext("senegal", "ci", "maths");
+    if (!act.ok) throw new Error(`activate: ${act.error}`);
+    await fn();
+  });
+}
+
 // A real Lesson id from the published CI-maths seed (a valid usesRoutine target).
 function someLessonId(g: MutationGraph): string {
   const m = modelOf(g);
@@ -223,25 +247,60 @@ describe("use_routine", () => {
   });
 });
 
+// use_formatter is the document-side apply: a formatter hangs under the Course's
+// TeachingLearningMaterial via hasPart (relabelled to Formatter/FormatterSpec), NOT
+// on a Course via usesRoutine (the pre-Phase-4 stopgap). Driven through the exported
+// applyCatalogEntry (behind the tool) inside an activated context, so the tool-layer
+// TLM resolution runs.
 describe("use_formatter", () => {
-  it("copies a formatter onto a Course (deliverable root) and links it via usesRoutine", async () => {
-    const published = await readPublished();
-    const courseId = published.nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;   // a deliverable root
-    const catalog = await readCatalog(SHARED_CATALOG_NAMESPACE);
+  const jsonOf = (r: unknown) => JSON.parse((r as { content: Array<{ text: string }> }).content[0].text);
 
-    const clone = cloneRoutineSubtree(catalog, "cat-fmt", ns, () => mintNodeId())!;
-    const args = { namespace: ns, targetId: courseId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
-    const preview = await runGraphMutation({ namespace: ns, mutation: useRoutine, args });
-    if (preview.phase !== "preview") throw new Error(`expected preview, got ${preview.phase}`);
-    expect(preview.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId("usesRoutine", courseId, clone.newEntryId));
+  it("resolves the Course's TLM and lands a Formatter under it via hasPart (re-send confirm)", async () => {
+    await inCtx(async () => {
+      const courseId = (await readPublished()).nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
+      const tlmId = await addTlmToPublished(courseId);
 
-    const confirm = await runGraphMutation({ namespace: ns, mutation: useRoutine, args, confirm: true, token: preview.confirmationToken });
-    expect(confirm.phase).toBe("apply");
-    const draft = (await readDraft())!;
-    // The formatter's spec Material came along, linked to the Course.
-    expect(draft.nodes.some((n) => n.id === clone.newEntryId)).toBe(true);
-    expect(draft.edges.some((e) => e.id === makeEdgeId("usesRoutine", courseId, clone.newEntryId))).toBe(true);
-    expect((await readPublished()).edges.some((e) => e.id === makeEdgeId("usesRoutine", courseId, clone.newEntryId))).toBe(false);
+      // Dry-run against the COURSE — use_formatter resolves it to the covering TLM.
+      const dry = jsonOf(await applyCatalogEntry({ entryId: "cat-fmt", targetId: courseId }, "formatter")) as {
+        diff: { edges: { added: Array<{ id: string }> } }; mintedIdMap: Record<string, string>; confirmationToken: string;
+      };
+      const newFmtId = dry.mintedIdMap["cat-fmt"];
+      expect(dry.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId("hasPart", tlmId, newFmtId));
+      expect(await readDraft()).toBeNull();   // dry-run stages nothing
+
+      // Confirm (small clone → not parked → re-send entryId/targetId/mintedIdMap).
+      const done = jsonOf(await applyCatalogEntry({ entryId: "cat-fmt", targetId: courseId, mintedIdMap: dry.mintedIdMap, confirm: true, confirmationToken: dry.confirmationToken }, "formatter")) as { phase: string; ok: boolean };
+      expect(done.phase).toBe("apply");
+      expect(done.ok).toBe(true);
+
+      const draft = (await readDraft())!;
+      // The copy is relabelled to the document layer and hung under the TLM.
+      expect(draft.nodes.find((n) => n.id === newFmtId)!.labels).toEqual(["Formatter"]);
+      expect(draft.nodes.find((n) => n.id === dry.mintedIdMap["cat-fmt-spec"])!.labels).toEqual(["FormatterSpec"]);
+      expect(draft.edges.some((e) => e.id === makeEdgeId("hasPart", tlmId, newFmtId))).toBe(true);
+      // No usesRoutine edge onto the copy, and published never saw it.
+      expect(draft.edges.some((e) => e.type === "usesRoutine" && e.to === newFmtId)).toBe(false);
+      expect((await readPublished()).nodes.some((n) => n.id === newFmtId)).toBe(false);
+    });
+  });
+
+  it("accepts a TLM id directly as the target", async () => {
+    await inCtx(async () => {
+      const courseId = (await readPublished()).nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
+      const tlmId = await addTlmToPublished(courseId);
+      const dry = jsonOf(await applyCatalogEntry({ entryId: "cat-fmt", targetId: tlmId }, "formatter")) as {
+        diff: { edges: { added: Array<{ id: string }> } }; mintedIdMap: Record<string, string>;
+      };
+      expect(dry.diff.edges.added.map((e) => e.id)).toContain(makeEdgeId("hasPart", tlmId, dry.mintedIdMap["cat-fmt"]));
+    });
+  });
+
+  it("errors when the target Course has no TLM to cover it yet", async () => {
+    await inCtx(async () => {
+      const courseId = (await readPublished()).nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
+      const res = jsonOf(await applyCatalogEntry({ entryId: "cat-fmt", targetId: courseId }, "formatter")) as { error?: string };
+      expect(res.error).toMatch(/no TeachingLearningMaterial covering it yet/);
+    });
   });
 });
 
@@ -253,15 +312,6 @@ describe("token-only confirm — use_routine wrapper parking", () => {
   const priorThreshold = process.env.TLM_CONFIRM_STORE_BYTES;
   beforeAll(() => { process.env.TLM_CONFIRM_STORE_BYTES = "1"; });
   afterAll(() => { if (priorThreshold === undefined) delete process.env.TLM_CONFIRM_STORE_BYTES; else process.env.TLM_CONFIRM_STORE_BYTES = priorThreshold; });
-
-  async function inCtx(fn: () => Promise<void>): Promise<void> {
-    await runInSession(newSessionState(), async () => {
-      __setActorForTest(CURATOR);
-      const act = await activateContext("senegal", "ci", "maths");
-      if (!act.ok) throw new Error(`activate: ${act.error}`);
-      await fn();
-    });
-  }
 
   it("copies onto a lesson token-only (no entryId / targetId / mintedIdMap on confirm)", async () => {
     await inCtx(async () => {
@@ -294,6 +344,26 @@ describe("token-only confirm — use_routine wrapper parking", () => {
       const doneJson = JSON.parse(done.content![0].text) as { ok?: boolean; reason?: string };
       expect(doneJson.ok).toBe(false);
       expect(doneJson.reason).toBe("stale");
+    });
+  });
+
+  it("copies a formatter under a TLM token-only (the parked mode dispatches useFormatter)", async () => {
+    await inCtx(async () => {
+      const courseId = (await readPublished()).nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
+      const tlmId = await addTlmToPublished(courseId);
+      const dry = (await applyCatalogEntry({ entryId: "cat-fmt", targetId: tlmId }, "formatter")) as { content?: Array<{ text: string }> };
+      const dryJson = JSON.parse(dry.content![0].text) as { payloadStored?: boolean; confirmationToken?: string; mintedIdMap?: Record<string, string> };
+      expect(dryJson.payloadStored).toBe(true);
+      // Confirm with ONLY confirm + token — no mode passed, so the parked context's
+      // mode is what routes this to useFormatter (not useRoutine).
+      const done = (await applyCatalogEntry({ confirm: true, confirmationToken: dryJson.confirmationToken })) as { content?: Array<{ text: string }> };
+      const doneJson = JSON.parse(done.content![0].text) as { phase?: string; ok?: boolean };
+      expect(doneJson.phase).toBe("apply");
+      expect(doneJson.ok).toBe(true);
+      const newFmtId = dryJson.mintedIdMap!["cat-fmt"];
+      const draft = (await readDraft())!;
+      expect(draft.edges.some((e) => e.id === makeEdgeId("hasPart", tlmId, newFmtId))).toBe(true);
+      expect(draft.nodes.find((n) => n.id === newFmtId)!.labels).toEqual(["Formatter"]);
     });
   });
 });
