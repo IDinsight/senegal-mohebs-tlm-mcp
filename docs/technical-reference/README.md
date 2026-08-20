@@ -29,3 +29,8 @@ current architecture summary; [DEPLOY.md](../../DEPLOY.md) is the production run
   Phase 4 runbook: relabel formatter routines → `Formatter`, mint one
   `TeachingLearningMaterial` per document, drop `usesRoutine` from the Course walk,
   re-point generation/history, deploy + verify (needs Firestore creds).
+- [`reading-tlm-migration.md`](reading-tlm-migration.md) — the CE1-reading cutover
+  runbook: canonicalise the content nesting (session `Lesson`→`Activity`, day
+  `Jour`→`Lesson`), mint the "Guide de l'enseignant" TLM + move its formatters off
+  the Course, rename the Course → "Planification"; deploy the prune change first,
+  then `migrate-reading-tlm.mjs` + `import-kg --replace-published` (needs creds).

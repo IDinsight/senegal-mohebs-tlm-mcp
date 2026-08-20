@@ -12,10 +12,10 @@
  * There is one strategy today, `content-reachable-from-roots`, which is the CE1
  * reading Scope-B/C prune generalised to take its root kinds as a parameter. Its
  * intermediate kinds are the canonical Learning-Commons kinds a node reports as its
- * own identity — day groupings are `Jour`, sessions `Lesson`, spine standards
- * `Standard`, components `LearningComponent`, content `Activity`/`Material`. No
- * reading vocabulary leaks in. A second strategy is a small generic addition here,
- * never a per-subject file.
+ * own identity — a day is a `Lesson`, a session an `Activity` (canonicalised reading
+ * shape), spine standards `Standard`, components `LearningComponent`, content
+ * `Activity`/`Material`. No reading vocabulary leaks in. A second strategy is a small
+ * generic addition here, never a per-subject file.
  */
 import type { CurriculumUnit } from "../types.js";
 
@@ -59,9 +59,13 @@ function contentReachableFromRoots(rootKinds: Set<string>): PostParse {
 
     // The standards a kept session teaches (session—hasEducationalAlignment→standard
     // folds so the standard's childIds ∋ the session), then those standards' components.
+    // The aligned content leaf is a `Lesson` in the maths shape but an `Activity` in the
+    // canonicalised reading shape (a day is the Lesson, a session the Activity) — accept
+    // either so a standard is kept whenever a kept session aligns to it.
+    const isAlignedContentLeaf = (u: CurriculumUnit | undefined) => u?.kind === "Lesson" || u?.kind === "Activity";
     for (const ex of units) {
       if (!isLeafStandard(ex)) continue;
-      if (ex.childIds.some((cid) => byId.get(cid)?.kind === "Lesson" && keep.has(cid))) keep.add(ex.id);
+      if (ex.childIds.some((cid) => isAlignedContentLeaf(byId.get(cid)) && keep.has(cid))) keep.add(ex.id);
     }
     for (const u of units) if (u.kind === "LearningComponent") { const p = byId.get(u.parentId ?? ""); if (p && keep.has(p.id)) keep.add(u.id); }
 
