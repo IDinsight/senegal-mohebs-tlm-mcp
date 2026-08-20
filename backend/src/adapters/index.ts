@@ -17,7 +17,10 @@
  * declarations, and no integrity rules — that is deliberate. Write-safety
  * rules for later phases live in the write tools, not on the adapter.
  */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { SubjectAdapter } from "../types.js";
+import { CONFIG } from "../config.js";
 import { ContextNotSetError, listAvailableContexts, sessionState } from "../context/index.js";
 import { buildAdapterFromProfile } from "./build.js";
 import { validateProfile, validateProfileRecord, type SubjectProfile } from "./profile.js";
@@ -27,7 +30,7 @@ import { validateProfile, validateProfileRecord, type SubjectProfile } from "./p
 export { validateProfile, validateProfileRecord, MAX_GUIDE_CHARS } from "./profile.js";
 export type { SubjectProfile, ProfileRecord } from "./profile.js";
 import { CI_MATHS_PROFILE, CI_MATHS_GUIDE } from "./profiles/senegal/ci-maths.js";
-import { CE1_READING_PROFILE, CE1_READING_GUIDE } from "./profiles/senegal/ce1-reading.js";
+import { CE1_READING_PROFILE } from "./profiles/senegal/ce1-reading.js";
 import { NIGERIA_MATHS_PROFILE, NIGERIA_MATHS_GUIDE } from "./profiles/nigeria/primary-1-3-maths.js";
 import { CBSE_SCIENCE_PROFILE, CBSE_SCIENCE_GUIDE } from "./profiles/cbse/class-9-10-science.js";
 import { GHANA_ENGLISH_PROFILE, GHANA_ENGLISH_GUIDE } from "./profiles/ghana/basic-1-3-english.js";
@@ -74,12 +77,16 @@ export function getRegisteredProfile(workspace: string, grade: string, subject: 
   return PROFILES[`${workspace}/${grade}/${subject}`] ?? null;
 }
 
-// The in-repo GRAPH GUIDE (authored markdown, phase 2c) for a (grade, subject),
-// or undefined when the subject ships without one yet. The seed writes it into
-// the config cell alongside the core; the guide is for the LLM, never for reads.
+// The in-repo GRAPH GUIDE (authored markdown, phase 2c) for a (grade, subject).
+// A subject ships its guide EITHER as a code literal here OR as a data file at
+// assets/<ws>/<grade>/<subject>/GRAPH_GUIDE.md (CE1 reading does the latter, to
+// keep its long markdown out of the profile module). The seed writes whichever it
+// finds into the config cell alongside the core; the guide is for the LLM, never
+// for reads — the live get_graph_guide reads the store cell, not this function.
+// Undefined when the subject ships neither.
 const GUIDES: Record<string, string> = {
   "senegal/ci/maths": CI_MATHS_GUIDE,
-  "senegal/ce1/reading": CE1_READING_GUIDE,
+  // senegal/ce1/reading ships its guide as a data file — see readGuideAsset.
   "nigeria/primary-1-3/maths": NIGERIA_MATHS_GUIDE,
   "cbse/class-9-10/science": CBSE_SCIENCE_GUIDE,
   "ghana/basic-1-3/english": GHANA_ENGLISH_GUIDE,
@@ -87,8 +94,20 @@ const GUIDES: Record<string, string> = {
   "madhi/class-1-5/maths": MADHI_MATHS_GUIDE,
   "rwanda/primary-1-3/maths": RWANDA_MATHS_GUIDE,
 };
+
+// The authored guide as a data file, when the subject ships one there instead of a
+// literal above. Read lazily (seed/test paths only), so a missing file is just
+// "no guide" (undefined), never a crash.
+function readGuideAsset(workspace: string, grade: string, subject: string): string | undefined {
+  try {
+    return readFileSync(resolve(CONFIG.assetsDir, workspace, grade, subject, "GRAPH_GUIDE.md"), "utf8");
+  } catch {
+    return undefined;
+  }
+}
+
 export function getRegisteredGuide(workspace: string, grade: string, subject: string): string | undefined {
-  return GUIDES[`${workspace}/${grade}/${subject}`];
+  return GUIDES[`${workspace}/${grade}/${subject}`] ?? readGuideAsset(workspace, grade, subject);
 }
 
 // Build an adapter from a profile record READ FROM THE STORE (phase 2b/2c)
