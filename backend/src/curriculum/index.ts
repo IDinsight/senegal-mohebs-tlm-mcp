@@ -11,5 +11,6 @@ export { searchTerminology, terminologySections } from "./terminology.js";
 export { serializeModel, deserializeToModel, toRawEnvelope, edgeId, PRELOADED_MODEL_KEY, PRELOADED_SLOT_KEY } from "./store-bridge.js";
 export { resolvePrune, type PruneStrategySpec } from "./prunes.js";
 export { coursesOf, courseSubgraph, standardsFor } from "./courses.js";
+export { documentSubgraph, type DocumentScope, type DocumentSectionOut } from "./documents.js";
 export { walkGraph, type WalkArgs, type WalkDirection, type WalkResult } from "./walk.js";
 export { computeGraphStats, type GraphStats, type StatsRoot } from "./stats.js";

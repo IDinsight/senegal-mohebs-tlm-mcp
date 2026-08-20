@@ -22,7 +22,7 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace, sessionState } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor, diffGraphs, type GraphDiff } from "../kg-store/index.js";
 import { exportSubtree } from "../kg-export.js";
-import { walkGraph, computeGraphStats, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
+import { walkGraph, computeGraphStats, documentSubgraph, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
 import { resolveDraftModel } from "./preview.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
@@ -134,6 +134,30 @@ export async function walkActiveGraph(args: WalkToolArgs): Promise<Record<string
   return { slot, physicalSlot: resolved.physicalSlot, ...result };
 }
 
+// ── Core: walk_document ───────────────────────────────────────────────────────
+// Resolve one TeachingLearningMaterial's full scope: its assembly guide, its
+// rendering stack, and the curriculum it renders (section spine or Course
+// fallback). The generation-side counterpart to walk_graph — where walk_graph
+// reads the curriculum to teach, this reads the document to produce. Slot-aware
+// (published default; role-gated draft) like walk_graph, so a curator can inspect
+// a document they are authoring before publishing. Exported so tests drive the
+// real logic directly.
+export async function walkDocument(args: { tlmId: string; slot?: WalkSlot }): Promise<Record<string, unknown>> {
+  const namespace = activeNamespace();
+  const slot = args.slot ?? "published";
+
+  const resolved = await resolveWalkModel(namespace, slot);
+  if ("notice" in resolved) {
+    return resolved.notice;
+  }
+
+  const document = documentSubgraph(resolved.model, args.tlmId);
+  if (!document) {
+    return { error: `TeachingLearningMaterial '${args.tlmId}' not found in the ${slot} graph. Call namespace_stats (its roots, filtered by labels including 'TeachingLearningMaterial') for available document ids.` };
+  }
+  return { slot, physicalSlot: resolved.physicalSlot, ...document };
+}
+
 // ── Core: namespace_stats ─────────────────────────────────────────────────────
 // Exported so tests drive the real logic directly (like buildCapabilitiesReport).
 export async function namespaceStats(): Promise<Record<string, unknown>> {
@@ -242,6 +266,20 @@ export function registerGraphTools(server: McpServer) {
       },
     },
     guarded(async (a: WalkToolArgs) => asJson(await walkActiveGraph(a))),
+  );
+
+  server.registerTool(
+    "walk_document",
+    {
+      title: "Resolve a document's generation scope",
+      description:
+        "Given a TeachingLearningMaterial (TLM) id — a document/deliverable root, found via namespace_stats roots (filter labels for 'TeachingLearningMaterial') — return everything generation composes to produce that document (docs/design-notes/teaching-learning-materials.md). This is the document-side counterpart to walk_graph: walk_graph reads the curriculum to TEACH, walk_document reads the document to PRODUCE. Returns: `assemblyGuide` (the document's own authored 'how to build me' markdown, from metadata.assemblyGuide, or null); `scope` — how the curriculum was resolved: 'sections' (the TLM has a DocumentSection spine), 'course' (the simple TLM→covers→Course fallback), or 'none' (covers nothing yet); `sections` (the ordered DocumentSection spine, each with its `covers` curriculum targets — an EMPTY covers marks a front-matter section like a cover/TOC); `document` (the TLM subtree as raw nodes+edges — the TLM plus its hasPart Formatter/FormatterSpec rendering stack and DocumentSections, with the covers edges); and `curriculum` (the resolved curriculum-to-render as raw nodes+edges — pure hasPart/hasChild containment, NOT usesRoutine, because formatting reaches generation through the TLM, not the curriculum). Read-only. `slot`: 'published' (default) or 'draft' (UNPUBLISHED staged edits — curators/approvers only), so you can inspect a document you are authoring before publishing.",
+      inputSchema: {
+        tlmId: z.string(),
+        slot: z.enum(["published", "draft"]).optional(),
+      },
+    },
+    guarded(async (a: { tlmId: string; slot?: WalkSlot }) => asJson(await walkDocument(a))),
   );
 
   server.registerTool(

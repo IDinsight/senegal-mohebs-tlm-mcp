@@ -266,3 +266,67 @@ describe("create_edges (batched)", () => {
     expect(await readDraft()).toBeNull();
   });
 });
+
+// ── The document / rendering layer, authored the same generic way ────────────
+// Proves a curator can build the whole document layer with the existing generic
+// verbs — add_nodes for the four non-canonical labels (TLM ▸ DocumentSection /
+// Formatter ▸ FormatterSpec, nested by hasPart) and create_edges for the `covers`
+// edge out to the curriculum — with no per-document tool. Each confirmed batch
+// accumulates on the same draft, so a later batch parents under an earlier node.
+describe("document-layer authoring via the generic verbs", () => {
+  const labelOf = (graph: MutationGraph, id: string) => graph.nodes.find((n) => n.id === id)!.labels;
+  const hasEdge = (graph: MutationGraph, type: string, from: string, to: string) =>
+    graph.edges.some((e) => e.type === type && e.from === from && e.to === to);
+
+  it("mints the TLM/section/formatter/spec + covers edges, all round-tripping in the draft", async () => {
+    const published = await readPublished();
+    const courseId = published.nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
+    const lessonId = published.nodes.find((n) => (n.labels ?? []).includes("Lesson"))!.id;
+
+    // 1. The TLM root (no parent — it points AT the Course via covers, not under it).
+    const tlmId = mintNodeId();
+    await run(addNodes, { namespace: ns, items: [{
+      label: "TeachingLearningMaterial", newNodeId: tlmId,
+      title: "Manuel de l'élève",
+      properties: { audience: "pupil", mediumType: "print", metadata: { assemblyGuide: "one page per lesson" } },
+    }] });
+
+    // 2. A doc-wide Formatter and a DocumentSection, both hasPart-nested under the TLM.
+    const [fmtId, secId] = [mintNodeId(), mintNodeId()];
+    await run(addNodes, { namespace: ns, items: [
+      { label: "Formatter", parentId: tlmId, newNodeId: fmtId, title: "Art style" },
+      { label: "DocumentSection", parentId: tlmId, newNodeId: secId, title: "Page 1" },
+    ] });
+
+    // 3. One FormatterSpec under the Formatter.
+    const specId = mintNodeId();
+    await run(addNodes, { namespace: ns, items: [
+      { label: "FormatterSpec", parentId: fmtId, newNodeId: specId, title: "Warm palette", properties: { content: "warm palette" } },
+    ] });
+
+    // 4. `covers` out to the curriculum: the TLM covers the Course (coarse), the
+    //    section covers the Lesson it renders (fine).
+    const { confirm } = await run(createEdges, { namespace: ns, edges: [
+      { edgeType: "covers", fromId: tlmId, toId: courseId },
+      { edgeType: "covers", fromId: secId, toId: lessonId },
+    ] });
+    expect(confirm?.phase).toBe("apply");
+
+    const draft = (await readDraft())!;
+    // Every node landed with its non-canonical label intact.
+    expect(labelOf(draft, tlmId)).toEqual(["TeachingLearningMaterial"]);
+    expect(labelOf(draft, fmtId)).toEqual(["Formatter"]);
+    expect(labelOf(draft, secId)).toEqual(["DocumentSection"]);
+    expect(labelOf(draft, specId)).toEqual(["FormatterSpec"]);
+    // The assemblyGuide rides the sidecar verbatim.
+    const tlmRaw = draft.nodes.find((n) => n.id === tlmId)!.properties.raw as Record<string, any>;
+    expect(tlmRaw.metadata.assemblyGuide).toBe("one page per lesson");
+    // hasPart nesting: TLM ▸ Formatter ▸ FormatterSpec, TLM ▸ DocumentSection.
+    expect(hasEdge(draft, "hasPart", tlmId, fmtId)).toBe(true);
+    expect(hasEdge(draft, "hasPart", tlmId, secId)).toBe(true);
+    expect(hasEdge(draft, "hasPart", fmtId, specId)).toBe(true);
+    // covers at both granularities.
+    expect(hasEdge(draft, "covers", tlmId, courseId)).toBe(true);
+    expect(hasEdge(draft, "covers", secId, lessonId)).toBe(true);
+  });
+});

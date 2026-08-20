@@ -208,7 +208,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
   // role, so `canWalkDraft` mirrors the SAME draft-read gate diff_draft enforces
   // (actions.canReadDraft) and cannot drift.
   const discovery = {
-    tools: ["walk_graph", "namespace_stats", "export_graph_view"],
+    tools: ["walk_graph", "walk_document", "namespace_stats", "export_graph_view"],
     canWalkDraft: actions.canReadDraft,
     walkGraph: {
       params: ["fromId", "direction", "edgeTypes", "nodeTypes", "maxDepth", "includeEdges", "limit", "cursor", "slot"],
@@ -216,6 +216,11 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       maxLimit: 500,
       // Two independent overflow flags callers should branch on.
       pagination: "nextCursor + truncatedByLimit (more nodes remain) vs truncated (depth cap) vs truncatedBySize (byte budget trimmed the page — see hint)",
+    },
+    walkDocument: {
+      params: ["tlmId", "slot"],
+      // How the curriculum-to-render was resolved from the TLM.
+      scopes: ["sections", "course", "none"],
     },
     exportGraphView: {
       params: ["fromId", "maxDepth", "detail"],
@@ -225,7 +230,7 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       overflow: "self-bounded — oversized detailed slice auto-drops detail; a still-too-big slice returns { tooLarge, message }",
     },
     note:
-      "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, PAGINATED BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. Page with limit (default 50, max 500) + nextCursor; do not raise the limit to fit a big result. truncatedByLimit means more nodes remain on further pages; truncated means the depth cap hid deeper nodes; truncatedBySize means a response BYTE budget trimmed the page below `limit` (raising limit won't help — set includeEdges:false and narrow nodeTypes, then page via cursor; the `hint` field says so). slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk; its `roots` (each with id + labels + description) surfaces the Course content roots, so it replaced list_courses. export_graph_view returns a SELF-CONTAINED scoped slice (the containment subtree of a node) in the explorer's DisplayGraph shape — feed it to a self-contained HTML artifact to render the same interactive tree the live explorer shows; published slot only, self-bounded to the response cap.",
+      "walk_graph is the single generic traversal: a directional (out/in/both), edge- and label-filtered, PAGINATED BFS from any node — use it to discover the framework root, a course subtree, a standards spine, anything. It replaced get_course. Page with limit (default 50, max 500) + nextCursor; do not raise the limit to fit a big result. truncatedByLimit means more nodes remain on further pages; truncated means the depth cap hid deeper nodes; truncatedBySize means a response BYTE budget trimmed the page below `limit` (raising limit won't help — set includeEdges:false and narrow nodeTypes, then page via cursor; the `hint` field says so). slot:'published' (default) reads live; slot:'draft' inspects UNPUBLISHED staged edits (curator/approver only). walk_document is the document-side counterpart: given a TeachingLearningMaterial (TLM) root it returns that document's assemblyGuide, its Formatter/FormatterSpec rendering stack, its DocumentSection spine, and the curriculum it renders (resolved by section spine or a TLM→covers→Course fallback — `scope` says which), so generation targets the document, not the raw curriculum. namespace_stats is a cheap, argument-free orientation snapshot (node/edge counts, roots, draft state) — run it FIRST to see the shape of the graph before writing a walk; its `roots` (each with id + labels + description) surfaces the Course content roots AND the TLM document roots, so it replaced list_courses. export_graph_view returns a SELF-CONTAINED scoped slice (the containment subtree of a node) in the explorer's DisplayGraph shape — feed it to a self-contained HTML artifact to render the same interactive tree the live explorer shows; published slot only, self-bounded to the response cap.",
   };
 
   // ── profile: the subject profile as authored config (phase 2b). `canEdit`

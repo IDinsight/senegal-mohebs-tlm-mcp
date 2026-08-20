@@ -22,6 +22,14 @@ const STANDARDS_LABELS = new Set(["StandardsFramework", "StandardsFrameworkItem"
 // `usesRoutine`). Always creatable, even in a graph that has none to copy yet
 // (e.g. reading before its first routine).
 const CROSS_CUTTING_LABELS = new Set(["InstructionalRoutine"]);
+// The non-canonical document / rendering layer — labels LC does not define, sitting
+// BESIDE the curriculum (a TeachingLearningMaterial `covers` a Course; it is not a
+// content node). Always creatable, like the cross-cutting routine, so a curator can
+// mint the first TLM/section/formatter in a graph that has none yet. They nest by
+// `hasPart` (TLM ▸ DocumentSection ▸ Formatter ▸ FormatterSpec) and carry no
+// normalizedType/normalizedStatementType/role — see
+// docs/design-notes/teaching-learning-materials.md.
+const DOCUMENT_LABELS = new Set(["TeachingLearningMaterial", "DocumentSection", "Formatter", "FormatterSpec"]);
 // Labels whose display name lives in the normalized `title` (a "Standard
 // Grouping"), as opposed to leaves whose text lives in `text`.
 const GROUPING_LABELS = new Set(["Course", "LessonGrouping", "StandardsFramework"]);
@@ -56,6 +64,10 @@ const FALLBACK_KIND: Record<string, string> = {
   Lesson: "Lesson", Activity: "Activity", Material: "Material",
   LessonGrouping: "LessonGrouping", Course: "Course",
   InstructionalRoutine: "InstructionalRoutine",
+  // Document-layer labels: kind = label (like a content leaf), so the PascalCase
+  // survives — a "DocumentSection" must not be mangled to "documentsection".
+  TeachingLearningMaterial: "TeachingLearningMaterial", DocumentSection: "DocumentSection",
+  Formatter: "Formatter", FormatterSpec: "FormatterSpec",
 };
 
 // LC "boilerplate" — the constant provenance/licensing fields every node of a
@@ -139,14 +151,17 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
   }
   // A cross-cutting routine carries no normalizedType and a fixed role, matching
   // the routine nodes the catalog seeds (assembleCatalog) — so a first inline
-  // routine looks like a seeded one.
+  // routine looks like a seeded one. Document-layer nodes (TLM/section/formatter)
+  // are non-canonical too: no normalizedType and no role — they are neither a
+  // content leaf nor a routine.
   const isCrossCutting = CROSS_CUTTING_LABELS.has(label);
+  const isDocument = DOCUMENT_LABELS.has(label);
   return {
     kind: FALLBACK_KIND[label] ?? label.toLowerCase(),
     labels: [label],
     isGrouping,
     orderPaths: ["raw.position"],
-    normalizedType: isCrossCutting ? undefined : label,
+    normalizedType: isCrossCutting || isDocument ? undefined : label,
     normalizedStatementType: STANDARDS_LABELS.has(label) ? "Standard Grouping" : undefined,
     role: isCrossCutting ? "instructional-routine" : undefined,
     boilerplate: { ...FALLBACK_BOILERPLATE },
@@ -162,6 +177,6 @@ export function deriveTemplate(graph: MutationGraph, label: string): NodeTemplat
 // Used by add_node's validation.
 export function isKnownLabel(graph: MutationGraph, label: string): boolean {
   if (CONTENT_LABELS.has(label) || STANDARDS_LABELS.has(label) || label === "LearningComponent") return true;
-  if (CROSS_CUTTING_LABELS.has(label)) return true;
+  if (CROSS_CUTTING_LABELS.has(label) || DOCUMENT_LABELS.has(label)) return true;
   return graph.nodes.some((node) => (node.labels ?? []).includes(label));
 }
