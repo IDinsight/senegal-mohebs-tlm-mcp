@@ -99,7 +99,7 @@ export async function readGraphGuide(slot?: "published" | "draft"): Promise<Reco
   return { source: "store", slot: slot ?? "published", namespace, hasGuide: guide !== undefined, guide: guide ?? null };
 }
 
-export async function runEditProfile(profile: Record<string, unknown>, confirm?: boolean, token?: string): Promise<unknown> {
+export async function runEditProfile(profile: Record<string, unknown> | undefined, confirm?: boolean, token?: string): Promise<unknown> {
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
 
@@ -250,14 +250,14 @@ export function registerProfileTools(server: McpServer) {
     {
       title: "Edit the subject profile",
       description:
-        "Replace the active grade/subject's SUBJECT PROFILE record with a new one — the two-phase, curator-gated way to change the machine `core` (parsing) AND the authored `guide` markdown as DATA, with no redeploy (phase 2b/2c). Pass the WHOLE { core, guide } record (get_profile first, edit, pass it back); this replaces, it does not patch. A bare core (no guide) is accepted for back-compat. The core is validated against its schema and the guide length-checked AT THIS STEP — a malformed record is BLOCKED at dry-run (no token). A dry-run returns the before/after diff + any referential warnings (e.g. a rule naming a kind no node has) + a confirmationToken, changing nothing; confirm STAGES it onto the draft (a profile edit and curriculum edits share one draft). Nothing reaches generation until you publish_draft. firestore mode only — in bundle/dev mode the profile is the in-repo record, edited in the repo.",
+        "Replace the active grade/subject's SUBJECT PROFILE record with a new one — the two-phase, curator-gated way to change the machine `core` (parsing) AND the authored `guide` markdown as DATA, with no redeploy (phase 2b/2c). Pass the WHOLE { core, guide } record (get_profile first, edit, pass it back); this replaces, it does not patch. A bare core (no guide) is accepted for back-compat. The core is validated against its schema and the guide length-checked AT THIS STEP — a malformed record is BLOCKED at dry-run (no token). A dry-run returns the before/after diff + any referential warnings (e.g. a rule naming a kind no node has) + a confirmationToken, changing nothing; confirm STAGES it onto the draft (a profile edit and curriculum edits share one draft). When the dry-run reports `payloadStored:true` (the record is held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `profile`; otherwise re-send the same record. Nothing reaches generation until you publish_draft. firestore mode only — in bundle/dev mode the profile is the in-repo record, edited in the repo.",
       inputSchema: {
-        profile: z.record(z.string(), z.unknown()),
+        profile: z.record(z.string(), z.unknown()).optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { profile: Record<string, unknown>; confirm?: boolean; confirmationToken?: string }) =>
+    guarded(async (a: { profile?: Record<string, unknown>; confirm?: boolean; confirmationToken?: string }) =>
       asJson(await runEditProfile(a.profile, a.confirm, a.confirmationToken))),
   );
 

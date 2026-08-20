@@ -73,6 +73,11 @@ export type GraphPreviewResult = {
   // base still reports STALE_TOKEN first. Surfaced so the caller knows how long
   // it has to get the user's approval before needing a fresh dry-run.
   expiresAt: string;
+  // True when the args were PARKED server-side (a large payload on a caller that
+  // opted in) — the confirm needs ONLY confirm:true + the token, no payload
+  // re-send. False on the normal re-send path. Surfaced so a tool/UI can tell the
+  // model it need not regenerate the payload.
+  payloadStored: boolean;
 };
 
 // What a validation-blocked dry-run returns instead. No token: confirm has
@@ -156,6 +161,12 @@ type TokenPayload = {
   v: string;   // hashGraph(base) at preview time
   n: string;   // nonce (one-time use)
   exp: number; // absolute expiry, epoch ms (issue #4 TTL)
+  // How the confirm gets its args. "resend" (the default, and the shape older
+  // tokens carry) → the caller re-sends the args and they must hash to `a`.
+  // "stored" → the args were PARKED at dry-run under nonce `n`; the confirm reads
+  // them back instead of the caller re-sending. `a` stays the integrity pin in
+  // both modes (it equals the parked payload's hash under "stored").
+  mode?: "resend" | "stored";
 };
 
 // Token time-to-live. State-based validation (the `v` hash) is still the
@@ -168,6 +179,29 @@ function tokenTtlMs(): number {
   const raw = Number(process.env.TLM_CONFIRM_TTL_MS);
   return Number.isFinite(raw) && raw > 0 ? raw : 15 * 60 * 1000;
 }
+
+// Payload size (bytes of the serialized args) at or above which the dry-run
+// PARKS the payload server-side and issues a "stored" token, so the confirm need
+// not re-send it. Below it, the payload rides the confirm as before (re-send +
+// args-hash). One framework-level switch, not a per-tool allowlist: it captures
+// exactly the tools whose payloads are big enough to be worth not regenerating
+// (a whole profile record, a content-heavy authoring batch) and leaves the tiny
+// structural edits (move/reposition/delete) on the cheap re-send path. Override
+// with TLM_CONFIRM_STORE_BYTES; default 4 KB. Exported so config-flow uses the
+// same threshold. Read lazily so a test can toggle it per-run.
+export function pendingStoreThresholdBytes(): number {
+  const raw = Number(process.env.TLM_CONFIRM_STORE_BYTES);
+  return Number.isFinite(raw) && raw > 0 ? raw : 4096;
+}
+
+// TTL of a parked payload. Kept in step with the token TTL — the entry only has
+// to outlive the window between dry-run and confirm, the same window the token
+// governs. A read past this treats the entry as absent (→ fresh dry-run).
+export const pendingTtlMs = tokenTtlMs;
+
+// Serialize args once and decide whether they cross the store threshold.
+export const shouldStorePayload = (args: unknown): boolean =>
+  stableStringify(args).length >= pendingStoreThresholdBytes();
 
 const encodeToken = (p: TokenPayload): string =>
   Buffer.from(JSON.stringify(p), "utf8").toString("base64url");
@@ -183,7 +217,9 @@ const decodeToken = (token: string): TokenPayload | null => {
     // (treat as non-expiring) so an in-flight token from an older build isn't
     // rejected as malformed across a rolling deploy.
     const exp = typeof c.exp === "number" ? c.exp : Number.POSITIVE_INFINITY;
-    return { m: c.m, a: c.a, k: c.k, v: c.v, n: c.n, exp };
+    // A token minted before this field existed is a re-send token by definition.
+    const mode = c.mode === "stored" ? "stored" : "resend";
+    return { m: c.m, a: c.a, k: c.k, v: c.v, n: c.n, exp, mode };
   } catch { return null; }
 };
 
@@ -297,12 +333,19 @@ export type RunGraphMutationArgs<Args> = {
   // — a safe no-op after a lost-response retry. Omit it and confirm keeps its
   // strict one-time-token behaviour (a replay is rejected).
   idempotencyKey?: string;
+  // Opt in to parking a LARGE payload server-side so the confirm need not re-send
+  // it (token-only confirm). Only callers that pass their COMPLETE args straight
+  // through — no wrapper that rebuilds args or mints ids per phase — should set
+  // this; a batch/minting wrapper must park at its own layer instead. When set,
+  // parking still only kicks in above the size threshold; small payloads keep the
+  // re-send path regardless.
+  storePayload?: boolean;
 };
 
 export async function runGraphMutation<Args>(
   input: RunGraphMutationArgs<Args>,
 ): Promise<GraphPreviewResult | GraphBlockedResult | GraphApplyResult | GraphUnauthorizedResult> {
-  const { namespace, mutation, args, confirm, token, idempotencyKey } = input;
+  const { namespace, mutation, args, confirm, token, idempotencyKey, storePayload } = input;
   const store = getKgStore();
 
   // Compose the stakes-accurate action string exactly once. Every path that
@@ -349,7 +392,16 @@ export async function runGraphMutation<Args>(
     const payload = decodeToken(token);
     if (!payload) { await auditBlocked("invalidToken: malformed"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "invalidToken", code: "INVALID_TOKEN", message: "confirmationToken is malformed; re-run without confirm to get a fresh preview." }; }
     if (payload.m !== mutation.name) { await auditBlocked(`mutationMismatch: token was for '${payload.m}'`); return { phase: "apply", ok: false, kind: "graphMutation", reason: "mutationMismatch", code: "MUTATION_MISMATCH", message: `confirmationToken was issued for mutation '${payload.m}', not '${mutation.name}'.` }; }
-    if (payload.a !== hashArgs(args)) { await auditBlocked("argsMismatch"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "argsMismatch", code: "ARGS_MISMATCH", message: "args differ from the previewed values; re-run without confirm to preview the new args." }; }
+
+    // In "resend" mode the caller's args must still hash to the previewed value.
+    // Kept BEFORE idempotency (a key must never mask a mismatched retry) and
+    // before the replay guard, matching the original order. "stored"-mode args are
+    // resolved AFTER the replay guard below (a replayed stored token whose parked
+    // payload was already deleted must report the replay, not a "payload missing").
+    if (payload.mode !== "stored" && payload.a !== hashArgs(args)) {
+      await auditBlocked("argsMismatch");
+      return { phase: "apply", ok: false, kind: "graphMutation", reason: "argsMismatch", code: "ARGS_MISMATCH", message: "args differ from the previewed values; re-run without confirm to preview the new args." };
+    }
 
     // Idempotency (issue #4): a retry carrying the SAME idempotencyKey returns
     // the first apply's cached result — a safe no-op — BEFORE the one-time-nonce
@@ -361,6 +413,19 @@ export async function runGraphMutation<Args>(
     }
 
     if (consumedNonces.has(payload.n)) { await auditBlocked("replay"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "replay", code: "REPLAY", message: "This confirmation token has already been used; a mutation cannot be applied twice from one preview. (Pass an idempotencyKey on confirm to make a retried confirm a safe no-op instead.)" }; }
+
+    // Resolve "stored"-mode args now that the replay guard has passed. The dry-run
+    // parked them under the nonce; read them back (the caller re-sent nothing, so
+    // we do NOT re-hash the incoming args — for graph tools a token-only confirm
+    // legitimately carries only a partial arg shape). A missing parked entry is
+    // STALE — the safe outcome is a fresh dry-run, never a guess.
+    let effectiveArgs = args;
+    if (payload.mode === "stored") {
+      const parked = await store.readPending(namespace, payload.n);
+      if (!parked) { await auditBlocked("stale: parked payload missing"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "stale", code: "STALE_TOKEN", message: "The previewed payload has expired or was already used; re-run without confirm to preview again." }; }
+      if (parked.proposedHash !== payload.a) { await auditBlocked("argsMismatch: parked payload"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "argsMismatch", code: "ARGS_MISMATCH", message: "the parked payload does not match the token; re-run without confirm to preview again." }; }
+      effectiveArgs = parked.payload as Args;
+    }
 
     const snap = await timed("confirm.readBase", () => readBase(namespace));
     if ("unseeded" in snap) { await auditBlocked("unseeded"); return { phase: "apply", ok: false, kind: "graphMutation", reason: "unseeded", code: "UNSEEDED", message: `Namespace '${namespace}' has no seed; run the seed before mutating.` }; }
@@ -430,7 +495,7 @@ export async function runGraphMutation<Args>(
       const [dn, de] = await timed("confirm.reReadDraft", () => Promise.all([store.listNodes(namespace, draftSlot), store.listEdges(namespace, draftSlot)]));
       draftGraph = { nodes: dn.map(stripSlot), edges: de.map(stripSlot) };
     }
-    const applied = timedSync("confirm.applyFold", () => mutation.apply(draftGraph, args));
+    const applied = timedSync("confirm.applyFold", () => mutation.apply(draftGraph, effectiveArgs));
     const diff = timedSync("confirm.diffGraphs", () => diffGraphs(draftGraph, applied));
 
     const resultingVersion = timedSync("confirm.hashApplied", () => hashGraph(applied));
@@ -475,7 +540,11 @@ export async function runGraphMutation<Args>(
     // Consume the nonce LAST — if applyDelta throws, the token remains usable
     // for a legitimate retry after the operator fixes the underlying issue.
     consumedNonces.add(payload.n);
-    const result: GraphApplyResult = { phase: "apply", ok: true, kind: "graphMutation", applied: mutation.describe(args), draftSlot, diff, auditId: applyRec.id };
+    // Best-effort cleanup of the parked payload now that it's applied. The nonce
+    // ledger already blocks a replay, so a failed delete only leaves an orphan
+    // for the TTL to sweep — never a correctness issue.
+    if (payload.mode === "stored") { try { await store.deletePending(namespace, payload.n); } catch { /* swept by TTL */ } }
+    const result: GraphApplyResult = { phase: "apply", ok: true, kind: "graphMutation", applied: mutation.describe(effectiveArgs), draftSlot, diff, auditId: applyRec.id };
     // Record the success under the idempotency key (if any) so a retried confirm
     // returns THIS result rather than re-applying. Set together with the nonce
     // so "nonce consumed" always implies "result cached" — no window where a
@@ -524,23 +593,43 @@ export async function runGraphMutation<Args>(
 
   const diff = diffGraphs(snap.graph, after);
   const expMs = Date.now() + tokenTtlMs();
+  const nonce = randomBytes(16).toString("base64url");
+
+  // Park the payload when the caller opted in AND it's big enough to be worth
+  // not re-sending. Below the threshold we keep the re-send path (the token's
+  // `a` hash), which avoids a store write on the common small edit.
+  const stored = (storePayload ?? false) && shouldStorePayload(args);
+  if (stored) {
+    await store.putPending(namespace, nonce, {
+      op: mutation.name,
+      proposedHash: hashArgs(args),
+      payload: args,
+      expiresAt: expMs,
+    });
+  }
+
   const issuedToken = encodeToken({
     m: mutation.name,
     a: hashArgs(args),
     k: snap.kind,
     v: hashGraph(snap.graph),
-    n: randomBytes(16).toString("base64url"),
+    n: nonce,
     exp: expMs,
+    mode: stored ? "stored" : "resend",
   });
+  const confirmHint = stored
+    ? "call this tool again with ONLY confirm: true AND the confirmationToken — the payload is held server-side, do NOT re-send it."
+    : "call this tool again with confirm: true AND the confirmationToken from this response.";
   return {
     phase: "preview",
     needsConfirmation: true,
     kind: "graphMutation",
     action,
-    message: `Do NOT proceed yet. Ask the user to confirm — about to ${action}. Once they explicitly agree, call this tool again with confirm: true AND the confirmationToken from this response.`,
+    message: `Do NOT proceed yet. Ask the user to confirm — about to ${action}. Once they explicitly agree, ${confirmHint}`,
     diff,
     warnings,
     confirmationToken: issuedToken,
     expiresAt: new Date(expMs).toISOString(),
+    payloadStored: stored,
   };
 }

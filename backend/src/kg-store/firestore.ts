@@ -18,7 +18,7 @@
  */
 import { createRequire } from "node:module";
 import { CONFIG } from "../config.js";
-import type { AuditQuery, AuditRecord, KgNodeStore, Slot, SlotDelta, StoredConfig, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
+import type { AuditQuery, AuditRecord, KgNodeStore, PendingEntry, Slot, SlotDelta, StoredConfig, StoredEdge, StoredMeta, StoredNode, StoredPointer } from "./types.js";
 import { otherSlot } from "./types.js";
 import { matchesAuditQuery, sortAuditNewestFirst } from "./audit.js";
 import { timed, note } from "../utils/index.js";
@@ -90,6 +90,12 @@ const POINTERS = "kg_pointers";
 // Firestore security rule can lock this in externally; for now the barrier
 // is the write-only surface exposed by KgNodeStore.
 const AUDIT = "kg_audit";
+// Parked confirm payloads (see PendingEntry). One doc per nonce, id
+// `${nsSlug}::${nonce}`. Short-lived: written at dry-run, deleted after a
+// successful confirm, and lazily ignored past `expiresAt`. Configure a Firestore
+// TTL policy on the `expiresAt` field to reclaim abandoned previews' storage;
+// correctness does not depend on it (reads enforce expiry themselves).
+const PENDING = "kg_pending";
 // Firestore caps a WriteBatch at 500 operations. We stay a bit under to leave
 // headroom.
 const BATCH_MAX = 450;
@@ -521,6 +527,26 @@ export function createFirestoreKgStore(): KgNodeStore {
     async appendAudit(record) {
       // create-style write on a fresh doc id — never an update / delete.
       await db.collection(AUDIT).doc(record.id).set(record as unknown as Record<string, unknown>);
+    },
+
+    // ── Pending confirm payloads ────────────────────────────────────────────
+    // Plain single-doc set/get/delete — no transaction needed. The doc id folds
+    // in the nonce (already unique), so two ops never collide. `expiresAt` is
+    // stored for a TTL policy; readPending also enforces it so an expired entry
+    // reads as absent even without one configured.
+    async putPending(namespace, nonce, entry) {
+      await db.collection(PENDING).doc(`${nsSlug(namespace)}::${nonce}`).set({ namespace, nonce, ...entry } as unknown as Record<string, unknown>);
+    },
+    async readPending(namespace, nonce) {
+      const doc = await db.collection(PENDING).doc(`${nsSlug(namespace)}::${nonce}`).get();
+      if (!doc.exists) return null;
+      const data = doc.data() as (PendingEntry & Record<string, unknown>) | undefined;
+      if (!data) return null;
+      if (Date.now() > data.expiresAt) { await doc.ref.delete(); return null; }
+      return { op: data.op, proposedHash: data.proposedHash, payload: data.payload, expiresAt: data.expiresAt };
+    },
+    async deletePending(namespace, nonce) {
+      await db.collection(PENDING).doc(`${nsSlug(namespace)}::${nonce}`).delete();
     },
 
     async listAudit(query) {
