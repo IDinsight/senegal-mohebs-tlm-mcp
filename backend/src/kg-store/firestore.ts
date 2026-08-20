@@ -531,11 +531,22 @@ export function createFirestoreKgStore(): KgNodeStore {
 
     // ── Pending confirm payloads ────────────────────────────────────────────
     // Plain single-doc set/get/delete — no transaction needed. The doc id folds
-    // in the nonce (already unique), so two ops never collide. `expiresAt` is
-    // stored for a TTL policy; readPending also enforces it so an expired entry
-    // reads as absent even without one configured.
+    // in the nonce (already unique), so two ops never collide.
+    //
+    // Expiry has two layers with different jobs:
+    //   • `expiresAt` — the number the interface (PendingEntry) already exposes;
+    //     `readPending` compares it to Date.now() so an expired entry reads as
+    //     absent even without a TTL policy configured.
+    //   • `expiresAtTs` — a Firestore Timestamp for the SAME instant, written
+    //     because Firestore TTL policies ONLY fire on Timestamp fields (a plain
+    //     number field silently never expires). The two fields must move
+    //     together — if you change one, change the other. This one is the field
+    //     the TTL policy targets (`--field=expiresAtTs`).
     async putPending(namespace, nonce, entry) {
-      await db.collection(PENDING).doc(`${nsSlug(namespace)}::${nonce}`).set({ namespace, nonce, ...entry } as unknown as Record<string, unknown>);
+      await db.collection(PENDING).doc(`${nsSlug(namespace)}::${nonce}`).set({
+        namespace, nonce, ...entry,
+        expiresAtTs: new Date(entry.expiresAt),   // Timestamp companion for TTL
+      } as unknown as Record<string, unknown>);
     },
     async readPending(namespace, nonce) {
       const doc = await db.collection(PENDING).doc(`${nsSlug(namespace)}::${nonce}`).get();
