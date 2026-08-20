@@ -221,3 +221,38 @@ describe("add_to_catalog — destination gate", () => {
     expect((await store.readPointer(wsCatalogNs))!.draftSlot).toBeFalsy();
   });
 });
+
+// The wrapper-park mechanism on the CATALOG surface: a large-enough cloned
+// entry is parked at dry-run so add_to_catalog's confirm needs ONLY the token.
+// Uses TLM_CONFIRM_STORE_BYTES to make even the tiny authored routine cross the
+// threshold — the mechanism, not the specific size, is what we're asserting.
+describe("token-only confirm — add_to_catalog wrapper parking", () => {
+  const priorThreshold = process.env.TLM_CONFIRM_STORE_BYTES;
+  beforeAll(() => { process.env.TLM_CONFIRM_STORE_BYTES = "1"; });   // park every payload
+  afterAll(() => { if (priorThreshold === undefined) delete process.env.TLM_CONFIRM_STORE_BYTES; else process.env.TLM_CONFIRM_STORE_BYTES = priorThreshold; });
+
+  it("clones + publishes token-only (no entryId / targetWorkspace / mintedIdMap on confirm)", async () => {
+    await inCtx(SUPER, async () => {
+      const routineId = await authorRoutine("Routine parquée");
+      const dry = await runAddToCatalog({ entryId: routineId, targetWorkspace: "_shared" });
+      expect(dry.payloadStored).toBe(true);
+      // Confirm with ONLY confirm + token.
+      const done = await runAddToCatalog({ confirm: true, confirmationToken: dry.confirmationToken as string });
+      expect(done).toMatchObject({ ok: true, published: true, scope: "shared" });
+    });
+    expect(listCatalogEntries(await readCatalog(SHARED_CATALOG_NAMESPACE), "shared").some((e) => e.name === "Routine parquée")).toBe(true);
+  });
+
+  it("a stale token-only confirm (parked context missing) reports stale", async () => {
+    await inCtx(SUPER, async () => {
+      const routineId = await authorRoutine("Ephemère");
+      const dry = await runAddToCatalog({ entryId: routineId, targetWorkspace: "_shared" });
+      // Simulate the parked entry vanishing (TTL sweep / instance restart) before confirm.
+      const nonce = (JSON.parse(Buffer.from(dry.confirmationToken as string, "base64url").toString("utf8")) as { n: string }).n;
+      await store.deletePending(SHARED_CATALOG_NAMESPACE, `${nonce}:w`);
+      const done = await runAddToCatalog({ confirm: true, confirmationToken: dry.confirmationToken as string });
+      expect(done.ok).toBe(false);
+      expect(String((done as { reason?: unknown }).reason)).toBe("stale");
+    });
+  });
+});

@@ -251,3 +251,87 @@ describe("two-phase integrity", () => {
     expect(outcome.after).toEqual({ open: false }); // dry-runs staged nothing
   });
 });
+
+// The wrapper-park mechanism: a LARGE add_nodes / create_edges dry-run parks its
+// built args + minted-id echoes server-side so the confirm needs ONLY the token.
+// Small batches keep the re-send path (the mechanism is a no-op there).
+describe("token-only confirm — batch wrapper parking", () => {
+  // A batch big enough to cross the default 4 KB store threshold — long
+  // descriptions on each item push the BUILT-args JSON well past it (measured
+  // by shouldStorePayload against the args runBatchMutation forwards).
+  const bigItems = (parentId: string, count: number) =>
+    Array.from({ length: count }, (_unused, index) => ({
+      kind: "Lesson", parentId,
+      description: `Batch lesson ${index + 1} — ${"x".repeat(600)}`,
+    }));
+
+  it("add_nodes: a large batch is parked; confirm applies token-only (no items, no mintedNodeIds)", async () => {
+    const outcome = await withActiveContext(async () => {
+      const parentId = await firstChapterId();
+      const items = bigItems(parentId, 8);
+      const preview = await runAddNodes({ items });
+      // Confirm carrying JUST the token — no items, no mintedNodeIds.
+      const confirm = await runAddNodes({ confirm: true, confirmationToken: preview.confirmationToken as string });
+      return { preview, confirm };
+    });
+    expect(outcome.preview.payloadStored).toBe(true);
+    // The apply must still surface the real minted ids (reconstructed from the parked context).
+    expect(Array.isArray(outcome.confirm.mintedNodeIds)).toBe(true);
+    expect((outcome.confirm.mintedNodeIds as string[]).length).toBe(8);
+    expect(outcome.confirm.ok).toBe(true);
+    expect((outcome.confirm.counts as { nodesAdded: number }).nodesAdded).toBe(8);
+  });
+
+  it("add_nodes: a small batch stays on the re-send path (payloadStored:false)", async () => {
+    const outcome = await withActiveContext(async () => {
+      const parentId = await firstChapterId();
+      // Two short items → well under the 4 KB threshold.
+      const items = [{ kind: "Lesson", parentId, description: "tiny" }];
+      const preview = await runAddNodes({ items });
+      // Token-only confirm on a re-send-mode token must reject (parked context is absent).
+      const tokenOnly = await runAddNodes({ confirm: true, confirmationToken: preview.confirmationToken as string });
+      return { preview, tokenOnly };
+    });
+    expect(outcome.preview.payloadStored).toBe(false);
+    expect(outcome.tokenOnly.ok).toBe(false); // no parked context → framework's re-send path fails args-hash
+  });
+
+  it("add_nodes: a large batch keyed by idempotencyKey replays token-only", async () => {
+    const outcome = await withActiveContext(async () => {
+      const parentId = await firstChapterId();
+      const items = bigItems(parentId, 8);
+      const preview = await runAddNodes({ items });
+      const token = preview.confirmationToken as string;
+      // Two token-only confirms with the SAME idempotencyKey. First applies; second replays.
+      const first = await runAddNodes({ confirm: true, confirmationToken: token, idempotencyKey: "key-park-1" });
+      const replay = await runAddNodes({ confirm: true, confirmationToken: token, idempotencyKey: "key-park-1" });
+      const applyRecords = await store.listAudit({ namespace: ns, eventType: "apply" });
+      return { first, replay, applyCount: applyRecords.length };
+    });
+    expect(outcome.first.ok).toBe(true);
+    expect(outcome.replay.ok).toBe(true);
+    expect(outcome.replay.replayed).toBe(true);
+    expect(outcome.applyCount).toBe(1);
+  });
+
+  it("create_edges: a large batch is parked; confirm applies token-only (no edges)", async () => {
+    const outcome = await withActiveContext(async () => {
+      // Author a big pool of leaf lessons first, so we can create many edges from them.
+      const parentId = await firstChapterId();
+      const items = bigItems(parentId, 40);   // 40 nodes → enough distinct ids for many edges
+      const seedPreview = await runAddNodes({ items });
+      await runAddNodes({ confirm: true, confirmationToken: seedPreview.confirmationToken as string });
+      const mintedIds = seedPreview.mintedNodeIds as string[];
+      // ~39 edges of {edgeType,fromId,toId,properties} at ~130 chars each → over 4 KB.
+      const edges = mintedIds.slice(0, -1).map((from, index) => ({
+        edgeType: "relatesTo", fromId: from, toId: mintedIds[index + 1],
+      }));
+      const preview = await runCreateEdges({ edges });
+      const confirm = await runCreateEdges({ confirm: true, confirmationToken: preview.confirmationToken as string });
+      return { preview, confirm, edgeCount: edges.length };
+    });
+    expect(outcome.preview.payloadStored).toBe(true);
+    expect(outcome.confirm.ok).toBe(true);
+    expect((outcome.confirm.counts as { edgesAdded: number }).edgesAdded).toBe(outcome.edgeCount);
+  });
+});

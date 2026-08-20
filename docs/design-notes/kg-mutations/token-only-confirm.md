@@ -1,10 +1,10 @@
 # Token-only confirm — parking large payloads instead of re-sending
 
-> **Status: Live (framework substrate + `edit_profile` + `edit_node`).** The
-> pending-payload store and the size-triggered stored/re-send split are shipped
-> and tested. `edit_profile` and `edit_node` opt in; the batch/minting tools
-> (`add_nodes`, `create_edges`, `use_routine`/`use_formatter`/`add_to_catalog`)
-> deliberately stay on re-send for now — see **Deferred** below.
+> **Status: Live.** Framework substrate + `edit_profile` + `edit_node` shipped
+> first; `add_nodes` / `create_edges` and the catalog `use_routine` /
+> `use_formatter` / `add_to_catalog` were then added via a wrapper-layer park
+> ([`server/wrapper-park.ts`](../../../backend/src/server/wrapper-park.ts)).
+> The remaining ops step is the Firestore TTL policy — see below.
 
 ## The problem
 
@@ -77,23 +77,33 @@ The dry-run response carries `payloadStored: true|false` and a tailored
 ## Scope: opt-in, size-triggered, not a per-tool allowlist
 
 The switch is `storePayload` on `runGraphMutation` (and always-on inside
-`editProfileWithConfirm`), gated by the shared size threshold. Only a caller that
-passes its **complete** args straight through — no wrapper that rebuilds args or
-mints ids per phase — may opt in. Today:
+`editProfileWithConfirm`), gated by the shared size threshold. Two layers park:
+
+**Framework layer** — for tools that pass their **complete** args straight through:
 
 - **`edit_profile`** — parks the `{ core, guide }` record; confirm needs only the
   token. `profile` is now optional on the tool.
 - **`edit_node`** — parks a large `content` edit; confirm needs only `nodeId` +
   the token (content is the big field).
 
-### Deferred: the batch/minting tools
+**Wrapper layer** ([`wrapper-park.ts`](../../../backend/src/server/wrapper-park.ts))
+— for tools that rebuild args and mint/echo ids around the framework call:
 
-`add_nodes` / `create_edges` and the catalog `use_*` / `add_to_catalog` tools run
-through a wrapper (`runBatchMutation`, `runAddNodes`) that **rebuilds args and
-mints/echoes ids on both phases**. Token-only confirm there needs the *built*
-args and the returned minted ids to be parked at that wrapper layer, not just
-inside `runGraphMutation`, and the returned `mintedNodeIds` reconstructed on a
-payload-less confirm. That is a separate, larger change; these tools stay on the
-re-send path until it lands. The framework substrate is already in place for
-them — flipping each on is "park the built args at the wrapper + relax the schema
-+ reconstruct the minted-id echo."
+- **`add_nodes`** — `runBatchMutation` parks `{ builtItems, mintedNodeIds,
+  mintedNodeIdMap, payloadHash }` against the token; a large batch confirms with
+  only the token, and the response still carries the real minted ids
+  (reconstructed from the parked context).
+- **`create_edges`** — same wrapper path; large edge batches confirm token-only.
+- **`use_routine` / `use_formatter`** — `applyCatalogEntry` parks the cloned
+  subtree + id-map; large clones confirm without re-sending
+  `entryId` / `targetId` / `mintedIdMap`.
+- **`add_to_catalog`** — same, plus the parked target metadata drives the
+  apply-and-publish sequence against the catalog namespace even when the
+  caller's `activeWorkspace()` has moved.
+
+The wrapper uses a distinct sibling key (`${nonce}:w`) against the SAME token, so
+framework-parked args and wrapper-parked context never collide. And the wrapper
+context is deliberately **NOT deleted after a successful apply** — it must
+outlive the first confirm so an `idempotencyKey` retry can still read its
+`payloadHash` and hit the recorded replay. The framework's nonce ledger blocks
+any real double-apply; the wrapper entry is TTL-swept.
