@@ -33,14 +33,31 @@ const JsonValue = z.any();
 // edge's properties, then delegates response shaping + idempotency to
 // runBatchMutation (no minted ids for edges, so `extra` is empty).
 export async function runCreateEdges(a: {
-  edges: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
+  edges?: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
   confirm?: boolean;
   confirmationToken?: string;
   returnMode?: ReturnMode;
   idempotencyKey?: string;
 }): Promise<Record<string, unknown>> {
   const namespace = activeNamespace();
-  const normalizedEdges = a.edges.map((edge) => ({ ...edge, properties: edge.properties ?? {} }));
+
+  // Token-only confirm: caller sends confirm+token with no `edges`. The parked
+  // context (built on dry-run) holds the normalised list, so runBatchMutation
+  // reconstructs from it — placeholder args/hash here are overwritten.
+  if (a.confirm && !a.edges) {
+    return runBatchMutation({
+      namespace, mutation: createEdges,
+      args: { namespace, edges: [] },
+      confirm: true, token: a.confirmationToken,
+      returnMode: a.returnMode ?? "summary",
+      idempotencyKey: a.idempotencyKey,
+      payloadHash: "",
+      extra: {},
+      storePayload: true,
+    });
+  }
+
+  const normalizedEdges = (a.edges ?? []).map((edge) => ({ ...edge, properties: edge.properties ?? {} }));
   return runBatchMutation({
     namespace,
     mutation: createEdges,
@@ -51,6 +68,7 @@ export async function runCreateEdges(a: {
     idempotencyKey: a.idempotencyKey,
     payloadHash: idempotencyPayloadHash(normalizedEdges),
     extra: {},
+    storePayload: true,
   });
 }
 
@@ -107,10 +125,12 @@ export function registerStructuralTools(server: McpServer) {
     {
       title: "Create edges (one or many) in one batch",
       description:
-        "The edge-creation tool — add ONE edge or MANY in one atomic draft edit (it replaced the single create_edge). Use it for edges add_nodes doesn't set: `usesRoutine` (apply a routine to a Lesson/Course/Activity), `buildsTowards` / `relatesTo` / `hasDependency` (prerequisites), or an extra `hasEducationalAlignment`. Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE confirmationToken; any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true and the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. " +
+        "The edge-creation tool — add ONE edge or MANY in one atomic draft edit (it replaced the single create_edge). Use it for edges add_nodes doesn't set: `usesRoutine` (apply a routine to a Lesson/Course/Activity), `buildsTowards` / `relatesTo` / `hasDependency` (prerequisites), or an extra `hasEducationalAlignment`. Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE confirmationToken; any item error blocks the whole batch (no partial apply). When the dry-run reports `payloadStored:true` (a large batch held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `edges`; otherwise re-send `edges` verbatim with confirm:true + the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. " +
         "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff; 'full' also attaches the whole `diff`. " +
         "`idempotencyKey` (optional): a unique key (a UUID) makes a RETRIED confirm safe — same key + same payload replays the first apply's summary with `replayed:true` (no double-apply/audit) instead of REPLAY; same key + different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Namespace-scoped, 24h TTL. Omit for strict single-use. DRAFT edit.",
       inputSchema: {
+        // Required on dry-run; omitted on a token-only confirm (large batch
+        // held server-side — the parked context reconstructs the list).
         edges: z.array(
           z.object({
             edgeType: z.string(),
@@ -118,7 +138,7 @@ export function registerStructuralTools(server: McpServer) {
             toId: z.string(),
             properties: z.record(JsonValue).optional(),
           }),
-        ),
+        ).optional(),
         returnMode: z.enum(["summary", "full"]).optional(),
         idempotencyKey: z.string().optional(),
         confirm: z.boolean().optional(),
@@ -126,7 +146,7 @@ export function registerStructuralTools(server: McpServer) {
       },
     },
     guarded(async (a: {
-      edges: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
+      edges?: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
       confirm?: boolean; confirmationToken?: string; returnMode?: ReturnMode; idempotencyKey?: string;
     }) => asJson(await runCreateEdges(a))),
   );

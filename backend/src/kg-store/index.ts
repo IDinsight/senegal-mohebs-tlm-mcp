@@ -7,7 +7,7 @@ export { createFirestoreKgStore } from "./firestore.js";
 export { createMemoryKgStore } from "./memory.js";
 export type { KgNodeStore, Slot, StoredNode, StoredEdge, StoredMeta, StoredConfig, StoredPointer } from "./types.js";
 export { otherSlot, edgeId } from "./types.js";
-export { runGraphMutation, diffGraphs, __resetMutationsForTest } from "./mutations.js";
+export { runGraphMutation, diffGraphs, __resetMutationsForTest, readTokenNonce, shouldStorePayload, pendingTtlMs } from "./mutations.js";
 export { publishDraft, discardDraft, diffDraft, publishDraftWithConfirm, discardDraftWithConfirm, __resetDraftTokensForTest } from "./publish-flow.js";
 export { editProfileWithConfirm, diffProfile, hashConfig, __resetConfigTokensForTest } from "./config-flow.js";
 export type { EditProfileResult, EditProfileOpts, ConfigDiff, WholeDraftProfileDiff } from "./config-flow.js";

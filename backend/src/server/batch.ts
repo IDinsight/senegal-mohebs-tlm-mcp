@@ -16,6 +16,7 @@ import {
   type GraphPreviewResult, type GraphBlockedResult, type GraphApplyResult, type GraphUnauthorizedResult,
 } from "../kg-store/index.js";
 import { lookupIdempotent, recordIdempotent, type IdempotencySummary } from "./idempotency.js";
+import { parkWrapperContext, readWrapperContext } from "./wrapper-park.js";
 
 export type ReturnMode = "summary" | "full";
 
@@ -47,18 +48,25 @@ export const countsOf = (diff: GraphDiff): BatchCounts => ({
 // Turn a framework result into the tool response. Both diff-carrying phases
 // (preview, successful apply) get `counts`; only returnMode:"full" also keeps the
 // raw `diff`. Non-diff phases (blocked / unauthorized / failed apply) pass through.
-function shapeResult(result: MutationResult, returnMode: ReturnMode, extra: BatchExtra): Record<string, unknown> {
+// `payloadStored` (preview only) tags a dry-run whose args/extras were parked
+// server-side, so the caller knows a token-only confirm is safe.
+function shapeResult(result: MutationResult, returnMode: ReturnMode, extra: BatchExtra, payloadStored = false): Record<string, unknown> {
   if (result.phase === "preview") {
     const shaped: Record<string, unknown> = {
       phase: "preview",
       kind: "graphMutation",
       needsConfirmation: true,
       action: result.action,
-      message: result.message,
+      // A parked context replaces the framework's re-send message with the
+      // token-only phrasing, so the model doesn't regenerate the payload.
+      message: payloadStored
+        ? result.message.replace(/call this tool again with .*$/, "call this tool again with ONLY confirm:true AND the confirmationToken — the payload is held server-side, do NOT re-send it.")
+        : result.message,
       confirmationToken: result.confirmationToken,
       expiresAt: result.expiresAt,
       counts: countsOf(result.diff),
       warnings: result.warnings,
+      payloadStored,
       ...extra,
     };
     if (returnMode === "full") {
@@ -100,17 +108,45 @@ export type RunBatchArgs<Args> = {
   idempotencyKey?: string;
   payloadHash: string;   // stable hash of the tool request (excl. returnMode)
   extra: BatchExtra;
+  // Opt into wrapper-layer parking: on dry-run the BUILT args + extras + payload
+  // hash are stashed against the token so a token-only confirm reconstructs them.
+  // Only take-effect when the payload is large enough; small batches keep re-send.
+  storePayload?: boolean;
 };
+
+// The wrapper's parked context for a batch — everything a stored confirm needs
+// to reconstruct the response without the caller re-sending anything. Stored
+// verbatim (JSON-serialisable) under the token's nonce sibling key.
+type ParkedBatchContext<Args> = { args: Args; extra: BatchExtra; payloadHash: string };
 
 // Run a batched mutation with returnMode shaping and optional idempotency.
 // Idempotency governs the CONFIRM phase only: a matching retry replays the stored
 // summary; a same-key-different-payload retry is a mismatch; a miss applies and
 // records. Without a key, behaviour is unchanged (a token replay -> REPLAY).
+// Token-only confirm (opts.storePayload): a large dry-run parks {args,extra,
+// payloadHash} against the token; the confirm reads them back so the caller
+// need not re-send. Small payloads keep the re-send path.
 export async function runBatchMutation<Args>(opts: RunBatchArgs<Args>): Promise<Record<string, unknown>> {
-  const { namespace, mutation, args, confirm, token, returnMode, idempotencyKey, payloadHash, extra } = opts;
+  const { namespace, mutation, confirm, token, returnMode, idempotencyKey, storePayload } = opts;
+
+  // On confirm, prefer the PARKED context if one exists — its args are the exact
+  // ones the framework's args-hash was minted from, and its extras carry the
+  // minted-id echoes the caller would otherwise have to send back. Absent →
+  // re-send path (opts.args/extra/payloadHash as passed by the caller).
+  let effectiveArgs = opts.args;
+  let effectiveExtra = opts.extra;
+  let effectivePayloadHash = opts.payloadHash;
+  if (confirm && token) {
+    const parked = await readWrapperContext<ParkedBatchContext<Args>>(namespace, token);
+    if (parked) {
+      effectiveArgs = parked.args;
+      effectiveExtra = parked.extra;
+      effectivePayloadHash = parked.payloadHash;
+    }
+  }
 
   if (confirm && idempotencyKey) {
-    const found = lookupIdempotent(namespace, idempotencyKey, payloadHash);
+    const found = lookupIdempotent(namespace, idempotencyKey, effectivePayloadHash);
     if (found.status === "replay") {
       // The stored summary IS the original success (minted ids included); mark it
       // replayed. No diff was stored, so a full-mode replay still returns summary.
@@ -129,14 +165,30 @@ export async function runBatchMutation<Args>(opts: RunBatchArgs<Args>): Promise<
     // miss → apply below and record on success.
   }
 
-  const result = await runGraphMutation({ namespace, mutation, args, confirm, token });
-  const shaped = shapeResult(result, returnMode, extra);
+  const result = await runGraphMutation({ namespace, mutation, args: effectiveArgs, confirm, token });
+
+  // Dry-run park: keep the built context for a possible token-only confirm. The
+  // helper decides whether to actually park based on payload size — small ones
+  // stay on the cheap re-send path with no store write.
+  let parkedNow = false;
+  if (!confirm && storePayload && result.phase === "preview") {
+    parkedNow = await parkWrapperContext<ParkedBatchContext<Args>>(namespace, result.confirmationToken, {
+      args: effectiveArgs, extra: effectiveExtra, payloadHash: effectivePayloadHash,
+    });
+  }
+
+  const shaped = shapeResult(result, returnMode, effectiveExtra, parkedNow);
 
   if (confirm && idempotencyKey && result.phase === "apply" && result.ok) {
     // Store the SUMMARY shape (never the diff) so a replay stays small.
-    const summary = shapeResult(result, "summary", extra) as IdempotencySummary;
-    recordIdempotent(namespace, idempotencyKey, payloadHash, summary);
+    const summary = shapeResult(result, "summary", effectiveExtra) as IdempotencySummary;
+    recordIdempotent(namespace, idempotencyKey, effectivePayloadHash, summary);
   }
+
+  // The parked wrapper context is NOT deleted after a successful apply — it must
+  // outlive the first confirm so an idempotency-key retry can still read its
+  // payloadHash and hit the recorded replay. The framework's nonce ledger blocks
+  // any real double-apply; the wrapper entry is TTL-swept later.
 
   return shaped;
 }

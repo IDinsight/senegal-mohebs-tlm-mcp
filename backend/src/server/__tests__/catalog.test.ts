@@ -6,7 +6,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
-import { listAvailableContexts } from "../../context/index.js";
+import { listAvailableContexts, newSessionState, runInSession } from "../../context/index.js";
+import { activateContext } from "../../activate.js";
+import { applyCatalogEntry } from "../catalog.js";
 import { subjectDir, KG_FIXTURE } from "../../__tests__/index.js";
 import { resolveAdapter } from "../../adapters/index.js";
 import { serializeModel, toRawEnvelope } from "../../curriculum/index.js";
@@ -240,5 +242,58 @@ describe("use_formatter", () => {
     expect(draft.nodes.some((n) => n.id === clone.newEntryId)).toBe(true);
     expect(draft.edges.some((e) => e.id === makeEdgeId("usesRoutine", courseId, clone.newEntryId))).toBe(true);
     expect((await readPublished()).edges.some((e) => e.id === makeEdgeId("usesRoutine", courseId, clone.newEntryId))).toBe(false);
+  });
+});
+
+// Wrapper-park mechanism on use_routine / use_formatter. TLM_CONFIRM_STORE_BYTES
+// is dropped so even the small test-fixture entries cross the threshold — the
+// mechanism, not the specific size, is what we're asserting. Drives the exported
+// applyCatalogEntry (behind both tools) inside an activated context.
+describe("token-only confirm — use_routine wrapper parking", () => {
+  const priorThreshold = process.env.TLM_CONFIRM_STORE_BYTES;
+  beforeAll(() => { process.env.TLM_CONFIRM_STORE_BYTES = "1"; });
+  afterAll(() => { if (priorThreshold === undefined) delete process.env.TLM_CONFIRM_STORE_BYTES; else process.env.TLM_CONFIRM_STORE_BYTES = priorThreshold; });
+
+  async function inCtx(fn: () => Promise<void>): Promise<void> {
+    await runInSession(newSessionState(), async () => {
+      __setActorForTest(CURATOR);
+      const act = await activateContext("senegal", "ci", "maths");
+      if (!act.ok) throw new Error(`activate: ${act.error}`);
+      await fn();
+    });
+  }
+
+  it("copies onto a lesson token-only (no entryId / targetId / mintedIdMap on confirm)", async () => {
+    await inCtx(async () => {
+      const lessonId = someLessonId(await readPublished());
+      const dry = (await applyCatalogEntry({ entryId: "cat-entry", targetId: lessonId })) as { content?: Array<{ text: string }> };
+      const dryJson = JSON.parse(dry.content![0].text) as { payloadStored?: boolean; confirmationToken?: string; mintedIdMap?: Record<string, string> };
+      expect(dryJson.payloadStored).toBe(true);
+      expect(dryJson.confirmationToken).toBeTruthy();
+      // Confirm with ONLY confirm + token.
+      const done = (await applyCatalogEntry({ confirm: true, confirmationToken: dryJson.confirmationToken })) as { content?: Array<{ text: string }> };
+      const doneJson = JSON.parse(done.content![0].text) as { phase?: string; ok?: boolean };
+      expect(doneJson.phase).toBe("apply");
+      expect(doneJson.ok).toBe(true);
+      // The clone landed on the draft (mirroring the re-send test above).
+      const newEntryId = dryJson.mintedIdMap!["cat-entry"];
+      const draft = (await readDraft())!;
+      expect(draft.edges.some((e) => e.id === makeEdgeId("usesRoutine", lessonId, newEntryId))).toBe(true);
+    });
+  });
+
+  it("a stale token-only confirm (parked context missing) reports stale", async () => {
+    await inCtx(async () => {
+      const lessonId = someLessonId(await readPublished());
+      const dry = (await applyCatalogEntry({ entryId: "cat-entry", targetId: lessonId })) as { content?: Array<{ text: string }> };
+      const dryJson = JSON.parse(dry.content![0].text) as { confirmationToken?: string };
+      // Simulate the parked context vanishing before confirm.
+      const nonce = (JSON.parse(Buffer.from(dryJson.confirmationToken!, "base64url").toString("utf8")) as { n: string }).n;
+      await store.deletePending(ns, `${nonce}:w`);
+      const done = (await applyCatalogEntry({ confirm: true, confirmationToken: dryJson.confirmationToken })) as { content?: Array<{ text: string }> };
+      const doneJson = JSON.parse(done.content![0].text) as { ok?: boolean; reason?: string };
+      expect(doneJson.ok).toBe(false);
+      expect(doneJson.reason).toBe("stale");
+    });
   });
 });

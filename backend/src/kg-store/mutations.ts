@@ -203,6 +203,17 @@ export const pendingTtlMs = tokenTtlMs;
 export const shouldStorePayload = (args: unknown): boolean =>
   stableStringify(args).length >= pendingStoreThresholdBytes();
 
+// Extract the one-time nonce from a confirmationToken. Exported so a WRAPPER
+// tool (server/wrapper-park.ts) can key its own parked context off the same
+// nonce the framework mints — one round-trip, no separate id space to invent.
+// Returns null when the token isn't a well-formed graph-mutation token; a caller
+// that also needs to know it's a graph token can inspect the return via
+// runGraphMutation later — this helper is deliberately minimal.
+export const readTokenNonce = (token: string): string | null => {
+  const payload = decodeToken(token);
+  return payload ? payload.n : null;
+};
+
 const encodeToken = (p: TokenPayload): string =>
   Buffer.from(JSON.stringify(p), "utf8").toString("base64url");
 

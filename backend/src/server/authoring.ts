@@ -90,7 +90,7 @@ const PER_KIND_GUIDE =
 // buildCapabilitiesReport). Mints per-item ids, folds them into the batch
 // mutation, and delegates response shaping + idempotency to runBatchMutation.
 export async function runAddNodes(a: {
-  items: AddNodesItemInput[];
+  items?: AddNodesItemInput[];
   confirm?: boolean;
   confirmationToken?: string;
   mintedNodeIds?: string[];
@@ -99,10 +99,29 @@ export async function runAddNodes(a: {
 }): Promise<Record<string, unknown>> {
   const { namespace } = bind(getActiveAdapter());
 
+  // Token-only confirm shortcut: caller sends confirm+token with NO items and no
+  // mintedNodeIds. Everything the batch needs — built args, mintedIds echo,
+  // payload hash — was parked at dry-run and runBatchMutation will read it back.
+  // We still call runBatchMutation, but with placeholder args/extra/hash that it
+  // overwrites from the parked context.
+  if (a.confirm && !a.items) {
+    return runBatchMutation({
+      namespace, mutation: addNodes,
+      args: { namespace, items: [] },
+      confirm: true, token: a.confirmationToken,
+      returnMode: a.returnMode ?? "summary",
+      idempotencyKey: a.idempotencyKey,
+      payloadHash: "",
+      extra: {},
+      storePayload: true,
+    });
+  }
+
   // Mint one real id per item on the dry-run; on confirm reuse the exact ids the
   // caller echoes back, so the args-hash matches the previewed batch.
-  const mintedIds = a.confirm ? (a.mintedNodeIds ?? []) : a.items.map(() => mintNodeId());
-  const builtItems = a.items.map((item, index) => ({
+  const items = a.items ?? [];
+  const mintedIds = a.confirm ? (a.mintedNodeIds ?? []) : items.map(() => mintNodeId());
+  const builtItems = items.map((item, index) => ({
     label: item.kind,
     parentId: item.parentId,
     newNodeId: mintedIds[index] ?? "",
@@ -117,7 +136,7 @@ export async function runAddNodes(a: {
   // A { yourAlias → realId } map for items that supplied their own mintedNodeId,
   // surfaced (with mintedNodeIds) on both the preview and the apply summary.
   const mintedNodeIdMap: Record<string, string> = {};
-  a.items.forEach((item, index) => {
+  items.forEach((item, index) => {
     if (item.mintedNodeId) {
       mintedNodeIdMap[item.mintedNodeId] = mintedIds[index];
     }
@@ -133,6 +152,7 @@ export async function runAddNodes(a: {
     idempotencyKey: a.idempotencyKey,
     payloadHash: idempotencyPayloadHash(builtItems),
     extra: { mintedNodeIds: mintedIds, mintedNodeIdMap },
+    storePayload: true,
   });
 }
 
@@ -144,10 +164,12 @@ export function registerAuthoringTools(server: McpServer) {
       description:
         "The single node-creation tool — create ONE node or MANY in one atomic draft edit (it replaced the per-label add_lesson/add_material/… tools). Each `items[i]` has `kind` (the LC label — Course/LessonGrouping/Lesson/Activity/Assessment/Material/LearningComponent/InstructionalRoutine/StandardsFrameworkItem), an EXISTING `parentId` (omit for a root Course/StandardsFramework), `description` (display title), optional `position`/`alignTo`/`via`, and `properties` (the kind-specific canonical LC bag). " +
         PER_KIND_GUIDE + " " +
-        "Each item attaches under an already-existing parent — a node minted in the SAME batch cannot be a parent (stage nodes here, then wire cross-references with create_edges). Optional per-item `mintedNodeId` is your own alias, returned in an id map so you can correlate items to their real ids. ALL-OR-NOTHING: the dry-run validates every item and returns ONE confirmationToken + `mintedNodeIds` (real ids, in item order); any item error blocks the whole batch (no partial apply). To confirm, call again with confirm:true, the token, AND `mintedNodeIds` echoed back verbatim. " +
+        "Each item attaches under an already-existing parent — a node minted in the SAME batch cannot be a parent (stage nodes here, then wire cross-references with create_edges). Optional per-item `mintedNodeId` is your own alias, returned in an id map so you can correlate items to their real ids. ALL-OR-NOTHING: the dry-run validates every item and returns ONE confirmationToken + `mintedNodeIds` (real ids, in item order); any item error blocks the whole batch (no partial apply). When the dry-run reports `payloadStored:true` (a large batch held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `items` or `mintedNodeIds`; otherwise re-send `items` verbatim with confirm:true, the token, and `mintedNodeIds` in the same order. " +
         "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff (~1 KB — enough to progress to confirm and wire ids); 'full' also attaches the whole `diff`. " +
         "`idempotencyKey` (optional): pass a unique key (a UUID) to make a RETRIED confirm safe — a repeat with the same key + same payload returns the first apply's summary with `replayed:true` (no double-apply, no double-audit) instead of REPLAY; the same key with a different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Keys are namespace-scoped and expire after 24h. Omit it to keep strict single-use. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
+        // `items` is required on a dry-run; on a token-only confirm (large batch
+        // held server-side) it is omitted alongside `mintedNodeIds`.
         items: z.array(
           z.object({
             kind: z.enum(ADD_NODE_KINDS),
@@ -160,16 +182,16 @@ export function registerAuthoringTools(server: McpServer) {
             properties: z.record(z.any()).optional(),
             mintedNodeId: z.string().optional(),
           }),
-        ),
+        ).optional(),
         returnMode: z.enum(["summary", "full"]).optional(),
         idempotencyKey: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
-        mintedNodeIds: z.array(z.string()).optional(),   // real ids, echoed on confirm
+        mintedNodeIds: z.array(z.string()).optional(),   // real ids, echoed on confirm (re-send path only)
       },
     },
     guarded(async (a: {
-      items: AddNodesItemInput[]; confirm?: boolean; confirmationToken?: string;
+      items?: AddNodesItemInput[]; confirm?: boolean; confirmationToken?: string;
       mintedNodeIds?: string[]; returnMode?: ReturnMode; idempotencyKey?: string;
     }) => asJson(await runAddNodes(a))),
   );

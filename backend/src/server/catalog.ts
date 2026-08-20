@@ -30,6 +30,7 @@ import { currentActor } from "../actor.js";
 import { getWorkspaceStore } from "../workspaces/index.js";
 import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, publishDraft, discardDraft, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
 import { SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, catalogNamespace, cloneRoutineSubtree, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, type CatalogScope } from "../kg-recipes/index.js";
+import { parkWrapperContext, readWrapperContext, deleteWrapperContext } from "./wrapper-park.js";
 
 // Read one catalog namespace's published slot as a plain MutationGraph. Empty when
 // that namespace has never been seeded (no pointer). Exported for tests.
@@ -68,10 +69,34 @@ function withMintedMap(result: unknown, mintedIdMap: Record<string, string>): un
 // clone to `targetId` via `usesRoutine`. Two-phase (mints an id-map on dry-run, reuses
 // it on confirm). The two tools differ only in intent/wording — a routine attaches to
 // a Lesson, a formatter to the Course/deliverable — but the mechanism is identical.
-type ApplyArgs = { entryId: string; targetId: string; mintedIdMap?: Record<string, string>; confirm?: boolean; confirmationToken?: string };
-async function applyCatalogEntry(a: ApplyArgs) {
+type ApplyArgs = { entryId?: string; targetId?: string; mintedIdMap?: Record<string, string>; confirm?: boolean; confirmationToken?: string };
+// The wrapper's parked context for a use_routine / use_formatter confirm: the
+// cloned subtree the dry-run built plus the id-map to surface in the response.
+type ParkedApplyContext = {
+  mutationArgs: { namespace: string; targetId: string; clonedNodes: MutationNode[]; clonedEdges: MutationEdge[]; newEntryId: string };
+  idMap: Record<string, string>;
+};
+
+export async function applyCatalogEntry(a: ApplyArgs) {
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
+
+  // Token-only confirm shortcut: caller sends confirm+token with no entryId /
+  // targetId / mintedIdMap. Read back the cloned subtree the dry-run parked and
+  // apply that verbatim — the args-hash still matches because they are the exact
+  // args the token was minted from.
+  if (a.confirm && !a.entryId) {
+    const parked = a.confirmationToken ? await readWrapperContext<ParkedApplyContext>(namespace, a.confirmationToken) : null;
+    if (!parked) return asJson({ phase: "apply", ok: false, reason: "stale", message: "The previewed catalog application has expired or was already used; re-run without confirm to preview again." });
+    const result = await runGraphMutation({
+      namespace, mutation: useRoutine, args: parked.mutationArgs,
+      confirm: true, token: a.confirmationToken,
+    });
+    if (result.phase === "apply" && result.ok && a.confirmationToken) await deleteWrapperContext(namespace, a.confirmationToken);
+    return asJson(result);
+  }
+
+  if (!a.entryId || !a.targetId) return asJson({ error: "entryId and targetId are required on a dry-run." });
 
   const catalogs = await Promise.all(catalogScopes().map((s) => readCatalog(s.namespace)));
   const source = catalogs.find((graph) => graph.nodes.some((n) => n.id === a.entryId));
@@ -79,15 +104,25 @@ async function applyCatalogEntry(a: ApplyArgs) {
 
   const mint = a.confirm ? (oldId: string) => (a.mintedIdMap ?? {})[oldId] : () => mintNodeId();
   const clone = cloneRoutineSubtree(source, a.entryId, namespace, mint)!;
+  const mutationArgs = { namespace, targetId: a.targetId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId };
 
   const result = await runGraphMutation({
     namespace,
     mutation: useRoutine,
-    args: { namespace, targetId: a.targetId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newEntryId: clone.newEntryId },
+    args: mutationArgs,
     confirm: a.confirm,
     token: a.confirmationToken,
   });
-  return asJson(a.confirm ? result : withMintedMap(result, clone.idMap));
+
+  // Dry-run: park the built context so a large clone can be confirmed token-only.
+  let payloadStored = false;
+  if (!a.confirm && result.phase === "preview") {
+    payloadStored = await parkWrapperContext<ParkedApplyContext>(namespace, result.confirmationToken, { mutationArgs, idMap: clone.idMap });
+  }
+
+  if (a.confirm) return asJson(result);
+  const preview = withMintedMap(result, clone.idMap) as Record<string, unknown>;
+  return asJson({ ...preview, payloadStored });
 }
 
 // ── add_to_catalog: file an authored routine/formatter INTO a catalog ─────────
@@ -159,16 +194,55 @@ function withCatalogPublishNote(result: unknown, target: { scope: CatalogScope; 
 }
 
 type AddToCatalogArgs = {
-  entryId: string;
+  entryId?: string;
   targetWorkspace?: string;
   mintedIdMap?: Record<string, string>;
   confirm?: boolean;
   confirmationToken?: string;
 };
 
+// Parked context for a token-only add_to_catalog confirm. The whole apply-and-
+// publish sequence needs to run against the catalog namespace, not the active
+// subject — so we park that namespace + the target metadata alongside the
+// mutation args, and reconstruct the response's `scope/workspace/namespace/entryId`
+// without touching activeWorkspace() (which may have moved).
+type ParkedAddToCatalogContext = {
+  target: { scope: CatalogScope; workspace: string; namespace: string };
+  mutationArgs: { namespace: string; clonedNodes: MutationNode[]; clonedEdges: MutationEdge[]; newEntryId: string };
+  idMap: Record<string, string>;
+};
+
 // Exported so tests drive the real logic (like runAddNodes / runPublishDraft).
 // Returns the raw result record; the tool registration wraps it in asJson.
 export async function runAddToCatalog(a: AddToCatalogArgs): Promise<Record<string, unknown>> {
+  // Token-only confirm shortcut: caller sends confirm+token with no entryId /
+  // targetWorkspace / mintedIdMap. Read back the parked context and run the
+  // apply-and-publish against the SAME catalog namespace it was previewed against.
+  if (a.confirm && !a.entryId) {
+    // We don't know the catalog namespace until we read the parked entry, but
+    // wrapper-park is keyed by (namespace, nonce). We keyed the dry-run park by
+    // the CATALOG namespace, so probe both possible catalog namespaces (the
+    // shared library and the active workspace's) — whichever holds the entry.
+    const candidateNss = catalogScopes().map((s) => s.namespace);
+    let parked: ParkedAddToCatalogContext | null = null;
+    for (const ns of candidateNss) {
+      parked = a.confirmationToken ? await readWrapperContext<ParkedAddToCatalogContext>(ns, a.confirmationToken) : null;
+      if (parked) break;
+    }
+    if (!parked) return { phase: "apply", ok: false, reason: "stale", message: "The previewed add_to_catalog has expired or was already used; re-run without confirm to preview again." };
+
+    const catalogNs = parked.target.namespace;
+    const applied = await runGraphMutation({ namespace: catalogNs, mutation: addCatalogEntry, args: parked.mutationArgs, confirm: true, token: a.confirmationToken });
+    if (applied.phase !== "apply" || !(applied as { ok?: boolean }).ok) return applied as unknown as Record<string, unknown>;
+    const published = await publishDraft(catalogNs);
+    if (!published.ok) {
+      await discardDraft(catalogNs).catch(() => undefined);
+      return { error: `Entry staged but publishing the ${parked.target.scope} catalog was refused: ${published.reason}. The catalog draft was rolled back — nothing changed.` };
+    }
+    if (a.confirmationToken) await deleteWrapperContext(catalogNs, a.confirmationToken);
+    return { ok: true, published: true, scope: parked.target.scope, workspace: parked.target.workspace, namespace: catalogNs, entryId: parked.mutationArgs.newEntryId, auditId: published.auditId };
+  }
+
   const target = await resolveCatalogTarget(a.targetWorkspace);
   if (target.kind === "error") return { error: target.message };
   if (target.kind === "choose") {
@@ -184,6 +258,8 @@ export async function runAddToCatalog(a: AddToCatalogArgs): Promise<Record<strin
   // brand-new library is a seed-time job (scripts/seed-catalog.mjs), not this tool's.
   const pointer = await getKgStore().readPointer(catalogNs);
   if (!pointer) return { error: `The ${target.scope} catalog ('${catalogNs}') has not been seeded yet — seed it before adding entries.` };
+
+  if (!a.entryId) return { error: "entryId is required on a dry-run." };
 
   // Source: the entry authored in the ACTIVE subject graph (draft-preferred).
   const adapter = getActiveAdapter();
@@ -201,7 +277,15 @@ export async function runAddToCatalog(a: AddToCatalogArgs): Promise<Record<strin
   // Dry-run: stage nothing; return the diff + the id-map to echo back + the publish note.
   if (!a.confirm) {
     const preview = await runGraphMutation({ namespace: catalogNs, mutation: addCatalogEntry, args: mutationArgs });
-    return withCatalogPublishNote(withMintedMap(preview, clone.idMap), target) as Record<string, unknown>;
+    let payloadStored = false;
+    if (preview.phase === "preview") {
+      payloadStored = await parkWrapperContext<ParkedAddToCatalogContext>(catalogNs, preview.confirmationToken, {
+        target: { scope: target.scope, workspace: target.workspace, namespace: target.namespace },
+        mutationArgs, idMap: clone.idMap,
+      });
+    }
+    const shaped = withCatalogPublishNote(withMintedMap(preview, clone.idMap), target) as Record<string, unknown>;
+    return { ...shaped, payloadStored };
   }
 
   // Confirm: apply to the catalog's draft…
@@ -216,14 +300,17 @@ export async function runAddToCatalog(a: AddToCatalogArgs): Promise<Record<strin
     await discardDraft(catalogNs).catch(() => undefined);
     return { error: `Entry staged but publishing the ${target.scope} catalog was refused: ${published.reason}. The catalog draft was rolled back — nothing changed.` };
   }
+  if (a.confirmationToken) await deleteWrapperContext(catalogNs, a.confirmationToken);
   return { ok: true, published: true, scope: target.scope, workspace: target.workspace, namespace: catalogNs, entryId: clone.newEntryId, auditId: published.auditId };
 }
 
 // Shared confirm-gate + copy input, declared on both apply tools.
+// `entryId` / `targetId` are required on dry-run; on a token-only confirm (large
+// clone held server-side) they are omitted alongside `mintedIdMap`.
 const APPLY_INPUT = {
-  entryId: z.string(),
-  targetId: z.string(),
-  mintedIdMap: z.record(z.string(), z.string()).optional(),   // required on confirm
+  entryId: z.string().optional(),
+  targetId: z.string().optional(),
+  mintedIdMap: z.record(z.string(), z.string()).optional(),   // required on re-send confirm
   confirm: z.boolean().optional(),
   confirmationToken: z.string().optional(),
 };
@@ -261,7 +348,7 @@ export function registerCatalogTools(server: McpServer) {
     "use_routine",
     {
       title: "Use a catalog routine",
-      description: "Apply a catalog ROUTINE to a lesson by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (a Lesson) via `usesRoutine`. The copy is independent — later edits to the library entry do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap; call again with confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
+      description: "Apply a catalog ROUTINE to a lesson by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (a Lesson) via `usesRoutine`. The copy is independent — later edits to the library entry do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetId/mintedIdMap; otherwise re-send confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
       inputSchema: APPLY_INPUT,
     },
     guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
@@ -271,7 +358,7 @@ export function registerCatalogTools(server: McpServer) {
     "use_formatter",
     {
       title: "Use a catalog formatter",
-      description: "Apply a catalog FORMATTER (a house-style spec) to a Course by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (the Course — the root of the document it produces) via `usesRoutine`, so generation for that Course applies the style. The copy is independent — later edits to the library formatter do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap; call again with confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
+      description: "Apply a catalog FORMATTER (a house-style spec) to a Course by COPYING it. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject and linked to `targetId` (the Course — the root of the document it produces) via `usesRoutine`, so generation for that Course applies the style. The copy is independent — later edits to the library formatter do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetId/mintedIdMap; otherwise re-send confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
       inputSchema: APPLY_INPUT,
     },
     guarded(async (a: ApplyArgs) => applyCatalogEntry(a)),
@@ -281,11 +368,11 @@ export function registerCatalogTools(server: McpServer) {
     "add_to_catalog",
     {
       title: "Add a routine or formatter to the catalog",
-      description: "Publish a routine or formatter you AUTHORED (an InstructionalRoutine entry + its steps/materials, built in the active subject with add_nodes) INTO a catalog library, so list_catalog / use_routine / use_formatter can then reuse it. It clones the entry's whole subtree with fresh ids into the destination and files it under that library's root — the write inverse of use_routine. DESTINATION: a workspace curator adds to their OWN workspace's library (omit targetWorkspace). A super_admin may target the shared cross-tenant library OR any workspace — pass `targetWorkspace` ('_shared' for the shared library, or a workspace id); call WITHOUT it to get back the list of catalogs to choose from. GATED by the destination — because it PUBLISHES, it needs an APPROVER of that workspace (or super_admin for the shared library). TWO-PHASE, and confirming does BOTH in one step: the dry-run returns the diff + confirmationToken + mintedIdMap; confirm APPLIES AND PUBLISHES the library live (catalogs aren't enterable contexts, so there is no separate publish_draft). Re-send confirm:true + the token + the same mintedIdMap.",
+      description: "Publish a routine or formatter you AUTHORED (an InstructionalRoutine entry + its steps/materials, built in the active subject with add_nodes) INTO a catalog library, so list_catalog / use_routine / use_formatter can then reuse it. It clones the entry's whole subtree with fresh ids into the destination and files it under that library's root — the write inverse of use_routine. DESTINATION: a workspace curator adds to their OWN workspace's library (omit targetWorkspace). A super_admin may target the shared cross-tenant library OR any workspace — pass `targetWorkspace` ('_shared' for the shared library, or a workspace id); call WITHOUT it to get back the list of catalogs to choose from. GATED by the destination — because it PUBLISHES, it needs an APPROVER of that workspace (or super_admin for the shared library). TWO-PHASE, and confirming does BOTH in one step: the dry-run returns the diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetWorkspace/mintedIdMap; otherwise re-send confirm:true + the token + the same mintedIdMap. Catalogs aren't enterable contexts, so there is no separate publish_draft.",
       inputSchema: {
-        entryId: z.string(),
+        entryId: z.string().optional(),   // required on dry-run; omitted on token-only confirm
         targetWorkspace: z.string().optional(),
-        mintedIdMap: z.record(z.string(), z.string()).optional(),   // required on confirm
+        mintedIdMap: z.record(z.string(), z.string()).optional(),   // required on re-send confirm
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
