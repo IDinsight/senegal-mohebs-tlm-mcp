@@ -8,15 +8,23 @@
  * Given a raw Learning-Commons envelope JSON ({ nodes, relationships }), this:
  *   1. parses it with the subject adapter → normalized CurriculumModel;
  *   2. serializes to generic StoredNode/StoredEdge docs (ids verbatim);
- *   3. writes them to slot "a" with a provenance meta stamp;
+ *   3. writes them to a slot with a provenance meta stamp — slot "a" for a fresh
+ *      namespace, or (with --replace-published, for an EXISTING namespace) the
+ *      currently-published slot IN PLACE, so a re-import lands live regardless of
+ *      whether the published slot is "a" or "b";
  *   4. writes the subject-profile config cell — from --profile <path> ({ core,
  *      guide }) when given, else the in-repo literal for that grade/subject;
- *   5. initializes the pointer { publishedSlot: "a", draftSlot: null } if absent
+ *   5. initializes the pointer { publishedSlot, draftSlot: null } if absent
  *      (ensurePointer is a no-op on an existing pointer, so a re-import never
- *      silently moves a published draft back to "a").
+ *      silently moves a published draft).
+ *
+ * Without --replace-published a re-import writes slot "a" and leaves the pointer,
+ * so if the namespace's published slot is "b" the import lands on the NON-published
+ * slot and readers see nothing change. --replace-published avoids that by writing
+ * the live slot directly (refused if a draft is open — publish/discard it first).
  *
  * Usage (after `npm run build`):
- *   node scripts/import-kg.mjs <workspace> <grade> <subject> <graph.json> [--profile p.json] [--dry-run]
+ *   node scripts/import-kg.mjs <workspace> <grade> <subject> <graph.json> [--profile p.json] [--replace-published] [--dry-run]
  *
  * Env (same as the server): SERVICE_ACCOUNT_KEY_PATH (or SERVICE_ACCOUNT_KEY_JSON),
  * FIREBASE_STORAGE_BUCKET, TLM_BUCKET_PREFIX (match the runtime prefix so the
@@ -39,6 +47,7 @@ const { kgNamespace, createMemoryKgStore, createFirestoreKgStore } = await impor
 
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
+const replacePublished = args.includes("--replace-published");
 const profileIdx = args.indexOf("--profile");
 const profilePath = profileIdx >= 0 ? args[profileIdx + 1] : null;
 // Drop the value after --profile, but only when the flag is present (indexOf
@@ -80,10 +89,25 @@ console.error(`import-kg: backend=${store.kind}, ns='${namespace}', nodes=${node
 
 try {
   const existing = await store.readPointer(namespace);
-  if (existing) console.error(`import-kg: WARNING — namespace '${namespace}' already exists (publishedSlot='${existing.publishedSlot}'); writing slot 'a' and leaving the pointer as-is.`);
-  await store.writeSlot(namespace, "a", { nodes, edges, meta });
-  if (config?.core) await store.writeConfig(namespace, "a", config);
-  await store.ensurePointer(namespace, "a");
+  // Fresh namespace → slot "a". Existing namespace → slot "a" (the old default,
+  // which lands on the non-published slot when published is "b"), UNLESS
+  // --replace-published, which writes the live published slot in place.
+  let targetSlot = "a";
+  if (existing) {
+    if (replacePublished) {
+      if (existing.draftSlot) {
+        console.error(`import-kg: REFUSING --replace-published — a draft is open on '${namespace}' (draftSlot='${existing.draftSlot}'). Publish or discard it first.`);
+        process.exit(2);
+      }
+      targetSlot = existing.publishedSlot;
+      console.error(`import-kg: --replace-published → overwriting the LIVE published slot '${targetSlot}' in place.`);
+    } else {
+      console.error(`import-kg: WARNING — namespace '${namespace}' already exists (publishedSlot='${existing.publishedSlot}'); writing slot 'a' and leaving the pointer as-is. Pass --replace-published to update the live graph instead.`);
+    }
+  }
+  await store.writeSlot(namespace, targetSlot, { nodes, edges, meta });
+  if (config?.core) await store.writeConfig(namespace, targetSlot, config);
+  await store.ensurePointer(namespace, targetSlot);
   console.error("import-kg: done.");
 } catch (e) {
   console.error(`import-kg: FAILED — ${(e && e.message) || e}`);
