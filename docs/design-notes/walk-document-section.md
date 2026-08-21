@@ -10,6 +10,13 @@
 > (`curriculum/documents.ts::documentSubgraph`). Prerequisite: `DocumentSection`
 > spines, which the model already supports but **no live graph has authored yet**
 > (ci/maths' two TLMs both use the `covers→Course` fallback — zero `DocumentSection`s).
+>
+> **Direction (decided):** *remain flexible* — do not bake a 1-lesson-=-1-section
+> assumption into the architecture. That assumption is exactly what `walk_lesson`'s
+> reverse-lookup depends on (see "Open questions"), so the flexibility requirement
+> settles the design in favour of the section anchor: `walk_document_section` is the
+> primary generation reader we build toward, and `walk_lesson` is an **interim
+> convenience** for the current spine-less graph, not the long-term entry point.
 
 ## The question this answers
 
@@ -109,9 +116,17 @@ deciding this.
 
 ## Open questions
 
-- **One curriculum node, many sections?** Can a lesson be covered by more than one section
-  in the same document (e.g. split across pages)? If yes, `walk_lesson`'s reverse-lookup is
-  genuinely ambiguous and the section anchor is required, not merely cleaner.
+- **One curriculum node, many sections?** *(Resolved by the flexibility requirement — kept
+  here as rationale.)* `walk_lesson` works **backwards**: hand it a lesson and it infers the
+  document context by asking "which section(s) cover this lesson?" That reverse step is only
+  unambiguous when a lesson maps to **exactly one** section per document. Example: if the
+  Teacher's Guide ever splits *"découvrir les nombres de 1 à 5"* across two fiches — page A
+  (discovery + modelling), page B (guided practice + bilan) — both sections `covers` the same
+  lesson, and `walk_lesson(lesson)` can no longer say **which page** you are generating. Only
+  `walk_document_section(pageB)` is precise. Today ci/maths holds a 1:1 mapping (the guide's
+  "one sheet = one lesson = one OS"), so `walk_lesson` is adequate *for now* — but a workbook
+  or a multi-page manual chapter would break 1:1, and we have decided to **stay flexible**
+  rather than assume it. Hence the section anchor is the target, not the lesson.
 - **Routine granularity** — TLM-level (one routine per document) vs section-level (a bilan
   section overrides with an assessment routine). The nearest-wins chain supports both; the
   question is where authors will actually put it.
