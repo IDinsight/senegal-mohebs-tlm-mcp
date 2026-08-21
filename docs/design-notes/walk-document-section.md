@@ -1,7 +1,10 @@
 # `walk_document_section` — the document section as the generation unit
 
-> **Status: Proposal.** Nothing here is built. It sketches a document-first generation
-> reader anchored on a `DocumentSection`, and argues it should become the primary
+> **Status: Reader built (the `walk_document_section` tool is live);
+> `DocumentSection` spines not yet authored on any graph.** The document-first
+> generation reader anchored on a `DocumentSection` is implemented
+> ([`../../backend/src/curriculum/documents.ts`](../../backend/src/curriculum/documents.ts)::`documentSectionSubgraph`,
+> exposed as the `walk_document_section` tool). It is meant to become the primary
 > "generate one piece" primitive — subsuming the curriculum-first
 > **`walk_lesson`** ([`../../backend/src/curriculum/lesson.ts`](../../backend/src/curriculum/lesson.ts),
 > live) once the TLMs carry a section spine. It builds on the document model in
@@ -100,9 +103,20 @@ Read-only, slot-aware (`published` default; role-gated `draft`) like the other `
    precondition that makes it clean. (`usesRoutine` from a TLM is non-canonical; hang it the
    way formatters already hang under the TLM, and register the deviation in the LC README.)
 
-3. **Add `walk_document_section`** (`curriculum/documents.ts` or a sibling), mirror it in
-   `get_capabilities.discovery`, and point the ci/maths **guide** at it as the per-piece
-   generation entry.
+3. **Add `walk_document_section`** — *done.* It lives in `curriculum/documents.ts`
+   (`documentSectionSubgraph`), is exposed as the `walk_document_section` tool
+   (`server/graph.ts`), and is mirrored in `get_capabilities.discovery`. Still open:
+   point the ci/maths **guide** at it as the per-piece generation entry (a guide edit,
+   deferred until the spines exist so the guide has a real section to point at).
+
+The reader's resolution matches the sketch below, with two spelled-out choices: the
+routine's third tier ("the covered Course's") is resolved as the **nearest routine up
+the covered curriculum's containment ancestry** (so a section covering a *lesson*
+still reaches its Course-level routine), and `resolvedFromScope`
+(`section`/`document`/`curriculum`) reports which tier won. The TLM's doc-wide
+formatter stack is collected by walking `hasPart` from the TLM but **treating
+`DocumentSection`s as walls**, so a sibling section's per-section formatters never leak
+into this section's stack.
 
 ## Relationship to `walk_lesson`
 

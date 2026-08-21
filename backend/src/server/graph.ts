@@ -22,7 +22,7 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace, sessionState } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor, diffGraphs, type GraphDiff } from "../kg-store/index.js";
 import { exportSubtree } from "../kg-export.js";
-import { walkGraph, computeGraphStats, documentSubgraph, lessonSubgraph, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
+import { walkGraph, computeGraphStats, documentSubgraph, documentSectionSubgraph, lessonSubgraph, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
 import { resolveDraftModel } from "./preview.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
@@ -182,6 +182,30 @@ export async function walkLesson(args: { lessonId: string; tlmId?: string; slot?
   return { slot, physicalSlot: resolved.physicalSlot, ...lesson };
 }
 
+// ── Core: walk_document_section ───────────────────────────────────────────────
+// Resolve one DocumentSection's full generation scope: the owning document, the
+// curriculum this slot renders, the routine that applies (section → document →
+// covered-curriculum, nearest-wins), and the formatters (the TLM's doc-wide stack
+// plus the section's own). The per-section counterpart to walk_document — the unit
+// generation produces a document from, section by section. Slot-aware (published
+// default; role-gated draft) like the other walk_* readers. Exported so tests drive
+// the real logic directly.
+export async function walkDocumentSection(args: { sectionId: string; slot?: WalkSlot }): Promise<Record<string, unknown>> {
+  const namespace = activeNamespace();
+  const slot = args.slot ?? "published";
+
+  const resolved = await resolveWalkModel(namespace, slot);
+  if ("notice" in resolved) {
+    return resolved.notice;
+  }
+
+  const section = documentSectionSubgraph(resolved.model, args.sectionId);
+  if (!section) {
+    return { error: `DocumentSection '${args.sectionId}' not found in the ${slot} graph. Call walk_document (its 'sections' spine) or walk_graph (nodeTypes ['DocumentSection']) to find section ids.` };
+  }
+  return { slot, physicalSlot: resolved.physicalSlot, ...section };
+}
+
 // ── Core: namespace_stats ─────────────────────────────────────────────────────
 // Exported so tests drive the real logic directly (like buildCapabilitiesReport).
 export async function namespaceStats(): Promise<Record<string, unknown>> {
@@ -319,6 +343,20 @@ export function registerGraphTools(server: McpServer) {
       },
     },
     guarded(async (a: { lessonId: string; tlmId?: string; slot?: WalkSlot }) => asJson(await walkLesson(a))),
+  );
+
+  server.registerTool(
+    "walk_document_section",
+    {
+      title: "Resolve one document section's generation scope",
+      description:
+        "Given a DocumentSection id, return everything a per-section generation composes to produce that ONE slot of a document — the unit a `.docx` is produced from, section by section (docs/design-notes/walk-document-section.md). Find section ids in walk_document's `sections` spine, or via walk_graph (nodeTypes ['DocumentSection']). This is the document-first counterpart to walk_lesson: a DocumentSection already IS the document↔curriculum binding (it hangs under exactly one TLM and `covers` its curriculum node), so nothing is reverse-searched — its document scope, routine, and formatters are all unambiguous. Returns: `section` (the DocumentSection's raw fields — its position + any per-section assemblyGuide); `document` (the owning TLM: its id, assemblyGuide, and raw node carrying audience/mediumType — null if the section is not under a TLM yet); `covers` (the curriculum node id(s) this section renders — an EMPTY array marks a front-matter section like a cover/TOC/intro); `curriculum` (the covered subtree as raw nodes+edges — pure hasPart/hasChild containment from the covers targets); `routine` (the InstructionalRoutine that APPLIES, resolved nearest-wins along a document-first chain: the section's own usesRoutine, else the owning TLM's, else the nearest routine up the covered curriculum's ancestry — with `resolvedFrom`, `resolvedFromScope` ('section'|'document'|'curriculum'), and the routine subtree; null when nothing in the chain uses a routine); and `formatters` (the owning TLM's DOC-WIDE Formatter/FormatterSpec stack unioned with this section's own per-section stack, as raw nodes+edges — sibling sections' stacks excluded). Read-only. `slot`: 'published' (default) or 'draft' (UNPUBLISHED staged edits — curators/approvers only).",
+      inputSchema: {
+        sectionId: z.string(),
+        slot: z.enum(["published", "draft"]).optional(),
+      },
+    },
+    guarded(async (a: { sectionId: string; slot?: WalkSlot }) => asJson(await walkDocumentSection(a))),
   );
 
   server.registerTool(
