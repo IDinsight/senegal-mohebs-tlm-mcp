@@ -189,6 +189,18 @@ export interface KgNodeStore {
   // its record.
   applyDelta(namespace: string, slot: Slot, delta: SlotDelta, meta: StoredMeta, audit?: AuditRecord): Promise<void>;
 
+  // Apply a precomputed delta to a slot as REAL upserts + REAL deletes — the
+  // efficient counterpart to writeSlot for REPLACING a canonical slot in place.
+  // Like applyDelta it writes only what changed (O(delta), not O(graph)), but
+  // unlike applyDelta a removed id is a genuine DELETE, not a draft tombstone —
+  // so it is for a real (published) slot, not the draft overlay. Used by
+  // import-kg --replace-published so a re-import of a mostly-unchanged graph
+  // costs a few hundred writes instead of rewriting every doc (which times out
+  // over a slow link). Stamps `meta` (+ optional `audit`) in the same final
+  // transaction writeSlot uses. The caller must have computed `delta` against
+  // this slot's current contents.
+  writeSlotDelta(namespace: string, slot: Slot, delta: SlotDelta, meta: StoredMeta, audit?: AuditRecord): Promise<void>;
+
   // Write the subject-profile config cell for one (namespace, slot). Independent
   // of writeSlot — the profile is edited on its own cadence (edit_profile), not
   // on every graph write. Like writeSlot's final meta touch, `audit` (when

@@ -322,6 +322,39 @@ export function createFirestoreKgStore(): KgNodeStore {
       });
     },
 
+    async writeSlotDelta(namespace, slot, delta, meta, audit) {
+      // Replace a REAL slot in place, writing only the delta. Same shape as
+      // applyDelta (O(delta), no full-slot read/rewrite) but a removed id is a
+      // genuine DELETE, not a tombstone — this targets a published/canonical
+      // slot, not the draft overlay, so there is nothing to mask. import-kg
+      // --replace-published uses it: re-importing a mostly-unchanged graph then
+      // costs a few hundred writes instead of rewriting every doc, which is what
+      // times out (DEADLINE_EXCEEDED) over a slow link. The caller computes
+      // `delta` against this slot's current contents.
+      const nodeUpserts = delta.upsertNodes.map((n) => ({ ref: db.collection(NODES).doc(docId(namespace, slot, n.id)), data: { ...n, namespace, slot } }));
+      const edgeUpserts = delta.upsertEdges.map((e) => ({ ref: db.collection(EDGES).doc(docId(namespace, slot, e.id)), data: { ...e, namespace, slot } }));
+      const nodeDeletes = delta.removeNodeIds.map((id) => db.collection(NODES).doc(docId(namespace, slot, id)));
+      const edgeDeletes = delta.removeEdgeIds.map((id) => db.collection(EDGES).doc(docId(namespace, slot, id)));
+
+      // Disjoint doc ids (upsert targets vs delete-only ids), so the four slices
+      // run concurrently — same as writeSlot.
+      await Promise.all([
+        commitInChunks(db, nodeUpserts, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "writeSlotDelta.nodeUpserts"),
+        commitInChunks(db, edgeUpserts, (b, w) => { b.set(w.ref as unknown as FsDocRef, w.data); }, "writeSlotDelta.edgeUpserts"),
+        commitInChunks(db, nodeDeletes, (b, r) => { b.delete(r as unknown as FsDocRef); }, "writeSlotDelta.nodeDeletes"),
+        commitInChunks(db, edgeDeletes, (b, r) => { b.delete(r as unknown as FsDocRef); }, "writeSlotDelta.edgeDeletes"),
+      ]);
+
+      // Same final meta+audit transaction as writeSlot / applyDelta.
+      await db.runTransaction(async (tx) => {
+        const pRef = pointerRef(namespace);
+        const doc = await tx.get(pRef as unknown as FsDocRef);
+        const prev = (doc.data() as PointerDoc | undefined) ?? {};
+        tx.set(pRef as unknown as FsDocRef, { ...prev, [metaField(slot)]: { ...meta } }, { merge: true });
+        if (audit) tx.set(db.collection(AUDIT).doc(audit.id) as unknown as FsDocRef, audit as unknown as Record<string, unknown>);
+      });
+    },
+
     async writeConfig(namespace, slot, config, audit) {
       // Single-doc transaction on the pointer, mirroring writeSlot's final meta
       // touch: set this slot's config cell and — when the caller passed an audit
