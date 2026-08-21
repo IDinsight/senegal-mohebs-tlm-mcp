@@ -36,16 +36,22 @@ export function kgNamespace(a: string, b: string, c?: string): string {
   return `${basePrefix()}${workspace}/${grade}/${subject}`;
 }
 
+// Reserved grade segments that name a workspace-scoped PARTITION, not a teaching
+// context: the catalog (`_catalog`) and the bilingual lexicon (`_glossary`).
+// parseNamespace rejects these so they never appear as a selectable context
+// (set_context) or as a browsable graph in the explorer's namespace picker.
+const RESERVED_GRADES = new Set(["_catalog", "_glossary"]);
+
 // Inverse of kgNamespace: recover the teaching context a namespace names. Strips
 // the bucket prefix and splits into workspace/grade/subject. Returns null for
 // anything that isn't a 3-segment curriculum namespace — notably the reserved
-// catalog partitions (grade segment `_catalog`), which are not teaching contexts.
+// partitions above, which are not teaching contexts.
 export function parseNamespace(ns: string): { workspace: string; grade: string; subject: string } | null {
   const prefix = basePrefix();
   const body = prefix && ns.startsWith(prefix) ? ns.slice(prefix.length) : ns;
   const parts = body.split("/");
   if (parts.length !== 3) return null;
   const [workspace, grade, subject] = parts;
-  if (grade === "_catalog") return null;
+  if (RESERVED_GRADES.has(grade)) return null;
   return { workspace, grade, subject };
 }
