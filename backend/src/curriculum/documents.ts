@@ -47,6 +47,23 @@ const CURRICULUM_EDGES = new Set(["hasPart", "hasChild"]);
 const nodeOut = (n: RawNode): NodeOut => ({ id: n.id, labels: n.labels ?? [], properties: n.properties ?? {} });
 const edgeOut = (e: RawEdge): EdgeOut => ({ id: e.id, type: e.type, start: e.start, end: e.end, properties: e.properties ?? {} });
 
+// walk_document inlines the WHOLE curriculum a document renders. For a
+// whole-Course document (a pupil manual whose section spine covers the full
+// Course) that subtree is essentially the entire graph and would blow the 100 KB
+// response cap — so, exactly as exportSubtree bounds a visualization slice, bound
+// it here: measure the assembled scope and, when the curriculum pushes it over
+// budget, drop the curriculum nodes/edges for a {tooLarge, …} marker that steers
+// the caller to the per-section path. The small, always-useful parts (assembly
+// guide, scope, the sections spine, the document subtree) still come back with the
+// section ids the caller needs. Budget sits under the response cap with headroom
+// for the document subtree + envelope; tunable via TLM_DOCUMENT_MAX_BYTES.
+const DEFAULT_DOCUMENT_MAX_BYTES = 80 * 1024;
+const documentMaxBytes = (): number => {
+  const override = Number(process.env.TLM_DOCUMENT_MAX_BYTES);
+  return Number.isFinite(override) && override > 0 ? override : DEFAULT_DOCUMENT_MAX_BYTES;
+};
+const byteLength = (value: unknown): number => Buffer.byteLength(JSON.stringify(value, null, 2), "utf8");
+
 const labelsOf = (n: RawNode): string[] => n.labels ?? [];
 const props = (n: RawNode): Record<string, any> => (n.properties ?? {}) as Record<string, any>;
 
@@ -88,6 +105,17 @@ function descendants(raw: RawGraphSnapshot, roots: string[], edgeTypes: Set<stri
 // front-matter section (cover, table of contents, intro) with no curriculum node.
 export type DocumentSectionOut = { id: string; position: number; covers: string[] };
 
+// The resolved curriculum inlined when it fits, or a self-bounding marker (its
+// node/edge counts + how to fetch it in bounded pieces) when it would blow the
+// response cap. Mirrors exportSubtree's `tooLarge` shape.
+export type CurriculumTooLarge = {
+  tooLarge: true;
+  counts: { nodes: number; edges: number };
+  approxBytes: number;
+  softCapBytes: number;
+  message: string;
+};
+
 // The full document scope generation composes over. `scope` records HOW the
 // curriculum was resolved: "sections" (a DocumentSection spine), "course" (the
 // simple TLM→covers→Course fallback), or "none" (the TLM covers nothing yet).
@@ -97,8 +125,24 @@ export type DocumentScope = {
   scope: "sections" | "course" | "none";
   sections: DocumentSectionOut[];              // ordered by position; [] when there is no spine
   document: { nodes: NodeOut[]; edges: EdgeOut[] };   // the TLM subtree: TLM + hasPart(sections/formatters/specs) + covers edges
-  curriculum: { nodes: NodeOut[]; edges: EdgeOut[] };  // the resolved curriculum-to-render subgraph
+  curriculum: { nodes: NodeOut[]; edges: EdgeOut[] } | CurriculumTooLarge;  // the resolved curriculum, inlined or self-bounded
 };
+
+// How to fetch the curriculum in bounded pieces once it is too big to inline. A
+// document with a section spine has a per-section entry (walk_document_section);
+// the spine-less Course fallback has none, so it points at walk_graph paging.
+function curriculumTooLargeMessage(
+  scope: DocumentScope["scope"],
+  sections: DocumentSectionOut[],
+  bytes: number,
+  budget: number,
+): string {
+  const size = `~${Math.round(bytes / 1024)} KB, over the ~${Math.round(budget / 1024)} KB budget for one document payload`;
+  const route = scope === "sections"
+    ? `Generate section by section: call walk_document_section on each of the ${sections.length} ids in \`sections\` — each returns just that slot's curriculum, routine and formatters.`
+    : `This document covers a Course directly (no DocumentSection spine), so there is no per-section entry. Page the curriculum with walk_graph from the covered Course root, or give the document a DocumentSection spine so it can be generated section by section.`;
+  return `The curriculum this document renders is ${size}. ${route}`;
+}
 
 // The document rooted at one TLM. Returns null if `tlmId` is not a
 // TeachingLearningMaterial node in this graph.
@@ -149,7 +193,26 @@ export function documentSubgraph(model: CurriculumModel, tlmId: string): Documen
     edges: raw.relationships.filter((e) => curriculumIds.has(e.start) && curriculumIds.has(e.end)).map(edgeOut),
   };
 
-  return { tlm: tlmId, assemblyGuide: assemblyGuideOf(tlm), scope, sections, document, curriculum };
+  // Self-bound: when inlining the curriculum pushes the scope over budget, return
+  // its counts + a route to the bounded fetch instead of the nodes/edges, so the
+  // caller gets an actionable response (and the section ids) rather than the hard
+  // RESPONSE_TOO_LARGE cap. The small parts (guide, spine, document) always ride.
+  const base = { tlm: tlmId, assemblyGuide: assemblyGuideOf(tlm), scope, sections, document };
+  const budget = documentMaxBytes();
+  if (byteLength({ ...base, curriculum }) > budget) {
+    const approxBytes = byteLength(curriculum);
+    return {
+      ...base,
+      curriculum: {
+        tooLarge: true,
+        counts: { nodes: curriculum.nodes.length, edges: curriculum.edges.length },
+        approxBytes,
+        softCapBytes: budget,
+        message: curriculumTooLargeMessage(scope, sections, approxBytes, budget),
+      },
+    };
+  }
+  return { ...base, curriculum };
 }
 
 // ── walk_document_section ──────────────────────────────────────────────────────

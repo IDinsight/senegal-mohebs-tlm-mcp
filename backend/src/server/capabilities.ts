@@ -226,6 +226,9 @@ export async function buildCapabilitiesReport(): Promise<Record<string, unknown>
       params: ["tlmId", "slot"],
       // How the curriculum-to-render was resolved from the TLM.
       scopes: ["sections", "course", "none"],
+      // A whole-Course curriculum too big to inline comes back self-bounded — the
+      // small parts (guide/spine/document) still ride; only `curriculum` degrades.
+      overflow: "self-bounded — an oversized curriculum returns { tooLarge, counts, message } routing to walk_document_section (spine) or walk_graph (Course fallback)",
     },
     walkDocumentSection: {
       params: ["sectionId", "slot"],

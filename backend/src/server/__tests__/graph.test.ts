@@ -394,15 +394,45 @@ async function stageADocument(): Promise<{ tlmId: string; courseId: string }> {
 
 describe("walk_document (tool core)", () => {
   it("resolves a staged TLM: its assembly guide + the Course it covers (fallback scope)", async () => {
-    const result = await withActiveContext(CURATOR, async () => {
-      const { tlmId, courseId } = await stageADocument();
-      return { doc: await walkDocument({ tlmId, slot: "draft" }), courseId };
-    });
-    expect(result.doc.scope).toBe("course");                 // no section spine → Course fallback
-    expect(result.doc.assemblyGuide).toBe("Une leçon par page.");
-    expect(result.doc.physicalSlot).toBe("b");               // the draft lives on slot "b"
-    const curriculumIds = (result.doc.curriculum as { nodes: Array<{ id: string }> }).nodes.map((node) => node.id);
-    expect(curriculumIds).toContain(result.courseId);        // the covered Course subtree is resolved
+    // The seeded Course is larger than the default inline budget; raise it so this
+    // test can assert the FULLY inlined curriculum (the self-bounding path is the
+    // separate test below).
+    const prior = process.env.TLM_DOCUMENT_MAX_BYTES;
+    process.env.TLM_DOCUMENT_MAX_BYTES = String(64 * 1024 * 1024);
+    try {
+      const result = await withActiveContext(CURATOR, async () => {
+        const { tlmId, courseId } = await stageADocument();
+        return { doc: await walkDocument({ tlmId, slot: "draft" }), courseId };
+      });
+      expect(result.doc.scope).toBe("course");                 // no section spine → Course fallback
+      expect(result.doc.assemblyGuide).toBe("Une leçon par page.");
+      expect(result.doc.physicalSlot).toBe("b");               // the draft lives on slot "b"
+      const curriculumIds = (result.doc.curriculum as { nodes: Array<{ id: string }> }).nodes.map((node) => node.id);
+      expect(curriculumIds).toContain(result.courseId);        // the covered Course subtree is resolved
+    } finally {
+      if (prior === undefined) delete process.env.TLM_DOCUMENT_MAX_BYTES;
+      else process.env.TLM_DOCUMENT_MAX_BYTES = prior;
+    }
+  });
+
+  it("self-bounds an oversized curriculum: a tooLarge marker, small parts still ride", async () => {
+    const prior = process.env.TLM_DOCUMENT_MAX_BYTES;
+    process.env.TLM_DOCUMENT_MAX_BYTES = "1"; // force any non-empty curriculum over budget
+    try {
+      const result = await withActiveContext(CURATOR, async () => {
+        const { tlmId } = await stageADocument();
+        return walkDocument({ tlmId, slot: "draft" });
+      });
+      const curriculum = result.curriculum as { tooLarge?: true; counts?: { nodes: number; edges: number }; message?: string };
+      expect(curriculum.tooLarge).toBe(true);
+      expect(curriculum.counts!.nodes).toBeGreaterThan(0);      // the counts survive
+      expect(curriculum.message).toMatch(/walk_graph/);         // Course-fallback route (no section spine)
+      expect(result.scope).toBe("course");                      // scope + document still resolve
+      expect((result.document as { nodes: unknown[] }).nodes.length).toBeGreaterThan(0);
+    } finally {
+      if (prior === undefined) delete process.env.TLM_DOCUMENT_MAX_BYTES;
+      else process.env.TLM_DOCUMENT_MAX_BYTES = prior;
+    }
   });
 
   it("errors clearly for an id that is not a TeachingLearningMaterial", async () => {
