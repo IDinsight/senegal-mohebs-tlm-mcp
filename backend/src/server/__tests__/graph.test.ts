@@ -25,7 +25,7 @@ import { addNode, addNodes, createEdges } from "../../kg-recipes/index.js";
 import { __setStorageForTest } from "../../storage/index.js";
 import { __setActorForTest, type Actor } from "../../actor.js";
 import { activateContext } from "../../activate.js";
-import { walkActiveGraph, walkDocument, namespaceStats, exportGraphView } from "../graph.js";
+import { walkActiveGraph, walkDocument, walkDocumentSection, namespaceStats, exportGraphView } from "../graph.js";
 import type { KgNodeStore, StoredMeta, MutationGraph } from "../../kg-store/index.js";
 import type { StorageAdapter, HistoryFile, CurriculumModel, RawGraphSnapshot } from "../../types.js";
 
@@ -416,6 +416,66 @@ describe("walk_document (tool core)", () => {
 
   it("denies slot:draft to an actor without the draft-read role", async () => {
     const result = await withActiveContext(SIGNED_IN_NO_ROLE, async () => walkDocument({ tlmId: "anything", slot: "draft" }));
+    expect(result.phase).toBe("unauthorized");
+  });
+});
+
+// Stage a DocumentSection spine onto the document from stageADocument: one section
+// under the TLM (hasPart) that `covers` a seeded Lesson — the document-first anchor
+// walk_document_section reads. Returns the section, TLM and lesson ids.
+async function stageASection(): Promise<{ sectionId: string; tlmId: string; lessonId: string }> {
+  const { tlmId } = await stageADocument();
+  const nodes = await store.listNodes(ns, "a");                       // a seeded lesson (present in both slots)
+  const lessonId = nodes.find((node) => (node.labels ?? []).includes("Lesson"))!.id;
+  const sectionId = mintNodeId();
+
+  const addArgs = {
+    namespace: ns,
+    items: [{ label: "DocumentSection", newNodeId: sectionId, title: "Fiche 1", properties: { position: 1 } }],
+  };
+  const addPreview = await runGraphMutation({ namespace: ns, mutation: addNodes, args: addArgs });
+  if (addPreview.phase !== "preview") throw new Error("expected add preview");
+  await runGraphMutation({ namespace: ns, mutation: addNodes, args: addArgs, confirm: true, token: addPreview.confirmationToken });
+
+  const edgeArgs = {
+    namespace: ns,
+    edges: [
+      { edgeType: "hasPart", fromId: tlmId, toId: sectionId },
+      { edgeType: "covers", fromId: sectionId, toId: lessonId },
+    ],
+  };
+  const edgePreview = await runGraphMutation({ namespace: ns, mutation: createEdges, args: edgeArgs });
+  if (edgePreview.phase !== "preview") throw new Error("expected edge preview");
+  await runGraphMutation({ namespace: ns, mutation: createEdges, args: edgeArgs, confirm: true, token: edgePreview.confirmationToken });
+
+  return { sectionId, tlmId, lessonId };
+}
+
+describe("walk_document_section (tool core)", () => {
+  it("resolves a staged section: its owning document + the lesson it covers", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      const { sectionId, tlmId, lessonId } = await stageASection();
+      return { section: await walkDocumentSection({ sectionId, slot: "draft" }), tlmId, lessonId };
+    });
+    const doc = result.section.document as { id: string } | null;
+    expect(doc?.id).toBe(result.tlmId);
+    expect(result.section.covers as string[]).toEqual([result.lessonId]);
+    expect(result.section.physicalSlot).toBe("b");                    // read from the draft slot
+    const curriculumIds = (result.section.curriculum as { nodes: Array<{ id: string }> }).nodes.map((node) => node.id);
+    expect(curriculumIds).toContain(result.lessonId);                 // the covered lesson subtree is resolved
+  });
+
+  it("errors clearly for an id that is not a DocumentSection", async () => {
+    const result = await withActiveContext(CURATOR, async () => {
+      const nodes = await store.listNodes(ns, "a");
+      const lessonId = nodes.find((node) => (node.labels ?? []).includes("Lesson"))!.id;
+      return walkDocumentSection({ sectionId: lessonId });
+    });
+    expect(result.error as string).toMatch(/not found/);
+  });
+
+  it("denies slot:draft to an actor without the draft-read role", async () => {
+    const result = await withActiveContext(SIGNED_IN_NO_ROLE, async () => walkDocumentSection({ sectionId: "anything", slot: "draft" }));
     expect(result.phase).toBe("unauthorized");
   });
 });

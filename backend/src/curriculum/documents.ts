@@ -151,3 +151,200 @@ export function documentSubgraph(model: CurriculumModel, tlmId: string): Documen
 
   return { tlm: tlmId, assemblyGuide: assemblyGuideOf(tlm), scope, sections, document, curriculum };
 }
+
+// ── walk_document_section ──────────────────────────────────────────────────────
+// The per-section generation reader (docs/design-notes/walk-document-section.md).
+// Where documentSubgraph reads a WHOLE document and lesson.ts reads one lesson by
+// reverse-resolving its document context, this is anchored on the DocumentSection —
+// the one node that already IS the document↔curriculum binding: it hangs under
+// exactly one TLM (hasPart) and `covers` the curriculum it renders, so nothing has
+// to be reverse-searched. It answers "what goes in this slot of this document?" and
+// is the unit generation produces a `.docx` section by section from.
+
+const FORMATTER_LABELS = new Set(["Formatter", "FormatterSpec"]);
+const ROUTINE_EDGE = "usesRoutine";
+// A routine subtree hangs off its entry node by hasPart, like every other content
+// subtree (the routine's ordered steps + their materials).
+const ROUTINE_EDGE_CONTENT = "hasPart";
+
+// The induced subgraph over `ids`: those nodes plus every edge of the given types
+// whose endpoints are both inside the set.
+function inducedSubgraph(raw: RawGraphSnapshot, ids: Set<string>, edgeTypes: Set<string>): { nodes: NodeOut[]; edges: EdgeOut[] } {
+  return {
+    nodes: raw.nodes.filter((n) => ids.has(n.id)).map(nodeOut),
+    edges: raw.relationships.filter((e) => edgeTypes.has(e.type) && ids.has(e.start) && ids.has(e.end)).map(edgeOut),
+  };
+}
+
+// Every containment ancestor of `roots`, nearest-first (level-order up hasPart +
+// hasChild). Used to resolve the routine that a covered curriculum node inherits —
+// a covered lesson reaches its Course-level routine by climbing this chain. Walks
+// inbound edges (parent = edge.start, child = edge.end).
+function ancestorsNearestFirst(raw: RawGraphSnapshot, roots: string[]): string[] {
+  const parentsOf = new Map<string, string[]>();
+  for (const e of raw.relationships) {
+    if (!CURRICULUM_EDGES.has(e.type)) continue;
+    (parentsOf.get(e.end) ?? parentsOf.set(e.end, []).get(e.end)!).push(e.start);
+  }
+
+  const ordered: string[] = [];
+  const seen = new Set<string>(roots);
+  let frontier = [...roots];
+  while (frontier.length) {
+    const next: string[] = [];
+    for (const node of frontier) {
+      for (const parent of parentsOf.get(node) ?? []) {
+        if (!seen.has(parent)) { seen.add(parent); ordered.push(parent); next.push(parent); }
+      }
+    }
+    frontier = next;
+  }
+  return ordered;
+}
+
+// The nearest TLM above a section — the document the section belongs to. A section
+// hangs under exactly one TLM by hasPart, so climb inbound hasPart to the first
+// TeachingLearningMaterial. null if the section is not under any document yet.
+function owningTlm(raw: RawGraphSnapshot, sectionId: string): RawNode | null {
+  const parentsOf = new Map<string, string[]>();
+  for (const e of raw.relationships) {
+    if (e.type !== DOCUMENT_EDGE) continue;
+    (parentsOf.get(e.end) ?? parentsOf.set(e.end, []).get(e.end)!).push(e.start);
+  }
+
+  const stack = [...(parentsOf.get(sectionId) ?? [])];
+  const seen = new Set<string>(stack);
+  while (stack.length) {
+    const parentId = stack.pop()!;
+    const parent = raw.nodes.find((n) => n.id === parentId);
+    if (!parent) continue;
+    if (labelsOf(parent).includes(TLM_LABEL)) return parent;
+    for (const grandparent of parentsOf.get(parent.id) ?? []) {
+      if (!seen.has(grandparent)) { seen.add(grandparent); stack.push(grandparent); }
+    }
+  }
+  return null;
+}
+
+// The Formatter/FormatterSpec ids of a document's DOC-WIDE stack: those reachable
+// from `rootId` by hasPart WITHOUT descending into any DocumentSection. Walking the
+// whole TLM subtree would sweep in sibling sections' per-section formatters too, so
+// sections are walls — their own stacks belong to those sections, not the document.
+function docWideFormatterIds(raw: RawGraphSnapshot, rootId: string): Set<string> {
+  const childrenOf = new Map<string, string[]>();
+  for (const e of raw.relationships) {
+    if (e.type !== DOCUMENT_EDGE) continue;
+    (childrenOf.get(e.start) ?? childrenOf.set(e.start, []).get(e.start)!).push(e.end);
+  }
+
+  const found = new Set<string>();
+  const stack = [...(childrenOf.get(rootId) ?? [])];
+  const seen = new Set<string>(stack);
+  while (stack.length) {
+    const nodeId = stack.pop()!;
+    const node = raw.nodes.find((n) => n.id === nodeId);
+    if (!node) continue;
+    if (labelsOf(node).includes(SECTION_LABEL)) continue;   // wall: a sibling section's own subtree
+    if (labelsOf(node).some((l) => FORMATTER_LABELS.has(l))) found.add(node.id);
+    for (const child of childrenOf.get(node.id) ?? []) {
+      if (!seen.has(child)) { seen.add(child); stack.push(child); }
+    }
+  }
+  return found;
+}
+
+// The Formatter/FormatterSpec ids hung directly under one node (a section's own
+// per-section stack), via hasPart.
+function ownFormatterIds(raw: RawGraphSnapshot, rootId: string): Set<string> {
+  const ids = descendants(raw, [rootId], new Set([DOCUMENT_EDGE]));
+  ids.delete(rootId);
+  return new Set([...ids].filter((id) => {
+    const node = raw.nodes.find((n) => n.id === id);
+    return node !== undefined && labelsOf(node).some((l) => FORMATTER_LABELS.has(l));
+  }));
+}
+
+// The routine that applies to a section, resolved NEAREST-WINS along a
+// document-first chain: the section's own usesRoutine, else the owning TLM's, else
+// (compat with a spine-less Course) the nearest routine up the covered curriculum's
+// ancestry. `resolvedFromScope` records which tier won. null when nothing in the
+// chain uses a routine.
+export type SectionRoutine = {
+  entryId: string;                                     // the InstructionalRoutine the edge points at
+  resolvedFrom: string;                                // the node that carried the usesRoutine edge
+  resolvedFromScope: "section" | "document" | "curriculum";
+  nodes: NodeOut[];                                    // the routine subtree (entry + its hasPart steps/materials)
+  edges: EdgeOut[];
+};
+
+function resolveSectionRoutine(
+  raw: RawGraphSnapshot,
+  sectionId: string,
+  tlmId: string | null,
+  coversTargets: string[],
+): SectionRoutine | null {
+  const routineTargetOf = (nodeId: string): string | null =>
+    raw.relationships.find((e) => e.type === ROUTINE_EDGE && e.start === nodeId)?.end ?? null;
+
+  // The nearest-wins chain, document-first: section, then its TLM, then the covered
+  // curriculum's ancestry (a covered lesson climbs to its Course-level routine).
+  const chain: Array<{ id: string; scope: SectionRoutine["resolvedFromScope"] }> = [
+    { id: sectionId, scope: "section" },
+    ...(tlmId ? [{ id: tlmId, scope: "document" as const }] : []),
+    ...ancestorsNearestFirst(raw, coversTargets).map((id) => ({ id, scope: "curriculum" as const })),
+  ];
+
+  for (const link of chain) {
+    const entryId = routineTargetOf(link.id);
+    if (entryId === null) continue;
+    const routineIds = descendants(raw, [entryId], new Set([ROUTINE_EDGE_CONTENT]));
+    const subtree = inducedSubgraph(raw, routineIds, new Set([ROUTINE_EDGE_CONTENT]));
+    return { entryId, resolvedFrom: link.id, resolvedFromScope: link.scope, nodes: subtree.nodes, edges: subtree.edges };
+  }
+  return null;
+}
+
+// Everything a per-section generation composes: the section node, the owning
+// document, the curriculum this slot renders, the applicable routine, and the
+// formatters (doc-wide + this section's own).
+export type DocumentSectionScope = {
+  section: NodeOut;
+  document: { id: string; assemblyGuide: string | null; node: NodeOut } | null;
+  covers: string[];                                    // [] ⇒ front-matter (cover, TOC, intro)
+  curriculum: { nodes: NodeOut[]; edges: EdgeOut[] };  // pure hasPart/hasChild from the covers targets
+  routine: SectionRoutine | null;
+  formatters: { nodes: NodeOut[]; edges: EdgeOut[] };  // the TLM's doc-wide stack ∪ this section's own
+};
+
+// The generation scope rooted at one DocumentSection. Returns null if `sectionId`
+// is not a DocumentSection node in this graph.
+export function documentSectionSubgraph(model: CurriculumModel, sectionId: string): DocumentSectionScope | null {
+  const raw = model.rawGraph;
+  if (!raw) return null;
+  const section = raw.nodes.find((n) => n.id === sectionId);
+  if (!section || !labelsOf(section).includes(SECTION_LABEL)) return null;
+
+  // The document the section belongs to (nearest TLM up hasPart).
+  const tlm = owningTlm(raw, sectionId);
+  const document = tlm
+    ? { id: tlm.id, assemblyGuide: assemblyGuideOf(tlm), node: nodeOut(tlm) }
+    : null;
+
+  // The curriculum this slot renders: the section's covers targets and their pure
+  // containment subtree. An empty covers marks a front-matter section.
+  const covers = raw.relationships.filter((e) => e.type === "covers" && e.start === sectionId).map((e) => e.end);
+  const curriculumIds = descendants(raw, covers, CURRICULUM_EDGES);
+  const curriculum = inducedSubgraph(raw, curriculumIds, CURRICULUM_EDGES);
+
+  const routine = resolveSectionRoutine(raw, sectionId, tlm?.id ?? null, covers);
+
+  // Formatters: this section's own per-section stack, unioned with the owning TLM's
+  // doc-wide stack (sibling sections' stacks excluded).
+  const formatterIds = new Set<string>([
+    ...ownFormatterIds(raw, sectionId),
+    ...(tlm ? docWideFormatterIds(raw, tlm.id) : []),
+  ]);
+  const formatters = inducedSubgraph(raw, formatterIds, new Set([DOCUMENT_EDGE]));
+
+  return { section: nodeOut(section), document, covers, curriculum, routine, formatters };
+}
