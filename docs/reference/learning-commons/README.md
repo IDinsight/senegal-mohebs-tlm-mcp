@@ -121,6 +121,10 @@ Documented so they don't get mistaken for canon:
    not an artifact). The document's own generation logic rides the sidecar as
    **`metadata.assemblyGuide`** (authored markdown). Design:
    [`docs/design-notes/teaching-learning-materials.md`](../../design-notes/teaching-learning-materials.md).
-   *(This replaces the earlier stopgap of modelling a formatter as an
-   `InstructionalRoutine` attached to a `Lesson` — which was off-canon on both the
-   label semantics and the `usesRoutine`-is-Activity-only edge rule.)*
+   *(This replaces the earlier stopgap of modelling a **formatter** as an
+   `InstructionalRoutine` attached to a `Lesson` — off-canon because a formatter is a
+   rendering concern, not an instructional routine, so the `InstructionalRoutine` label
+   was the wrong home for it. The `usesRoutine` **edge** from a `Lesson` is **not** the
+   problem and never was: LC allows `Course`/`Lesson`/`Activity → InstructionalRoutine`
+   (see [`relationships.md`](relationships.md) and [`node-types.md`](node-types.md)), so
+   a genuine pedagogy routine attached to a `Lesson` is canonical.)*
