@@ -22,7 +22,7 @@ import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace, sessionState } from "../context/index.js";
 import { getKgStore, kgNamespace, toAuditActor, diffGraphs, type GraphDiff } from "../kg-store/index.js";
 import { exportSubtree } from "../kg-export.js";
-import { walkGraph, computeGraphStats, documentSubgraph, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
+import { walkGraph, computeGraphStats, documentSubgraph, lessonSubgraph, PRELOADED_SLOT_KEY, type WalkDirection } from "../curriculum/index.js";
 import { resolveDraftModel } from "./preview.js";
 import { authorize } from "../authz.js";
 import { currentActor } from "../actor.js";
@@ -158,6 +158,30 @@ export async function walkDocument(args: { tlmId: string; slot?: WalkSlot }): Pr
   return { slot, physicalSlot: resolved.physicalSlot, ...document };
 }
 
+// ── Core: walk_lesson ─────────────────────────────────────────────────────────
+// Resolve one Lesson's full generation scope: its own content subtree, the routine
+// that applies to it (its own usesRoutine, else the nearest ancestor's — the Course
+// default), and the formatters of every document that covers it. The per-lesson
+// counterpart to walk_document: where walk_document reads a whole document, this
+// reads a single lesson with its inherited pedagogy + formatting folded in.
+// Slot-aware (published default; role-gated draft) like the other walk_* readers.
+// Exported so tests drive the real logic directly.
+export async function walkLesson(args: { lessonId: string; tlmId?: string; slot?: WalkSlot }): Promise<Record<string, unknown>> {
+  const namespace = activeNamespace();
+  const slot = args.slot ?? "published";
+
+  const resolved = await resolveWalkModel(namespace, slot);
+  if ("notice" in resolved) {
+    return resolved.notice;
+  }
+
+  const lesson = lessonSubgraph(resolved.model, args.lessonId, args.tlmId);
+  if (!lesson) {
+    return { error: `Lesson '${args.lessonId}' not found in the ${slot} graph. Call walk_graph (nodeTypes ['Lesson']) from a Course to find lesson ids.` };
+  }
+  return { slot, physicalSlot: resolved.physicalSlot, ...lesson };
+}
+
 // ── Core: namespace_stats ─────────────────────────────────────────────────────
 // Exported so tests drive the real logic directly (like buildCapabilitiesReport).
 export async function namespaceStats(): Promise<Record<string, unknown>> {
@@ -280,6 +304,21 @@ export function registerGraphTools(server: McpServer) {
       },
     },
     guarded(async (a: { tlmId: string; slot?: WalkSlot }) => asJson(await walkDocument(a))),
+  );
+
+  server.registerTool(
+    "walk_lesson",
+    {
+      title: "Resolve one lesson's generation scope",
+      description:
+        "Given a Lesson id, return everything a per-lesson generation composes to produce that single lesson — the per-lesson counterpart to walk_document (which reads a whole document). Find lesson ids with walk_graph (nodeTypes ['Lesson']) from a Course. Returns: `lessonNode` (the lesson's raw fields); `content` (the lesson's own hasPart subtree — Activities/Materials/Assessments — as raw nodes+edges); `routine` (the InstructionalRoutine that APPLIES, resolved nearest-wins: the lesson's own usesRoutine if it has one, else inherited from the nearest containment ancestor — typically the Course carrying one default routine for every lesson — with `resolvedFrom` (the node that carried the edge), `inherited` (false when the lesson carries it directly), and the routine subtree; null when nothing in the lesson's ancestry uses a routine); and `formatters` (one entry per document that covers this lesson — a TLM whose covers reaches the lesson directly or via its Course — each with the TLM id, the covered node `via`, and its Formatter/FormatterSpec rendering stack). Pass `tlmId` to scope the formatters to a single document you are generating (omit for every covering document). This is the reader that folds inherited pedagogy + formatting into a lesson; the Course/document readers stay pure containment. Read-only. `slot`: 'published' (default) or 'draft' (UNPUBLISHED staged edits — curators/approvers only).",
+      inputSchema: {
+        lessonId: z.string(),
+        tlmId: z.string().optional(),
+        slot: z.enum(["published", "draft"]).optional(),
+      },
+    },
+    guarded(async (a: { lessonId: string; tlmId?: string; slot?: WalkSlot }) => asJson(await walkLesson(a))),
   );
 
   server.registerTool(

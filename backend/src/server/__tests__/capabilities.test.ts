@@ -252,11 +252,13 @@ describe("editable and rules come from the real sources (no hand-copied literals
     expect(caps.editable.batch.tools).toContain("add_nodes");
   });
 
-  it("discovery advertises walk_graph + walk_document + namespace_stats + export_graph_view, with canWalkDraft mirroring the draft-read gate", async () => {
+  it("discovery advertises walk_graph + walk_document + walk_lesson + namespace_stats + export_graph_view, with canWalkDraft mirroring the draft-read gate", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
-    expect(caps.discovery.tools).toEqual(["walk_graph", "walk_document", "namespace_stats", "export_graph_view"]);
+    expect(caps.discovery.tools).toEqual(["walk_graph", "walk_document", "walk_lesson", "namespace_stats", "export_graph_view"]);
     // walk_document resolves a document's scope one of three ways.
     expect(caps.discovery.walkDocument.scopes).toEqual(["sections", "course", "none"]);
+    // walk_lesson resolves the lesson's routine nearest-wins (own edge, else inherited).
+    expect(caps.discovery.walkLesson.params).toContain("lessonId");
     // canWalkDraft is the SAME gate diff_draft enforces — it cannot drift.
     expect(caps.discovery.canWalkDraft).toBe(caps.actions.canReadDraft);
     // Feature-detection for the paginated walk.
