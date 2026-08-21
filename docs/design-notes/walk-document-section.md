@@ -1,25 +1,31 @@
 # `walk_document_section` — the document section as the generation unit
 
-> **Status: Reader built (the `walk_document_section` tool is live);
-> `DocumentSection` spines not yet authored on any graph.** The document-first
-> generation reader anchored on a `DocumentSection` is implemented
+> **Status: Live — `walk_document_section` is the sole per-piece generation
+> reader; `walk_lesson` has been retired.** The document-first reader anchored on a
+> `DocumentSection` is implemented
 > ([`../../backend/src/curriculum/documents.ts`](../../backend/src/curriculum/documents.ts)::`documentSectionSubgraph`,
-> exposed as the `walk_document_section` tool). It is meant to become the primary
-> "generate one piece" primitive — subsuming the curriculum-first
-> **`walk_lesson`** ([`../../backend/src/curriculum/lesson.ts`](../../backend/src/curriculum/lesson.ts),
-> live) once the TLMs carry a section spine. It builds on the document model in
+> exposed as the `walk_document_section` tool) and deployed. The curriculum-first
+> `walk_lesson` reader it was meant to subsume has now been **removed** (its
+> `curriculum/lesson.ts` deleted), and the ci/maths **guide** points generation at
+> `walk_document_section` as the per-piece entry. It builds on the document model in
 > [`teaching-learning-materials.md`](teaching-learning-materials.md) and the
 > document-scope reader [`walk_document`](teaching-learning-materials.md)
-> (`curriculum/documents.ts::documentSubgraph`). Prerequisite: `DocumentSection`
-> spines, which the model already supports but **no live graph has authored yet**
+> (`curriculum/documents.ts::documentSubgraph`).
+>
+> `DocumentSection` spines are **still not pre-authored** on any live graph
 > (ci/maths' two TLMs both use the `covers→Course` fallback — zero `DocumentSection`s).
+> Rather than a big upfront spine-authoring pass, the guide folds section authoring
+> **into producing each piece**: to generate a slot you find its `DocumentSection`
+> or, if it has none yet, author it first (`add_nodes` a `DocumentSection` +
+> `create_edges` `hasPart` from the TLM + `covers` to the chapter/lesson), then read
+> it with `walk_document_section`.
 >
 > **Direction (decided):** *remain flexible* — do not bake a 1-lesson-=-1-section
 > assumption into the architecture. That assumption is exactly what `walk_lesson`'s
-> reverse-lookup depends on (see "Open questions"), so the flexibility requirement
-> settles the design in favour of the section anchor: `walk_document_section` is the
-> primary generation reader we build toward, and `walk_lesson` is an **interim
-> convenience** for the current spine-less graph, not the long-term entry point.
+> reverse-lookup depended on (see "Open questions"), so the flexibility requirement
+> settled the design in favour of the section anchor. `walk_lesson` served as the
+> interim spine-less reader and has been retired now that the section anchor is the
+> committed entry point.
 
 ## The question this answers
 
@@ -118,15 +124,15 @@ formatter stack is collected by walking `hasPart` from the TLM but **treating
 `DocumentSection`s as walls**, so a sibling section's per-section formatters never leak
 into this section's stack.
 
-## Relationship to `walk_lesson`
+## Relationship to `walk_lesson` (retired)
 
-`walk_lesson` stays useful only as long as the graph is spine-less: it is the reader that
-*works today* against lessons-under-a-Course with no `DocumentSection`s. Once spines exist,
-`walk_document_section` **subsumes** it — "generate lesson X" becomes "generate the section
-of document D that covers lesson X", which is the honest shape of the task. At that point
-`walk_lesson` should either become a thin convenience that finds the covering section and
-delegates, or be retired. We should not invest further in the lesson-first path before
-deciding this.
+`walk_lesson` was the interim reader that *worked* against lessons-under-a-Course with no
+`DocumentSection`s. `walk_document_section` **subsumes** it — "generate lesson X" becomes
+"generate the section of document D that covers lesson X", the honest shape of the task —
+so rather than keep two per-piece entry points, **`walk_lesson` has been retired**
+(`curriculum/lesson.ts` and its tool/tests/capabilities entry removed). Generation now has
+exactly one per-piece reader, `walk_document_section`, and the spine-less case is handled
+by authoring the section as the first step of producing the piece (see the Status note).
 
 ## Open questions
 
@@ -144,5 +150,5 @@ deciding this.
 - **Routine granularity** — TLM-level (one routine per document) vs section-level (a bilan
   section overrides with an assessment routine). The nearest-wins chain supports both; the
   question is where authors will actually put it.
-- **Do we keep `walk_lesson` at all** post-spine, or retire it? Decide before authoring the
-  spines, so the guide points at one entry point, not two.
+- **Do we keep `walk_lesson` at all** post-spine, or retire it? *(Resolved — retired, so the
+  guide points at one entry point, `walk_document_section`, not two.)*
