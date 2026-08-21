@@ -41,7 +41,7 @@ export const CONFIG = {
   // routing. No key set → the translate tool reports a clear config error.
   gemini: {
     apiKey: env.GEMINI_API_KEY ?? "",
-    model: (env.GEMINI_MODEL ?? "gemini-2.5-flash").trim(),
+    model: (env.GEMINI_MODEL ?? "gemini-3.6-flash").trim(),
     baseUrl: (env.GEMINI_BASE_URL ?? "https://generativelanguage.googleapis.com").replace(/\/+$/, ""),
   },
 };

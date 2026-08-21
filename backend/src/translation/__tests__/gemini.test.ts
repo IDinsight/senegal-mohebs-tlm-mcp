@@ -23,7 +23,7 @@ function stubGemini(payload: unknown) {
 describe("translate — Gemini FR↔Wolof service", () => {
   beforeEach(() => {
     CONFIG.gemini.apiKey = "test-key";
-    CONFIG.gemini.model = "gemini-2.5-flash";
+    CONFIG.gemini.model = "gemini-3.6-flash";
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -35,7 +35,7 @@ describe("translate — Gemini FR↔Wolof service", () => {
     await translate({ text: "Bonjour" });
 
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain("gemini-2.5-flash:generateContent");
+    expect(url).toContain("gemini-3.6-flash:generateContent");
     expect(url).not.toContain("test-key"); // key must not leak into the URL
     expect((init.headers as Record<string, string>)["x-goog-api-key"]).toBe("test-key");
     const body = JSON.parse(init.body as string);
@@ -69,7 +69,7 @@ describe("translate — Gemini FR↔Wolof service", () => {
       translation: "Bonjour",
       sourceLanguage: "Wolof",
       targetLanguage: "French",
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       glossaryTermsUsed: 1,
     });
   });
