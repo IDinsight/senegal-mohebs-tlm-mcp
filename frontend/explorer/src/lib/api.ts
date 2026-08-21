@@ -2,7 +2,7 @@ import {
   createClient,
   type SupabaseClient,
 } from "@supabase/supabase-js";
-import type { CatalogExport, DisplayGraph, KgConfig, NamespaceEntry } from "../types";
+import type { CatalogExport, DisplayGraph, KgConfig, NamespaceEntry, TerminologyExport } from "../types";
 
 // API base. Empty = same-origin (Firebase Hosting rewrites /kg → Cloud Run).
 // Override with ?api=http://localhost:8791 for local/direct testing (CORS).
@@ -87,6 +87,11 @@ export function fetchCatalogEntry(
   id: string,
 ): Promise<{ id: string; markdown: string }> {
   return apiGet(`/kg/catalog/entry?ns=${encodeURIComponent(ns)}&id=${encodeURIComponent(id)}`);
+}
+
+// The workspace's bilingual lexicon (FR/Wolof glossary) for the Terminology tab.
+export function fetchTerminology(ns: string): Promise<TerminologyExport> {
+  return apiGet(`/kg/terminology?ns=${encodeURIComponent(ns)}`);
 }
 
 // The origin we tried to reach, for error messages.

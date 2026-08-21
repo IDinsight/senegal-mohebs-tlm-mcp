@@ -8,6 +8,7 @@ import { SourceFilters } from "./components/SourceFilters";
 import { Toolbar } from "./components/Toolbar";
 import { Tree } from "./components/Tree";
 import { CatalogPanel } from "./components/CatalogPanel";
+import { TerminologyPanel } from "./components/TerminologyPanel";
 import { DetailModal } from "./components/DetailModal";
 import { useGraphData } from "./hooks/useGraphData";
 import { computeSearch } from "./lib/search";
@@ -16,10 +17,12 @@ import { makeT, pick } from "./i18n";
 import type { GraphModel } from "./lib/graphModel";
 import type { Lang, ViewSpec } from "./types";
 
-// The Catalog tab isn't a graph view (its data lives in separate _catalog
-// namespaces, fetched on demand), so it rides alongside the viewConfig views as a
-// synthetic tab with a reserved id and renders its own panel instead of the tree.
+// The Catalog and Terminology tabs aren't graph views (their data lives in
+// separate reserved namespaces — _catalog / _glossary — fetched on demand), so
+// each rides alongside the viewConfig views as a synthetic tab with a reserved id
+// and renders its own panel instead of the tree.
 const CATALOG_TAB = "__catalog";
+const TERMINOLOGY_TAB = "__terminology";
 
 // Every node reachable in the current view (used by "expand all").
 function allViewNodes(
@@ -65,9 +68,11 @@ export default function App() {
     urlRestored.current = true;
 
     // View: honor the URL's view only if this graph actually defines it (or it's
-    // the synthetic Catalog tab, which every graph has).
+    // a synthetic tab — Catalog / Terminology — which every graph has).
     const restoredView =
-      url.view === CATALOG_TAB ? CATALOG_TAB : views.find((v) => v.id === url.view)?.id;
+      url.view === CATALOG_TAB || url.view === TERMINOLOGY_TAB
+        ? url.view
+        : views.find((v) => v.id === url.view)?.id;
     setCurrentView(restoredView ?? views[0]?.id ?? null);
 
     // Sources: start every chip on, then turn off the ones the URL names,
@@ -114,16 +119,19 @@ export default function App() {
   }, [data, currentView]);
 
   const catalogActive = currentView === CATALOG_TAB;
+  const terminologyActive = currentView === TERMINOLOGY_TAB;
 
-  // The tab strip: the graph's views, with the synthetic Catalog tab slotted in
-  // just before the generic "Par type (LC)" floor (or appended if there is none).
+  // The tab strip: the graph's views, with the synthetic Catalog + Terminology
+  // tabs slotted in just before the generic "Par type (LC)" floor (or appended if
+  // there is none).
   const tabs = useMemo<TabSpec[]>(() => {
     if (!data) return [];
     const catalogTab: TabSpec = { id: CATALOG_TAB, label: { fr: t("catalog"), en: t("catalog") } };
+    const terminologyTab: TabSpec = { id: TERMINOLOGY_TAB, label: { fr: t("terminology"), en: t("terminology") } };
     const views: TabSpec[] = data.meta.viewConfig.views;
     const genericAt = views.findIndex((v) => v.id === "generic");
     const at = genericAt === -1 ? views.length : genericAt;
-    return [...views.slice(0, at), catalogTab, ...views.slice(at)];
+    return [...views.slice(0, at), catalogTab, terminologyTab, ...views.slice(at)];
   }, [data, t]);
 
   // Stats chips: visible node count, per-taxonomy counts, and edges among visibles.
@@ -206,8 +214,9 @@ export default function App() {
   }, []);
 
   // The graph is ready once loaded; a graph view additionally needs its spec, but
-  // the Catalog tab renders without one (it fetches its own data).
-  const ready = g.phase === "ready" && data && model && (catalogActive || spec);
+  // the synthetic tabs (Catalog / Terminology) render without one (they fetch
+  // their own data).
+  const ready = g.phase === "ready" && data && model && (catalogActive || terminologyActive || spec);
   const refreshing = g.phase === "loading" && g.namespaces.length > 0;
 
   return (
@@ -247,6 +256,8 @@ export default function App() {
           />
           {catalogActive ? (
             g.currentNs && <CatalogPanel lang={lang} ns={g.currentNs} />
+          ) : terminologyActive ? (
+            g.currentNs && <TerminologyPanel lang={lang} ns={g.currentNs} />
           ) : (
             spec && (
               <>
