@@ -117,21 +117,32 @@ Read a lesson's objective and sub-skills with `get_standards(lessonId)`: the ali
 the sub-skills an activity targets. Empty `nodes` means that lesson is not yet wired to
 the spine — say the OS is missing, don't invent it.
 
-### The per-piece reader (target: `walk_document_section`)
+### The per-piece reader: `walk_document_section`
 
-A document is produced **one slot at a time** — a chapter of the Student's Book, a
-*fiche* of the Teacher's Guide. The intended reader for that unit is
-**`walk_document_section(sectionId)`**: given one `DocumentSection` it returns, in a
-single read, that slot's **curriculum** to render, the **routine** that applies to it
-(nearest-wins: the section's own, else its document's, else the covered `Course`'s), and
-the **formatters** — so you never assemble the routine + style by hand.
+Produce a document **one slot at a time**, and read that slot with
+**`walk_document_section(sectionId)`** — the per-piece generation entry. A slot is a
+`DocumentSection` under its TLM that `covers` the curriculum it renders: a chapter of the
+Student's Book, a *fiche* of the Teacher's Guide. In a **single read** the reader returns
+everything that piece composes over:
 
-**Not usable on this graph yet.** ci/maths' two TLMs carry **no `DocumentSection`
-spine** (both fall back to `covers → Course`), so there are no section ids to pass. Until
-the spines are authored, generate a piece the way the two deliverable sections below
-describe — read the routine via `walk_graph` and the formatters off the `Course`. Once a
-TLM carries a section spine, `walk_document_section(sectionId)` becomes the single
-per-piece entry and those manual reads collapse into it.
+- its **curriculum** — the covered subtree (pure `hasPart`/`hasChild`);
+- the **routine** that applies — resolved nearest-wins, document-first: the section's own
+  `usesRoutine`, else the owning TLM's, else the covered `Course`'s (this is where a
+  Teacher's-Guide-specific routine like the *Fiche* lives, inherited by every fiche);
+- the **formatters** — the TLM's doc-wide Formatter/FormatterSpec stack unioned with the
+  section's own.
+
+So you no longer assemble the routine and the style by hand — one call hands you all three
+for the exact slot you are generating.
+
+**Find (or author) the section first.** List a TLM's slots with
+`walk_document(tlmId).sections`. If the piece you want has **no section yet** (the TLM
+still resolves by the `covers → Course` fallback — `scope: "course"`), author it as the
+first step of generating that piece: `add_nodes` a `DocumentSection` (give it a
+`position`), then `create_edges` a `hasPart` from the TLM to it and a `covers` from it to
+the chapter/lesson it renders — publish, and `walk_document_section` now drives the piece.
+Authoring the slot spine is part of producing the document, not a prerequisite someone
+else must finish first.
 
 ### Conventions for both deliverables
 
@@ -217,11 +228,10 @@ Pupils do not write in the book (MCQ; the pupil writes only the letter).
 
 The five-step structure, its names, its timings, and each step's spec come from the
 **"Fiche de leçon — enseignement explicite" routine** (including the first-lesson /
-intermediate / bilan variants and the bilan's question split) — read it via
-`walk_graph`, don't restate it (once a *fiche* section spine exists, one
-`walk_document_section` call returns this routine with the curriculum and formatters).
-The house style comes from the guide's **formatter**. What follows is the delivery
-judgment on top.
+intermediate / bilan variants and the bilan's question split) — `walk_document_section`
+returns it as this fiche's `routine`, alongside the curriculum and the formatter; don't
+restate it. The house style comes from the returned **formatter**. What follows is the
+delivery judgment on top.
 
 - **Low-cost, blackboard-first (the load-bearing constraint).** Schools cannot buy
   props, so the teacher demonstrates **primarily on the blackboard** — chalk drawings,

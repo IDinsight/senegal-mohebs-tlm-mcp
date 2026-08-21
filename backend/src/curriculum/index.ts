@@ -12,6 +12,5 @@ export { serializeModel, deserializeToModel, toRawEnvelope, edgeId, PRELOADED_MO
 export { resolvePrune, type PruneStrategySpec } from "./prunes.js";
 export { coursesOf, courseSubgraph, standardsFor } from "./courses.js";
 export { documentSubgraph, documentSectionSubgraph, type DocumentScope, type DocumentSectionOut, type DocumentSectionScope, type SectionRoutine } from "./documents.js";
-export { lessonSubgraph, type LessonScope, type ResolvedRoutine, type CoveringFormatters } from "./lesson.js";
 export { walkGraph, type WalkArgs, type WalkDirection, type WalkResult } from "./walk.js";
 export { computeGraphStats, type GraphStats, type StatsRoot } from "./stats.js";
