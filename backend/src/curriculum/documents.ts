@@ -153,13 +153,13 @@ export function documentSubgraph(model: CurriculumModel, tlmId: string): Documen
 }
 
 // ── walk_document_section ──────────────────────────────────────────────────────
-// The per-section generation reader (docs/design-notes/walk-document-section.md).
-// Where documentSubgraph reads a WHOLE document and lesson.ts reads one lesson by
-// reverse-resolving its document context, this is anchored on the DocumentSection —
-// the one node that already IS the document↔curriculum binding: it hangs under
-// exactly one TLM (hasPart) and `covers` the curriculum it renders, so nothing has
-// to be reverse-searched. It answers "what goes in this slot of this document?" and
-// is the unit generation produces a `.docx` section by section from.
+// The per-section generation reader (docs/design-notes/walk-document-section.md) —
+// the per-piece entry generation produces a document from, one slot at a time.
+// Where documentSubgraph reads a WHOLE document, this is anchored on the
+// DocumentSection — the one node that already IS the document↔curriculum binding: it
+// hangs under exactly one TLM (hasPart) and `covers` the curriculum it renders, so
+// nothing has to be reverse-searched. It answers "what goes in this slot of this
+// document?" and is the unit generation produces a `.docx` section by section from.
 
 const FORMATTER_LABELS = new Set(["Formatter", "FormatterSpec"]);
 const ROUTINE_EDGE = "usesRoutine";
