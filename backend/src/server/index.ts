@@ -10,6 +10,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerContextTools } from "./context.js";
 import { registerWorkspaceTools } from "./workspaces.js";
 import { registerCurriculumTools } from "./curriculum.js";
+import { registerTranslationTools } from "./translation.js";
+import { registerGlossaryTools } from "./glossary.js";
 import { registerGraphTools } from "./graph.js";
 import { registerPreviewTools } from "./preview.js";
 import { registerCiMathsTools } from "./ci-maths.js";
@@ -30,6 +32,8 @@ export function buildServer(): McpServer {
   registerContextTools(server);      // set_context, get_context
   registerWorkspaceTools(server);    // list_workspaces, create_workspace, add/remove/list_member (tenant admin)
   registerCurriculumTools(server);   // get_standards (generic node reader), terminology
+  registerTranslationTools(server);  // translate (FR↔Wolof via Gemini, glossary-grounded)
+  registerGlossaryTools(server);     // add_terms, edit_term, remove_terms (workspace bilingual lexicon)
   registerGraphTools(server);        // walk_graph (generic BFS traversal), namespace_stats (orientation snapshot)
   registerPreviewTools(server);      // preview_generation, create_preview_upload_url (draft-resolved, isolated from published)
   registerCiMathsTools(server);      // suggest_fresh_domain, domain_usage (CI maths-specific)
