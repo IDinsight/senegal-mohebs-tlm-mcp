@@ -36,6 +36,10 @@ describe("parseNamespace", () => {
     expect(parseNamespace(SHARED_CATALOG_NAMESPACE)).toBeNull();
   });
 
+  it("rejects the reserved glossary partition (so it isn't a selectable context)", () => {
+    expect(parseNamespace(kgNamespace("senegal", "_glossary", "terms"))).toBeNull();
+  });
+
   it("rejects anything that isn't a 3-segment namespace", () => {
     expect(parseNamespace("senegal/ci")).toBeNull();
     expect(parseNamespace("a/b/c/d")).toBeNull();

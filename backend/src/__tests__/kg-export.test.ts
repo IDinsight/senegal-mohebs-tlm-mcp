@@ -12,8 +12,9 @@ import { subjectDir, KG_FIXTURE } from "./index.js";
 import { resolveAdapter } from "../adapters/index.js";
 import { serializeModel } from "../curriculum/index.js";
 import { __setKgStoreForTest, createMemoryKgStore, kgNamespace, edgeId as makeEdgeId } from "../kg-store/index.js";
-import { exportNamespace, exportCatalog, exportCatalogEntry } from "../kg-export.js";
+import { exportNamespace, exportCatalog, exportCatalogEntry, exportTerminology } from "../kg-export.js";
 import { SHARED_CATALOG_NAMESPACE, catalogNamespace } from "../kg-recipes/index.js";
+import { glossaryNamespace, buildLexiconNode } from "../glossary/index.js";
 import { DEFAULT_WORKSPACE } from "../config.js";
 import type { KgNodeStore, StoredMeta, StoredNode, StoredEdge } from "../kg-store/index.js";
 
@@ -90,7 +91,21 @@ async function seed(): Promise<KgNodeStore> {
   await seedCatalog(store, SHARED_CATALOG_NAMESPACE);
   await seedCatalog(store, catalogNamespace(DEFAULT_WORKSPACE));
   await seedDocumentLayer(store, docNs);
+  await seedGlossary(store, DEFAULT_WORKSPACE);
   return store;
+}
+
+// Two lexicon entries in the default workspace's glossary namespace — what the
+// Terminology tab reads.
+async function seedGlossary(store: KgNodeStore, workspace: string): Promise<void> {
+  const namespace = glossaryNamespace(workspace);
+  const nodes = [
+    buildLexiconNode({ renderings: { fr: "compter", wo: "waññ" }, tags: ["Nombres"] }, "term-1", namespace),
+    buildLexiconNode({ renderings: { fr: "triangle", wo: "koñ-ñett" }, tags: ["Géométrie"] }, "term-2", namespace),
+  ];
+  const meta: StoredMeta = { contentHash: "t", seededAt: "1970-01-01T00:00:00Z", adapterId: "glossary/lexicon-v1", nodeCount: nodes.length, edgeCount: 0 };
+  await store.writeSlot(namespace, "a", { nodes, edges: [], meta });
+  await store.ensurePointer(namespace, "a");
 }
 
 beforeAll(async () => { process.env.KG_SOURCE = "firestore"; __setKgStoreForTest(await seed()); });
@@ -297,6 +312,27 @@ describe("kg-export — catalog", () => {
 
   it("returns null for a namespace that isn't a curriculum context", async () => {
     expect(await exportCatalog(SHARED_CATALOG_NAMESPACE)).toBeNull();
+  });
+});
+
+// The Terminology tab: given any curriculum namespace, it returns that
+// namespace's WORKSPACE glossary (not the subject graph), keyed by workspace.
+describe("kg-export — terminology", () => {
+  it("returns the workspace's lexicon for a curriculum namespace", async () => {
+    const out = (await exportTerminology(mathsNs))!;
+    expect(out.workspace).toBe("senegal");
+    expect(out.entries.map((e) => e.renderings.fr).sort()).toEqual(["compter", "triangle"]);
+  });
+
+  it("resolves the SAME workspace lexicon from a different subject namespace", async () => {
+    // reading and maths share the senegal workspace → same glossary.
+    const out = (await exportTerminology(readingNs))!;
+    expect(out.workspace).toBe("senegal");
+    expect(out.entries).toHaveLength(2);
+  });
+
+  it("returns null for a non-curriculum namespace (e.g. the glossary partition itself)", async () => {
+    expect(await exportTerminology(glossaryNamespace("senegal"))).toBeNull();
   });
 });
 
