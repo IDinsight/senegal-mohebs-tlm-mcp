@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { fetchTerminology } from "../lib/api";
 import { makeT } from "../i18n";
 import type { Lang, LexiconEntry } from "../types";
 
 type Props = { lang: Lang; ns: string };
+
+const PAGE_SIZES = [10, 20, 50];
 
 // Diacritics-insensitive match, mirroring the server's noAccents lookup, so
 // searching "eleve" finds "élève".
@@ -50,38 +52,16 @@ function EntryRow({ entry }: { entry: LexiconEntry }) {
   );
 }
 
-// One section (from the entry's first tag): a heading with a count, a column
-// header, then the section's terms sorted by French headword.
-function SectionBlock({ lang, title, entries }: { lang: Lang; title: string; entries: LexiconEntry[] }) {
-  const t = makeT(lang);
-  if (!entries.length) return null;
-  const sorted = [...entries].sort((a, b) => frenchOf(a).localeCompare(frenchOf(b)));
-  return (
-    <div className="mb-6 overflow-hidden rounded-xl border border-line bg-panel2">
-      <div className="flex items-center justify-between bg-panel px-3 py-2">
-        <h3 className="text-[11px] uppercase tracking-[0.05em] text-muted">{title}</h3>
-        <span className="text-[11px] text-accent">{entries.length}</span>
-      </div>
-      <div className="hidden grid-cols-[1fr_1fr_1.2fr] gap-3 px-3 py-1.5 text-[10px] uppercase tracking-[0.04em] text-muted md:grid">
-        <span>{t("terminologyFrench")}</span>
-        <span>{t("terminologyWolof")}</span>
-        <span>{t("terminologyExample")}</span>
-      </div>
-      {sorted.map((e) => (
-        <EntryRow key={e.id} entry={e} />
-      ))}
-    </div>
-  );
-}
-
-// The Terminology tab body: the workspace's bilingual lexicon, filterable by a
-// search box and grouped by section. Fetches its own data by namespace (the
-// server resolves the namespace's workspace glossary), like the Catalog tab.
+// The Terminology tab body: the workspace's bilingual lexicon in one width-capped,
+// paginated table, filterable by search and split by section headers. Fetches its
+// own data by namespace (the server resolves the namespace's workspace glossary).
 export function TerminologyPanel({ lang, ns }: Props) {
   const t = makeT(lang);
   const [entries, setEntries] = useState<LexiconEntry[] | null>(null);
   const [error, setError] = useState(false);
   const [query, setQuery] = useState("");
+  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(0);
 
   // (Re)load whenever the namespace changes; ignore a stale response if the ns
   // switched mid-flight.
@@ -109,8 +89,10 @@ export function TerminologyPanel({ lang, ns }: Props) {
     );
   }, [entries, query]);
 
-  // Group by section (the first tag), preserving first-seen order.
-  const groups = useMemo(() => {
+  // Flat list in section order (first-seen), French-sorted within each section,
+  // tagging each term with its section so the paginated view can show a header
+  // whenever the section changes on the current page.
+  const rows = useMemo(() => {
     const order: string[] = [];
     const byTitle = new Map<string, LexiconEntry[]>();
     for (const e of filtered) {
@@ -121,41 +103,113 @@ export function TerminologyPanel({ lang, ns }: Props) {
       }
       byTitle.get(key)!.push(e);
     }
-    return order.map((title) => ({ title, entries: byTitle.get(title)! }));
+    return order.flatMap((section) =>
+      [...byTitle.get(section)!]
+        .sort((a, b) => frenchOf(a).localeCompare(frenchOf(b)))
+        .map((entry) => ({ entry, section })),
+    );
   }, [filtered, t]);
+
+  // Reset to the first page whenever the result set or page size changes.
+  useEffect(() => setPage(0), [query, ns, pageSize]);
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const current = Math.min(page, pageCount - 1);
+  const pageRows = rows.slice(current * pageSize, current * pageSize + pageSize);
 
   return (
     <>
       <div className="px-3.5 pb-3 pt-0.5 text-xs text-muted">{t("terminologyHint")}</div>
       <div className="overflow-auto px-3.5 pb-20 pt-1">
-        {error ? (
-          <div className="py-6 text-xs text-muted">{t("terminologyErr")}</div>
-        ) : entries == null ? (
-          <div className="py-6 text-xs text-muted">{t("terminologyLoading")}</div>
-        ) : !entries.length ? (
-          <div className="py-6 text-xs text-muted">{t("terminologyEmpty")}</div>
-        ) : (
-          <>
-            <div className="mb-3.5 flex items-center gap-2">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("terminologySearch")}
-                className="w-full max-w-sm rounded-lg border border-line bg-panel2 px-3 py-1.5 text-[13px] text-txt placeholder:text-muted focus:border-accent focus:outline-none"
-              />
-              <span className="shrink-0 text-[11px] text-muted">
-                {filtered.length} {t("terminologyCount")}
-              </span>
-            </div>
-            {groups.length === 0 ? (
-              <div className="py-6 text-xs text-muted">{t("terminologyNoMatch")}</div>
-            ) : (
-              groups.map((g) => (
-                <SectionBlock key={g.title} lang={lang} title={g.title} entries={g.entries} />
-              ))
-            )}
-          </>
-        )}
+        <div className="mx-auto max-w-4xl">
+          {error ? (
+            <div className="py-6 text-xs text-muted">{t("terminologyErr")}</div>
+          ) : entries == null ? (
+            <div className="py-6 text-xs text-muted">{t("terminologyLoading")}</div>
+          ) : !entries.length ? (
+            <div className="py-6 text-xs text-muted">{t("terminologyEmpty")}</div>
+          ) : (
+            <>
+              <div className="mb-3.5 flex flex-wrap items-center gap-2">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("terminologySearch")}
+                  className="w-full max-w-xs rounded-lg border border-line bg-panel2 px-3 py-1.5 text-[13px] text-txt placeholder:text-muted focus:border-accent focus:outline-none"
+                />
+                <span className="text-[11px] text-muted">
+                  {rows.length} {t("terminologyCount")}
+                </span>
+              </div>
+
+              {rows.length === 0 ? (
+                <div className="py-6 text-xs text-muted">{t("terminologyNoMatch")}</div>
+              ) : (
+                <>
+                  <div className="overflow-hidden rounded-xl border border-line bg-panel2">
+                    <div className="hidden grid-cols-[1fr_1fr_1.2fr] gap-3 border-b border-line bg-panel px-3 py-1.5 text-[10px] uppercase tracking-[0.04em] text-muted md:grid">
+                      <span>{t("terminologyFrench")}</span>
+                      <span>{t("terminologyWolof")}</span>
+                      <span>{t("terminologyExample")}</span>
+                    </div>
+                    {pageRows.map((r, i) => {
+                      const newSection = i === 0 || pageRows[i - 1].section !== r.section;
+                      return (
+                        <Fragment key={r.entry.id}>
+                          {newSection && (
+                            <div className="border-t border-line bg-panel px-3 py-1.5 text-[11px] uppercase tracking-[0.05em] text-muted">
+                              {r.section}
+                            </div>
+                          )}
+                          <EntryRow entry={r.entry} />
+                        </Fragment>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination bar: page-size selector + prev/next + page indicator. */}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted">{t("terminologyPerPage")}</span>
+                      {PAGE_SIZES.map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setPageSize(size)}
+                          className={`rounded border px-2 py-0.5 text-[11px] ${
+                            size === pageSize
+                              ? "border-accent text-accent"
+                              : "border-line text-muted hover:border-accent"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <button
+                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        disabled={current === 0}
+                        className="rounded border border-line px-2 py-0.5 text-muted enabled:hover:border-accent disabled:opacity-40"
+                      >
+                        ‹ {t("terminologyPrev")}
+                      </button>
+                      <span className="text-muted">
+                        {t("terminologyPage")} {current + 1} / {pageCount}
+                      </span>
+                      <button
+                        onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                        disabled={current >= pageCount - 1}
+                        className="rounded border border-line px-2 py-0.5 text-muted enabled:hover:border-accent disabled:opacity-40"
+                      >
+                        {t("terminologyNext")} ›
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </>
   );

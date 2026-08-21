@@ -64,6 +64,10 @@ export const UI = {
     terminologyLoading: "Chargement du lexique…",
     terminologyErr: "Échec du chargement du lexique.",
     terminologyNoMatch: "Aucun terme ne correspond à la recherche.",
+    terminologyPerPage: "Par page",
+    terminologyPrev: "Précédent",
+    terminologyNext: "Suivant",
+    terminologyPage: "Page",
   },
   en: {
     title: "Explorer — Knowledge graphs",
@@ -126,6 +130,10 @@ export const UI = {
     terminologyLoading: "Loading lexicon…",
     terminologyErr: "Failed to load the lexicon.",
     terminologyNoMatch: "No term matches the search.",
+    terminologyPerPage: "Per page",
+    terminologyPrev: "Previous",
+    terminologyNext: "Next",
+    terminologyPage: "Page",
   },
 } satisfies Record<Lang, Record<string, string>>;
 
