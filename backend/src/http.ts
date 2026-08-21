@@ -28,7 +28,7 @@ import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.
 import type { OAuthTokenVerifier } from "@modelcontextprotocol/sdk/server/auth/provider.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { buildServer } from "./server/index.js";
-import { listExportNamespaces, exportNamespace, exportCatalog, exportCatalogEntry } from "./kg-export.js";
+import { listExportNamespaces, exportNamespace, exportCatalog, exportCatalogEntry, exportTerminology } from "./kg-export.js";
 import { CONFIG, basePrefix, DEFAULT_WORKSPACE } from "./config.js";
 import { newSessionState, runInSession, listAvailableContexts, type SessionState } from "./context/index.js";
 import { readGlobalObject, writeGlobalObject } from "./storage/index.js";
@@ -83,6 +83,8 @@ function supabaseVerifier(): OAuthTokenVerifier {
 //   GET /kg/catalog?ns=<ns>            — auth-gated. The catalog libraries (shared +
 //                                        that workspace's) for the Catalog tab.
 //   GET /kg/catalog/entry?ns=&id=      — auth-gated. One entry's full spec (markdown).
+//   GET /kg/terminology?ns=<ns>        — auth-gated. The workspace's bilingual lexicon
+//                                        (FR/Wolof glossary) for the Terminology tab.
 // CORS is allow-listed to the hosting origin(s); auth requires a valid Supabase
 // Bearer JWT whenever auth is enabled (mirrors /mcp). All read-only, published-only.
 //
@@ -183,6 +185,21 @@ function registerKgRoutes(app: express.Express, authEnabled: boolean, verifier: 
       res.json({ id, markdown });
     } catch (e) {
       console.error(`${LOG} /kg/catalog/entry?ns=${ns}&id=${id} failed:`, (e as Error).message);
+      res.status(500).json({ error: "export_failed", message: (e as Error).message });
+    }
+  });
+
+  // The Terminology tab: the workspace's bilingual lexicon (the FR/Wolof glossary the
+  // translate + get_terminology tools ground on), keyed by this namespace's workspace.
+  app.get("/kg/terminology", cors, requireJwt, async (req, res) => {
+    const ns = String(req.query.ns ?? "").trim();
+    if (!ns) { res.status(400).json({ error: "missing_ns" }); return; }
+    try {
+      const terminology = await exportTerminology(ns);
+      if (!terminology) { res.status(404).json({ error: "not_a_curriculum_namespace", ns }); return; }
+      res.json(terminology);
+    } catch (e) {
+      console.error(`${LOG} /kg/terminology?ns=${ns} failed:`, (e as Error).message);
       res.status(500).json({ error: "export_failed", message: (e as Error).message });
     }
   });

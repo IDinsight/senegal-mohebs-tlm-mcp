@@ -31,6 +31,7 @@ import {
   type CatalogEntry, type CatalogScope,
 } from "./kg-recipes/index.js";
 import { listAvailableContexts } from "./context/index.js";
+import { glossaryNamespace, readGlossaryEntries, type LexiconEntry } from "./glossary/index.js";
 
 // ── Display schema (what the explorer consumes) ──────────────────────────────
 // The React explorer (frontend/explorer/, schema mirrored in
@@ -686,4 +687,20 @@ export async function exportCatalogEntry(ns: string, id: string): Promise<string
     if (markdown) return markdown;
   }
   return null;
+}
+
+// ── Export the workspace's bilingual lexicon ─────────────────────────────────
+// The explorer's Terminology tab. Given any curriculum namespace, it resolves the
+// namespace's workspace and returns that workspace's whole published glossary
+// (LexiconEntry entries), so authors can browse the FR/Wolof terminology the
+// translate + get_terminology tools ground on. Mirrors the catalog export's
+// namespace-keyed, stateless shape. null for a namespace that has no workspace.
+
+export type TerminologyExport = { workspace: string; entries: LexiconEntry[] };
+
+export async function exportTerminology(ns: string): Promise<TerminologyExport | null> {
+  const parsed = parseNamespace(ns);
+  if (!parsed) return null;
+  const entries = await readGlossaryEntries(glossaryNamespace(parsed.workspace));
+  return { workspace: parsed.workspace, entries };
 }

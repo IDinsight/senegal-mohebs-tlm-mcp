@@ -146,3 +146,21 @@ export type CatalogExport = {
   scopes: Array<{ scope: CatalogScope; namespace: string }>;
   entries: CatalogEntry[];
 };
+
+// ── Terminology (GET /kg/terminology?ns=) ────────────────────────────────────
+// Kept in lock-step with the server's LexiconEntry / TerminologyExport (glossary,
+// re-exported by kg-export.ts). The workspace's bilingual lexicon.
+export type LexiconEntry = {
+  id: string;
+  renderings: Record<string, string>; // langCode → text, e.g. { fr, wo }
+  subject?: string; // narrowing: applies only to this subject when set
+  grade?: string; // narrowing: applies only to this grade when set
+  example?: string;
+  tags?: string[];
+  notes?: string;
+};
+
+export type TerminologyExport = {
+  workspace: string;
+  entries: LexiconEntry[];
+};
