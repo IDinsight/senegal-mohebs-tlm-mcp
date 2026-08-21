@@ -79,6 +79,10 @@ for (const section of rawFile.sections ?? []) {
 // don't duplicate a term.
 const keyOf = (renderings) => `${renderings.fr ?? ""}||${renderings.wo ?? ""}`;
 
+// Collapse duplicate rows WITHIN the source file (the terminology.json repeats a
+// few pairs) — keep the first occurrence of each fr|wo pair.
+const dedupedSource = [...new Map(sourceEntries.map((entry) => [keyOf(entry.renderings), entry])).values()];
+
 // ── Merge into the published glossary slot ───────────────────────────────────
 const namespace = glossaryNamespace(workspace);
 const store = createFirestoreKgStore();
@@ -92,14 +96,14 @@ try {
   const existingNodes = pointer ? (await store.listNodes(namespace, targetSlot)).filter(isLexiconNode).map(strip) : [];
   const existingKeys = new Set(existingNodes.map((n) => keyOf(parseEntry(n).renderings)));
 
-  const toAdd = sourceEntries.filter((entry) => !existingKeys.has(keyOf(entry.renderings)));
+  const toAdd = dedupedSource.filter((entry) => !existingKeys.has(keyOf(entry.renderings)));
   const newNodes = toAdd.map((entry) => buildLexiconNode(entry, randomUUID(), namespace));
   const nodes = [...existingNodes, ...newNodes];
 
   console.error(
     `import-glossary: source=${sourcePath}\n` +
     `  ns='${namespace}', slot='${targetSlot}'${pointer ? "" : " (new namespace)"}, mode=${narrowSubject ? `narrowed to subject '${subject}'` : "workspace-wide"}\n` +
-    `  source entries=${sourceEntries.length}, already present=${sourceEntries.length - toAdd.length}, to add=${toAdd.length}, total after=${nodes.length}` +
+    `  source rows=${sourceEntries.length}, unique terms=${dedupedSource.length}, already in store=${dedupedSource.length - toAdd.length}, to add=${toAdd.length}, total after=${nodes.length}` +
     (dryRun ? "\n  (dry-run — no write)" : ""),
   );
   if (dryRun) process.exit(0);
