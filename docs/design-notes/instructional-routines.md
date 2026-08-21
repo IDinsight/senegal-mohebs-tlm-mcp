@@ -126,7 +126,7 @@ Same shape as #65:
    reads.
 3. Re-seed Firestore (`node scripts/seed-kg-store.mjs ci maths`) and verify
    (`parity:kg-store -- --live`). **No Cloud Run deploy** — data-only, parser
-   unchanged. See [`seed-and-deploy`](../../.claude/skills/seed-and-deploy/SKILL.md).
+   unchanged. See [`rollout`](../../.claude/skills/rollout/SKILL.md).
 
 Deltas for the manual routine: **+13 nodes** (1 parent + 6 steps + 6 Materials),
 **+37 edges** (12 `hasPart` + 25 `usesRoutine`) → CI/maths **770 nodes / 1304 edges**.

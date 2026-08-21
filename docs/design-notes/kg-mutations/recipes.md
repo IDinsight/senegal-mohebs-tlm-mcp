@@ -45,8 +45,9 @@ free: one whole-composite diff + one token on dry-run (no state change); #13's
 warnings; one #7 audit `apply` event tagged with the recipe name; #8's role
 gate. An invalid composite is rejected as a WHOLE (validate blocks the token) —
 nothing partial lands. Recipes are NOT Claude orchestrating separate primitive
-calls. Lives in [`src/kg-store/recipes.ts`](../../../src/kg-store/recipes.ts); tools in
-[`src/server/recipes.ts`](../../../src/server/recipes.ts).
+calls. The recipe logic now lives in the [`src/kg-recipes/`](../../../backend/src/kg-recipes/registry.ts)
+module (it moved out of `kg-store/` in the generic-verb refactor — see this folder's
+[README status](README.md)); tools in [`src/server/recipes.ts`](../../../backend/src/server/recipes.ts).
 
 Subject-agnosticism is preserved exactly as #10/#12 did it: kg-store never names
 "chapter"/"lesson"/"hasChild". Each recipe reads that vocabulary from a

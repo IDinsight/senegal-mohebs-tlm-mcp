@@ -1,6 +1,6 @@
 ---
-name: seed-and-deploy
-description: Roll out a change to the Firestore KG store or the deployed MCP server and verify it — import/export a whole graph, edit a subject profile or guide through the live curator loop, deploy new server code, or repair a namespace. Use whenever importing/exporting a KG, changing a profile/guide, coordinating a data or code change with a Cloud Run deploy, or fixing a store namespace. (There is no `seed:kg-store` / seed-from-`sources/` step any more — Firestore is the only store.)
+name: rollout
+description: Roll out a change to the Firestore KG store or the deployed MCP server and verify it — import/export a whole graph, edit a subject profile or guide through the live curator loop, deploy new server code, or repair a namespace. Use whenever importing/exporting a KG, changing a profile/guide, coordinating a data or code change with a server deploy, or fixing a store namespace. (Deploys run from GitHub Actions now, not a laptop `gcloud`; there is no `seed:kg-store` / seed-from-`sources/` step — Firestore is the only store.)
 ---
 
 # Roll out a KG-store or server change safely
@@ -8,8 +8,8 @@ description: Roll out a change to the Firestore KG store or the deployed MCP ser
 **Firestore is the only KG store.** There is no `bundle`/`KG_SOURCE` mode, no
 `seed:kg-store`, and no seed-from-`sources/` step — all removed with the
 firestore-only change (see
-[`docs/design-notes/firestore-only-store.md`](../../docs/design-notes/firestore-only-store.md)
-and [`docs/technical-reference/store.md`](../../docs/technical-reference/store.md)).
+[`docs/design-notes/firestore-only-store.md`](../../../docs/design-notes/firestore-only-store.md)
+and [`docs/technical-reference/store.md`](../../../docs/technical-reference/store.md)).
 The graphs now live under `backend/test/fixtures/` (tests only) and in Firestore (live); the
 per-subject `backend/assets/<ws>/<grade>/<subject>/` (terminology + prompt files) ship in the
 container image. **The server is a self-contained package under `backend/` — run every
@@ -22,7 +22,7 @@ container image. **The server is a self-contained package under `backend/` — r
 | **Curriculum content, a subject profile, or a graph guide** | The **live curator loop** — edit with the graph tools / `edit_profile`, then `diff_draft` → `publish_draft`. Nothing reaches generation until you publish. | **No** |
 | **A whole graph** (new namespace, restore from backup, clone) | `export:kg-store` (back up first) then `import:kg-store` | No (data only) |
 | **A new subject** | Register its profile under `backend/src/adapters/profiles/` (**code**) → deploy → `import:kg-store` its graph | Yes (the profile is code) |
-| **Server code** (parser, adapter engine, tools) | Cloud Run deploy (see [`DEPLOY.md`](../../DEPLOY.md)) | Yes |
+| **Server code** (parser, adapter engine, tools) | Deploy from GitHub Actions (see [`DEPLOY.md`](../../../DEPLOY.md)) | Yes |
 
 The common case — tweaking a guide, fixing a lesson, editing a profile — is a **data
 change through the curator loop, live, with no redeploy and no import.** Reach for
@@ -50,7 +50,7 @@ supplies credentials.) Never print or commit the key.
 ```bash
 npm run build                                                          # scripts read dist/
 npm run export:kg-store -- <ws> <grade> <subject> [out.json]          # back up first
-npm run import:kg-store -- <ws> <grade> <subject> <graph.json> [--profile p.json] [--dry-run]
+npm run import:kg-store -- <ws> <grade> <subject> <graph.json> [--profile p.json] [--replace-published] [--dry-run]
 npm run write:profile -- <ws> <grade> <subject> [--profile p.json] [--slot a|b|published] [--dry-run]  # repair a config cell (see Recovery)
 ```
 
@@ -58,14 +58,24 @@ npm run write:profile -- <ws> <grade> <subject> [--profile p.json] [--slot a|b|p
 <path>` (`{ core, guide }` JSON) when given, otherwise the in-repo literal for that
 grade/subject.
 
-> **⚠️ import writes slot `a` and never repoints an existing namespace.** The store is
-> double-buffered (`a`/`b`) behind a pointer `{ publishedSlot, draftSlot }`. On a
-> **new** namespace, import stamps the pointer to `a`. On an **existing** one it prints
-> `WARNING — namespace already exists … writing slot 'a' and leaving the pointer as-is`
-> and writes `a` regardless. So if the published slot is `b`, a re-import lands in a
-> **side-copy nothing reads.** Read the script's output; if you need the imported data
-> published, publish it through the curator loop (which flips the pointer), not by
-> re-running import.
+> **⚠️ a plain re-import writes slot `a` and does NOT repoint an existing namespace.**
+> The published graph lives in one of two slots (`a`/`b`) behind a pointer
+> `{ publishedSlot, draftSlot }`. On a **new** namespace, import writes `a` and stamps
+> the pointer to it. On an **existing** one, a plain re-import writes `a` and leaves the
+> pointer — so if the published slot is `b`, the import lands in a **side-copy nothing
+> reads**. Two ways to land a re-import live instead:
+>
+> - **`--replace-published`** — writes the currently-published slot **in place**
+>   (whichever it is), as a **delta** vs the live slot (not a full rewrite, which can
+>   `DEADLINE_EXCEEDED` over a slow link on a large graph). Refused if a draft is open —
+>   publish or discard it first. This is the whole-graph replace path (mirrors the
+>   `--replace-published` note in [`store.md`](../../../docs/technical-reference/store.md)).
+> - **the curator loop** — stage the fresh graph as the next draft and `publish_draft`,
+>   which folds it into canonical. Prefer this for a *reviewed* change; use
+>   `--replace-published` for a straight operator replacement.
+>
+> (The overlay model is about *drafts*; a namespace's **published** data still resolves to
+> a slot, so the `a`/`b` framing above is unchanged.)
 
 ## Verify after any store change
 
@@ -78,7 +88,17 @@ Against the deployed server (via the MCP tools):
 
 ## Deploy the server
 
-Full command + env live in [`DEPLOY.md`](../../DEPLOY.md). After deploy, smoke-check:
+Deploys run from **GitHub Actions**, not a laptop `gcloud` — the `deploy.yml`
+workflow builds from the checked-out repo and authenticates with no JSON key
+(Workload Identity Federation). Because a deploy rolls the single Cloud Run
+instance and drops in-memory MCP sessions, it is **not** triggered on every push —
+*you* choose when, two ways:
+
+- **Run workflow** button (`workflow_dispatch`) — Actions tab → "Deploy to Cloud Run", from any branch;
+- push a version tag: `git tag v1.4.0 && git push origin v1.4.0`.
+
+Full runbook, one-time WIF setup, and the manual `gcloud run deploy --source backend`
+fallback live in [`DEPLOY.md`](../../../DEPLOY.md). After deploy, smoke-check:
 
 ```bash
 curl -s https://<service-url>/health     # → ok   (NOT /healthz — Google reserves that path)

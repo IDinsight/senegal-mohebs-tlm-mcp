@@ -173,7 +173,7 @@ deploy, then verify, then delete the old paths.
 1. **Reorg sources:** `git mv sources/ci sources/senegal/ci`,
    `git mv sources/ce1 sources/senegal/ce1`.
 2. **Reseed the KG** under `senegal/ci/maths` + `senegal/ce1/reading` (via the
-   seed-and-deploy skill). These are new namespaces, so it's additive — the old
+   rollout skill). These are new namespaces, so it's additive — the old
    `ci/maths` / `ce1/reading` docs are untouched.
 3. **Move the Storage artifacts** — copy the generated `.docx` + `history.json`
    from the old prefixes to the new (additive; keep old as rollback):

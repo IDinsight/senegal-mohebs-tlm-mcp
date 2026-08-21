@@ -13,9 +13,10 @@ current architecture summary; [DEPLOY.md](../../DEPLOY.md) is the production run
 
 ## Contents
 
-- [`store.md`](store.md) — the KG node/edge store + the curator loop: seed/cutover,
-  draft/published, the two-phase mutation framework, write-safety, integrity, audit,
-  roles, structural verbs, recipes, `get_capabilities`, `read_audit`, import/export.
+- [`store.md`](store.md) — the KG node/edge store + the curator loop: the full-graph
+  node/edge model, the canonical + overlay draft/published state, the two-phase mutation
+  framework, write-safety & integrity, audit, per-workspace roles, the generic authoring
+  verbs, `get_capabilities`, `read_audit`, import/export.
 - [`explorer.md`](explorer.md) — the read-only live KG explorer: endpoint contract,
   the raw-LC→display transform, data-driven views, deploy.
 - [`generation-and-storage.md`](generation-and-storage.md) — bucket layout, the

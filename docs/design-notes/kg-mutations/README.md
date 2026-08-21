@@ -5,9 +5,9 @@
 > **Update (maths↔reading convergence):** the "Regime-B" / `chapitreNum` drift discussion below is HISTORICAL. Chapter↔lesson membership is now the `hasChild` edge (the denormalized number-join is gone), so move/split rewire the edge and renumber changes only the chapter's own number — no cross-lesson cascade, no drift warning. The `regimeGated` recipe flag was removed. See CLAUDE.md.
 
 This is the internal design note for the graph-mutation framework in
-[`src/kg-store/mutations.ts`](../../../src/kg-store/mutations.ts). No user-facing
+[`src/kg-store/mutations.ts`](../../../backend/src/kg-store/mutations.ts). No user-facing
 graph edit tool is exposed by this step; the framework only ships with an
-internal test-only mutation ([`src/kg-store/__tests__/mutations.test.ts`](../../../src/kg-store/__tests__/mutations.test.ts)).
+internal test-only mutation ([`src/kg-store/__tests__/mutations.test.ts`](../../../backend/src/kg-store/__tests__/mutations.test.ts)).
 
 ## Two lifecycles, one thin shared convention
 
@@ -25,7 +25,7 @@ unify them:
    which makes each click **higher-stakes**.
 
 They share only a thin **confirmation envelope** (defined in
-[`src/utils/server.ts`](../../../src/utils/server.ts) as `ConfirmationEnvelope`):
+[`src/utils/server.ts`](../../../backend/src/utils/server.ts) as `ConfirmationEnvelope`):
 
 ```ts
 { needsConfirmation: true, action: string, message: string }
@@ -44,12 +44,12 @@ token because they have nothing to reconcile against a base version.
 "stages a draft edit on namespace '…'; nothing reaches generation until
 you separately publish the draft." Document tools always say "writes NOW
 to the live bucket/history (no draft, no undo)." This is asserted in
-[`mutations.test.ts`](../../../src/kg-store/__tests__/mutations.test.ts).
+[`mutations.test.ts`](../../../backend/src/kg-store/__tests__/mutations.test.ts).
 
 ## Draft-apply mechanism
 
 The framework rides on the primitives from #4 in
-[`src/kg-store/types.ts`](../../../src/kg-store/types.ts):
+[`src/kg-store/types.ts`](../../../backend/src/kg-store/types.ts):
 
 - Slot model per namespace (`a`/`b`) with an atomic pointer doc
   `{ publishedSlot, draftSlot | null }`.

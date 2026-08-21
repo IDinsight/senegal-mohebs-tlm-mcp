@@ -58,20 +58,28 @@ Full lifecycle, roles, verbs, integrity rules, and audit: [technical reference �
 
 ## The generation flow (in brief)
 
-1. `set_context(grade, subject)` — pick what you're working on.
-2. `get_generation_context(unit, deliverable)` — curriculum slice, established characters, terminology, coverage, fresh example-domain suggestion.
+1. `set_context(workspace, grade, subject)` — pick what you're working on.
+2. Walk the curriculum for the node you're generating — `walk_document` / `walk_lesson` / `walk_document_section` return that node's subtree plus the routines + formatters that apply, and `get_terminology` (and, for CI maths, `suggest_fresh_domain`) supplies the glossary and a fresh example-domain suggestion.
 3. Generate the `.docx`.
 4. `create_upload_url(relPath)` → `PUT` the file to the signed URL (no large payloads through MCP).
-5. `log_generation(unit, deliverable, relPath, content)` — records what you produced (md5 read from storage).
+5. `log_generation(nodeId, relPath, content)` — records what you produced against the **scope node** the document covers (md5 read from storage).
 
 The outward-writing tools (`create_upload_url`, `log_generation`, `record_document_content`) are gated by a confirmation step. Details, preview generation, ingestion, and reconciliation: [technical reference](docs/technical-reference/generation-and-storage.md#the-generation-flow-cross-host-no-shared-disk).
 
 ## Tools
 
-- **Context:** `set_context`, `get_context`.
-- **Subject-agnostic:** `get_terminology`, `terminology_sections`, `get_prompt`, `reconcile`, `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`, `get_capabilities`.
-- **Curator loop (role-gated):** `diff_draft`, `upsert_property`, `create_node`/`link_nodes`/`unlink_nodes`/`delete_node`, `add_lesson`/`add_chapter`/`move_lesson`/`split_chapter`/`renumber`, `publish_draft`, `discard_draft`, `read_audit`.
-- **Subject-shaped payloads:** `list_units`, `get_curriculum`, `get_generation_context`, `record_document_content`, `log_generation`, `preview_generation`, `create_preview_upload_url`, and (CI maths only) `suggest_fresh_domain`, `domain_usage`.
+The live surface is mirrored by `get_capabilities`; this is the map.
+
+- **Context:** `set_context`, `get_context`, `get_capabilities`.
+- **Graph reads (generic):** `walk_graph` (directional, filtered, paginated BFS — the traversal primitive), `namespace_stats` (orientation snapshot), `get_standards`.
+- **Generation reads:** `walk_document`, `walk_lesson`, `walk_document_section` (a document / lesson / section subtree with the routines + formatters that apply), `get_terminology`, `terminology_sections`.
+- **Curator loop — authoring (role-gated):** `add_nodes`, `create_edges`, `edit_node`, `move_node`, `delete_nodes`, `delete_edges` (single-node `add_node` underlies `add_nodes`).
+- **Curator loop — lifecycle (role-gated):** `diff_draft`, `review_draft`, `publish_draft`, `discard_draft`, `read_audit`.
+- **Subject profile & guide:** `get_profile`, `edit_profile`, `get_graph_guide`.
+- **Catalog, routines & formatters:** `list_catalog`, `get_catalog_entry`, `add_to_catalog`, `use_routine`, `use_formatter`.
+- **Documents & generation output:** `list_documents`, `create_upload_url`, `create_download_url`, `get_document_text`, `record_document_content`, `log_generation`, `reconcile`, `preview_generation`, `create_preview_upload_url`.
+- **Workspaces (tenant admin):** `list_workspaces`, `create_workspace`, `add_member`, `remove_member`, `list_members`.
+- **CI maths only:** `suggest_fresh_domain`, `domain_usage`.
 
 ## Documentation
 

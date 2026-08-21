@@ -17,12 +17,12 @@ editor. No MCP tool grants roles — self-escalation surface is zero.
 - `Actor.role?: "curator" | "approver"` — new field on the actor,
   populated only in `resolveActor` from the verified `app_role` claim.
 - `authorize(actor, action, namespace)` — pure function in
-  [`src/authz.ts`](../../../src/authz.ts). Takes `namespace` even though roles
+  [`src/authz.ts`](../../../backend/src/authz.ts). Takes `namespace` even though roles
   are global today, so per-namespace roles slot in later without changing
   call sites.
 - Enforcement chokepoints: `runGraphMutation` (both dry-run and confirm),
   `publishDraft` wrapper, `discardDraft` wrapper — all in
-  [`src/kg-store/mutations.ts`](../../../src/kg-store/mutations.ts).
+  [`src/kg-store/mutations.ts`](../../../backend/src/kg-store/mutations.ts).
 
 ### Decisions (a)–(d) — as implemented
 

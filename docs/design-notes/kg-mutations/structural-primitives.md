@@ -6,9 +6,9 @@
 single #5 `GraphMutation`, individually confirmed, applied to the draft,
 validated by #6, audited by #7, gated by #8 — exactly the shape
 `upsert_property` established, just structural. Live in
-[`src/kg-store/structural.ts`](../../../src/kg-store/structural.ts); registered
+[`src/kg-store/structural.ts`](../../../backend/src/kg-store/structural.ts); registered
 at the tool boundary in
-[`src/server/structural.ts`](../../../src/server/structural.ts).
+[`src/server/structural.ts`](../../../backend/src/server/structural.ts).
 
 ### Rename-detection anchor — published, not base
 

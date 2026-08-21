@@ -1,17 +1,17 @@
 # Canonical + changeset store (a git-like working copy)
 
-> **Status: Proposal (design note, not built).** A redesign of the KG store's
-> draft/publish lifecycle: replace the a/b **double-buffer** (two full copies of
-> the graph, `createDraft` copies published → free slot) with a **single
-> canonical graph + a small changeset** of uncommitted edits — the git mental
-> model (one committed tree + a staging area). Motivated by measured production
-> numbers (below): `createDraft`'s whole-graph copy is a real **~15s tax on the
-> first edit of every editing session**, even co-located. This note lays out the
-> model, the one genuine tradeoff (publish atomicity for very large sessions),
-> the migration, and the decision — it does **not** land code. It supersedes the
-> draft-slot mechanics described in
-> [`firestore-only-store.md`](firestore-only-store.md) and the
-> [`kg-mutations/`](kg-mutations/) framework if adopted.
+> **Status: Live.** This redesign of the KG store's draft/publish lifecycle shipped:
+> the a/b **double-buffer** (two full copies of the graph, `createDraft` copies
+> published → free slot) was replaced with a **single canonical graph + a small
+> changeset overlay** of uncommitted edits — the git mental model (one committed
+> tree + a staging area). Motivated by measured production numbers (below):
+> `createDraft`'s whole-graph copy was a real **~15s tax on the first edit of every
+> editing session**; the overlay cut it to ~1s. This note lays out the model, the one
+> genuine tradeoff (publish atomicity for very large sessions — handled by the
+> small-publish transaction cap with a scratch-and-swap fallback), and the migration.
+> It supersedes the draft-slot copy mechanics described in
+> [`firestore-only-store.md`](firestore-only-store.md); the current operational
+> summary is [`../technical-reference/store.md`](../technical-reference/store.md).
 
 ## Why
 
@@ -133,7 +133,7 @@ Each namespace, once (an operator script, same footing as `import-kg`):
 
 `import-kg` writes canonical directly; `export-kg` reads canonical. Both live
 Senegal namespaces (`ci/maths`, `ce1/reading`) and `nigeria/primary-1-3/maths`
-migrate once, with the same reseed-then-verify rollout the `seed-and-deploy`
+migrate once, with the same reseed-then-verify rollout the `rollout`
 skill already covers.
 
 ## Open questions
