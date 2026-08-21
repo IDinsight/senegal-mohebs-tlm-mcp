@@ -59,7 +59,7 @@ Full lifecycle, roles, verbs, integrity rules, and audit: [technical reference �
 ## The generation flow (in brief)
 
 1. `set_context(workspace, grade, subject)` — pick what you're working on.
-2. Walk the curriculum for the node you're generating — `walk_document` / `walk_lesson` / `walk_document_section` return that node's subtree plus the routines + formatters that apply, and `get_terminology` (and, for CI maths, `suggest_fresh_domain`) supplies the glossary and a fresh example-domain suggestion.
+2. Walk the curriculum for what you're generating — `walk_document` for a whole document, `walk_document_section` for a single piece (the section that covers it) — each returns the subtree plus the routines + formatters that apply, and `get_terminology` (and, for CI maths, `suggest_fresh_domain`) supplies the glossary and a fresh example-domain suggestion.
 3. Generate the `.docx`.
 4. `create_upload_url(relPath)` → `PUT` the file to the signed URL (no large payloads through MCP).
 5. `log_generation(nodeId, relPath, content)` — records what you produced against the **scope node** the document covers (md5 read from storage).
@@ -72,7 +72,7 @@ The live surface is mirrored by `get_capabilities`; this is the map.
 
 - **Context:** `set_context`, `get_context`, `get_capabilities`.
 - **Graph reads (generic):** `walk_graph` (directional, filtered, paginated BFS — the traversal primitive), `namespace_stats` (orientation snapshot), `get_standards`.
-- **Generation reads:** `walk_document`, `walk_lesson`, `walk_document_section` (a document / lesson / section subtree with the routines + formatters that apply), `get_terminology`, `terminology_sections`.
+- **Generation reads:** `walk_document`, `walk_document_section` (a whole document, or the single section that covers a piece — the per-piece reader — each with the routines + formatters that apply), `get_terminology`, `terminology_sections`.
 - **Curator loop — authoring (role-gated):** `add_nodes`, `create_edges`, `edit_node`, `move_node`, `delete_nodes`, `delete_edges` (single-node `add_node` underlies `add_nodes`).
 - **Curator loop — lifecycle (role-gated):** `diff_draft`, `review_draft`, `publish_draft`, `discard_draft`, `read_audit`.
 - **Subject profile & guide:** `get_profile`, `edit_profile`, `get_graph_guide`.
