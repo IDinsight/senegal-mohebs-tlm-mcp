@@ -4,6 +4,21 @@ The server runs as a remote MCP server (Streamable HTTP, `dist/http.js`) on Clou
 `senegal-ci-maths` GCP project. Supabase Auth is the OAuth authorization server; this service
 only validates its JWTs. Users connect via Claude custom connectors pointing at `PUBLIC_URL/mcp`.
 
+## How deploys run
+
+**The normal deploy is a GitHub Actions job**, not a laptop command — the "Deploy to
+Cloud Run" workflow (`.github/workflows/deploy.yml`) builds from the checked-out repo and
+authenticates with no JSON key. Because a deploy rolls the single Cloud Run instance and
+drops in-memory MCP sessions, it is **not** triggered on every push — *you* choose when:
+
+- the **Run workflow** button (Actions tab → "Deploy to Cloud Run"), from any branch; or
+- push a version tag: `git tag v1.4.0 && git push origin v1.4.0`.
+
+Setup for that job is in [CD: deploy from GitHub Actions](#cd-deploy-from-github-actions-workload-identity-federation)
+below. The [manual `gcloud run deploy`](#manual-deploy-fallback--first-bootstrap) is the
+fallback (and the first-ever deploy, before the service exists). The GCP/Supabase one-time
+setup and smoke checks in between apply to both paths.
+
 ## One-time setup
 
 ```bash
@@ -22,10 +37,13 @@ gcloud iam service-accounts add-iam-policy-binding \
   --role roles/iam.serviceAccountTokenCreator
 ```
 
-## Deploy (from repo root)
+## Manual deploy (fallback / first bootstrap)
 
-The server package (with its `Dockerfile`) lives under `backend/`, so the build source
-is that directory rather than the repo root.
+Prefer the [GitHub Actions deploy](#cd-deploy-from-github-actions-workload-identity-federation);
+reach for this manual command only as a fallback, or for the **first-ever** deploy before the
+service exists. It uploads your working tree from your laptop each time. The server package
+(with its `Dockerfile`) lives under `backend/`, so the build source is that directory rather
+than the repo root.
 
 ```bash
 gcloud run deploy senegal-mohebs-tlm \

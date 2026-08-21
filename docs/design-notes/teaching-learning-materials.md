@@ -230,7 +230,7 @@ The **generated `.docx` pointer stays in document history** keyed by the TLM nod
 
 ## Explorer — a Documents view
 
-Add a third top-level view to the KG explorer ([`src/kg-export.ts`](../../src/kg-export.ts)),
+Add a third top-level view to the KG explorer ([`src/kg-export.ts`](../../backend/src/kg-export.ts)),
 alongside the existing containment-hierarchy and by-label views, without touching them:
 
 - **Root** at `TeachingLearningMaterial` nodes.

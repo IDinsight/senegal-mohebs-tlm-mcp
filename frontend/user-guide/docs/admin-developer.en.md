@@ -58,7 +58,7 @@ Every workspace or member change is **immediate** (no draft) and **logged**.
 ## Part 2 — Add a new subject (code + commands)
 
 !!! warning "Developer task"
-    This part assumes access to the code repository and to deployment (Cloud Run). All commands are run from the `backend/` folder (`cd backend` first). When in doubt, lean on the internal **seed-and-deploy** skill, which walks through the procedure step by step.
+    This part assumes access to the code repository and to deployment (Cloud Run). All commands are run from the `backend/` folder (`cd backend` first). When in doubt, lean on the internal **rollout** skill, which walks through the procedure step by step.
 
 Adding a subject is **code, then data**.
 

@@ -58,7 +58,7 @@ Chaque changement d'espace ou de membre est **immédiat** (pas de brouillon) et 
 ## Partie 2 — Ajouter une nouvelle matière (code + commandes)
 
 !!! warning "Tâche de développeur"
-    Cette partie suppose l'accès au dépôt de code et au déploiement (Cloud Run). Toutes les commandes se lancent depuis le dossier `backend/` (`cd backend` d'abord). En cas de doute, appuyez-vous sur la compétence interne **seed-and-deploy**, qui décrit la procédure pas à pas.
+    Cette partie suppose l'accès au dépôt de code et au déploiement (Cloud Run). Toutes les commandes se lancent depuis le dossier `backend/` (`cd backend` d'abord). En cas de doute, appuyez-vous sur la compétence interne **rollout**, qui décrit la procédure pas à pas.
 
 Ajouter une matière, c'est **du code puis des données**.
 

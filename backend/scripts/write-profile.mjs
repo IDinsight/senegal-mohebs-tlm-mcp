@@ -8,7 +8,7 @@
  * refuses to activate that namespace. That blocks `edit_profile` (which needs an
  * activated context), and `import-kg` can't help either — it only writes slot
  * "a" and never repoints, so it can't fix a bad cell living in the *published*
- * slot. This script closes that gap. See the seed-and-deploy skill's "Recovery"
+ * slot. This script closes that gap. See the rollout skill's "Recovery"
  * section and docs/technical-reference/store.md.
  *
  * By default it targets the namespace's CURRENTLY PUBLISHED slot, so the fix is
