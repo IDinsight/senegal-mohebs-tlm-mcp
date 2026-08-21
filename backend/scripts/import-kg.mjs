@@ -11,7 +11,10 @@
  *   3. writes them to a slot with a provenance meta stamp — slot "a" for a fresh
  *      namespace, or (with --replace-published, for an EXISTING namespace) the
  *      currently-published slot IN PLACE, so a re-import lands live regardless of
- *      whether the published slot is "a" or "b";
+ *      whether the published slot is "a" or "b". --replace-published writes only
+ *      the DELTA vs the live slot (writeSlotDelta), not a full rewrite of every
+ *      doc — the full rewrite is what times out (DEADLINE_EXCEEDED) over a slow
+ *      link on a large graph;
  *   4. writes the subject-profile config cell — from --profile <path> ({ core,
  *      guide }) when given, else the in-repo literal for that grade/subject;
  *   5. initializes the pointer { publishedSlot, draftSlot: null } if absent
@@ -60,6 +63,45 @@ if (positional.length !== 4) {
 }
 const [workspace, grade, subject, graphPath] = positional;
 
+// Stable JSON (keys sorted recursively) so property-ORDER differences between a
+// freshly-serialized doc and its stored copy don't read as content changes.
+function stableStringify(v) {
+  if (Array.isArray(v)) return `[${v.map(stableStringify).join(",")}]`;
+  if (v && typeof v === "object") {
+    return `{${Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + stableStringify(v[k])).join(",")}}`;
+  }
+  return JSON.stringify(v);
+}
+
+// Content fingerprint of a stored doc, IGNORING the `slot` stamp (it's re-stamped
+// on write). Everything else — id, type, labels, spine, properties, edge seq — is
+// load-bearing, so any change there is a real change.
+function fingerprint(doc) {
+  const { slot, ...rest } = doc;
+  return stableStringify(rest);
+}
+
+// Diff the desired graph against the slot's current contents → the minimal
+// SlotDelta. Ids are the identity: an id whose fingerprint changed (or is new) is
+// an upsert; an id present live but absent now is a delete. A spurious mismatch
+// only ever costs an extra (identical) upsert — it can never corrupt the result.
+function computeDelta(curNodes, curEdges, nextNodes, nextEdges) {
+  const upserts = (cur, next) => {
+    const liveFp = new Map(cur.map((d) => [d.id, fingerprint(d)]));
+    return next.filter((d) => liveFp.get(d.id) !== fingerprint(d));
+  };
+  const removals = (cur, next) => {
+    const keep = new Set(next.map((d) => d.id));
+    return cur.filter((d) => !keep.has(d.id)).map((d) => d.id);
+  };
+  return {
+    upsertNodes: upserts(curNodes, nextNodes),
+    upsertEdges: upserts(curEdges, nextEdges),
+    removeNodeIds: removals(curNodes, nextNodes),
+    removeEdgeIds: removals(curEdges, nextEdges),
+  };
+}
+
 const adapter = resolveAdapter(workspace, grade, subject);
 if (!adapter) {
   console.error(`import-kg: no subject adapter registered for '${workspace}/${grade}/${subject}'. Add its profile under src/adapters/profiles/ first.`);
@@ -105,7 +147,27 @@ try {
       console.error(`import-kg: WARNING — namespace '${namespace}' already exists (publishedSlot='${existing.publishedSlot}'); writing slot 'a' and leaving the pointer as-is. Pass --replace-published to update the live graph instead.`);
     }
   }
-  await store.writeSlot(namespace, targetSlot, { nodes, edges, meta });
+
+  if (existing && replacePublished) {
+    // O(delta) in-place replace: read the live slot, diff, and write ONLY what
+    // changed. writeSlot rewrites every doc (~nodes+edges writes), which is what
+    // times out (DEADLINE_EXCEEDED) over a slow link on a large re-import; a
+    // re-import of a mostly-unchanged graph now costs a few hundred writes.
+    const [curNodes, curEdges] = await Promise.all([
+      store.listNodes(namespace, targetSlot),
+      store.listEdges(namespace, targetSlot),
+    ]);
+    const delta = computeDelta(curNodes, curEdges, nodes, edges);
+    console.error(
+      `import-kg: delta vs live slot '${targetSlot}' — nodes ${delta.upsertNodes.length} upsert / ${delta.removeNodeIds.length} delete, ` +
+      `edges ${delta.upsertEdges.length} upsert / ${delta.removeEdgeIds.length} delete (live had ${curNodes.length} nodes / ${curEdges.length} edges).`,
+    );
+    await store.writeSlotDelta(namespace, targetSlot, delta, meta);
+  } else {
+    // Fresh namespace (or the non-replace slot-'a' path): nothing to diff against,
+    // so write the whole slot.
+    await store.writeSlot(namespace, targetSlot, { nodes, edges, meta });
+  }
   if (config?.core) await store.writeConfig(namespace, targetSlot, config);
   await store.ensurePointer(namespace, targetSlot);
   console.error("import-kg: done.");
