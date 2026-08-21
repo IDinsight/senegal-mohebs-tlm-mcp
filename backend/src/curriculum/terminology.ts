@@ -37,6 +37,14 @@ export function searchTerminology(query: string, limit = 20) {
   return entries.filter((e) => noAccents(e.francais).includes(q)).slice(0, limit);
 }
 
+// The whole on-disk glossary for the active subject. This is the FALLBACK the
+// store-backed glossary falls back to when a workspace has no `_glossary`
+// namespace yet (see server/glossary-read.ts); the app layer maps these entries
+// into the same shape a stored LexiconEntry produces.
+export function allTerminologyEntries() {
+  return termEnsure();
+}
+
 export function terminologySections() {
   const counts = new Map<string | null, number>();
   for (const e of termEnsure()) counts.set(e.section, (counts.get(e.section) ?? 0) + 1);

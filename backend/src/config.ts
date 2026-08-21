@@ -34,6 +34,16 @@ export const CONFIG = {
   defaultWorkspace: (env.TLM_WORKSPACE ?? "").trim(),
   defaultGrade: (env.TLM_GRADE ?? "").trim(),
   defaultSubject: (env.TLM_SUBJECT ?? "").trim(),
+  // Google Gemini, used only by the `translate` tool for FR↔Wolof translation
+  // (Gemini reads Wolof more reliably than we do in-house). The API key is a
+  // secret provisioned per deployment; the model is env-overridable so it can be
+  // bumped without a code change. baseUrl is overridable for tests/regional
+  // routing. No key set → the translate tool reports a clear config error.
+  gemini: {
+    apiKey: env.GEMINI_API_KEY ?? "",
+    model: (env.GEMINI_MODEL ?? "gemini-2.5-flash").trim(),
+    baseUrl: (env.GEMINI_BASE_URL ?? "https://generativelanguage.googleapis.com").replace(/\/+$/, ""),
+  },
 };
 
 // The single tenant every graph belonged to before workspaces existed, and the
