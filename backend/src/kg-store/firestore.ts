@@ -76,6 +76,27 @@ function initFirebase(): void {
   fbApp.initializeApp({ credential, storageBucket: CONFIG.firebaseBucket || undefined });
 }
 
+// Firestore rejects a document that carries `undefined` anywhere in its shape
+// (it has no `undefined` type). Most of our writes are internally constructed and
+// never carry one, but a PARKED CONFIRM PAYLOAD is the raw tool args — where an
+// optional field the caller left out (edit_node's `position`, `title`, …) is a
+// literal `undefined` — so it must be scrubbed before the write. Dropping a
+// key whose value is `undefined` is loss-free here: it reads back absent, which
+// downstream `args.x !== undefined` checks treat identically. The confirm-side
+// integrity pin still holds because it compares the SEPARATELY stored
+// `proposedHash` (hashed from the original args) — not a re-hash of these bytes.
+export function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(stripUndefined) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (v !== undefined) out[k] = stripUndefined(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 // Firestore doc ids cannot contain "/", so the namespace ("<prefix>ci/maths")
 // is flattened. Pointer docs use the flat form directly as their id.
 const nsSlug = (ns: string) => ns.replace(/\//g, "__");
@@ -576,8 +597,11 @@ export function createFirestoreKgStore(): KgNodeStore {
     //     together — if you change one, change the other. This one is the field
     //     the TTL policy targets (`--field=expiresAtTs`).
     async putPending(namespace, nonce, entry) {
+      // `entry.payload` is the raw tool args — scrub its `undefined` optionals so
+      // Firestore accepts the write (see stripUndefined). `proposedHash` is left
+      // untouched, so the confirm-side integrity check is unaffected.
       await db.collection(PENDING).doc(`${nsSlug(namespace)}::${nonce}`).set({
-        namespace, nonce, ...entry,
+        namespace, nonce, ...entry, payload: stripUndefined(entry.payload),
         expiresAtTs: new Date(entry.expiresAt),   // Timestamp companion for TTL
       } as unknown as Record<string, unknown>);
     },
