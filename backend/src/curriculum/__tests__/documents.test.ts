@@ -8,7 +8,7 @@
  * and proves formatting/routines never leak into the curriculum walk.
  */
 import { describe, it, expect } from "vitest";
-import { documentSubgraph } from "../documents.js";
+import { documentSubgraph, type DocumentScope } from "../documents.js";
 import type { CurriculumModel, RawGraphSnapshot } from "../../types.js";
 
 type N = RawGraphSnapshot["nodes"][number];
@@ -72,6 +72,13 @@ const EDGES: E[] = [
 const model = { rawGraph: { nodes: NODES, relationships: EDGES } } as CurriculumModel;
 const ids = (ns: { id: string }[]) => new Set(ns.map((n) => n.id));
 
+// These fixtures always fit the budget, so `curriculum` is inlined; narrow the
+// self-bounding union to the { nodes, edges } branch for the assertions below.
+const inlined = (c: DocumentScope["curriculum"]) => {
+  if ("tooLarge" in c) throw new Error("fixture curriculum unexpectedly self-bounded");
+  return c;
+};
+
 describe("documentSubgraph — the section-spine document", () => {
   const doc = documentSubgraph(model, "tlm-manual")!;
 
@@ -99,10 +106,10 @@ describe("documentSubgraph — the section-spine document", () => {
   });
 
   it("renders exactly the covered lessons — no formatter and no routine leak into the curriculum", () => {
-    expect(ids(doc.curriculum.nodes)).toEqual(new Set(["les-1", "les-2"]));
+    expect(ids(inlined(doc.curriculum).nodes)).toEqual(new Set(["les-1", "les-2"]));
     // the alignment target and the usesRoutine formatter are reachable in the graph
     // but the curriculum walk (hasPart/hasChild only) must exclude both.
-    const curIds = ids(doc.curriculum.nodes);
+    const curIds = ids(inlined(doc.curriculum).nodes);
     expect(curIds.has("sfi")).toBe(false);
     expect(curIds.has("routine")).toBe(false);
     expect(curIds.has("fmt-art")).toBe(false);
@@ -119,7 +126,7 @@ describe("documentSubgraph — the covers-only document (Course fallback)", () =
   });
 
   it("walks the Course containment subtree, still excluding the routine and the SFI", () => {
-    expect(ids(doc.curriculum.nodes)).toEqual(new Set(["crs", "chap", "les-1", "les-2"]));
+    expect(ids(inlined(doc.curriculum).nodes)).toEqual(new Set(["crs", "chap", "les-1", "les-2"]));
   });
 
   it("carries only its own doc-wide formatter in the document subtree", () => {
@@ -133,7 +140,7 @@ describe("documentSubgraph — edge cases", () => {
   it("scope is 'none' with an empty curriculum when the TLM covers nothing", () => {
     const doc = documentSubgraph(model, "tlm-empty")!;
     expect(doc.scope).toBe("none");
-    expect(doc.curriculum.nodes).toEqual([]);
+    expect(inlined(doc.curriculum).nodes).toEqual([]);
     expect(doc.sections).toEqual([]);
   });
 
