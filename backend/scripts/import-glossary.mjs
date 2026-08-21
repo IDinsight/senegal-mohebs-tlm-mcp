@@ -13,8 +13,16 @@
  * namespace), so the import is live with no pointer flip — like write-profile,
  * this is a direct operator write, outside the two-phase curator loop.
  *
+ * --replace-narrow (requires --narrow-subject) is the exception to merge-only:
+ * it first DROPS every existing entry tagged with this subject, then re-imports
+ * the whole file fresh. Use it to push corrections (edited examples, fixed
+ * spellings) that a plain merge would skip — a merge dedups by fr|wo, so it can
+ * never update an already-present entry's fields, and a corrected fr/wo would
+ * merely add a second entry beside the stale one. Replace stays scoped to this
+ * subject's tagged entries, so workspace-wide terms (e.g. maths) are untouched.
+ *
  * Usage (after `npm run build`):
- *   node scripts/import-glossary.mjs <workspace> <grade> <subject> [--narrow-subject] [--dry-run]
+ *   node scripts/import-glossary.mjs <workspace> <grade> <subject> [--narrow-subject] [--replace-narrow] [--dry-run]
  *
  * <workspace> <grade> <subject> locate the SOURCE terminology.json under the
  * assets dir; the TARGET is always the workspace glossary namespace. By default
@@ -44,6 +52,11 @@ const { glossaryNamespace, buildLexiconNode, normalizeRenderings, isLexiconNode,
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const narrowSubject = args.includes("--narrow-subject");
+const replaceNarrow = args.includes("--replace-narrow");
+if (replaceNarrow && !narrowSubject) {
+  console.error("import-glossary: --replace-narrow requires --narrow-subject (it replaces only this subject's tagged entries).");
+  process.exit(1);
+}
 const positional = args.filter((a) => !a.startsWith("--"));
 if (positional.length !== 3) {
   console.error("import-glossary: expected `<workspace> <grade> <subject>` (plus optional --narrow-subject / --dry-run).");
@@ -93,7 +106,11 @@ try {
   const pointer = await store.readPointer(namespace);
   const targetSlot = pointer ? pointer.publishedSlot : "a";
 
-  const existingNodes = pointer ? (await store.listNodes(namespace, targetSlot)).filter(isLexiconNode).map(strip) : [];
+  const allExisting = pointer ? (await store.listNodes(namespace, targetSlot)).filter(isLexiconNode).map(strip) : [];
+  // In replace-narrow mode, drop this subject's entries so the file re-imports
+  // fresh (fixing fields a merge would skip); other subjects' entries are kept.
+  const droppedForReplace = replaceNarrow ? allExisting.filter((n) => parseEntry(n).subject === subject) : [];
+  const existingNodes = replaceNarrow ? allExisting.filter((n) => parseEntry(n).subject !== subject) : allExisting;
   const existingKeys = new Set(existingNodes.map((n) => keyOf(parseEntry(n).renderings)));
 
   const toAdd = dedupedSource.filter((entry) => !existingKeys.has(keyOf(entry.renderings)));
@@ -102,7 +119,7 @@ try {
 
   console.error(
     `import-glossary: source=${sourcePath}\n` +
-    `  ns='${namespace}', slot='${targetSlot}'${pointer ? "" : " (new namespace)"}, mode=${narrowSubject ? `narrowed to subject '${subject}'` : "workspace-wide"}\n` +
+    `  ns='${namespace}', slot='${targetSlot}'${pointer ? "" : " (new namespace)"}, mode=${narrowSubject ? `narrowed to subject '${subject}'` : "workspace-wide"}${replaceNarrow ? ` (REPLACE: dropped ${droppedForReplace.length} existing '${subject}' entries)` : ""}\n` +
     `  source rows=${sourceEntries.length}, unique terms=${dedupedSource.length}, already in store=${dedupedSource.length - toAdd.length}, to add=${toAdd.length}, total after=${nodes.length}` +
     (dryRun ? "\n  (dry-run — no write)" : ""),
   );
