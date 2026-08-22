@@ -156,11 +156,57 @@ describe("list_catalog", () => {
     // order + timing), matching what nested step-routines yield — not left empty.
     expect(byId["cat-flat"]).toMatchObject({ kind: "routine", materialCount: 2 });
     expect(byId["cat-flat"].steps).toEqual([
-      { id: "cat-flat-1", name: "Révision", order: 1, timeRequired: "PT5M" },
-      { id: "cat-flat-2", name: "Intégration", order: 2, timeRequired: undefined },
+      // `materials` is empty because a flat step HOLDS its text — the step id is
+      // itself what edit_node takes, so there is no separate Material to name.
+      { id: "cat-flat-1", name: "Révision", order: 1, timeRequired: "PT5M", materials: [] },
+      { id: "cat-flat-2", name: "Intégration", order: 2, timeRequired: undefined, materials: [] },
     ]);
     // A formatter's direct Materials stay spec, NOT steps (no regression).
     expect(byId["cat-fmt"].steps).toEqual([]);
+  });
+
+  // A catalog is not walkable (walk_graph reads a parsed CurriculumModel and a
+  // catalog has no subject profile), so these ids are the ONLY way to reach the
+  // node holding a spec's text — without them a drifted master cannot be corrected.
+  it("names the Material node ids under an entry, for both entry shapes", async () => {
+    const byId = Object.fromEntries(listCatalogEntries(await readCatalog(SHARED_CATALOG_NAMESPACE), "shared").map((e) => [e.id, e]));
+
+    // A FORMATTER's spec lives in its own direct Materials — the case that had no
+    // id anywhere before (steps is [] for a formatter, so nothing surfaced it).
+    expect(byId["cat-fmt"].materials.map((m) => m.id)).toEqual(["cat-fmt-spec"]);
+
+    // A NESTED routine step's text sits in Material grandchildren, one id per step.
+    expect(byId["cat-entry"].steps.map((s) => s.materials.map((m) => m.id))).toEqual([["cat-m1"], ["cat-m2"]]);
+    // The entry itself has no direct Materials in the nested shape.
+    expect(byId["cat-entry"].materials).toEqual([]);
+
+    // A FLAT routine's Materials ARE its steps, and are listed both ways — the
+    // field means "this entry's own Materials" regardless of kind.
+    expect(byId["cat-flat"].materials.map((m) => m.id)).toEqual(["cat-flat-1", "cat-flat-2"]);
+
+    // materialCount stays the count of the same leaves the ids now name.
+    expect(byId["cat-entry"].materialCount).toBe(byId["cat-entry"].steps.flatMap((s) => s.materials).length);
+    expect(byId["cat-fmt"].materialCount).toBe(byId["cat-fmt"].materials.length);
+  });
+
+  it("prints each spec's node id beside its content so it can be edited", async () => {
+    const graph = await readCatalog(SHARED_CATALOG_NAMESPACE);
+
+    // A formatter renders its spec flat, with no heading to identify it — the id
+    // line is the only thing tying the text to an editable node.
+    const formatter = renderCatalogEntry(graph, "cat-fmt", "shared")!;
+    expect(formatter).toContain("`edit_node` nodeId: `cat-fmt-spec`");
+    expect(formatter).toContain("palette + fonts + page setup");
+
+    // A nested routine names the grandchild Material, not the step routine.
+    const routine = renderCatalogEntry(graph, "cat-entry", "shared")!;
+    expect(routine).toContain("`edit_node` nodeId: `cat-m1`");
+    expect(routine).not.toContain("`edit_node` nodeId: `cat-s1`");
+
+    // A flat routine's step IS the Material, so its own id is the one printed.
+    const flat = renderCatalogEntry(graph, "cat-flat", "shared")!;
+    expect(flat).toContain("`edit_node` nodeId: `cat-flat-1`");
+    expect(flat).toContain("corps révision");
   });
 
   it("reads a WORKSPACE-scoped catalog namespace independently, tagged workspace", async () => {
