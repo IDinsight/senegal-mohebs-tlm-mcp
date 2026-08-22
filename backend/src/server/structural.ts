@@ -21,6 +21,7 @@ import { kgNamespace, deleteEdges, deleteNodes } from "../kg-store/index.js";
 import { createEdges } from "../kg-recipes/index.js";
 import { runBatchMutation, type ReturnMode } from "./batch.js";
 import { idempotencyPayloadHash } from "./idempotency.js";
+import { runCatalogWrite } from "./catalog-target.js";
 
 function activeNamespace(): string {
   const a = getActiveAdapter();
@@ -29,18 +30,30 @@ function activeNamespace(): string {
 
 const JsonValue = z.any();
 
-// The create_edges core, exported so tests drive the real logic. Normalizes each
-// edge's properties, then delegates response shaping + idempotency to
-// runBatchMutation (no minted ids for edges, so `extra` is empty).
-export async function runCreateEdges(a: {
+type CreateEdgesArgs = {
   edges?: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
   confirm?: boolean;
   confirmationToken?: string;
   returnMode?: ReturnMode;
   idempotencyKey?: string;
-}): Promise<Record<string, unknown>> {
-  const namespace = activeNamespace();
+  catalog?: string;   // write to a catalog library instead of the active subject
+};
 
+// The create_edges core, exported so tests drive the real logic. Routes the batch
+// to the active subject's namespace, or — when `catalog` is set — to a catalog
+// library, which also publishes on confirm (see catalog-target.ts).
+export async function runCreateEdges(a: CreateEdgesArgs): Promise<Record<string, unknown>> {
+  const createInNamespace = (namespace: string) => createEdgesInNamespace(namespace, a);
+  if (a.catalog) {
+    return runCatalogWrite(a.catalog, a.confirm, createInNamespace);
+  }
+  return createInNamespace(activeNamespace());
+}
+
+// Normalizes each edge's properties, then delegates response shaping +
+// idempotency to runBatchMutation (no minted ids for edges, so `extra` is empty).
+// Namespace-agnostic so the same path serves a subject and a catalog write.
+async function createEdgesInNamespace(namespace: string, a: CreateEdgesArgs): Promise<Record<string, unknown>> {
   // Token-only confirm: caller sends confirm+token with no `edges`. The parked
   // context (built on dry-run) holds the normalised list, so runBatchMutation
   // reconstructs from it — placeholder args/hash here are overwritten.
@@ -127,7 +140,8 @@ export function registerStructuralTools(server: McpServer) {
       description:
         "The edge-creation tool — add ONE edge or MANY in one atomic draft edit (it replaced the single create_edge). Use it for edges add_nodes doesn't set: `usesRoutine` (apply a routine to a Lesson/Course/Activity), `buildsTowards` / `relatesTo` / `hasDependency` (prerequisites), or an extra `hasEducationalAlignment`. Each `edges[i]` has `edgeType`, `fromId`, `toId`, and optional `properties`; both endpoints must already exist in the draft (ids minted by a prior committed add_nodes are valid). Edge ids are deterministic (`<type>:<from>-><to>`); a duplicate triple is rejected — duplicate detection spans BOTH the batch and the current draft. ALL-OR-NOTHING: the dry-run validates every edge and returns ONE confirmationToken; any item error blocks the whole batch (no partial apply). When the dry-run reports `payloadStored:true` (a large batch held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `edges`; otherwise re-send `edges` verbatim with confirm:true + the token. Edge-type legality across labels is a reviewer judgment at publish, not enforced here. " +
         "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff; 'full' also attaches the whole `diff`. " +
-        "`idempotencyKey` (optional): a unique key (a UUID) makes a RETRIED confirm safe — same key + same payload replays the first apply's summary with `replayed:true` (no double-apply/audit) instead of REPLAY; same key + different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Namespace-scoped, 24h TTL. Omit for strict single-use. DRAFT edit.",
+        "`idempotencyKey` (optional): a unique key (a UUID) makes a RETRIED confirm safe — same key + same payload replays the first apply's summary with `replayed:true` (no double-apply/audit) instead of REPLAY; same key + different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Namespace-scoped, 24h TTL. Omit for strict single-use. DRAFT edit. " +
+        "`catalog` (optional) wires the edges inside a CATALOG LIBRARY instead of the active subject graph — pass 'workspace' (your own library), 'shared', or a workspace id; crossing libraries needs super_admin. Confirming PUBLISHES the library live in one step (catalogs are not enterable, so no publish_draft), and `catalog` must be RE-SENT on the confirm.",
       inputSchema: {
         // Required on dry-run; omitted on a token-only confirm (large batch
         // held server-side — the parked context reconstructs the list).
@@ -141,14 +155,12 @@ export function registerStructuralTools(server: McpServer) {
         ).optional(),
         returnMode: z.enum(["summary", "full"]).optional(),
         idempotencyKey: z.string().optional(),
+        catalog: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: {
-      edges?: Array<{ edgeType: string; fromId: string; toId: string; properties?: Record<string, unknown> }>;
-      confirm?: boolean; confirmationToken?: string; returnMode?: ReturnMode; idempotencyKey?: string;
-    }) => asJson(await runCreateEdges(a))),
+    guarded(async (a: CreateEdgesArgs) => asJson(await runCreateEdges(a))),
   );
 
   // ── delete_edges ───────────────────────────────────────────────────────────
