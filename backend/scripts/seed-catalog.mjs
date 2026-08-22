@@ -193,6 +193,100 @@ const MATHS_ILLUSTRATION_FORMATTER = {
   ],
 };
 
+// WORKSPACE (senegal): Annexe 8's illustration + socio-cultural criteria — WHAT an image
+// depicts (diversity, gender, disability, life skills), not how it is rendered.
+// Deliberately NOT folded into the shared art-style formatter: that entry's verbatim block
+// is pasted unchanged into every image prompt, and representation policy would bloat the
+// very thing whose value is being copied word for word.
+// Its rules are per-BOOK, not per-image — asking whether ONE picture respects religious
+// diversity is meaningless — so the spec tells the caller to plan the scenes first and
+// verify once the support is complete.
+const ILLUSTRATION_REPRESENTATION_FORMATTER = {
+  nodes: [
+    {
+      id: "formatter-illustration-representation",
+      labels: [ROUTINE_LABEL],
+      properties: {
+        description: "Représentation et inclusion dans les illustrations (images)",
+        metadata: {
+          role: "instructional-routine",
+          catalogKind: "formatter",
+          summary: "Ce que les illustrations doivent montrer : diversité sénégalaise, équité de genre, handicap, absence de stéréotypes, compétences de vie. Reprend les critères socioculturels de l'Annexe 8. À appliquer par-dessus le formatter de style graphique partagé, qui régit le rendu.",
+        },
+      },
+    },
+    {
+      id: "formatter-illustration-representation-diversite",
+      labels: [MATERIAL_LABEL],
+      properties: {
+        description: "Diversité et réalités sénégalaises",
+        materialType: "Reference",
+        metadata: { role: "instructional-routine-material" },
+        content: [
+          "Diversité — ces règles s'apprécient à l'échelle du SUPPORT ENTIER, pas image par image. Avant de générer les illustrations d'un support, dresser la liste des scènes prévues et répartir la diversité sur l'ensemble ; la vérifier une fois le support complet.",
+          "Cadre de vie : sur l'ensemble d'un support, les scènes se répartissent entre milieu urbain et milieu rural, sans qu'aucun des deux ne représente moins d'un tiers des scènes situées. Varier concrètement les décors : cour d'école, marché, champ, quartier, bord de mer, cour familiale.",
+          "Diversité ethnique et coutumière : varier les carnations, les coiffures et les tenues au sein d'une même scène de groupe, en s'appuyant sur les réalités sénégalaises. Les tenues traditionnelles et les tenues contemporaines coexistent ; ne pas cantonner le traditionnel au rural.",
+          "Diversité religieuse : lorsqu'un marqueur religieux apparaît, le traiter comme un élément ordinaire du décor, jamais comme le sujet de l'image, et veiller à ce qu'un même support n'en montre pas d'un seul type. En cas de doute, préférer une scène sans marqueur religieux plutôt qu'une scène déséquilibrée.",
+          "Symboles et sites : lorsqu'un lieu ou une figure célèbre du Sénégal est représenté, le figurer fidèlement et respectueusement, sans caricature ni détournement humoristique.",
+        ].join("\n\n"),
+      },
+    },
+    {
+      id: "formatter-illustration-representation-genre",
+      labels: [MATERIAL_LABEL],
+      properties: {
+        description: "Genre, handicap et stéréotypes",
+        materialType: "Reference",
+        metadata: { role: "instructional-routine-material" },
+        content: [
+          "Équité de genre, à l'échelle du support : filles et garçons, femmes et hommes apparaissent en nombre comparable (ni l'un ni l'autre sous 40 % des personnages humains), et en particulier parmi les personnages qui AGISSENT — celui qui résout, dirige, explique ou décide dans une scène.",
+          "Rôles : ne jamais réserver un rôle à un sexe. Une fille peut mener le jeu, réparer, compter, conduire ; un garçon peut cuisiner, balayer, prendre soin d'un plus petit, pleurer. Sur l'ensemble d'un support, au moins un tiers des scènes de tâche domestique montre un personnage masculin, et au moins un tiers des scènes de responsabilité ou de savoir montre un personnage féminin.",
+          "Handicap : au moins un personnage porteur de handicap apparaît de façon récurrente dans chaque support, comme membre ordinaire du groupe — il participe, joue et réussit. Ne jamais faire du handicap le sujet de l'image, ni l'objet de la leçon, ni un motif de pitié ou d'assistance.",
+          "Stéréotypes : aucune image ne fait reposer son sens sur une caractéristique attribuée à un groupe (le rural naïf, le citadin aisé, la fille timide). En cas de doute sur une scène, se poser la question : si l'on échangeait le sexe, le milieu ou l'origine des personnages, l'image garderait-elle exactement le même sens ? Si non, la scène est à revoir.",
+        ].join("\n\n"),
+      },
+    },
+    {
+      id: "formatter-illustration-representation-competences-de-vie",
+      labels: [MATERIAL_LABEL],
+      properties: {
+        description: "Compétences de vie et environnement",
+        materialType: "Reference",
+        metadata: { role: "instructional-routine-material" },
+        content: [
+          "Compétences de vie — à faire porter par le DÉCOR et par ce que font les personnages, jamais par une morale ajoutée. L'image montre le bon geste ; elle ne le commente pas.",
+          "Environnement : aucune scène ne banalise un geste nuisible (déchet jeté au sol, robinet laissé ouvert, arbre coupé sans raison). Sur l'ensemble d'un support, plusieurs scènes montrent un geste favorable rendu ordinaire : ramasser, planter, arroser, trier, refermer.",
+          "Hygiène et sécurité : partout où le geste a naturellement sa place, le représenter correctement — se laver les mains avant de manger, regarder avant de traverser, s'écarter du feu. Ne jamais illustrer un geste dangereux, même pour le dénoncer : un lecteur débutant retient l'image, pas la légende.",
+          "Vivre ensemble : privilégier les scènes de coopération, d'entraide et de respect mutuel — partager, écouter celui qui parle, aider un plus jeune, accueillir un nouveau. Les scènes de conflit ne servent que si l'image montre aussi la résolution.",
+          "Ces éléments restent au second plan : ils ne doivent jamais détourner l'attention de l'objet d'apprentissage de la page.",
+        ].join("\n\n"),
+      },
+    },
+    {
+      id: "formatter-illustration-representation-adequation",
+      labels: [MATERIAL_LABEL],
+      properties: {
+        description: "Adéquation au texte et au niveau",
+        materialType: "Reference",
+        metadata: { role: "instructional-routine-material" },
+        content: [
+          "Adéquation au texte : l'illustration représente ce que le texte de la page dit, sans rien ajouter qui le contredise ni rien montrer que le texte n'évoque pas. Pour un lecteur débutant, l'image est un appui au décodage : un détail non mentionné devient une fausse piste.",
+          "Une image n'anticipe jamais la chute d'un récit ni la réponse d'un exercice.",
+          "Adéquation au niveau : plus le niveau est bas, plus l'image est dépouillée — livrets 1 à 3 : un seul sujet clairement détouré, décor minimal, pas plus de trois personnages ; à partir du niveau 6 et dans le Cahier de récits, une scène complète est admise.",
+          "Attrait et caractère ludique : chaque illustration comporte au moins un élément vivant — un mouvement, un regard, une expression, un petit détail à trouver — pour que l'élève ait envie de la regarder. Une image plate et purement descriptive ne satisfait pas ce critère.",
+          "Variété : ne pas répéter le même cadrage ni la même composition d'une page à l'autre. Alterner les plans (personnage seul, groupe, objet isolé, scène large) au fil du support.",
+        ].join("\n\n"),
+      },
+    },
+  ],
+  relationships: [
+    { id: "formatter-illustration-representation-haspart-1", type: "hasPart", start: "formatter-illustration-representation", end: "formatter-illustration-representation-diversite", properties: {} },
+    { id: "formatter-illustration-representation-haspart-2", type: "hasPart", start: "formatter-illustration-representation", end: "formatter-illustration-representation-genre", properties: {} },
+    { id: "formatter-illustration-representation-haspart-3", type: "hasPart", start: "formatter-illustration-representation", end: "formatter-illustration-representation-competences-de-vie", properties: {} },
+    { id: "formatter-illustration-representation-haspart-4", type: "hasPart", start: "formatter-illustration-representation", end: "formatter-illustration-representation-adequation", properties: {} },
+  ],
+};
+
 // Read every installed source's raw graph (assembleCatalog keeps only the routine
 // subtrees), to be spliced under the SHARED catalog with the shared formatters.
 const subjectSources = [];
@@ -213,7 +307,12 @@ for (const bundlePath of fixtureGraphs()) {
 // tenant (its subject-specific layout formatters).
 const catalogs = [
   { namespace: SHARED_CATALOG_NAMESPACE, adapterId: "shared-routine-catalog", sources: subjectSources, authored: [HOUSE_STYLE_FORMATTER, HOUSE_ART_STYLE_FORMATTER] },
-  { namespace: catalogNamespace("senegal"), adapterId: "senegal-catalog", sources: [], authored: [MATHS_ILLUSTRATION_FORMATTER] },
+  {
+    namespace: catalogNamespace("senegal"),
+    adapterId: "senegal-catalog",
+    sources: [],
+    authored: [MATHS_ILLUSTRATION_FORMATTER, ILLUSTRATION_REPRESENTATION_FORMATTER],
+  },
 ];
 
 const store = dryRun ? createMemoryKgStore() : createFirestoreKgStore();
