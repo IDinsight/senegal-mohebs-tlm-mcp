@@ -101,6 +101,37 @@ draft→publish loop apply unchanged) remain the eventual shape. That is an
 adapter-nullability refactor across ~20 `getActiveAdapter()` call sites, which a library
 edited a handful of times a year does not yet justify.
 
+#### The read side — where the node ids come from
+
+The write redirect shipped without a way to *find* what to write to, and the first live
+use hit it immediately: the entry root's id comes from `list_catalog`, but the child
+`Material` holding a formatter's actual spec text had no id anywhere, so its content could
+not be edited at all.
+
+The obvious-looking fix — a `catalog` argument on `walk_graph`, symmetric with the write
+verbs — was **rejected**. `walk_graph` walks a parsed `CurriculumModel`
+(`getActiveAdapter().model()`), not raw nodes and edges, and a catalog namespace has no
+subject profile to parse it with. Making it catalog-aware means giving it a second,
+model-free traversal path: the same adapter-nullability refactor deferred just above,
+in a smaller disguise. It is also the option that becomes *redundant* if catalogs ever
+become enterable, since `walk_graph` would then work on them with no extra argument.
+
+Instead the ids are surfaced where a catalog is already read (`kg-recipes/catalog.ts`):
+
+- `CatalogEntry.materials[]` — the entry's own direct `Material` children. A **formatter's
+  spec lives only here**; this was the blocked case, because `steps` is empty for a
+  formatter by design and nothing else named those nodes.
+- `CatalogEntry.steps[i].materials[]` — a **nested** step's `Material` grandchildren, which
+  `materialCount` counted without ever listing. A **flat** step holds its own text, so its
+  `materials` is empty and `steps[i].id` is itself the editable id.
+- `renderCatalogEntry` prints `` `edit_node` nodeId: `<id>` `` above each block of authored
+  text, so reading a spec and correcting it no longer needs a second lookup.
+
+`materials` is populated for every kind rather than only for formatters — kind-dependent
+population is exactly the special case (`if (kind === "routine")`) that hid the ids in the
+first place. The cost is a deliberate asymmetry: writes take `catalog`, but reads get their
+ids from `list_catalog` / `get_catalog_entry`. That is the price of not doing the refactor.
+
 ## Phase 2 — subject profiles (Step 2a done, in-repo)
 
 The three per-subject adapter behavior modules are **gone**. A subject is now a

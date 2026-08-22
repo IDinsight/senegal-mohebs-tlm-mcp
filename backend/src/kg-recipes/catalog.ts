@@ -64,13 +64,21 @@ export type CatalogKind = "routine" | "formatter";
 // One catalog entry as listed to a browsing curator — the entry's identity, its
 // kind, which scope it came from, plus a shallow outline (its steps) so the pick is
 // informed without reading materials.
+// One Material node under an entry: the id `edit_node` takes, plus its display name.
+// These ids are surfaced HERE because a catalog cannot be traversed — walk_graph
+// reads a parsed CurriculumModel and a catalog namespace has no subject profile to
+// parse it with, so list_catalog / get_catalog_entry are the ONLY place a curator
+// can learn which node holds a given spec's text.
+export type CatalogMaterial = { id: string; name: string };
+
 export type CatalogEntry = {
   id: string;
   kind: CatalogKind;
   scope: CatalogScope;          // which library this entry lives in (drives edit rights)
   name: string;                 // the entry's title (raw.description)
   summary: string;              // cross-cutting rules (raw.metadata.summary), "" when absent
-  steps: Array<{ id: string; name: string; order: number; timeRequired?: string }>;
+  steps: Array<{ id: string; name: string; order: number; timeRequired?: string; materials: CatalogMaterial[] }>;
+  materials: CatalogMaterial[]; // the entry's OWN direct Materials — a formatter's spec
   materialCount: number;        // load-bearing Material leaves under the entry
 };
 
@@ -132,18 +140,43 @@ export function listCatalogEntries(graph: MutationGraph, scope: CatalogScope): C
 
 function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, children: Map<string, string[]>, scope: CatalogScope): CatalogEntry {
   const steps: CatalogEntry["steps"] = [];
+  const materials: CatalogMaterial[] = [];
   let materialCount = 0;
   const kind = kindOf(entry);
-  const asStep = (n: MutationNode) => ({ id: n.id, name: str(rawOf(n).description), order: orderOf(n), timeRequired: str(rawOf(n).timeRequired) || undefined });
+
+  const asMaterial = (n: MutationNode): CatalogMaterial => ({ id: n.id, name: str(rawOf(n).description) });
+
+  // The Material children directly under `parentId`. Empty for a FLAT step, whose
+  // text lives on the step node itself — there, the step's own id is what edit_node
+  // takes, so no separate material entry is needed.
+  const materialsUnder = (parentId: string): CatalogMaterial[] =>
+    (children.get(parentId) ?? [])
+      .map((id) => byId.get(id))
+      .filter((n): n is MutationNode => isMaterial(n))
+      .map(asMaterial);
+
+  const asStep = (n: MutationNode) => ({
+    id: n.id,
+    name: str(rawOf(n).description),
+    order: orderOf(n),
+    timeRequired: str(rawOf(n).timeRequired) || undefined,
+    materials: materialsUnder(n.id),
+  });
+
   for (const childId of children.get(entry.id) ?? []) {
     const child = byId.get(childId);
     if (!child) continue;
     if (isRoutine(child)) {
       // Nested step shape: a step is a child routine, its body in a Material grandchild.
       steps.push(asStep(child));
-      materialCount += (children.get(child.id) ?? []).filter((id) => isMaterial(byId.get(id))).length;
+      materialCount += materialsUnder(child.id).length;
     } else if (isMaterial(child)) {
       materialCount += 1;
+      // Every direct Material is listed in `materials`, whatever the kind — a
+      // formatter's spec lives ONLY here, and listing a routine's flat steps here
+      // too keeps the field's meaning uniform ("the entry's own Materials") rather
+      // than kind-dependent. Kind still decides what counts as a STEP.
+      materials.push(asMaterial(child));
       // Flat step shape (add_nodes → add_to_catalog): a ROUTINE's direct Material child
       // IS a step (name/order/timing on the Material itself). A FORMATTER's direct
       // Materials are its spec, not steps.
@@ -158,6 +191,7 @@ function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, chi
     name: str(rawOf(entry).description),
     summary: str(metaOf(entry).summary),
     steps,
+    materials,
     materialCount,
   };
 }
@@ -174,6 +208,12 @@ export function renderCatalogEntry(graph: MutationGraph, entryId: string, scope:
 
   const childrenOf = (id: string) => (children.get(id) ?? []).map((c) => byId.get(c)).filter((n): n is MutationNode => !!n);
   const kind = kindOf(entry);
+
+  // Name the node each block of text lives on. Without this a reader who spots a
+  // problem in the rendered spec has no way back to the node that holds it — a
+  // catalog is not walkable, so this markdown is the only place the id appears
+  // next to its content.
+  const editHint = (id: string) => `\`edit_node\` nodeId: \`${id}\``;
   const lines: string[] = [`# ${str(rawOf(entry).description) || entryId}`, "", `*${kind} · ${scope} catalog*`, ""];
   const summary = str(metaOf(entry).summary);
   if (summary) lines.push(summary, "");
@@ -182,7 +222,7 @@ export function renderCatalogEntry(graph: MutationGraph, entryId: string, scope:
     // A formatter's spec sits in its direct Material children — rendered flat, no headings.
     for (const m of childrenOf(entry.id).filter(isMaterial)) {
       const content = str(rawOf(m).content);
-      if (content) lines.push(content, "");
+      if (content) lines.push(editHint(m.id), "", content, "");
     }
   } else {
     // A routine's ordered steps, each under its own heading. A step is either a child
@@ -192,8 +232,14 @@ export function renderCatalogEntry(graph: MutationGraph, entryId: string, scope:
     for (const step of steps) {
       const timing = str(rawOf(step).timeRequired);
       lines.push(`## ${str(rawOf(step).description)}${timing ? `  (${timing})` : ""}`, "");
-      const bodies = isMaterial(step) ? [str(rawOf(step).content)] : childrenOf(step.id).filter(isMaterial).map((m) => str(rawOf(m).content));
-      for (const body of bodies) if (body) lines.push(body, "");
+      // A flat step holds its own text, so the step node IS what edit_node takes; a
+      // nested step's text sits in Material grandchildren, each with its own id.
+      const bodies = isMaterial(step)
+        ? [{ id: step.id, content: str(rawOf(step).content) }]
+        : childrenOf(step.id).filter(isMaterial).map((m) => ({ id: m.id, content: str(rawOf(m).content) }));
+      for (const body of bodies) {
+        if (body.content) lines.push(editHint(body.id), "", body.content, "");
+      }
     }
   }
   return `${lines.join("\n").trimEnd()}\n`;

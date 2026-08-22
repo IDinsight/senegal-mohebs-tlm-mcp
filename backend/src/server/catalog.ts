@@ -323,7 +323,7 @@ const APPLY_INPUT = {
 export function registerCatalogTools(server: McpServer) {
   server.registerTool(
     "list_catalog",
-    { title: "List the catalog", description: "Browse the reusable-spec catalog — the instructional routines and formatters a curator can apply to content. Reads BOTH the shared cross-tenant library and the active workspace's own; each entry carries its `scope` (shared | workspace) and `kind` (routine | formatter), plus id, name, cross-cutting summary, ordered steps (name + timing), and material count. Pass a routine's id to use_routine, or a formatter's to use_formatter, to copy it. For an entry's FULL authored spec, call get_catalog_entry. [] when nothing is seeded.", inputSchema: {} },
+    { title: "List the catalog", description: "Browse the reusable-spec catalog — the instructional routines and formatters a curator can apply to content. Reads BOTH the shared cross-tenant library and the active workspace's own; each entry carries its `scope` (shared | workspace) and `kind` (routine | formatter), plus id, name, cross-cutting summary, ordered steps (name + timing), and material count. Pass a routine's id to use_routine, or a formatter's to use_formatter, to copy it. For an entry's FULL authored spec, call get_catalog_entry. [] when nothing is seeded. EDITING an entry: this is also where the NODE IDS come from, because a catalog cannot be traversed (walk_graph reads the active subject only). `materials[]` on an entry lists its own Material children — a FORMATTER's spec lives there; `steps[i].materials[]` lists a nested step's Material children. Those ids are what `edit_node(nodeId, content, catalog)` takes. A flat routine step carries its text on the step node itself, so `steps[i].id` IS the editable id and its `materials` is empty.", inputSchema: {} },
     guarded(async () => {
       const scopes = catalogScopes();
       const perScope = await Promise.all(scopes.map(async (s) => listCatalogEntries(await readCatalog(s.namespace), s.scope)));
@@ -335,7 +335,7 @@ export function registerCatalogTools(server: McpServer) {
     "get_catalog_entry",
     {
       title: "Read a catalog entry",
-      description: "Read ONE catalog entry's FULL authored spec, as markdown: a routine's summary + its ordered, timed steps AND each step's Material content; a formatter's spec Material. This is the detail list_catalog only COUNTS (materialCount) — the same content the `catalog://` browse resource serves, exposed as a TOOL so it works in every client (not only those with a resource browser). Pass the entry `id` from list_catalog; both libraries (shared + workspace) are searched. Read-only.",
+      description: "Read ONE catalog entry's FULL authored spec, as markdown: a routine's summary + its ordered, timed steps AND each step's Material content; a formatter's spec Material. This is the detail list_catalog only COUNTS (materialCount) — the same content the `catalog://` browse resource serves, exposed as a TOOL so it works in every client (not only those with a resource browser). Pass the entry `id` from list_catalog; both libraries (shared + workspace) are searched. Each block of authored text is preceded by the NODE ID holding it (`edit_node nodeId: ...`), so a spec you find wrong here can be corrected straight away with edit_node(nodeId, content, catalog) — a catalog is not walkable, so this is where content and its id appear together. Read-only.",
       inputSchema: { id: z.string() },
     },
     guarded(async (a: { id: string }) => {
