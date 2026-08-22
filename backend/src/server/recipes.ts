@@ -31,7 +31,7 @@ export function registerRecipeTools(server: McpServer) {
     {
       title: "Edit a node's fields",
       description:
-        "Edit a node IN PLACE in ONE atomic draft edit — the single field-edit verb (it replaced set_content + reposition and added title editing). Only `nodeId` is required. Every editable field is OPTIONAL and independent: supply just the ones you want to change (a single field is fine) — any unsupplied field is left untouched, never cleared. Provide AT LEAST ONE of: `content` (load-bearing text, canonical LC Material.content), `position` (ordinal among siblings — membership is the containment edge, so this NEVER cascades; only labels that carry a position in LC — LessonGrouping/Lesson/Activity/routine steps — have one), `title` (display name — normalized to the node's title/text field per its label), `title_en` (English mirror), `summary` (a routine/formatter's cross-cutting blurb → raw.metadata.summary, the field list_catalog / get_catalog_entry / walk_graph surface). A nonexistent `nodeId` is BLOCKED; to remove content, delete the node instead. Edit in place — do NOT delete + re-add (that cascades the subtree, drops every incident edge, and mints a new id). REQUIRES CONFIRMATION: the dry-run returns a diff + confirmationToken; confirm with confirm:true + the token. When the dry-run reports `payloadStored:true` (a large edit held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `content`; otherwise re-send the same fields. DRAFT edit — publish_draft to make it live.",
+        "Edit a node IN PLACE in ONE atomic draft edit — the single field-edit verb (it replaced set_content + reposition and added title editing). Only `nodeId` is required. Every editable field is OPTIONAL and independent: supply just the ones you want to change (a single field is fine) — any unsupplied field is left untouched, never cleared. Provide AT LEAST ONE of: `content` (load-bearing text, canonical LC Material.content), `position` (ordinal among siblings — membership is the containment edge, so this NEVER cascades; only labels that carry a position in LC — LessonGrouping/Lesson/Activity/routine steps — have one), `title` (display name — normalized to the node's title/text field per its label), `title_en` (English mirror), `summary` (a routine/formatter's cross-cutting blurb → raw.metadata.summary, the field list_catalog / get_catalog_entry / walk_graph surface), `properties` (a freeform object amending ANY OTHER canonical LC prop → written under raw.<key>, nested-merge — e.g. {\"metadata.assemblyGuide\":\"…\"}; the same bag add_nodes takes at create time, so a raw prop can be amended later without a dedicated argument). `properties` REFUSES protected paths — LC identity (normalizedType / normalizedStatementType / metadata.role / identifier) and the mirrored fields that have their own argument (use `position` for the ordinal, `title` for the display name/description, `content` for the Material payload). A nonexistent `nodeId` is BLOCKED; to remove content, delete the node instead. Edit in place — do NOT delete + re-add (that cascades the subtree, drops every incident edge, and mints a new id). REQUIRES CONFIRMATION: the dry-run returns a diff + confirmationToken; confirm with confirm:true + the token. When the dry-run reports `payloadStored:true` (a large edit held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `content`; otherwise re-send the same fields. DRAFT edit — publish_draft to make it live.",
       inputSchema: {
         nodeId: z.string(),
         content: z.string().optional(),
@@ -39,16 +39,17 @@ export function registerRecipeTools(server: McpServer) {
         title: z.string().optional(),
         title_en: z.string().optional(),
         summary: z.string().optional(),
+        properties: z.record(z.string(), z.unknown()).optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
       },
     },
-    guarded(async (a: { nodeId: string; content?: string; position?: number; title?: string; title_en?: string; summary?: string; confirm?: boolean; confirmationToken?: string }) => {
+    guarded(async (a: { nodeId: string; content?: string; position?: number; title?: string; title_en?: string; summary?: string; properties?: Record<string, unknown>; confirm?: boolean; confirmationToken?: string }) => {
       const { namespace } = bind(getActiveAdapter());
       const result = await runGraphMutation({
         namespace,
         mutation: editNode,
-        args: { namespace, nodeId: a.nodeId, content: a.content, position: a.position, title: a.title, title_en: a.title_en, summary: a.summary },
+        args: { namespace, nodeId: a.nodeId, content: a.content, position: a.position, title: a.title, title_en: a.title_en, summary: a.summary, properties: a.properties },
         confirm: a.confirm,
         token: a.confirmationToken,
         // edit_node passes its complete args straight through (no minting/rebuild

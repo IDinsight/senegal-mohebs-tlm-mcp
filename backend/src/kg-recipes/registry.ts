@@ -18,7 +18,7 @@ export type RecipeDescriptor = {
 export const RECIPES: readonly RecipeDescriptor[] = [
   {
     name: "edit_node",
-    summary: "Edit a node's fields in one atomic draft edit: content (canonical LC Material.content), position (ordinal among siblings — never cascades), title (display name), title_en (English mirror), and/or summary (a routine/formatter's cross-cutting blurb → raw.metadata.summary). Pass at least one. Replaced set_content + reposition and added title editing.",
+    summary: "Edit a node's fields in one atomic draft edit: content (canonical LC Material.content), position (ordinal among siblings — never cascades), title (display name), title_en (English mirror), summary (a routine/formatter's cross-cutting blurb → raw.metadata.summary), and/or properties (a freeform bag amending any other canonical LC prop → raw.<key>, e.g. metadata.assemblyGuide). Pass at least one. Replaced set_content + reposition and added title editing.",
     params: [
       { name: "nodeId", required: true },
       { name: "content", required: false },
@@ -26,6 +26,7 @@ export const RECIPES: readonly RecipeDescriptor[] = [
       { name: "title", required: false },
       { name: "title_en", required: false },
       { name: "summary", required: false },
+      { name: "properties", required: false, note: "amend any other canonical LC prop → raw.<key>; refuses identity + mirrored paths (use position/title/content for those)" },
     ],
   },
 ];

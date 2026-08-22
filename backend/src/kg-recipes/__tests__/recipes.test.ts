@@ -300,6 +300,33 @@ describe("edit_node (composite field edit — replaced reposition + set_content,
     expect((node.properties.raw as any).metadata.summary).toBe("Résumé transversal en **markdown**.");
   });
 
+  it("amends an arbitrary raw prop via the properties bag, nested-merging beside siblings", async () => {
+    const { lessonId } = pick(await readPublished());
+    const { confirm } = await runRecipe(editNode, {
+      namespace: ns,
+      nodeId: lessonId,
+      properties: { "metadata.assemblyGuide": "Assemble ordre A→B." },
+    });
+    expect(confirm?.phase).toBe("apply");
+    const node = (await readDraft())!.nodes.find((candidate) => candidate.id === lessonId)!;
+    const raw = node.properties.raw as Record<string, any>;
+    expect(raw.metadata.assemblyGuide).toBe("Assemble ordre A→B.");
+    // Nested-merge: writing metadata.assemblyGuide leaves metadata.order intact.
+    expect(raw.metadata.order).toBeDefined();
+  });
+
+  it("blocks a properties bag that targets a protected identity or mirrored path", async () => {
+    const { lessonId } = pick(await readPublished());
+    const identity = await runRecipe(editNode, { namespace: ns, nodeId: lessonId, properties: { normalizedType: "Lesson" } });
+    expect(identity.preview.phase).toBe("blocked");
+    // An ancestor object that would clobber a protected leaf is refused too.
+    const clobber = await runRecipe(editNode, { namespace: ns, nodeId: lessonId, properties: { metadata: { role: "x" } } });
+    expect(clobber.preview.phase).toBe("blocked");
+    // A mirrored field must go through its dedicated argument, not the bag.
+    const mirrored = await runRecipe(editNode, { namespace: ns, nodeId: lessonId, properties: { position: 5 } });
+    expect(mirrored.preview.phase).toBe("blocked");
+  });
+
   it("blocks when no field is provided", async () => {
     const { lessonId } = pick(await readPublished());
     const { preview } = await runRecipe(editNode, { namespace: ns, nodeId: lessonId });
