@@ -18,6 +18,9 @@
 > [`logic-in-the-graph.md`](logic-in-the-graph.md) and
 > [`instructional-routines.md`](instructional-routines.md) with a curator-facing layer.
 > **D2 was revised from by-reference to copy-on-use during implementation** (see below).
+> A **third kind, `rubric`** (evaluation grids, applied with `use_rubric` and read by
+> `evaluate_document`) is built but not yet live — see
+> [`evaluation-rubrics.md`](evaluation-rubrics.md).
 
 ## What shipped (the catalog)
 

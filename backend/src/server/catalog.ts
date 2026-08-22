@@ -7,12 +7,14 @@
  *                     each tagged with its scope + kind (read-only, ungated).
  *   - use_routine   — COPY a routine entry onto a lesson (linked via `usesRoutine`).
  *   - use_formatter — COPY a formatter entry (a house-style spec) under a document.
- *                     Both share one path: the entry's subtree is cloned with fresh
- *                     ids into the ACTIVE subject's draft; the copy is independent of
- *                     the library. They diverge in the ATTACHMENT — a routine links to
- *                     a Lesson via `usesRoutine`; a formatter is relabelled to the
- *                     document layer (Formatter/FormatterSpec) and hung under the
- *                     Course's TeachingLearningMaterial via `hasPart`.
+ *   - use_rubric    — COPY a rubric entry (an evaluation grid) under a document.
+ *                     All three share one path: the entry's subtree is cloned with
+ *                     fresh ids into the ACTIVE subject's draft; the copy is
+ *                     independent of the library. They diverge in the ATTACHMENT — a
+ *                     routine links to a Lesson via `usesRoutine`; a formatter and a
+ *                     rubric are relabelled to the document layer (Formatter/
+ *                     FormatterSpec, Rubric/RubricSection/RubricCriterion) and hung
+ *                     under the Course's TeachingLearningMaterial via `hasPart`.
  *
  * use_routine shares the graph-mutation envelope: a dry-run returns a diff +
  * confirmationToken + the minted id-map (no state change); the confirm re-checks the
@@ -30,7 +32,7 @@ import { asJson, asMarkdown, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
 import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, publishDraft, discardDraft, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
-import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, relabelClonedFormatter, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, useFormatter, type CatalogScope, type UseRoutineArgs, type UseFormatterArgs } from "../kg-recipes/index.js";
+import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, relabelClonedFormatter, relabelClonedRubric, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, useFormatter, useRubric, type CatalogScope, type UseRoutineArgs, type UseFormatterArgs, type UseRubricArgs } from "../kg-recipes/index.js";
 import { parkWrapperContext, readWrapperContext, deleteWrapperContext } from "./wrapper-park.js";
 // Destination resolution moved to catalog-target.ts, which the generic write
 // verbs (edit_node / add_nodes / create_edges) share for their `catalog` redirect.
@@ -77,22 +79,24 @@ function withMintedMap(result: unknown, mintedIdMap: Record<string, string>): un
 //     FormatterSpec) and hung under the Course's TeachingLearningMaterial via `hasPart`.
 // The token-only confirm path reads the mode back from the parked context, so a
 // confirm dispatches to the right mutation without the caller re-stating it.
-type CatalogApplyMode = "routine" | "formatter";
+type CatalogApplyMode = "routine" | "formatter" | "rubric";
 type ApplyArgs = { entryId?: string; targetId?: string; mintedIdMap?: Record<string, string>; confirm?: boolean; confirmationToken?: string };
 // The wrapper's parked context for a use_routine / use_formatter confirm: the mode,
 // the cloned subtree's mutation args the dry-run built, plus the id-map to surface in
 // the response. Discriminated by `mode` so the confirm runs the matching mutation.
 type ParkedApplyContext =
   | { mode: "routine"; mutationArgs: UseRoutineArgs; idMap: Record<string, string> }
-  | { mode: "formatter"; mutationArgs: UseFormatterArgs; idMap: Record<string, string> };
+  | { mode: "formatter"; mutationArgs: UseFormatterArgs; idMap: Record<string, string> }
+  | { mode: "rubric"; mutationArgs: UseRubricArgs; idMap: Record<string, string> };
 
-// Resolve the TeachingLearningMaterial a formatter attaches under, from the id the
-// caller gave use_formatter. A TLM id is used directly; a Course id resolves to the
-// TLM that `covers` it (the document produced from that Course). Reads the active
-// graph DRAFT-first so a just-authored TLM resolves. Any other node — or a Course
-// with no TLM yet — is an actionable error: a formatter is a property of the
-// DOCUMENT (TLM ─hasPart→ Formatter), never the curriculum.
-async function resolveFormatterTarget(namespace: string, targetId: string): Promise<{ tlmId: string } | { error: string }> {
+// Resolve the TeachingLearningMaterial a formatter or rubric attaches under, from the
+// id the caller gave. A TLM id is used directly; a Course id resolves to the TLM that
+// `covers` it (the document produced from that Course). Reads the active graph
+// DRAFT-first so a just-authored TLM resolves. Any other node — or a Course with no
+// TLM yet — is an actionable error: both are properties of the DOCUMENT
+// (TLM ─hasPart→ Formatter/Rubric), never of the curriculum. `tool`/`noun` name the
+// calling verb so the message reads as its own.
+export async function resolveDocumentTarget(namespace: string, targetId: string, tool: string, noun: string): Promise<{ tlmId: string } | { error: string }> {
   const graph = await readActiveGraph(namespace);
   const target = graph.nodes.find((n) => n.id === targetId);
   if (!target) return { error: `Target '${targetId}' does not exist in the active graph.` };
@@ -103,9 +107,9 @@ async function resolveFormatterTarget(namespace: string, targetId: string): Prom
       (n) => (n.labels ?? []).includes("TeachingLearningMaterial") && graph.edges.some((e) => e.type === "covers" && e.from === n.id && e.to === targetId),
     )?.id;
     if (tlmId) return { tlmId };
-    return { error: `Course '${targetId}' has no TeachingLearningMaterial covering it yet. A formatter attaches under the DOCUMENT, not the Course — mint a TeachingLearningMaterial that \`covers\` this Course (add_nodes + create_edges), then use_formatter against the Course or the TLM directly.` };
+    return { error: `Course '${targetId}' has no TeachingLearningMaterial covering it yet. A ${noun} attaches under the DOCUMENT, not the Course — mint a TeachingLearningMaterial that \`covers\` this Course (add_nodes + create_edges), then ${tool} against the Course or the TLM directly.` };
   }
-  return { error: `'${targetId}' is a ${labels.join("/") || "node"} — use_formatter targets a TeachingLearningMaterial (the document), or a Course to resolve its TLM.` };
+  return { error: `'${targetId}' is a ${labels.join("/") || "node"} — ${tool} targets a TeachingLearningMaterial (the document), or a Course to resolve its TLM.` };
 }
 
 // Shared tail for a dry-run / confirm: on a dry-run park the built context (so a large
@@ -121,6 +125,18 @@ async function finishApply(namespace: string, result: Awaited<ReturnType<typeof 
   return asJson({ ...preview, payloadStored });
 }
 
+// Run the mutation matching a parked confirm's mode. ParkedApplyContext is
+// discriminated by `mode`, so each branch's mutationArgs type is the matching one.
+async function confirmParkedApply(namespace: string, parked: ParkedApplyContext, token: string | undefined) {
+  if (parked.mode === "formatter") {
+    return runGraphMutation({ namespace, mutation: useFormatter, args: parked.mutationArgs, confirm: true, token });
+  }
+  if (parked.mode === "rubric") {
+    return runGraphMutation({ namespace, mutation: useRubric, args: parked.mutationArgs, confirm: true, token });
+  }
+  return runGraphMutation({ namespace, mutation: useRoutine, args: parked.mutationArgs, confirm: true, token });
+}
+
 export async function applyCatalogEntry(a: ApplyArgs, mode: CatalogApplyMode = "routine") {
   const adapter = getActiveAdapter();
   const namespace = kgNamespace(activeWorkspace(), adapter.grade, adapter.subject);
@@ -132,9 +148,7 @@ export async function applyCatalogEntry(a: ApplyArgs, mode: CatalogApplyMode = "
   if (a.confirm && !a.entryId) {
     const parked = a.confirmationToken ? await readWrapperContext<ParkedApplyContext>(namespace, a.confirmationToken) : null;
     if (!parked) return asJson({ phase: "apply", ok: false, reason: "stale", message: "The previewed catalog application has expired or was already used; re-run without confirm to preview again." });
-    const result = parked.mode === "formatter"
-      ? await runGraphMutation({ namespace, mutation: useFormatter, args: parked.mutationArgs, confirm: true, token: a.confirmationToken })
-      : await runGraphMutation({ namespace, mutation: useRoutine, args: parked.mutationArgs, confirm: true, token: a.confirmationToken });
+    const result = await confirmParkedApply(namespace, parked, a.confirmationToken);
     if (result.phase === "apply" && result.ok && a.confirmationToken) await deleteWrapperContext(namespace, a.confirmationToken);
     return asJson(result);
   }
@@ -150,12 +164,23 @@ export async function applyCatalogEntry(a: ApplyArgs, mode: CatalogApplyMode = "
   if (mode === "formatter") {
     // A formatter hangs under the document (TLM), not the Course — resolve the TLM
     // first, then relabel the clone to the Formatter/FormatterSpec document shape.
-    const resolved = await resolveFormatterTarget(namespace, a.targetId);
+    const resolved = await resolveDocumentTarget(namespace, a.targetId, "use_formatter", "formatter");
     if ("error" in resolved) return asJson({ error: resolved.error });
     const clone = relabelClonedFormatter(cloneRoutineSubtree(source, a.entryId, namespace, mint)!);
     const mutationArgs: UseFormatterArgs = { namespace, tlmId: resolved.tlmId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newFormatterId: clone.newEntryId };
     const result = await runGraphMutation({ namespace, mutation: useFormatter, args: mutationArgs, confirm: a.confirm, token: a.confirmationToken });
     return finishApply(namespace, result, clone.idMap, a.confirm, { mode: "formatter", mutationArgs, idMap: clone.idMap });
+  }
+
+  if (mode === "rubric") {
+    // Same attachment point as a formatter (the document, via hasPart) — a grid judges
+    // the DOCUMENT — but relabelled one level deeper: Rubric → RubricSection → RubricCriterion.
+    const resolved = await resolveDocumentTarget(namespace, a.targetId, "use_rubric", "rubric");
+    if ("error" in resolved) return asJson({ error: resolved.error });
+    const clone = relabelClonedRubric(cloneRoutineSubtree(source, a.entryId, namespace, mint)!);
+    const mutationArgs: UseRubricArgs = { namespace, tlmId: resolved.tlmId, clonedNodes: clone.nodes, clonedEdges: clone.edges, newRubricId: clone.newEntryId };
+    const result = await runGraphMutation({ namespace, mutation: useRubric, args: mutationArgs, confirm: a.confirm, token: a.confirmationToken });
+    return finishApply(namespace, result, clone.idMap, a.confirm, { mode: "rubric", mutationArgs, idMap: clone.idMap });
   }
 
   const clone = cloneRoutineSubtree(source, a.entryId, namespace, mint)!;
@@ -175,14 +200,21 @@ export async function applyCatalogEntry(a: ApplyArgs, mode: CatalogApplyMode = "
 // Read a namespace's current graph, preferring its DRAFT slot so a just-authored
 // (still-unpublished) routine is visible — the natural flow is author inline (a
 // draft edit) then add it to the catalog. Falls back to published; empty when unseeded.
-async function readActiveGraph(namespace: string): Promise<MutationGraph> {
+export async function readActiveGraphWithSlot(namespace: string): Promise<{ graph: MutationGraph; reading: "draft" | "published" }> {
   const store = getKgStore();
   const pointer = await store.readPointer(namespace);
-  if (!pointer) return { nodes: [], edges: [] };
+  if (!pointer) return { graph: { nodes: [], edges: [] }, reading: "published" };
   const slot = pointer.draftSlot ?? pointer.publishedSlot;
   const [nodes, edges] = await Promise.all([store.listNodes(namespace, slot), store.listEdges(namespace, slot)]);
   const dropSlot = <T extends { slot: unknown }>(x: T): Omit<T, "slot"> => { const { slot: _s, ...rest } = x; return rest; };
-  return { nodes: nodes.map((n: StoredNode) => dropSlot(n) as MutationNode), edges: edges.map((e: StoredEdge) => dropSlot(e) as MutationEdge) };
+  return {
+    graph: { nodes: nodes.map((n: StoredNode) => dropSlot(n) as MutationNode), edges: edges.map((e: StoredEdge) => dropSlot(e) as MutationEdge) },
+    reading: pointer.draftSlot ? "draft" : "published",
+  };
+}
+
+async function readActiveGraph(namespace: string): Promise<MutationGraph> {
+  return (await readActiveGraphWithSlot(namespace)).graph;
 }
 
 // Tag a dry-run preview so the caller knows confirming PUBLISHES the library live
@@ -323,7 +355,7 @@ const APPLY_INPUT = {
 export function registerCatalogTools(server: McpServer) {
   server.registerTool(
     "list_catalog",
-    { title: "List the catalog", description: "Browse the reusable-spec catalog — the instructional routines and formatters a curator can apply to content. Reads BOTH the shared cross-tenant library and the active workspace's own; each entry carries its `scope` (shared | workspace) and `kind` (routine | formatter), plus id, name, cross-cutting summary, ordered steps (name + timing), and material count. Pass a routine's id to use_routine, or a formatter's to use_formatter, to copy it. For an entry's FULL authored spec, call get_catalog_entry. [] when nothing is seeded. EDITING an entry: this is also where the NODE IDS come from, because a catalog cannot be traversed (walk_graph reads the active subject only). `materials[]` on an entry lists its own Material children — a FORMATTER's spec lives there; `steps[i].materials[]` lists a nested step's Material children. Those ids are what `edit_node(nodeId, content, catalog)` takes. A flat routine step carries its text on the step node itself, so `steps[i].id` IS the editable id and its `materials` is empty.", inputSchema: {} },
+    { title: "List the catalog", description: "Browse the reusable-spec catalog — the instructional routines, formatters and evaluation rubrics a curator can apply to content. Reads BOTH the shared cross-tenant library and the active workspace's own; each entry carries its `scope` (shared | workspace) and `kind` (routine | formatter | rubric), plus id, name, cross-cutting summary, ordered steps (name + timing), and material count. A RUBRIC (an evaluation grid) additionally carries `scale` ('0-4' or 'oui-non') on the entry, and its `steps` are the grid's weighted SECTIONS — each with a `weight` ('20%') and its criteria in `materials`. Pass a routine's id to use_routine, a formatter's to use_formatter, or a rubric's to use_rubric, to copy it. For an entry's FULL authored spec, call get_catalog_entry. [] when nothing is seeded. EDITING an entry: this is also where the NODE IDS come from, because a catalog cannot be traversed (walk_graph reads the active subject only). `materials[]` on an entry lists its own Material children — a FORMATTER's spec lives there; `steps[i].materials[]` lists a nested step's Material children. Those ids are what `edit_node(nodeId, content, catalog)` takes. A flat routine step carries its text on the step node itself, so `steps[i].id` IS the editable id and its `materials` is empty.", inputSchema: {} },
     guarded(async () => {
       const scopes = catalogScopes();
       const perScope = await Promise.all(scopes.map(async (s) => listCatalogEntries(await readCatalog(s.namespace), s.scope)));
@@ -335,7 +367,7 @@ export function registerCatalogTools(server: McpServer) {
     "get_catalog_entry",
     {
       title: "Read a catalog entry",
-      description: "Read ONE catalog entry's FULL authored spec, as markdown: a routine's summary + its ordered, timed steps AND each step's Material content; a formatter's spec Material. This is the detail list_catalog only COUNTS (materialCount) — the same content the `catalog://` browse resource serves, exposed as a TOOL so it works in every client (not only those with a resource browser). Pass the entry `id` from list_catalog; both libraries (shared + workspace) are searched. Each block of authored text is preceded by the NODE ID holding it (`edit_node nodeId: ...`), so a spec you find wrong here can be corrected straight away with edit_node(nodeId, content, catalog) — a catalog is not walkable, so this is where content and its id appear together. Read-only.",
+      description: "Read ONE catalog entry's FULL authored spec, as markdown: a routine's summary + its ordered, timed steps AND each step's Material content; a formatter's spec Material; a rubric's scale plus its weighted sections and their named criteria (each with its measurable indicator). This is the detail list_catalog only COUNTS (materialCount) — the same content the `catalog://` browse resource serves, exposed as a TOOL so it works in every client (not only those with a resource browser). Pass the entry `id` from list_catalog; both libraries (shared + workspace) are searched. Each block of authored text is preceded by the NODE ID holding it (`edit_node nodeId: ...`), so a spec you find wrong here can be corrected straight away with edit_node(nodeId, content, catalog) — a catalog is not walkable, so this is where content and its id appear together. Read-only.",
       inputSchema: { id: z.string() },
     },
     guarded(async (a: { id: string }) => {
@@ -370,10 +402,20 @@ export function registerCatalogTools(server: McpServer) {
   );
 
   server.registerTool(
+    "use_rubric",
+    {
+      title: "Use a catalog rubric",
+      description: "Apply a catalog RUBRIC (an evaluation grid — e.g. Annexe 8's approval checklist, Annexe 7's scored grid) to a DOCUMENT by COPYING it, so `evaluate_document` knows which grid governs that document. `targetId` is a TeachingLearningMaterial (the document node), OR a Course — in which case the TLM that `covers` that Course is resolved for you. The entry (from the shared OR the workspace library) is cloned with fresh ids into the active subject, RELABELLED to the document layer (Rubric → RubricSection → RubricCriterion), and hung under the TLM via `hasPart`. A grid judges the DOCUMENT, so it attaches where a formatter does — not to the curriculum. A document may carry SEVERAL rubrics (a general quality grid plus an approval checklist); evaluate_document reports every one. (If a Course has no TLM yet, mint one first: add_nodes a TeachingLearningMaterial + create_edges a `covers` edge to the Course.) The copy is independent — later edits to the library rubric do not reach it. REQUIRES CONFIRMATION: dry-run returns diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetId/mintedIdMap; otherwise re-send confirm:true, the token, and the same mintedIdMap. DRAFT edit — publish_draft to make it live.",
+      inputSchema: APPLY_INPUT,
+    },
+    guarded(async (a: ApplyArgs) => applyCatalogEntry(a, "rubric")),
+  );
+
+  server.registerTool(
     "add_to_catalog",
     {
       title: "Add a routine or formatter to the catalog",
-      description: "Publish a routine or formatter you AUTHORED (an InstructionalRoutine entry + its steps/materials, built in the active subject with add_nodes) INTO a catalog library, so list_catalog / use_routine / use_formatter can then reuse it. It clones the entry's whole subtree with fresh ids into the destination and files it under that library's root — the write inverse of use_routine. DESTINATION: a workspace curator adds to their OWN workspace's library (omit targetWorkspace). A super_admin may target the shared cross-tenant library OR any workspace — pass `targetWorkspace` ('_shared' for the shared library, or a workspace id); call WITHOUT it to get back the list of catalogs to choose from. GATED by the destination — because it PUBLISHES, it needs an APPROVER of that workspace (or super_admin for the shared library). TWO-PHASE, and confirming does BOTH in one step: the dry-run returns the diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetWorkspace/mintedIdMap; otherwise re-send confirm:true + the token + the same mintedIdMap. Catalogs aren't enterable contexts, so there is no separate publish_draft.",
+      description: "Publish a routine, formatter or rubric you AUTHORED (an InstructionalRoutine entry + its steps/materials, built in the active subject with add_nodes) INTO a catalog library, so list_catalog / use_routine / use_formatter / use_rubric can then reuse it. It clones the entry's whole subtree with fresh ids into the destination and files it under that library's root — the write inverse of use_routine. DESTINATION: a workspace curator adds to their OWN workspace's library (omit targetWorkspace). A super_admin may target the shared cross-tenant library OR any workspace — pass `targetWorkspace` ('_shared' for the shared library, or a workspace id); call WITHOUT it to get back the list of catalogs to choose from. GATED by the destination — because it PUBLISHES, it needs an APPROVER of that workspace (or super_admin for the shared library). TWO-PHASE, and confirming does BOTH in one step: the dry-run returns the diff + confirmationToken + mintedIdMap. When the dry-run reports `payloadStored:true` (a large clone held server-side), confirm with ONLY confirm:true + the token — do NOT re-send entryId/targetWorkspace/mintedIdMap; otherwise re-send confirm:true + the token + the same mintedIdMap. Catalogs aren't enterable contexts, so there is no separate publish_draft.",
       inputSchema: {
         entryId: z.string().optional(),   // required on dry-run; omitted on token-only confirm
         targetWorkspace: z.string().optional(),

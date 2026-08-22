@@ -287,6 +287,227 @@ const ILLUSTRATION_REPRESENTATION_FORMATTER = {
   ],
 };
 
+// ── Authored rubric entries (evaluation grids) ───────────────────────────────
+// A rubric is a catalog entry (kind=rubric) shaped like a nested routine, one level
+// deeper than a formatter: entry → SECTIONS (each weighted) → CRITERIA (Materials
+// holding the measurable indicator). use_rubric relabels a copy to Rubric/
+// RubricSection/RubricCriterion under a document's TLM, and evaluate_document reads
+// it back. Sections and criteria are written as plain JS below and expanded by
+// `rubricEntry`, because a grid is ~30 criteria and the literal form would bury the
+// content under boilerplate.
+//
+// Content convention (as elsewhere in this file): English comments, French content.
+
+// Expand a grid into the raw {nodes, relationships} envelope assembleCatalog takes.
+// `sections` is [{ slug, name, weight?, criteria: [{ slug, name, indicator }] }];
+// positions are the array order, so re-ordering the source re-orders the grid.
+function rubricEntry({ id, name, summary, scale, sections }) {
+  const nodes = [{
+    id,
+    labels: [ROUTINE_LABEL],
+    properties: {
+      description: name,
+      metadata: { role: "instructional-routine", catalogKind: "rubric", summary, scale },
+    },
+  }];
+  const relationships = [];
+
+  sections.forEach((section, sectionIndex) => {
+    const sectionId = `${id}-${section.slug}`;
+    nodes.push({
+      id: sectionId,
+      labels: [ROUTINE_LABEL],
+      properties: {
+        description: section.name,
+        position: sectionIndex + 1,
+        metadata: { role: "instructional-routine", ...(section.weight ? { weight: section.weight } : {}) },
+      },
+    });
+    relationships.push({ id: `${sectionId}-haspart`, type: "hasPart", start: id, end: sectionId, properties: {} });
+
+    section.criteria.forEach((criterion, criterionIndex) => {
+      const criterionId = `${sectionId}-${criterion.slug}`;
+      nodes.push({
+        id: criterionId,
+        labels: [MATERIAL_LABEL],
+        properties: {
+          description: criterion.name,
+          materialType: "Reference",
+          position: criterionIndex + 1,
+          metadata: { role: "instructional-routine-material" },
+          content: criterion.indicator,
+        },
+      });
+      relationships.push({ id: `${criterionId}-haspart`, type: "hasPart", start: sectionId, end: criterionId, properties: {} });
+    });
+  });
+
+  return { nodes, relationships };
+}
+
+// SHARED: Annexe 7's scored grid. Only its CONTENT sections (A–F) are here — G–L
+// (contrôlabilité, cohérence, adaptation contextuelle, efficience, fiabilité, éthique)
+// judge the authoring TOOL and the process, not the material, and stamping them into a
+// document-scoped rubric would imply this server can answer them. The kept weights are
+// the source document's own, so they total 80%, not 100% — score each section, then
+// renormalise over the sections actually judged.
+const ANNEXE_7_RUBRIC = rubricEntry({
+  id: "rubric-annexe-7-materiels",
+  name: "Annexe 7 — Grille d'évaluation des matériels (sections A–F)",
+  scale: "0-4",
+  summary: [
+    "Grille NOTÉE de la qualité didactique d'un matériel produit. Échelle 0 à 4 : 0 = inexistant ou incorrect, 1 = très insuffisant, 2 = acceptable (minimum), 3 = bon, 4 = excellent. Le score global est la moyenne pondérée des sections.",
+    "Ne couvre que les sections A à F de l'Annexe 7 — celles qui portent sur le MATÉRIEL. Les sections G à L de la grille d'origine (contrôlabilité, cohérence pédagogique du dispositif, adaptation contextuelle, efficience, fiabilité, éthique et biais) évaluent l'outil de production et son usage : elles se jugent avec des personnes, pas sur un document, et ne figurent donc pas ici.",
+    "Les poids retenus sont ceux de la grille d'origine et totalisent 80 % ; renormaliser sur les seules sections évaluées.",
+    "Certains indicateurs supposent un test de terrain (taux de compréhension par les élèves, temps de résolution). Ils ne se déduisent pas d'une lecture du document : le déclarer explicitement plutôt que d'inventer une note.",
+  ].join("\n\n"),
+  sections: [
+    {
+      slug: "a-pertinence-didactique", name: "A. Pertinence didactique", weight: "20%",
+      criteria: [
+        { slug: "alignement", name: "Alignement aux objectifs", indicator: "Part des contenus alignés sur les objectifs définis. Vérifier que chaque section du document se rattache à un objectif du programme, et signaler tout contenu orphelin." },
+        { slug: "progression", name: "Progression pédagogique", indicator: "Présence d'une gradation claire du simple vers le complexe, observable d'une séance à la suivante." },
+        { slug: "explications", name: "Qualité des explications", indicator: "Explications structurées, en étapes explicites — et non un résultat donné sans cheminement." },
+        { slug: "exemples", name: "Pertinence des exemples", indicator: "Exemples en lien direct avec la notion enseignée, et non décoratifs ou hors sujet." },
+        { slug: "erreurs", name: "Anticipation des erreurs", indicator: "Les erreurs typiques des élèves sont nommées et traitées, pas seulement la démarche correcte." },
+      ],
+    },
+    {
+      slug: "b-exactitude", name: "B. Exactitude disciplinaire", weight: "15%",
+      criteria: [
+        { slug: "contenus", name: "Exactitude des contenus", indicator: "Part d'erreurs détectées ; l'objectif est zéro. Citer chaque erreur relevée avec sa localisation." },
+        { slug: "solutions", name: "Rigueur des solutions", indicator: "Les solutions proposées sont complètes et justifiées, non tronquées." },
+        { slug: "coherence", name: "Cohérence interne", indicator: "Absence de contradictions entre deux passages du même document (terminologie, valeurs, consignes)." },
+      ],
+    },
+    {
+      slug: "c-adaptation-niveau", name: "C. Adaptation au niveau", weight: "10%",
+      criteria: [
+        { slug: "niveau-cognitif", name: "Niveau cognitif", indicator: "Adéquation avec le niveau cible (par exemple CE1) : ni au-dessous, ni hors de portée." },
+        { slug: "complexite", name: "Complexité des tâches", indicator: "Progressivité observable de la difficulté des tâches au fil du document." },
+        { slug: "differenciation", name: "Différenciation", indicator: "Des variantes sont proposées (facile / moyen / difficile), ou une remédiation est prévue pour les élèves en difficulté." },
+      ],
+    },
+    {
+      slug: "d-gestion-langage", name: "D. Gestion du langage", weight: "15%",
+      criteria: [
+        { slug: "consignes", name: "Clarté des consignes", indicator: "Taux de compréhension par les élèves (test terrain). Non déductible du seul document : le signaler si aucun test n'est disponible, et juger à défaut la lisibilité des consignes pour l'enseignant." },
+        { slug: "simplicite", name: "Simplicité linguistique", indicator: "Longueur moyenne des phrases et vocabulaire contrôlé, adaptés au niveau." },
+        { slug: "vocabulaire", name: "Explicitation du vocabulaire", indicator: "Les termes techniques de la discipline sont définis (Annexe 7 : « termes mathématiques »)." },
+        { slug: "multilinguisme", name: "Multilinguisme", indicator: "Possibilité L1/L2 (par exemple wolof / français) prise en charge là où le dispositif le prévoit." },
+        { slug: "terminologie", name: "Cohérence terminologique", indicator: "Un même objet porte un même nom d'un bout à l'autre : absence de variations confuses." },
+      ],
+    },
+    {
+      slug: "e-qualite-taches", name: "E. Qualité des tâches", weight: "10%",
+      criteria: [
+        { slug: "variete", name: "Variété des exercices", indicator: "Nombre de types d'activités différents proposés ; compter les types, pas les exercices." },
+        { slug: "niveau-taches", name: "Niveau cognitif des tâches", indicator: "Part de tâches de réflexion par rapport aux tâches de répétition." },
+        { slug: "ancrage", name: "Ancrage réel", indicator: "Présence de contextes réels et familiers aux élèves, plutôt que d'énoncés abstraits." },
+      ],
+    },
+    {
+      slug: "f-explication-feedback", name: "F. Explication & feedback", weight: "10%",
+      criteria: [
+        { slug: "pas-a-pas", name: "Explication pas à pas", indicator: "Les étapes détaillées sont présentes, y compris pour l'enseignant qui remédie." },
+        { slug: "feedback", name: "Feedback sur les erreurs", indicator: "Les retours sur erreur sont explicatifs : ils disent pourquoi, pas seulement que c'est faux." },
+        { slug: "reformulation", name: "Reformulation", indicator: "Des explications alternatives sont proposées pour l'élève qui n'a pas compris la première." },
+      ],
+    },
+  ],
+});
+
+// WORKSPACE (senegal): Annexe 8's approval checklist — the Oui/Non gate an MoE
+// reviewer signs before a final support is printed. Deliberately PARTIAL: the rows
+// that a formatter already enforces AT GENERATION TIME are not repeated here, namely
+// Annexe 8's section C (physical: marges, taille et police de caractères, espacements,
+// contraste, pagination, table des matières, repères) and the illustration block
+// (diversifiées, attrayantes, ludiques, en adéquation avec les textes, non
+// stéréotypées). Those live in the fiche-session layout formatter and the illustration
+// formatters — you do not want to generate a support with 9pt text and then tick "Non"
+// in a box. What remains is what only a reader of the finished document can answer.
+//
+// Note the two are not the same instrument: Annexe 7 SCORES quality 0–4, Annexe 8
+// GATES approval Oui/Non. A single "Non" blocks; there is no weighted average.
+const ANNEXE_8_RUBRIC = rubricEntry({
+  id: "rubric-annexe-8-approbation",
+  name: "Annexe 8 — Grille d'approbation des supports finaux (critères de jugement)",
+  scale: "oui-non",
+  summary: [
+    "Grille d'APPROBATION, non de notation : chaque critère se répond par Oui ou Non, sans pondération. Tout « Non » est bloquant et doit être listé comme tel, avec la localisation du passage en cause.",
+    "Cette grille ne reprend PAS l'intégralité de l'Annexe 8. Les critères physiques (section C : mise en page, marges, taille et police de caractères, espacements, contraste texte-papier, pagination, table des matières, repères) et le bloc sur les illustrations (diversifiées, attrayantes, ludiques, en adéquation avec les textes, non stéréotypées) sont pris en charge en amont par les formatters de mise en page et d'illustration : ils sont satisfaits par construction à la génération, et non vérifiés après coup ici.",
+    "Restent ci-dessous les critères qui exigent la lecture du document produit — exactitude, progression, exploitation pédagogique, représentation socioculturelle, langue. Plusieurs ne s'apprécient qu'à l'échelle du SUPPORT ENTIER (équité de genre, diversité géographique) : lire le document en entier avant de répondre.",
+    "Support évalué : le support effectivement produit. L'Annexe 8 d'origine vise les Cahiers de récits et les Livrets gradués ; ici, aucun manuel de l'élève n'étant produit, la grille s'applique au Guide de l'enseignant.",
+  ].join("\n\n"),
+  sections: [
+    {
+      slug: "a-contenus", name: "A. Contenus",
+      criteria: [
+        { slug: "couverture", name: "Couverture des objets d'apprentissage", indicator: "Les supports produits contribuent-ils à la couverture de la totalité des objets d'apprentissage programmés ? (À recouper avec review_draft, qui vérifie la même couverture côté graphe.)" },
+        { slug: "themes", name: "Conformité aux thèmes", indicator: "Les contenus sont-ils conformes aux thèmes proposés dans les spécifications pédagogiques ?" },
+        { slug: "exactitude", name: "Exactitude", indicator: "Les contenus sont-ils exacts — données précises, claires et non sujettes à interprétation — là où cela s'applique ?" },
+        { slug: "actualite", name: "Actualité", indicator: "Les contenus reflètent-ils les réalités récentes et l'état des connaissances en apprentissage de la lecture initiale ?" },
+      ],
+    },
+    {
+      slug: "b-strategie", name: "B. Stratégie pédagogique",
+      criteria: [
+        { slug: "progression", name: "Progression", indicator: "Les supports respectent-ils le principe de progression défini dans les spécifications pédagogiques, en présentant des apprentissages significatifs progressifs et illustrés ?" },
+        { slug: "integration", name: "Situations d'intégration", indicator: "Présentent-ils des situations significatives d'intégration diverses ?" },
+        { slug: "pratique-reguliere", name: "Pratique régulière de la lecture", indicator: "Les supports favorisent-ils la pratique régulière de la lecture ?" },
+        { slug: "consolidation", name: "Révision et consolidation", indicator: "Les supports favorisent-ils la révision ou la consolidation de la lecture ?" },
+        { slug: "vecu", name: "Appel au vécu de l'élève", indicator: "Les possibilités d'exploitation pédagogique font-elles appel au vécu de l'élève ?" },
+        { slug: "acquis", name: "Consolidation des acquis", indicator: "Font-elles appel à la consolidation des acquis ?" },
+        { slug: "reinvestissement", name: "Réinvestissement des acquis", indicator: "Font-elles appel au réinvestissement des acquis ?" },
+      ],
+    },
+    {
+      slug: "c-evaluation", name: "C. Évaluation",
+      criteria: [
+        { slug: "formative", name: "Évaluation formative", indicator: "Le support comprend-il des questions permettant l'évaluation formative des élèves ? (Annexe 8 : pour le cahier de récits et les livrets gradués des niveaux 6 et 7.)" },
+      ],
+    },
+    {
+      slug: "d-realites-socioculturelles", name: "D. Respect des réalités socio-culturelles sénégalaises",
+      criteria: [
+        { slug: "situations-diversifiees", name: "Diversité des situations", indicator: "Les supports présentent-ils différents types de textes et d'illustrations dans des situations diversifiées respectant les réalités sénégalaises ?" },
+        { slug: "geographique", name: "Diversité géographique", indicator: "La diversité géographique (zone urbaine et zone rurale) est-elle respectée ? À apprécier sur l'ensemble du support, en comptant les scènes situées." },
+        { slug: "religieuse", name: "Diversité religieuse", indicator: "La diversité religieuse est-elle respectée ?" },
+        { slug: "ethnique", name: "Diversité ethnique et coutumière", indicator: "La diversité ethnique et coutumière est-elle respectée ?" },
+        { slug: "symboles", name: "Symboles, personnages et sites célèbres", indicator: "Les supports respectent-ils les symboles liés aux personnages ou sites célèbres du Sénégal ?" },
+      ],
+    },
+    {
+      slug: "e-genre-inclusion", name: "E. Genre et inclusion sociale",
+      criteria: [
+        { slug: "handicap", name: "Personnages porteurs de handicap", indicator: "Les personnages porteurs de handicap sont-ils représentés de façon respectueuse et dans des rôles valorisants ? Répondre Non si aucun n'apparaît : l'absence est elle-même un manquement." },
+        { slug: "equite", name: "Représentation équitable des deux sexes", indicator: "Les personnages des deux sexes sont-ils représentés de façon équitable ? Compter les personnages sur tout le support, et regarder en particulier qui agit, décide et explique." },
+        { slug: "respect-realites", name: "Représentation respectueuse", indicator: "Les personnages des deux sexes sont-ils représentés de façon respectueuse des réalités sénégalaises ?" },
+        { slug: "stereotypes", name: "Absence de stéréotypes", indicator: "Les comportements de l'un ou de l'autre sexe sont-ils dénués de stéréotypes ?" },
+      ],
+    },
+    {
+      slug: "f-competences-de-vie", name: "F. Compétences de vie",
+      criteria: [
+        { slug: "environnement", name: "Préservation de l'environnement", indicator: "Les contenus des textes et des illustrations sont-ils respectueux de la préservation de l'environnement ?" },
+        { slug: "developpement-durable", name: "Développement durable", indicator: "Suscitent-ils des actions favorisant le développement durable (santé et bien-être, entrepreneuriat, citoyenneté, environnement, etc.) ?" },
+        { slug: "citoyennete", name: "Devoirs et droits", indicator: "Incitent-ils l'élève à accomplir ses devoirs envers sa communauté et à jouir de ses droits ?" },
+        { slug: "respect", name: "Respect de soi et des autres", indicator: "Suscitent-ils chez l'élève le renforcement des capacités de respect de soi et des autres ?" },
+        { slug: "hygiene-securite", name: "Hygiène et sécurité", indicator: "Suscitent-ils le renforcement des capacités de respect des règles d'hygiène et de sécurité ?" },
+      ],
+    },
+    {
+      slug: "g-langue", name: "G. Critères linguistiques et typographiques",
+      criteria: [
+        { slug: "normes", name: "Normes linguistiques", indicator: "Les normes linguistiques sont-elles respectées — textes exempts de fautes, de coquilles, etc. ?" },
+        { slug: "niveau-langage", name: "Langage adapté au niveau", indicator: "Le support utilise-t-il un langage adapté au niveau scolaire de l'élève ?" },
+        { slug: "richesse", name: "Richesse du vocabulaire", indicator: "Le vocabulaire utilisé est-il riche et diversifié ?" },
+        { slug: "typographie", name: "Règles typographiques", indicator: "Les règles typographiques dans la présentation sont-elles respectées ? (La mise en page elle-même relève du formatter de layout, pas de ce critère.)" },
+      ],
+    },
+  ],
+});
+
 // Read every installed source's raw graph (assembleCatalog keeps only the routine
 // subtrees), to be spliced under the SHARED catalog with the shared formatters.
 const subjectSources = [];
@@ -298,6 +519,14 @@ for (const bundlePath of fixtureGraphs()) {
   subjectSources.push({ nodes: parsed.nodes ?? [], relationships: parsed.relationships ?? parsed.edges ?? [] });
 }
 
+// DANGER — do NOT run this against the LIVE `senegal` catalog. store.writeSlot
+// rewrites the WHOLE slot: it upserts these ids and DELETES every node not in the
+// batch. The live senegal library holds ~18 entries authored through add_to_catalog
+// that exist nowhere in this file, so a seed run would erase them (and duplicate the
+// entries whose live ids were minted rather than slugged). Deliver a new senegal entry
+// with add_to_catalog through the curator loop; use this script for `_shared`, or only
+// after folding the live entries in. The `--dry-run` flag is safe.
+//
 // The catalog namespaces to seed. `sources` are subject graphs (scraped for their
 // ROUTINE subtrees only); `authored` are the formatter literals, added whole. Keeping
 // them separate is what stops a subject graph's attached formatter copies (from
@@ -306,12 +535,12 @@ for (const bundlePath of fixtureGraphs()) {
 // workspace-agnostic formatters); each workspace library holds entries local to that
 // tenant (its subject-specific layout formatters).
 const catalogs = [
-  { namespace: SHARED_CATALOG_NAMESPACE, adapterId: "shared-routine-catalog", sources: subjectSources, authored: [HOUSE_STYLE_FORMATTER, HOUSE_ART_STYLE_FORMATTER] },
+  { namespace: SHARED_CATALOG_NAMESPACE, adapterId: "shared-routine-catalog", sources: subjectSources, authored: [HOUSE_STYLE_FORMATTER, HOUSE_ART_STYLE_FORMATTER, ANNEXE_7_RUBRIC] },
   {
     namespace: catalogNamespace("senegal"),
     adapterId: "senegal-catalog",
     sources: [],
-    authored: [MATHS_ILLUSTRATION_FORMATTER, ILLUSTRATION_REPRESENTATION_FORMATTER],
+    authored: [MATHS_ILLUSTRATION_FORMATTER, ILLUSTRATION_REPRESENTATION_FORMATTER, ANNEXE_8_RUBRIC],
   },
 ];
 

@@ -301,7 +301,7 @@ describe("editable and rules come from the real sources (no hand-copied literals
   it("catalog advertises its tools + browse resource; canUse mirrors the apply gate", async () => {
     const caps = await withActiveContext(CURATOR, callGetCapabilities);
     expect(caps.catalog.browse).toBe(true);   // list_catalog is an ungated read
-    expect(caps.catalog.tools).toEqual(["list_catalog", "get_catalog_entry", "use_routine", "use_formatter", "add_to_catalog"]);
+    expect(caps.catalog.tools).toEqual(["list_catalog", "get_catalog_entry", "use_routine", "use_formatter", "use_rubric", "add_to_catalog"]);
     expect(caps.catalog.resources).toEqual(["catalog://{scope}/{id}"]);
     expect(caps.catalog.scopes.shared).toBe(SHARED_CATALOG_NAMESPACE);
     // use_routine copies onto the draft — same gate as any edit, no drift.
