@@ -61,11 +61,21 @@ async function seedCatalog(s: KgNodeStore) {
     rNode("cat-flat", "InstructionalRoutine", { description: "Séance d'intégration" }),
     rNode("cat-flat-1", "Material", { description: "Révision", position: 1, timeRequired: "PT5M", content: "corps révision" }),
     rNode("cat-flat-2", "Material", { description: "Intégration", position: 2, content: "corps intégration" }),
+    // …and a RUBRIC entry — one level deeper than a formatter: weighted sections of
+    // named criteria, each criterion's measurable indicator in its `content`.
+    rNode("cat-rub", "InstructionalRoutine", { description: "Grille d'approbation", metadata: { catalogKind: "rubric", scale: "oui-non", summary: "Oui/Non, tout Non bloque" } }),
+    rNode("cat-rub-a", "InstructionalRoutine", { description: "A. Contenus", position: 1, metadata: { weight: "20%" } }),
+    rNode("cat-rub-a1", "Material", { description: "Exactitude", position: 1, content: "Les contenus sont-ils exacts ?" }),
+    rNode("cat-rub-a2", "Material", { description: "Progression", position: 2, content: "La progression est-elle observable ?" }),
+    rNode("cat-rub-b", "InstructionalRoutine", { description: "B. Genre", position: 2 }),
+    rNode("cat-rub-b1", "Material", { description: "Équité", position: 1, content: "Les deux sexes sont-ils représentés équitablement ?" }),
   ];
   const edges = [
     rEdge("cat-root", "cat-entry"), rEdge("cat-entry", "cat-s1"), rEdge("cat-entry", "cat-s2"), rEdge("cat-s1", "cat-m1"), rEdge("cat-s2", "cat-m2"),
     rEdge("cat-root", "cat-fmt"), rEdge("cat-fmt", "cat-fmt-spec"),
     rEdge("cat-root", "cat-flat"), rEdge("cat-flat", "cat-flat-1"), rEdge("cat-flat", "cat-flat-2"),
+    rEdge("cat-root", "cat-rub"), rEdge("cat-rub", "cat-rub-a"), rEdge("cat-rub", "cat-rub-b"),
+    rEdge("cat-rub-a", "cat-rub-a1"), rEdge("cat-rub-a", "cat-rub-a2"), rEdge("cat-rub-b", "cat-rub-b1"),
   ];
   const meta: StoredMeta = { contentHash: "test", seededAt: "1970-01-01T00:00:00Z", adapterId: "catalog", nodeCount: nodes.length, edgeCount: edges.length };
   await s.writeSlot(SHARED_CATALOG_NAMESPACE, "a", { nodes, edges, meta });
@@ -148,6 +158,22 @@ describe("list_catalog", () => {
     expect(byId["cat-entry"].steps.map((s) => s.id)).toEqual(["cat-s1", "cat-s2"]);
     expect(byId["cat-fmt"]).toMatchObject({ scope: "shared", kind: "formatter", name: "House style", materialCount: 1 });
     expect(byId["cat-fmt"].steps).toEqual([]);   // a formatter has no ordered steps
+  });
+
+  it("lists a rubric's sections as steps, with their weights and criteria", async () => {
+    const byId = Object.fromEntries(listCatalogEntries(await readCatalog(SHARED_CATALOG_NAMESPACE), "shared").map((e) => [e.id, e]));
+    // materialCount counts the leaves under the whole entry — here the 3 criteria.
+    expect(byId["cat-rub"]).toMatchObject({ kind: "rubric", scale: "oui-non", materialCount: 3 });
+    // The criteria hang off SECTIONS, not off the entry, so they surface as each
+    // section's `materials` (the entry's own `materials` stays empty).
+    expect(byId["cat-rub"].steps).toEqual([
+      { id: "cat-rub-a", name: "A. Contenus", order: 1, timeRequired: undefined, weight: "20%",
+        materials: [{ id: "cat-rub-a1", name: "Exactitude" }, { id: "cat-rub-a2", name: "Progression" }] },
+      { id: "cat-rub-b", name: "B. Genre", order: 2, timeRequired: undefined, weight: undefined,
+        materials: [{ id: "cat-rub-b1", name: "Équité" }] },
+    ]);
+    // A routine still reports no scale — the field is the rubric's alone.
+    expect(byId["cat-entry"].scale).toBeUndefined();
   });
 
   it("derives steps from a routine's DIRECT Material children (the add_to_catalog shape)", async () => {
@@ -249,6 +275,22 @@ describe("catalog browse resources", () => {
     expect(flatMd).toContain("## Intégration");
     expect(flatMd.indexOf("## Révision")).toBeLessThan(flatMd.indexOf("## Intégration")); // ordered
   });
+
+  it("renders a rubric as its scale plus weighted sections of named criteria", async () => {
+    const md = renderCatalogEntry(await readCatalog(SHARED_CATALOG_NAMESPACE), "cat-rub", "shared")!;
+    expect(md).toContain("*rubric · shared catalog*");
+    expect(md).toContain("**Échelle : oui-non**");
+    expect(md).toContain("## A. Contenus  (poids : 20%)");
+    expect(md).toContain("## B. Genre");          // a section may carry no weight
+    // A criterion has BOTH a name and an indicator, so unlike a routine step's body
+    // the name gets its own heading — otherwise the grid reads as loose questions.
+    expect(md).toContain("### Exactitude");
+    expect(md).toContain("Les contenus sont-ils exacts ?");
+    // …and each criterion names the node holding it, so a wrong indicator in a master
+    // can be corrected with edit_node(nodeId, content, catalog).
+    expect(md).toContain("`edit_node` nodeId: `cat-rub-a1`");
+    expect(md.indexOf("### Exactitude")).toBeLessThan(md.indexOf("### Progression"));
+  });
 });
 
 describe("use_routine", () => {
@@ -346,6 +388,48 @@ describe("use_formatter", () => {
       const courseId = (await readPublished()).nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
       const res = jsonOf(await applyCatalogEntry({ entryId: "cat-fmt", targetId: courseId }, "formatter")) as { error?: string };
       expect(res.error).toMatch(/no TeachingLearningMaterial covering it yet/);
+    });
+  });
+});
+
+describe("use_rubric", () => {
+  const jsonOf = (r: unknown) => JSON.parse((r as { content: Array<{ text: string }> }).content[0].text);
+
+  it("relabels the copy across all THREE levels and hangs it under the document", async () => {
+    await inCtx(async () => {
+      const courseId = (await readPublished()).nodes.find((n) => (n.labels ?? []).includes("Course"))!.id;
+      const tlmId = await addTlmToPublished(courseId);
+
+      const dry = jsonOf(await applyCatalogEntry({ entryId: "cat-rub", targetId: courseId }, "rubric")) as {
+        mintedIdMap: Record<string, string>; confirmationToken: string;
+      };
+      const done = jsonOf(await applyCatalogEntry({ entryId: "cat-rub", targetId: courseId, mintedIdMap: dry.mintedIdMap, confirm: true, confirmationToken: dry.confirmationToken }, "rubric")) as { ok: boolean };
+      expect(done.ok).toBe(true);
+
+      const draft = (await readDraft())!;
+      const labelsOf = (oldId: string) => draft.nodes.find((n) => n.id === dry.mintedIdMap[oldId])!.labels;
+      expect(labelsOf("cat-rub")).toEqual(["Rubric"]);
+      expect(labelsOf("cat-rub-a")).toEqual(["RubricSection"]);
+      expect(labelsOf("cat-rub-a1")).toEqual(["RubricCriterion"]);
+      // The grid hangs off the DOCUMENT, like a formatter — never a usesRoutine edge.
+      expect(draft.edges.some((e) => e.id === makeEdgeId("hasPart", tlmId, dry.mintedIdMap["cat-rub"]))).toBe(true);
+      expect(draft.edges.some((e) => e.type === "usesRoutine" && e.to === dry.mintedIdMap["cat-rub"])).toBe(false);
+      // Weight and scale are CONTENT, not kind tags — they survive the relabel, while
+      // catalogKind (which the label now carries) is scrubbed.
+      const rubric = draft.nodes.find((n) => n.id === dry.mintedIdMap["cat-rub"])!;
+      const section = draft.nodes.find((n) => n.id === dry.mintedIdMap["cat-rub-a"])!;
+      const meta = (n: typeof rubric) => ((n.properties!.raw as Record<string, unknown>).metadata ?? {}) as Record<string, unknown>;
+      expect(meta(rubric).scale).toBe("oui-non");
+      expect(meta(rubric).catalogKind).toBeUndefined();
+      expect(meta(section).weight).toBe("20%");
+    });
+  });
+
+  it("refuses a Lesson as the target — a grid judges the document, not the curriculum", async () => {
+    await inCtx(async () => {
+      const lessonId = someLessonId(await readPublished());
+      const res = jsonOf(await applyCatalogEntry({ entryId: "cat-rub", targetId: lessonId }, "rubric")) as { error?: string };
+      expect(res.error).toMatch(/use_rubric targets a TeachingLearningMaterial/);
     });
   });
 });

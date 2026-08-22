@@ -1,6 +1,6 @@
 /*
- * Catalog — a library of reusable spec blocks (instructional routines and, later,
- * formatters) that a curator browses and copies onto content.
+ * Catalog — a library of reusable spec blocks (instructional routines, formatters
+ * and evaluation rubrics) that a curator browses and copies onto content.
  *
  * The catalog lives in a reserved `_catalog` partition, ONE graph per SCOPE:
  *   - the cross-tenant SHARED library (workspace `_shared`), and
@@ -11,14 +11,17 @@
  *     ─hasPart→ InstructionalRoutine (ENTRY)       ← a catalog entry: "Fiche de leçon", …
  *                 ─hasPart→ InstructionalRoutine (step) ─hasPart→ Material
  *
- * Each entry carries a `kind` (routine | formatter). Using an entry COPIES it:
+ * Each entry carries a `kind` (routine | formatter | rubric). Using an entry COPIES it:
  * cloneRoutineSubtree mints fresh ids for the entry and its whole subtree into the
  * active subject's namespace. A ROUTINE attaches to a Lesson via `usesRoutine`
  * (`useRoutine`); a FORMATTER is relabelled to the document-layer Formatter/
  * FormatterSpec shape (`relabelClonedFormatter`) and hung under the document's
  * TeachingLearningMaterial via `hasPart` (`useFormatter`) — formatting is a property
  * of the DOCUMENT, not the curriculum, so it never rides a Course's `usesRoutine`
- * edge (the pre-Phase-4 stopgap the TLM migration moved away from). The copy is
+ * edge (the pre-Phase-4 stopgap the TLM migration moved away from). A RUBRIC — the
+ * evaluation grid a document is judged against — attaches the same way, relabelled to
+ * Rubric/RubricSection/RubricCriterion (`useRubric`), because which grid governs a
+ * document is a property of the document too. The copy is
  * independent — later edits to the library entry do NOT reach copies already made
  * (that independence is the point). Edit rights follow the entry's namespace:
  * `_shared` writes need super_admin, `<workspace>` writes its curators.
@@ -53,13 +56,22 @@ const FORMATTER_LABEL = "Formatter";
 const FORMATTER_SPEC_LABEL = "FormatterSpec";
 const TLM_LABEL = "TeachingLearningMaterial";
 
+// The document-layer labels a RUBRIC takes on when applied — an evaluation grid
+// (Annexe 8's approval checklist, Annexe 7's scored grid) hung under the document it
+// judges. Three levels, because a grid is sections of criteria: Rubric ─hasPart→
+// RubricSection ─hasPart→ RubricCriterion. Non-canonical, like the rest of the
+// document layer. See docs/design-notes/evaluation-rubrics.md.
+const RUBRIC_LABEL = "Rubric";
+const RUBRIC_SECTION_LABEL = "RubricSection";
+const RUBRIC_CRITERION_LABEL = "RubricCriterion";
+
 // The labels a `usesRoutine` edge may originate from (canonical LC) — the valid
 // targets of use_routine. A formatter no longer rides usesRoutine (it hangs under a
 // TeachingLearningMaterial via hasPart — see useFormatter), so this is routines only.
 const ROUTINE_USERS = new Set(["Lesson", "Course", "Activity"]);
 
 export type CatalogScope = "shared" | "workspace";
-export type CatalogKind = "routine" | "formatter";
+export type CatalogKind = "routine" | "formatter" | "rubric";
 
 // One catalog entry as listed to a browsing curator — the entry's identity, its
 // kind, which scope it came from, plus a shallow outline (its steps) so the pick is
@@ -77,7 +89,10 @@ export type CatalogEntry = {
   scope: CatalogScope;          // which library this entry lives in (drives edit rights)
   name: string;                 // the entry's title (raw.description)
   summary: string;              // cross-cutting rules (raw.metadata.summary), "" when absent
-  steps: Array<{ id: string; name: string; order: number; timeRequired?: string; materials: CatalogMaterial[] }>;
+  scale?: string;               // a RUBRIC's scoring scale, e.g. "0-4" or "oui-non"
+  // A rubric's SECTIONS list here too — same shape as a routine's steps, with the
+  // section's `weight` ("20%") in place of a step's `timeRequired`.
+  steps: Array<{ id: string; name: string; order: number; timeRequired?: string; weight?: string; materials: CatalogMaterial[] }>;
   materials: CatalogMaterial[]; // the entry's OWN direct Materials — a formatter's spec
   materialCount: number;        // load-bearing Material leaves under the entry
 };
@@ -98,7 +113,9 @@ const num = (v: unknown): number | undefined => (typeof v === "number" ? v : und
 // no "Formatter" LC label to reach for, so the author overloads role). Either counts.
 const kindOf = (n: MutationNode): CatalogKind => {
   const meta = metaOf(n);
-  return meta.catalogKind === "formatter" || meta.role === "formatter" ? "formatter" : "routine";
+  if (meta.catalogKind === "rubric") return "rubric";
+  if (meta.catalogKind === "formatter" || meta.role === "formatter") return "formatter";
+  return "routine";
 };
 
 // A step's ordinal comes from raw.position or raw.metadata.order (CI maths writes
@@ -160,6 +177,8 @@ function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, chi
     name: str(rawOf(n).description),
     order: orderOf(n),
     timeRequired: str(rawOf(n).timeRequired) || undefined,
+    // Only a rubric SECTION carries a weight ("20%"); a routine step has none.
+    weight: str(metaOf(n).weight) || undefined,
     materials: materialsUnder(n.id),
   });
 
@@ -190,6 +209,7 @@ function describeEntry(entry: MutationNode, byId: Map<string, MutationNode>, chi
     scope,
     name: str(rawOf(entry).description),
     summary: str(metaOf(entry).summary),
+    scale: str(metaOf(entry).scale) || undefined,
     steps,
     materials,
     materialCount,
@@ -223,6 +243,22 @@ export function renderCatalogEntry(graph: MutationGraph, entryId: string, scope:
     for (const m of childrenOf(entry.id).filter(isMaterial)) {
       const content = str(rawOf(m).content);
       if (content) lines.push(editHint(m.id), "", content, "");
+    }
+  } else if (kind === "rubric") {
+    // A grid: weighted sections of named criteria. Unlike a routine step (whose text
+    // IS the body), a criterion has BOTH a name ("Alignement aux objectifs") and a
+    // measurable indicator, so the name gets its own heading above the indicator.
+    const scale = str(metaOf(entry).scale);
+    if (scale) lines.push(`**Échelle : ${scale}**`, "");
+    const sections = childrenOf(entry.id).filter(isRoutine).sort((a, b) => orderOf(a) - orderOf(b));
+    for (const section of sections) {
+      const weight = str(metaOf(section).weight);
+      lines.push(`## ${str(rawOf(section).description)}${weight ? `  (poids : ${weight})` : ""}`, "");
+      for (const criterion of childrenOf(section.id).filter(isMaterial).sort((a, b) => orderOf(a) - orderOf(b))) {
+        lines.push(`### ${str(rawOf(criterion).description)}`, "", editHint(criterion.id), "");
+        const indicator = str(rawOf(criterion).content);
+        if (indicator) lines.push(indicator, "");
+      }
     }
   } else {
     // A routine's ordered steps, each under its own heading. A step is either a child
@@ -312,14 +348,17 @@ function toCatalogStoreShape(raw: RawGraphSnapshot, namespace: string): Mutation
 // Re-home one source's top-level routine subtrees under `rootId`, appending to
 // `nodes`/`edges`. A top-level routine is an `InstructionalRoutine` with no routine
 // `hasPart` parent; its subtree (steps + Materials) comes along verbatim, ids
-// preserved. `keepFormatters` decides whether formatter-kind entries are taken —
-// false for scraped subject bundles (a subject graph may CARRY formatter attachments,
-// but those are copies of authored entries and must not be re-scraped into the catalog),
-// true for the authored formatter literals that ARE the formatter entries.
-function rehomeEntries(source: RawGraphSnapshot, namespace: string, rootId: string, keepFormatters: boolean, nodes: MutationNode[], edges: MutationEdge[]): void {
+// preserved. `keepAuthoredKinds` decides whether NON-routine entries (formatters,
+// rubrics) are taken — true for the authored literals that ARE those entries, false
+// for scraped subject bundles: a subject graph CARRIES formatter/rubric attachments,
+// but those are copies of authored entries and re-scraping them would seed a second
+// copy of every one. (Copies applied since the document layer landed are relabelled
+// to Formatter/Rubric and so fail `isRoutine` anyway; this guards the older ones that
+// are still InstructionalRoutine with only a metadata tag.)
+function rehomeEntries(source: RawGraphSnapshot, namespace: string, rootId: string, keepAuthoredKinds: boolean, nodes: MutationNode[], edges: MutationEdge[]): void {
   const graph = toCatalogStoreShape(source, namespace);
   const { byId, children, hasRoutineParent } = indexContainment(graph);
-  const entries = graph.nodes.filter((n) => isRoutine(n) && !hasRoutineParent.has(n.id) && (keepFormatters || kindOf(n) !== "formatter"));
+  const entries = graph.nodes.filter((n) => isRoutine(n) && !hasRoutineParent.has(n.id) && (keepAuthoredKinds || kindOf(n) === "routine"));
   for (const entry of entries) {
     const ids = new Set(subtreeIds(entry.id, children));
     for (const id of ids) { const n = byId.get(id); if (n) nodes.push(n); }
@@ -330,11 +369,12 @@ function rehomeEntries(source: RawGraphSnapshot, namespace: string, rootId: stri
 
 // Build a catalog's stored graph: a single root container plus re-homed entries.
 // `sources` are subject graphs (a subject's knowledge_graph.json) — scraped for their
-// ROUTINE subtrees only; any formatter a subject graph carries (a copy attached under
-// its document via use_formatter) is deliberately NOT re-scraped, since the catalog's
-// formatters come solely from the authored literals in `authored`. `authored` are those
-// formatter/routine literals, taken whole (formatters kept). Everything else in a source
-// (chapters, lessons, the spine) is dropped. `namespace` is the target catalog.
+// ROUTINE subtrees only; any formatter or rubric a subject graph carries (a copy
+// attached under its document via use_formatter / use_rubric) is deliberately NOT
+// re-scraped, since those come solely from the authored literals in `authored`.
+// `authored` are the routine/formatter/rubric literals, taken whole (every kind kept).
+// Everything else in a source (chapters, lessons, the spine) is dropped. `namespace`
+// is the target catalog.
 export function assembleCatalog(sources: RawGraphSnapshot[], namespace = SHARED_CATALOG_NAMESPACE, rootId = CATALOG_ROOT_ID, authored: RawGraphSnapshot[] = []): MutationGraph {
   const root: MutationNode = {
     id: rootId, type: ROUTINE_LABEL, namespace, labels: [ROUTINE_LABEL], spine: false,
@@ -390,12 +430,13 @@ export const useRoutine: GraphMutation<UseRoutineArgs> = {
 // Phase-4 migration produces (scripts/migrate-tlm-documents.mjs, Steps A + D), so a
 // formatter applied today matches one migrated from the old usesRoutine stopgap.
 
-// Drop the kind-signalling metadata tags a catalog formatter carried
-// (`catalogKind` / `role:"formatter"`) — the LC label now carries the kind. Returns
-// a fresh raw bag (metadata copied, not mutated) so the source catalog node is never
+// Drop the kind-signalling metadata tags a catalog entry carried (`catalogKind` /
+// `role:"formatter"`) — once relabelled, the LC label carries the kind. Returns a
+// fresh raw bag (metadata copied, not mutated) so the source catalog node is never
 // touched; an emptied metadata bag is dropped so the relabelled node stays
-// canonical-clean. Mirrors migrate-tlm-documents.mjs::dropKindTags.
-function withoutFormatterKindTags(raw: Record<string, unknown>): Record<string, unknown> {
+// canonical-clean. A rubric's `weight` / `scale` survive: they are content, not tags.
+// Mirrors migrate-tlm-documents.mjs::dropKindTags.
+function withoutKindTags(raw: Record<string, unknown>): Record<string, unknown> {
   const next = { ...raw };
   const metadata = next.metadata as Record<string, unknown> | undefined;
   if (metadata) {
@@ -429,7 +470,7 @@ export function relabelClonedFormatter(clone: ClonedSubtree): ClonedSubtree {
       ...node,
       type: label,
       labels: [label],
-      properties: { ...(node.properties ?? {}), raw: withoutFormatterKindTags(rawOf(node)) },
+      properties: { ...(node.properties ?? {}), raw: withoutKindTags(rawOf(node)) },
     };
   });
   return { ...clone, nodes };
@@ -449,25 +490,114 @@ export type UseFormatterArgs = {
   newFormatterId: string;       // the cloned entry, relabelled to Formatter (the hasPart target)
 };
 
+// The checks use_formatter and use_rubric share: the target is an existing
+// TeachingLearningMaterial, and the pre-built clone is intact and not already in the
+// draft. `tool`/`noun` name the caller so the message reads as that tool's own, e.g.
+// ("use_rubric", "rubric").
+function validateDocumentAttachment(
+  base: MutationGraph,
+  args: { tlmId: string; clonedNodes: MutationNode[] },
+  attachedId: string,
+  tool: string,
+  noun: string,
+): string[] {
+  const errors: string[] = [];
+  const target = nodeById(base, args.tlmId);
+  if (!target) {
+    errors.push(`${tool}: document '${args.tlmId}' does not exist in the draft.`);
+  } else if (!(target.labels ?? []).includes(TLM_LABEL)) {
+    const labels = (target.labels ?? []).join("/") || "node";
+    errors.push(`${tool}: '${args.tlmId}' is a ${labels} — a ${noun} attaches under a ${TLM_LABEL} (the document). Pass a TLM id, or a Course to resolve its TLM.`);
+  }
+  if (!args.clonedNodes.some((n) => n.id === attachedId)) {
+    errors.push(`${tool}: the cloned ${noun} '${attachedId}' is missing from the copied subtree (retry).`);
+  }
+  for (const node of args.clonedNodes) {
+    if (nodeById(base, node.id)) errors.push(`${tool}: copied id '${node.id}' already exists in the draft (retry).`);
+  }
+  return errors;
+}
+
+// Append the cloned subtree and hang its root under the document via `hasPart`.
+// apply() runs before validate() on the dry-run, so a missing document must return
+// base (→ a clean "blocked" from validate) rather than produce a dangling edge.
+function attachUnderDocument(
+  base: MutationGraph,
+  args: { namespace: string; tlmId: string; clonedNodes: MutationNode[]; clonedEdges: MutationEdge[] },
+  attachedId: string,
+): MutationGraph {
+  if (!nodeById(base, args.tlmId)) return base;
+  const link: MutationEdge = {
+    id: edgeId(CONTAINMENT, args.tlmId, attachedId),
+    type: CONTAINMENT, from: args.tlmId, to: attachedId,
+    namespace: args.namespace, properties: {},
+  };
+  return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
+}
+
 export const useFormatter: GraphMutation<UseFormatterArgs> = {
   name: "useFormatter",
   describe: (args) => `copy a catalog formatter under document '${args.tlmId}'`,
-  validate: (base, _after, args) => {
-    const errors: string[] = [];
-    const target = nodeById(base, args.tlmId);
-    if (!target) errors.push(`use_formatter: document '${args.tlmId}' does not exist in the draft.`);
-    else if (!(target.labels ?? []).includes(TLM_LABEL)) errors.push(`use_formatter: '${args.tlmId}' is a ${(target.labels ?? []).join("/") || "node"} — a formatter attaches under a ${TLM_LABEL} (the document). Pass a TLM id, or a Course to resolve its TLM.`);
-    if (!args.clonedNodes.some((n) => n.id === args.newFormatterId)) errors.push(`use_formatter: the cloned formatter '${args.newFormatterId}' is missing from the copied subtree (retry).`);
-    for (const n of args.clonedNodes) if (nodeById(base, n.id)) errors.push(`use_formatter: copied id '${n.id}' already exists in the draft (retry).`);
-    return { errors, warnings: [] };
-  },
-  apply: (base, args) => {
-    // apply() runs before validate() on the dry-run, so a bad target must return
-    // base (→ clean "blocked" from validate) rather than produce a dangling edge.
-    if (!nodeById(base, args.tlmId)) return base;
-    const link: MutationEdge = { id: edgeId(CONTAINMENT, args.tlmId, args.newFormatterId), type: CONTAINMENT, from: args.tlmId, to: args.newFormatterId, namespace: args.namespace, properties: {} };
-    return { nodes: [...base.nodes, ...args.clonedNodes], edges: [...base.edges, ...args.clonedEdges, link] };
-  },
+  validate: (base, _after, args) => ({ errors: validateDocumentAttachment(base, args, args.newFormatterId, "use_formatter", "formatter"), warnings: [] }),
+  apply: (base, args) => attachUnderDocument(base, args, args.newFormatterId),
+};
+
+// ── use_rubric: copy an evaluation grid under a document (TLM) ────────────────
+// The third apply verb, alongside useRoutine (→ a Lesson) and useFormatter (→ a
+// document). A RUBRIC is the grid a document is judged against — Annexe 8's approval
+// checklist, Annexe 7's scored grid — so it attaches where a formatter does, under the
+// TeachingLearningMaterial via `hasPart`: both are properties of the DOCUMENT, not of
+// the curriculum. Attaching it is what makes "which grid governs this document"
+// graph data instead of convention, and it is what evaluate_document reads.
+
+// Turn a freshly-cloned rubric subtree into the document-layer shape: the entry →
+// `Rubric`, its section children → `RubricSection`, their Material leaves →
+// `RubricCriterion`, each with its catalog kind tags dropped. Content, weights and
+// scale are untouched. Mirrors relabelClonedFormatter, one level deeper.
+export function relabelClonedRubric(clone: ClonedSubtree): ClonedSubtree {
+  const childIdsOf = (parentId: string): string[] =>
+    clone.edges.filter((e) => e.type === CONTAINMENT && e.from === parentId).map((e) => e.to);
+
+  const sectionIds = new Set(childIdsOf(clone.newEntryId));
+  const criterionIds = new Set<string>();
+  for (const sectionId of sectionIds) {
+    for (const criterionId of childIdsOf(sectionId)) criterionIds.add(criterionId);
+  }
+
+  // null = leave this node alone (anything deeper than criteria, or a stray non-Material).
+  const labelFor = (node: MutationNode): string | null => {
+    if (node.id === clone.newEntryId) return RUBRIC_LABEL;
+    if (sectionIds.has(node.id)) return RUBRIC_SECTION_LABEL;
+    if (criterionIds.has(node.id) && isMaterial(node)) return RUBRIC_CRITERION_LABEL;
+    return null;
+  };
+
+  const nodes = clone.nodes.map((node) => {
+    const label = labelFor(node);
+    if (!label) return node;
+    return {
+      ...node,
+      type: label,
+      labels: [label],
+      properties: { ...(node.properties ?? {}), raw: withoutKindTags(rawOf(node)) },
+    };
+  });
+  return { ...clone, nodes };
+}
+
+export type UseRubricArgs = {
+  namespace: string;
+  tlmId: string;                // the TeachingLearningMaterial the rubric judges
+  clonedNodes: MutationNode[];
+  clonedEdges: MutationEdge[];
+  newRubricId: string;          // the cloned entry, relabelled to Rubric (the hasPart target)
+};
+
+export const useRubric: GraphMutation<UseRubricArgs> = {
+  name: "useRubric",
+  describe: (args) => `copy a catalog rubric under document '${args.tlmId}'`,
+  validate: (base, _after, args) => ({ errors: validateDocumentAttachment(base, args, args.newRubricId, "use_rubric", "rubric"), warnings: [] }),
+  apply: (base, args) => attachUnderDocument(base, args, args.newRubricId),
 };
 
 // ── add_to_catalog: publish an authored entry INTO a catalog ─────────────────
