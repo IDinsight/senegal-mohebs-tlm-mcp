@@ -25,6 +25,7 @@ import { kgNamespace, mintNodeId, type MutationGraph } from "../kg-store/index.j
 import { addNodes } from "../kg-recipes/index.js";
 import { runBatchMutation, type ReturnMode } from "./batch.js";
 import { idempotencyPayloadHash } from "./idempotency.js";
+import { runCatalogWrite } from "./catalog-target.js";
 import type { SubjectAdapter } from "../types.js";
 
 // The namespace the active subject binds to (same as the other mutation tool groups).
@@ -100,19 +101,32 @@ const PER_KIND_GUIDE =
   "FormatterSpec (one rule — under a Formatter): content (the rule text). " +
   "Common to every item: `description` (display title), `title_en`, `position`; content kinds may `alignTo` an SFI (hasEducationalAlignment).";
 
-// The add_nodes core, exported so tests drive the real logic (like
-// buildCapabilitiesReport). Mints per-item ids, folds them into the batch
-// mutation, and delegates response shaping + idempotency to runBatchMutation.
-export async function runAddNodes(a: {
+type AddNodesArgs = {
   items?: AddNodesItemInput[];
   confirm?: boolean;
   confirmationToken?: string;
   mintedNodeIds?: string[];
   returnMode?: ReturnMode;
   idempotencyKey?: string;
-}): Promise<Record<string, unknown>> {
-  const { namespace } = bind(getActiveAdapter());
+  catalog?: string;   // write to a catalog library instead of the active subject
+};
 
+// The add_nodes core, exported so tests drive the real logic (like
+// buildCapabilitiesReport). Routes the batch to the active subject's namespace,
+// or — when `catalog` is set — to a catalog library, which also publishes on
+// confirm (catalogs have no publish_draft; see catalog-target.ts).
+export async function runAddNodes(a: AddNodesArgs): Promise<Record<string, unknown>> {
+  const addInNamespace = (namespace: string) => addNodesInNamespace(namespace, a);
+  if (a.catalog) {
+    return runCatalogWrite(a.catalog, a.confirm, addInNamespace);
+  }
+  return addInNamespace(bind(getActiveAdapter()).namespace);
+}
+
+// Mints per-item ids, folds them into the batch mutation, and delegates response
+// shaping + idempotency to runBatchMutation. Namespace-agnostic so the same path
+// serves both a subject write and a catalog write.
+async function addNodesInNamespace(namespace: string, a: AddNodesArgs): Promise<Record<string, unknown>> {
   // Token-only confirm shortcut: caller sends confirm+token with NO items and no
   // mintedNodeIds. Everything the batch needs — built args, mintedIds echo,
   // payload hash — was parked at dry-run and runBatchMutation will read it back.
@@ -180,7 +194,8 @@ export function registerAuthoringTools(server: McpServer) {
         PER_KIND_GUIDE + " " +
         "Each item attaches under an already-existing parent — a node minted in the SAME batch cannot be a parent (stage nodes here, then wire cross-references with create_edges). Optional per-item `mintedNodeId` is your own alias, returned in an id map so you can correlate items to their real ids. ALL-OR-NOTHING: the dry-run validates every item and returns ONE confirmationToken + `mintedNodeIds` (real ids, in item order); any item error blocks the whole batch (no partial apply). When the dry-run reports `payloadStored:true` (a large batch held server-side), confirm with ONLY confirm:true + the token — do NOT re-send `items` or `mintedNodeIds`; otherwise re-send `items` verbatim with confirm:true, the token, and `mintedNodeIds` in the same order. " +
         "`returnMode` (default 'summary') controls the response: 'summary' returns `counts` {nodesAdded,edgesAdded,nodesChanged,nodesRemoved,edgesRemoved} instead of the full diff (~1 KB — enough to progress to confirm and wire ids); 'full' also attaches the whole `diff`. " +
-        "`idempotencyKey` (optional): pass a unique key (a UUID) to make a RETRIED confirm safe — a repeat with the same key + same payload returns the first apply's summary with `replayed:true` (no double-apply, no double-audit) instead of REPLAY; the same key with a different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Keys are namespace-scoped and expire after 24h. Omit it to keep strict single-use. DRAFT edit — publish_draft to make it live.",
+        "`idempotencyKey` (optional): pass a unique key (a UUID) to make a RETRIED confirm safe — a repeat with the same key + same payload returns the first apply's summary with `replayed:true` (no double-apply, no double-audit) instead of REPLAY; the same key with a different payload is rejected as IDEMPOTENCY_KEY_MISMATCH. Keys are namespace-scoped and expire after 24h. Omit it to keep strict single-use. DRAFT edit — publish_draft to make it live. " +
+        "`catalog` (optional) adds the nodes to a CATALOG LIBRARY instead of the active subject graph — use it to extend a stale master entry (e.g. add a missing FormatterSpec) that use_routine / use_formatter would otherwise keep re-cloning without it. Pass 'workspace' (your own library), 'shared' (the cross-tenant one), or a workspace id. Crossing into another workspace's or the shared library needs super_admin. In a catalog the entry root is an `InstructionalRoutine` and its steps/specs are `Material` — a formatter is only RELABELLED to Formatter/FormatterSpec when use_formatter clones it out, so author catalog children as Material. TWO DIFFERENCES from a subject add: confirming PUBLISHES the library live in one step (catalogs are not enterable, so no publish_draft or diff_draft), and you must RE-SEND `catalog` on the confirm. Sequence multi-call authoring so each confirmed call leaves the library coherent on its own.",
       inputSchema: {
         // `items` is required on a dry-run; on a token-only confirm (large batch
         // held server-side) it is omitted alongside `mintedNodeIds`.
@@ -199,14 +214,12 @@ export function registerAuthoringTools(server: McpServer) {
         ).optional(),
         returnMode: z.enum(["summary", "full"]).optional(),
         idempotencyKey: z.string().optional(),
+        catalog: z.string().optional(),
         confirm: z.boolean().optional(),
         confirmationToken: z.string().optional(),
         mintedNodeIds: z.array(z.string()).optional(),   // real ids, echoed on confirm (re-send path only)
       },
     },
-    guarded(async (a: {
-      items?: AddNodesItemInput[]; confirm?: boolean; confirmationToken?: string;
-      mintedNodeIds?: string[]; returnMode?: ReturnMode; idempotencyKey?: string;
-    }) => asJson(await runAddNodes(a))),
+    guarded(async (a: AddNodesArgs) => asJson(await runAddNodes(a))),
   );
 }

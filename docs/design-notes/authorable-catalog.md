@@ -60,6 +60,47 @@ applied.)
 **Surfaced.** `get_capabilities` carries a `catalog` mirror (both scope namespaces,
 `canUse` from the same `apply` gate, and the per-namespace edit governance).
 
+### Correcting an entry in place — the `catalog` write redirect
+
+Copy-on-use means the library master and the graph copies **drift**, and for a while
+that drift was one-way: a master could be applied but never corrected. `add_to_catalog`
+files a *new* entry, so the only remedy for (say) a stale `[p X]` page reference in one
+FormatterSpec was to re-file the whole entry under a new id — and every later
+`use_formatter` kept cloning the un-fixed original in the meantime.
+
+The fix is **addressing, not a new verb**. The generic write verbs were already
+subject-agnostic; only their tool registrations hard-bound the namespace to the active
+adapter. `edit_node`, `add_nodes`, and `create_edges` now take an optional **`catalog`**
+argument — `"workspace"` (your own library), `"shared"`, or a workspace id — which routes
+the write to that library instead. A deliberate *tool* was rejected: `edit_catalog_entry`
+would have covered field edits only, leaving "this entry is missing a spec" (an
+`add_nodes` job) still unfixable, and would have duplicated `edit_node`'s protected-path
+and ordinal-mirror rules.
+
+Routing lives in `src/server/catalog-target.ts::runCatalogWrite`, shared by all three
+verbs, and it carries the two things a catalog write does differently:
+
+- **Destination rights** — `resolveCatalogTarget` (lifted out of `catalog.ts`, which now
+  imports it) locks a workspace curator to their own library; crossing into another
+  workspace's or the shared one needs super_admin.
+- **Lifecycle** — catalogs are not enterable contexts, so there is no `publish_draft` or
+  `diff_draft` for them. A confirmed catalog write **applies and publishes in one step**,
+  the bargain `add_to_catalog` already makes, and a refused publish rolls the draft back
+  rather than stranding it where nobody can discard it. Because the namespace is a routing
+  argument rather than mutation state, **`catalog` must be re-sent on the confirm**;
+  forgetting it fails the token's args check rather than writing somewhere unintended.
+
+Two consequences worth stating plainly. Multi-call authoring against a library publishes
+at *each* confirm, so sequence calls so every one leaves the library coherent on its own.
+And correcting a master still does **not** reach copies already made from it — drift
+remains the accepted tradeoff of copy-on-use; those are fixed in the subject graph
+separately.
+
+Enterable catalogs (letting `set_context` target one, so the whole toolset and the normal
+draft→publish loop apply unchanged) remain the eventual shape. That is an
+adapter-nullability refactor across ~20 `getActiveAdapter()` call sites, which a library
+edited a handful of times a year does not yet justify.
+
 ## Phase 2 — subject profiles (Step 2a done, in-repo)
 
 The three per-subject adapter behavior modules are **gone**. A subject is now a

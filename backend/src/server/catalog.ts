@@ -29,11 +29,12 @@ import { z } from "zod";
 import { asJson, asMarkdown, guarded } from "./shared.js";
 import { getActiveAdapter } from "../adapters/index.js";
 import { activeWorkspace } from "../context/index.js";
-import { currentActor } from "../actor.js";
-import { getWorkspaceStore } from "../workspaces/index.js";
 import { getKgStore, mintNodeId, runGraphMutation, kgNamespace, publishDraft, discardDraft, type MutationGraph, type MutationEdge, type MutationNode, type StoredEdge, type StoredNode } from "../kg-store/index.js";
-import { SHARED_CATALOG_NAMESPACE, SHARED_CATALOG_WORKSPACE, catalogNamespace, cloneRoutineSubtree, relabelClonedFormatter, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, useFormatter, type CatalogScope, type UseRoutineArgs, type UseFormatterArgs } from "../kg-recipes/index.js";
+import { SHARED_CATALOG_NAMESPACE, catalogNamespace, cloneRoutineSubtree, relabelClonedFormatter, addCatalogEntry, listCatalogEntries, renderCatalogEntry, useRoutine, useFormatter, type CatalogScope, type UseRoutineArgs, type UseFormatterArgs } from "../kg-recipes/index.js";
 import { parkWrapperContext, readWrapperContext, deleteWrapperContext } from "./wrapper-park.js";
+// Destination resolution moved to catalog-target.ts, which the generic write
+// verbs (edit_node / add_nodes / create_edges) share for their `catalog` redirect.
+import { resolveCatalogTarget } from "./catalog-target.js";
 
 // Read one catalog namespace's published slot as a plain MutationGraph. Empty when
 // that namespace has never been seeded (no pointer). Exported for tests.
@@ -182,40 +183,6 @@ async function readActiveGraph(namespace: string): Promise<MutationGraph> {
   const [nodes, edges] = await Promise.all([store.listNodes(namespace, slot), store.listEdges(namespace, slot)]);
   const dropSlot = <T extends { slot: unknown }>(x: T): Omit<T, "slot"> => { const { slot: _s, ...rest } = x; return rest; };
   return { nodes: nodes.map((n: StoredNode) => dropSlot(n) as MutationNode), edges: edges.map((e: StoredEdge) => dropSlot(e) as MutationEdge) };
-}
-
-// Which catalog the caller may write to. A workspace curator is locked to their OWN
-// workspace's library. A super_admin picks — the shared library or any workspace's —
-// and when they name none, we hand back the choices for the caller to ask about.
-type CatalogTarget =
-  | { kind: "namespace"; workspace: string; namespace: string; scope: CatalogScope }
-  | { kind: "choose"; choices: Array<{ target: string; label: string }> }
-  | { kind: "error"; message: string };
-
-async function resolveCatalogTarget(target: string | undefined): Promise<CatalogTarget> {
-  const actor = currentActor();
-  const active = activeWorkspace();
-  const toTarget = (workspace: string): CatalogTarget => ({
-    kind: "namespace", workspace, namespace: catalogNamespace(workspace),
-    scope: workspace === SHARED_CATALOG_WORKSPACE ? "shared" : "workspace",
-  });
-
-  if (!actor.superAdmin) {
-    // Only a super_admin writes across catalogs; everyone else → their own workspace.
-    if (target && target !== active) {
-      return { kind: "error", message: `Only a super admin can add to another workspace's or the shared catalog. As a member of '${active}', you can add to that workspace's library only — omit targetWorkspace (or pass '${active}').` };
-    }
-    return toTarget(active);
-  }
-  if (target) return toTarget(target);
-
-  // super_admin, no choice yet — offer the shared library plus every live workspace.
-  const registry = await getWorkspaceStore().listWorkspaces().catch(() => []);
-  const choices = [
-    { target: SHARED_CATALOG_WORKSPACE, label: "Shared cross-tenant library (every workspace can use it)" },
-    ...registry.filter((w) => !w.archived).map((w) => ({ target: w.id, label: `Workspace library — ${w.displayName} (${w.id})` })),
-  ];
-  return { kind: "choose", choices };
 }
 
 // Tag a dry-run preview so the caller knows confirming PUBLISHES the library live
