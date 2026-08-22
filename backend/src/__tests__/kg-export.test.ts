@@ -236,9 +236,12 @@ describe("kg-export — LC ontology (maths)", () => {
     const view = graph.meta.viewConfig.views.find((v) => v.id === "curriculum") as any;
     expect(view.shape).toBe("label-tree");
     // The tail is the graph-native way to reach the alignment the content walk folds
-    // away: Lesson --hasEducationalAlignment--> SFI --supports--> LearningComponent.
+    // away: <content leaf> --hasEducationalAlignment--> SFI --supports--> LearningComponent.
+    // The leaf is a Lesson in maths and an Activity in reading (its Lessons are day
+    // containers that align nothing), so both seed the tail.
     expect(view.params.alignmentTail).toEqual([
       { from: "Lesson", rel: "hasEducationalAlignment", dir: "in" },
+      { from: "Activity", rel: "hasEducationalAlignment", dir: "in" },
       { from: "StandardsFrameworkItem", rel: "supports", dir: "out" },
     ]);
 

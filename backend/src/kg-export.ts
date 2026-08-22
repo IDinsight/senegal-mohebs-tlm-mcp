@@ -350,13 +350,17 @@ function buildViewConfig(nodes: DisplayNode[], edges: DisplayEdge[]): ViewConfig
       // Only Course / top LessonGrouping anchor the content tree; Lesson/Activity/
       // Material never head it (illustrative Activities are exemplars under
       // components and must not surface here as orphans).
-      // The tail lets a Lesson walk out to the standard it teaches
+      // The tail lets the aligning content leaf walk out to the standard it teaches
       // (hasEducationalAlignment) and, under that standard, the learning components
-      // that support it (supports) — the alignment the content walk folds away.
+      // that support it (supports) — the alignment the content walk folds away. The
+      // leaf differs by subject: maths teacher-guide LESSONS align, while reading
+      // authors alignment on the session ACTIVITIES (its Lessons are day containers
+      // that teach no single standard), so both are seeded.
       params: {
         includeLabels: CONTENT_LABELS, expandEdge: "hasChild", rootKinds: ["Course", "LessonGrouping"],
         alignmentTail: [
           { from: "Lesson", rel: "hasEducationalAlignment", dir: "in" },
+          { from: "Activity", rel: "hasEducationalAlignment", dir: "in" },
           { from: "StandardsFrameworkItem", rel: "supports", dir: "out" },
         ],
       },
